@@ -89,13 +89,13 @@
     "constrains/additionalAnnotations+additionalAnnotations:helm-marker-free+7more@2": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks"
+        },
+        {
           "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more@5"
         },
         {
           "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
@@ -157,7 +157,16 @@
     "constrains/additionalAnnotations+additionalAnnotations:t+additionalAnnotations=null+23more": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks+webhooks.name"
+        },
+        {
           "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more@2"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+6more@2"
@@ -166,25 +175,10 @@
           "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.failurePolicy@2"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks+webhooks.name"
-        },
-        {
           "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:helm-marker-free+7more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t+webhooks.timeoutSeconds+1more"
@@ -196,13 +190,19 @@
           "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more"
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+webhooks+webhooks.enabled:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more"
         }
       ]
     },
@@ -269,10 +269,10 @@
     "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
@@ -313,10 +313,10 @@
     "constrains/additionalAnnotations:t+additionalLabels:t+certificates.certManager.enabled:t+3more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
+          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalAnnotations:t+certificates.certManager.enabled:t"
+          "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
@@ -446,10 +446,10 @@
     "constrains/additionalLabels+additionalLabels:helm-marker-free+additionalLabels:t+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels=null@2"
+          "$ref": "#/$defs/constrains~1additionalLabels@2"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels@2"
+          "$ref": "#/$defs/constrains~1additionalLabels+additionalLabels:helm-marker-free+additionalLabels=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
@@ -559,10 +559,10 @@
     "constrains/additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1operator+operator.name@3"
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
+          "$ref": "#/$defs/constrains~1operator+operator.name@3"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks@2"
@@ -571,10 +571,10 @@
           "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@2"
+          "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more"
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t"
@@ -584,13 +584,13 @@
     "constrains/additionalLabels:t+certificates.certManager+customManagedBy+customManagedBy:t+11more@2": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@3"
+        },
+        {
           "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@3"
         },
         {
           "$ref": "#/$defs/constrains~1operator+operator.name@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@3"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t+certificates.certManager.enabled:t+webhooks"
@@ -688,7 +688,7 @@
     "constrains/additionalLabels:t+certificates.certManager.enabled:t+webhooks@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t"
@@ -701,7 +701,7 @@
     "constrains/additionalLabels:t+certificates.certManager.enabled:t+webhooks@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
+          "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t"
@@ -714,13 +714,13 @@
     "constrains/additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=null@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t"
         },
         {
           "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=false+customManagedBy=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@6"
@@ -749,13 +749,13 @@
           "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@7"
         },
         {
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=null@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t"
         },
         {
           "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=false+customManagedBy=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t+customManagedBy=null@2"
         }
       ]
     },
@@ -853,10 +853,10 @@
     "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.name+webhooks.name=false+2more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@2"
+          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@7"
         },
         {
-          "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t@7"
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.name@2"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.name@2"
@@ -949,13 +949,13 @@
     "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@5"
-        },
-        {
           "$ref": "#/$defs/constrains~1additionalLabels:t+webhooks.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t@5"
@@ -965,13 +965,13 @@
     "constrains/additionalLabels:t+webhooks+webhooks.enabled:t+webhooks.timeoutSeconds+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@5"
-        },
-        {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1additionalLabels:t"
@@ -1126,7 +1126,7 @@
       }
     },
     "constrains/certificates.certManager.enabled:t": {
-      "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@3"
+      "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@2"
     },
     "constrains/certificates.certManager.enabled:t@2": {
       "not": {
@@ -1373,7 +1373,7 @@
     "constrains/customManagedBy+customManagedBy:t@8": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@6"
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@3"
@@ -1382,7 +1382,7 @@
           "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@5"
+          "$ref": "#/$defs/constrains~1customManagedBy+customManagedBy:t@6"
         }
       ]
     },
@@ -3118,17 +3118,17 @@
     "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@4"
+          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
         },
         {
-          "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@3"
         }
       ]
     },
     "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@6"
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@4"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
@@ -3138,7 +3138,7 @@
     "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@5"
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@6"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
@@ -3148,7 +3148,7 @@
     "constrains/webhooks+webhooks.timeoutSeconds+webhooks.timeoutSeconds:t@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@3"
+          "$ref": "#/$defs/constrains~1webhooks+webhooks.timeoutSeconds@5"
         },
         {
           "$ref": "#/$defs/constrains~1webhooks.timeoutSeconds:t"
@@ -3886,6 +3886,55 @@
         "pattern": "[^A-Za-z0-9_./+-]"
       },
       "type": "string"
+    },
+    "when/prometheus.webhooks.enabled:t/then/prometheus.webhooks.serviceMonitor/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus.webhooks.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus.webhooks.serviceMonitor.enabled:t~1then~1webhooks~1else~1fail"
+      }
+    },
+    "when/prometheus.webhooks.serviceMonitor.enabled:t/then/webhooks/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "prometheus": {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "serviceMonitor": {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "prometheus"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhooks.enabled:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/webhooks.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -3950,12 +3999,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:t+additionalAnnotations=null+23more"
-      },
-      "then": false
     },
     {
       "if": {
@@ -4218,6 +4261,41 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1prometheus.webhooks.enabled:t~1then~1prometheus.webhooks.serviceMonitor~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
+            "additionalProperties": {},
+            "properties": {
+              "webhooks": {
+                "additionalProperties": {},
+                "description": "- alert: KedaScalerErrors\nannotations:\ndescription: Keda scaledObject {{ $labels.scaledObject }} is experiencing errors with {{ $labels.scaler }} scaler\nsummary: Keda Scaler {{ $labels.scaler }} Errors\nexpr: sum by ( scaledObject , scaler) (rate(keda_metrics_adapter_scaler_errors[2m]))  > 0\nfor: 2m\nlabels:",
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
+                    "properties": {
+                      "additionalLabels": {
+                        "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -4559,6 +4637,88 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "certificates": {
+                    "properties": {
+                      "certManager": {
+                        "properties": {
+                          "issuer": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "issuer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certificates"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "certificates": {
+                      "properties": {
+                        "certManager": {
+                          "properties": {
+                            "issuer": {}
+                          },
+                          "required": [
+                            "issuer"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "certManager"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "certificates"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalAnnotations:t+additionalAnnotations=null+23more"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1additionalLabels:t+customManagedBy+customManagedBy:t+customManagedBy=false+3more@2"
           },
           {
@@ -4810,82 +4970,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1certificates.certManager.generateCA:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "certificates": {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "issuer": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "issuer"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "certificates"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "certificates": {
-                      "properties": {
-                        "certManager": {
-                          "properties": {
-                            "issuer": {}
-                          },
-                          "required": [
-                            "issuer"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "certificates"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhooks.enabled:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1certificates.certManager.enabled:t@4"
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "properties": {

@@ -1,6 +1,883 @@
 {
+  "$defs": {
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride@2": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@3": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@4": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/kind": {
+      "$ref": "#/$defs/when~1kind~1then~1any~1else~1fail"
+    },
+    "constrains/kind+kind=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "kind": {}
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/kind@2": {
+      "$ref": "#/$defs/when~1kind~1then~1any~1else~1fail"
+    },
+    "constrains/kind@3": {
+      "$ref": "#/$defs/when~1kind~1then~1any~1else~1fail"
+    },
+    "constrains/kind@4": {
+      "properties": {
+        "kind": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "$ref": "#/$defs/constrains~1nameOverride@4"
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "$ref": "#/$defs/constrains~1nameOverride@5"
+    },
+    "constrains/nameOverride@3": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@4": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@5": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@6": {
+      "$ref": "#/$defs/constrains~1nameOverride@3"
+    },
+    "constrains/serviceMonitor.enabled:t": {
+      "properties": {
+        "serviceMonitor": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "constrains/verticalPodAutoscaler.enabled:t": {
+      "properties": {
+        "verticalPodAutoscaler": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "verticalPodAutoscaler"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/kind+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/fullnameOverride/then/kind+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/fullnameOverride/then/kind+nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind~1then~1nameOverride~1else~1fail@3"
+      }
+    },
+    "when/fullnameOverride/then/kind/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1kind@3"
+      }
+    },
+    "when/fullnameOverride/then/kind/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1kind"
+      }
+    },
+    "when/fullnameOverride/then/kind/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1kind@2"
+      }
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      }
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+kind+kind=null+nameOverride+nameOverride:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+kind+kind=null+nameOverride+nameOverride:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+kind+kind=null+nameOverride+nameOverride:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1kind+kind=null+nameOverride+serviceMonitor.enabled:t+verticalPodAutoscaler~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+kind+kind=null+nameOverride+serviceMonitor.enabled:t+1more~1else~1any"
+      }
+    },
+    "when/kind+kind=null/then/any/else/kind": {
+      "else": {
+        "$ref": "#/$defs/constrains~1kind@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": true
+    },
+    "when/kind+kind=null/then/any/else/kind@2": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1any~1else~1kind"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": true
+    },
+    "when/kind+kind=null/then/any/else/kind@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1kind"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": true
+    },
+    "when/kind+kind=null/then/any/else/kind@4": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1any~1else~1kind@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": true
+    },
+    "when/kind+kind=null/then/any/else/kind@5": {
+      "else": {
+        "$ref": "#/$defs/constrains~1kind@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": true
+    },
+    "when/kind+kind=null/then/any/else/kind@6": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1any~1else~1kind@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": true
+    },
+    "when/kind+kind=null/then/fullnameOverride+nameOverride/else/kind": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1kind+nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride+nameOverride/else/kind@2": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride+nameOverride~1else~1kind"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride+nameOverride/else/kind@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1kind+nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride+nameOverride/else/kind@4": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride+nameOverride~1else~1kind@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride+nameOverride/else/kind@5": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1kind+nameOverride~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@3"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride+nameOverride/else/kind@6": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride+nameOverride~1else~1kind@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@3"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride/else/kind": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1kind~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride/else/kind@2": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride~1else~1kind"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride/else/kind@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1kind~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride/else/kind@4": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride~1else~1kind@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride/else/kind@5": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1kind~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/kind+kind=null/then/fullnameOverride/else/kind@6": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride~1else~1kind@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/kind+kind=null/then/nameOverride/else/kind": {
+      "else": {
+        "$ref": "#/$defs/when~1kind~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      }
+    },
+    "when/kind+kind=null/then/nameOverride/else/kind@2": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1nameOverride~1else~1kind"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      }
+    },
+    "when/kind+kind=null/then/nameOverride/else/kind@3": {
+      "else": {
+        "$ref": "#/$defs/when~1kind~1then~1nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/kind+kind=null/then/nameOverride/else/kind@4": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1nameOverride~1else~1kind@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/kind+kind=null/then/nameOverride/else/kind@5": {
+      "else": {
+        "$ref": "#/$defs/when~1kind~1then~1nameOverride~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/kind+kind=null/then/nameOverride/else/kind@6": {
+      "else": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1nameOverride~1else~1kind@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1kind+kind=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/kind/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1kind@4"
+      },
+      "then": true
+    },
+    "when/kind/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1kind@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      }
+    },
+    "when/kind/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1kind@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/kind/then/nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1kind@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/fullnameOverride+kind+kind=null+nameOverride+serviceMonitor.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+kind+kind=null+verticalPodAutoscaler~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+kind+kind=null+nameOverride+verticalPodAutoscaler~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1fullnameOverride+kind+kind=null~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1fullnameOverride+kind+kind=null+nameOverride~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1fullnameOverride+kind+kind=null~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1fullnameOverride+kind+kind=null+nameOverride~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/kind+kind=null+nameOverride+serviceMonitor.enabled:t+verticalPodAutoscaler/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1kind+kind=null+verticalPodAutoscaler~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1kind+kind=null+nameOverride+verticalPodAutoscaler~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1kind+kind=null~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1kind+kind=null+nameOverride~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/kind+kind=null+nameOverride+verticalPodAutoscaler.enabled:t/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1kind+kind=null~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1kind+kind=null+nameOverride~1else~1any@3"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+kind+kind=null+nameOverride+verticalPodAutoscaler/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1fullnameOverride+kind+kind=null+nameOverride~1else~1any@3"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+kind+kind=null+verticalPodAutoscaler/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1fullnameOverride+kind+kind=null~1else~1any"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/kind+kind=null+nameOverride+verticalPodAutoscaler/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1kind+kind=null+nameOverride~1else~1any"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/kind+kind=null+verticalPodAutoscaler/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1kind+kind=null~1else~1any"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/fullnameOverride+kind+kind=null+nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride+nameOverride~1else~1kind@2"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/fullnameOverride+kind+kind=null+nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride+nameOverride~1else~1kind@6"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/fullnameOverride+kind+kind=null+nameOverride/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride+nameOverride~1else~1kind@4"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/fullnameOverride+kind+kind=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride~1else~1kind@2"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/fullnameOverride+kind+kind=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride~1else~1kind@4"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/fullnameOverride+kind+kind=null/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1fullnameOverride~1else~1kind@6"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/kind+kind=null+nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1nameOverride~1else~1kind@2"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/kind+kind=null+nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1nameOverride~1else~1kind@4"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/kind+kind=null+nameOverride/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1nameOverride~1else~1kind@6"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/kind+kind=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1any~1else~1kind@2"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/kind+kind=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1any~1else~1kind@4"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/kind+kind=null/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kind+kind=null~1then~1any~1else~1kind@6"
+      }
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+kind+kind=null+nameOverride+nameOverride:t+1more~1else~1any@2"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceMonitor": {}
+                  },
+                  "required": [
+                    "serviceMonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceMonitor": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+kind+kind=null+nameOverride+nameOverride:t+2more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "additionalProperties": {},
+            "properties": {
+              "targets": {
+                "description": "- name: example                    # Human readable URL that will appear in Prometheus / AlertManager\nurl: http://example.com/healthz  # The URL that blackbox will scrape\nhostname: example.com            # HTTP probes can accept an additional `hostname` parameter that will set `Host` header and TLS SNI\nlabels: {}                       # Map of labels for ServiceMonitor. Overrides value set in `defaults`\ninterval: 60s                    # Scraping interval. Overrides value set in `defaults`\nscrapeTimeout: 60s               # Scrape timeout. Overrides value set in `defaults`\nmodule: http_2xx                 # Module used for scraping. Overrides value set in `defaults`\nadditionalMetricsRelabels: {}    # Map of metric labels and values to add\nadditionalRelabeling: []         # List of metric relabeling actions to run",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+kind+kind=null+nameOverride+nameOverride:t+1more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ],
   "properties": {
     "affinity": {},
     "automountServiceAccountToken": {

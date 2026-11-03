@@ -49,11 +49,86 @@
         "snapshotter"
       ],
       "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/sidecars.snapshotter.forceEnable:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "sidecars": {
+            "properties": {
+              "snapshotter": {
+                "properties": {
+                  "forceEnable": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "forceEnable"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "snapshotter"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "sidecars"
+        ],
+        "type": "object"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "$ref": "#/$defs/when~1sidecars.snapshotter.forceEnable:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "volumeSnapshotClasses": {
+            "description": "Add VolumeSnapshotClass resources like:\n- name: ebs-vsc\nannotation metadata\nannotations:\nsnapshot.storage.kubernetes.io/is-default-class: \"true\"\nlabel metadata\nlabels:\nmy-label-is: supercool\ndeletionPolicy must be specified\ndeletionPolicy: Delete\nparameters:",
+            "type": [
+              "array",
+              "integer",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
     {
       "if": {
         "$ref": "#/$defs/constrains~1sidecars+sidecars=null"

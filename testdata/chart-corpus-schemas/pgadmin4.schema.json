@@ -1,5 +1,16 @@
 {
   "$defs": {
+    "constrains/commonLabels": {
+      "properties": {
+        "commonLabels": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -45,6 +56,9 @@
     "constrains/fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+3more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@3"
         },
         {
@@ -57,9 +71,6 @@
           "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         }
       ]
@@ -67,10 +78,10 @@
     "constrains/fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+3more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+1more"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+istioIngress.enabled:t+istioIngress.virtualService+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+istioIngress.enabled:t+istioIngress.virtualService+2more"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+3more"
@@ -80,10 +91,10 @@
     "constrains/fullnameOverride+fullnameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         }
       ]
     },
@@ -95,6 +106,12 @@
     "constrains/fullnameOverride:t+istioIngress.enabled:t+istioIngress.virtualService+2more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@3"
         },
         {
@@ -102,12 +119,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
@@ -127,10 +138,10 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
@@ -255,6 +266,244 @@
           "const": true
         }
       ]
+    },
+    "when/commonLabels/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1commonLabels"
+      },
+      "then": true
+    },
+    "when/commonLabels/then/fullnameOverride+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1commonLabels"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/commonLabels/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1commonLabels"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/commonLabels/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1commonLabels"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/commonLabels:t/then/commonLabels+fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+3more/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "commonLabels": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "commonLabels"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1commonLabels+fullnameOverride+istioIngress.enabled:t+istioIngress.virtualService+2more~1else~1any"
+      }
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/commonLabels+fullnameOverride+istioIngress.enabled:t+istioIngress.virtualService+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1istioIngress.enabled:t~1then~1commonLabels+istioIngress.virtualService+nameOverride+nameOverride:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.enabled:t~1then~1commonLabels+fullnameOverride+istioIngress.virtualService+nameOverride+1more~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+istioIngress.enabled:t+istioIngress.virtualService+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1istioIngress.enabled:t~1then~1istioIngress.virtualService+nameOverride:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.enabled:t~1then~1fullnameOverride+istioIngress.virtualService+nameOverride:t~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/istioIngress.enabled:t+istioIngress.virtualService/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.enabled:t~1then~1istioIngress.virtualService~1else~1fail"
+      }
+    },
+    "when/istioIngress.enabled:t/then/commonLabels+fullnameOverride+istioIngress.virtualService+nameOverride+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.virtualService.enabled:t~1then~1commonLabels+fullnameOverride+nameOverride+nameOverride:t~1else~1fail"
+      }
+    },
+    "when/istioIngress.enabled:t/then/commonLabels+istioIngress.virtualService+nameOverride+nameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.virtualService.enabled:t~1then~1commonLabels+nameOverride+nameOverride:t~1else~1fail"
+      }
+    },
+    "when/istioIngress.enabled:t/then/fullnameOverride+istioIngress.virtualService+nameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.virtualService.enabled:t~1then~1fullnameOverride+nameOverride:t~1else~1fail"
+      }
+    },
+    "when/istioIngress.enabled:t/then/istioIngress.virtualService+nameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.virtualService.enabled:t~1then~1nameOverride:t~1else~1fail"
+      }
+    },
+    "when/istioIngress.enabled:t/then/istioIngress.virtualService/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1istioIngress.virtualService.enabled:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/istioIngress.virtualService.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
+      },
+      "then": true
+    },
+    "when/istioIngress.virtualService.enabled:t/then/commonLabels+fullnameOverride+nameOverride+nameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1commonLabels+fullnameOverride+nameOverride~1else~1any"
+      }
+    },
+    "when/istioIngress.virtualService.enabled:t/then/commonLabels+nameOverride+nameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1commonLabels+nameOverride~1else~1any"
+      }
+    },
+    "when/istioIngress.virtualService.enabled:t/then/fullnameOverride+nameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride~1else~1fail"
+      }
+    },
+    "when/istioIngress.virtualService.enabled:t/then/nameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/commonLabels+fullnameOverride+nameOverride/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1commonLabels~1then~1fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1commonLabels~1then~1fullnameOverride+nameOverride~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/commonLabels+nameOverride/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1commonLabels~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1commonLabels~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -262,56 +511,43 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+3more@2"
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1istioIngress.enabled:t+istioIngress.virtualService~1else~1fail"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1istioIngress.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
+        "$ref": "#/$defs/when~1commonLabels:t~1then~1commonLabels+fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+3more~1else~1fail"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "description": "Add labels to all the deployed resources",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+istioIngress.enabled:t+istioIngress.virtualService+1more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -361,6 +597,59 @@
             }
           }
         ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1istioIngress.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1istioIngress.virtualService.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "service": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {}
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+istioIngress.enabled:t+3more@2"
       },
       "then": false
     },

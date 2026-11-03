@@ -1,48 +1,47 @@
 {
   "$defs": {
-    "constrains/alertmanager+alertmanager.enabled+alertmanager.enabled:t+1more": {
-      "anyOf": [
-        {
-          "properties": {
-            "alertmanager": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1enabled+enabled=null"
-                },
-                {
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "alertmanager"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "alertmanager": {
-                "type": "object"
-              }
-            },
-            "required": [
-              "alertmanager"
-            ],
+    "constrains/alertmanager": {
+      "not": {
+        "properties": {
+          "alertmanager": {
             "type": "object"
           }
         },
+        "required": [
+          "alertmanager"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/alertmanager+alertmanager.enabled+alertmanager.enabled:t+1more": {
+      "anyOf": [
         {
-          "properties": {
-            "alertmanager": {
-              "$ref": "#/$defs/constrains~1enabled:t"
-            }
-          },
-          "required": [
-            "alertmanager"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1alertmanager"
+        },
+        {
+          "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+        }
+      ]
+    },
+    "constrains/alertmanager+alertmanager.enabled+alertmanager.enabled=null": {
+      "$ref": "#/$defs/when~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/alertmanager+alertmanager.enabled+alertmanager.enabled=null@2": {
+      "$ref": "#/$defs/when~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/alertmanager+alertmanager.enabled+alertmanager.enabled=null@3": {
+      "$ref": "#/$defs/when~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/alertmanager+alertmanager.enabled+alertmanager.enabled=null@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1alertmanager"
         }
       ]
     },
@@ -58,6 +57,95 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/alertmanager.enabled+alertmanager.enabled=null": {
+      "properties": {
+        "alertmanager": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1enabled+enabled=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.enabled:t": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.fullnameOverride:t": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.nameOverride:t": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.verticalPodAutoscaler.enabled:t": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.verticalPodAutoscaler.recommenders:t": {
+      "properties": {
+        "alertmanager": {
+          "properties": {
+            "verticalPodAutoscaler": {
+              "properties": {
+                "recommenders": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "recommenders"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "verticalPodAutoscaler"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
     },
     "constrains/enabled": {
       "properties": {
@@ -183,7 +271,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
@@ -257,31 +345,31 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "$ref": "#/$defs/constrains~1nameOverride@3"
+      "$ref": "#/$defs/constrains~1nameOverride@10"
     },
     "constrains/nameOverride+nameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride@8"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+2more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
@@ -291,32 +379,32 @@
     "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+2more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
@@ -332,68 +420,43 @@
     "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@4": {
+    "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+2more"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+2more"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride+2more"
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@5": {
+    "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@4": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+1more@2"
-        },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride+2more@2"
         },
@@ -401,64 +464,26 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@3"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride+3more"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+1more@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.automountServiceAccountToken+5more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@9"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@17"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@18"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+4more@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@8"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@5"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@14"
         }
       ]
     },
@@ -476,7 +501,7 @@
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@6"
+      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5"
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@10": {
       "allOf": [
@@ -484,7 +509,7 @@
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride+server.fullnameOverride:t@3"
@@ -494,99 +519,99 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@11": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@6"
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride+server.fullnameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@12": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@13": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@13": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@14": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+serviceAccounts.server.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@15": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@16": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@3"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+serviceAccounts.server.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t@2"
         }
       ]
     },
@@ -599,7 +624,7 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@4"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+serviceAccounts.server.create:t@2"
@@ -612,7 +637,7 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.verticalAutoscaler.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@4"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@7"
@@ -622,10 +647,10 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@19": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@10"
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@10"
         }
       ]
     },
@@ -635,15 +660,15 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@20": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@11"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@11"
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@3": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5"
+      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@6"
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@4": {
       "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5"
@@ -651,13 +676,13 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
@@ -670,13 +695,13 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@6": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -692,7 +717,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -711,13 +736,13 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@12"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@4"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@6"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@3"
         }
       ]
     },
@@ -738,18 +763,43 @@
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@10"
+      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@14"
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@10": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@11": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
@@ -762,16 +812,16 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@11": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@12": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -784,16 +834,16 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@12": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@13": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -806,16 +856,16 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@13": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@14": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -828,13 +878,13 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@14": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@15": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
@@ -843,14 +893,14 @@
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride"
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@15": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@16": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@19"
@@ -859,17 +909,17 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@12"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@4"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@6"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+1more@3"
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@16": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@17": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@20"
@@ -888,51 +938,35 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@17": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more"
-        }
-      ]
-    },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@18": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@9"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@19": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@3"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@3"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more"
         }
       ]
     },
@@ -942,10 +976,26 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@20": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@21": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@5"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@2"
@@ -955,80 +1005,64 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@21": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@22": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@5"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@22": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@5"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@6"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@4"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@5"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@4"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@23": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@9"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@7"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@5"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@24": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@8"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@4"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@25": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@9"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@5"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@7"
@@ -1038,13 +1072,45 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@26": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@7"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@8"
         },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@10"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@27": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride:t+2more@2"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@28": {
+      "anyOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.verticalAutoscaler.enabled:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@14"
+          "$ref": "#/$defs/constrains~1nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@15"
         }
       ]
     },
@@ -1055,7 +1121,7 @@
       "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@11"
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@5": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@10"
+      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@14"
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@6": {
       "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@13"
@@ -1069,13 +1135,13 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@9": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
@@ -1097,19 +1163,19 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -1119,16 +1185,16 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+3more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@16"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@17"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@23"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@27"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+3more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@9"
         }
       ]
     },
@@ -1151,41 +1217,41 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@16"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@25"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@19"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@24"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@22"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@18"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@15"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@17"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@21"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@14"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@20"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+7more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@15"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@25"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@20"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@24"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@19"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@26"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@15"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@16"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@22"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@23"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@21"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@17"
         }
       ]
     },
@@ -1208,7 +1274,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
@@ -1218,88 +1284,53 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more@4": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
-        },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
         },
@@ -1307,17 +1338,55 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+1more@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+2more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
@@ -1326,23 +1395,42 @@
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.clusterIP:t"
@@ -1355,13 +1443,13 @@
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.clusterIP:t"
@@ -1380,7 +1468,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -1396,26 +1484,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -1425,22 +1494,41 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@3": {
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@2": {
       "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.loadBalancerIP:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
         }
       ]
     },
@@ -1450,7 +1538,45 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.externalIPs:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.loadBalancerIP:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
@@ -1463,51 +1589,13 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.externalIPs:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.loadBalancerIP:t"
-        }
-      ]
-    },
     "constrains/nameOverride+nameOverride:t+server.fullnameOverride:t+server.service.enabled:t@2": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
@@ -1526,7 +1614,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         }
       ]
     },
@@ -1539,10 +1627,10 @@
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -1571,60 +1659,60 @@
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t@4": {
+    "constrains/nameOverride+nameOverride:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         }
       ]
     },
+    "constrains/nameOverride+nameOverride:t@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        }
+      ]
+    },
     "constrains/nameOverride+nameOverride:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride@11"
         }
       ]
     },
@@ -1634,16 +1722,16 @@
     "constrains/nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
@@ -1653,54 +1741,32 @@
     "constrains/nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride+2more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
         },
         {
           "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+1more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
@@ -1710,64 +1776,45 @@
     "constrains/nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.automountServiceAccountToken+server.fullnameOverride:t+2more": {
-      "allOf": [
+        },
         {
           "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -1777,87 +1824,90 @@
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
@@ -1869,9 +1919,6 @@
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
         }
       ]
@@ -1879,29 +1926,7 @@
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@10": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.loadBalancerIP:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
@@ -1910,20 +1935,64 @@
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
         },
         {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@11": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.clusterIP:t"
@@ -1936,7 +2005,83 @@
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.externalIPs:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.loadBalancerIP:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@7": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.clusterIP:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@8": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -1952,10 +2097,10 @@
         }
       ]
     },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@5": {
+    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@9": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -1971,89 +2116,13 @@
         }
       ]
     },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@6": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@7": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@8": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.clusterIP:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@9": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.externalIPs:t"
-        }
-      ]
-    },
     "constrains/nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+server.service+2more": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t"
@@ -2062,7 +2131,7 @@
           "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -2072,14 +2141,33 @@
     "constrains/nameOverride:t+server.fullnameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride:t+2more@2": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.automountServiceAccountToken"
@@ -2088,23 +2176,23 @@
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken@2"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.automountServiceAccountToken"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.clusterIP:t"
@@ -2117,10 +2205,10 @@
     "constrains/nameOverride:t+server.fullnameOverride:t+server.service.clusterIP:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.clusterIP:t"
@@ -2155,7 +2243,7 @@
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.service.loadBalancerIP:t"
+          "$ref": "#/$defs/constrains~1server.service.externalIPs:t"
         }
       ]
     },
@@ -2168,6 +2256,22 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
+          "$ref": "#/$defs/constrains~1server.service.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.service.loadBalancerIP:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
         },
         {
@@ -2175,13 +2279,13 @@
         }
       ]
     },
-    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@3": {
+    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -2191,13 +2295,13 @@
         }
       ]
     },
-    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@4": {
+    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@5": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -2207,45 +2311,29 @@
         }
       ]
     },
-    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@5": {
+    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t+1more@6": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.service.externalIPs:t"
         }
       ]
     },
     "constrains/nameOverride:t+server.fullnameOverride:t+server.service.enabled:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1server.service.enabled:t"
@@ -2255,19 +2343,6 @@
     "constrains/nameOverride:t+server.fullnameOverride:t+serviceAccounts.server.create:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t+server.fullnameOverride:t+serviceAccounts.server.create:t@2": {
-      "allOf": [
-        {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
         },
         {
@@ -2275,6 +2350,19 @@
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        }
+      ]
+    },
+    "constrains/nameOverride:t+server.fullnameOverride:t+serviceAccounts.server.create:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
@@ -2312,22 +2400,12 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
+    "constrains/nameOverride@10": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
+        "$ref": "#/$defs/constrains~1nameOverride@11"
       }
     },
-    "constrains/nameOverride@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      }
-    },
-    "constrains/nameOverride@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      }
-    },
-    "constrains/nameOverride@5": {
+    "constrains/nameOverride@11": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -2337,6 +2415,34 @@
         "nameOverride"
       ],
       "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@3": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@4": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@5": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@6": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@7": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@8": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      }
+    },
+    "constrains/nameOverride@9": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      }
     },
     "constrains/probe": {
       "additionalProperties": {},
@@ -2524,13 +2630,13 @@
     "constrains/prometheus-pushgateway+prometheus-pushgateway.enabled+12more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.liveness.probe+2more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+2more"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway.liveness.probe@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.liveness.probe+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway.runAsStatefulSet:t"
@@ -2642,9 +2748,6 @@
     "constrains/prometheus-pushgateway+prometheus-pushgateway.enabled+16more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.readiness.probe+2more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+2more"
         },
         {
@@ -2652,6 +2755,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.readiness.probe+2more@2"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway.runAsStatefulSet:t"
@@ -2704,16 +2810,16 @@
     "constrains/prometheus-pushgateway+prometheus-pushgateway.enabled+16more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+13more"
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+11more@2"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+12more"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+13more@2"
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+13more"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+11more@2"
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+13more@2"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+16more"
@@ -2901,13 +3007,13 @@
     "constrains/prometheus-pushgateway+prometheus-pushgateway.readiness.probe+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe.httpGet.httpHeaders:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more@3"
         }
       ]
     },
@@ -2919,10 +3025,10 @@
     "constrains/prometheus-pushgateway+prometheus-pushgateway.readiness.probe+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more"
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more@3"
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe+1more@4"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway.readiness.probe.httpGet.httpHeaders:t"
@@ -3007,16 +3113,19 @@
     },
     "constrains/prometheus-pushgateway.fullnameOverride:t": {
       "not": {
-        "properties": {
-          "prometheus-pushgateway": {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-          }
-        },
-        "required": [
-          "prometheus-pushgateway"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.fullnameOverride:t@2"
       }
+    },
+    "constrains/prometheus-pushgateway.fullnameOverride:t@2": {
+      "properties": {
+        "prometheus-pushgateway": {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        }
+      },
+      "required": [
+        "prometheus-pushgateway"
+      ],
+      "type": "object"
     },
     "constrains/prometheus-pushgateway.liveness+prometheus-pushgateway.liveness.enabled:t+4more": {
       "$ref": "#/$defs/constrains~1prometheus-pushgateway.liveness+prometheus-pushgateway.liveness.enabled:t+4more@2"
@@ -3272,21 +3381,24 @@
       ],
       "type": "object"
     },
+    "constrains/prometheus-pushgateway.nameOverride": {
+      "properties": {
+        "prometheus-pushgateway": {
+          "$ref": "#/$defs/constrains~1nameOverride@11"
+        }
+      },
+      "required": [
+        "prometheus-pushgateway"
+      ],
+      "type": "object"
+    },
     "constrains/prometheus-pushgateway.nameOverride+prometheus-pushgateway.nameOverride:t": {
       "$ref": "#/$defs/constrains~1prometheus-pushgateway.nameOverride+prometheus-pushgateway.nameOverride:t@2"
     },
     "constrains/prometheus-pushgateway.nameOverride+prometheus-pushgateway.nameOverride:t@2": {
       "anyOf": [
         {
-          "properties": {
-            "prometheus-pushgateway": {
-              "$ref": "#/$defs/constrains~1nameOverride@5"
-            }
-          },
-          "required": [
-            "prometheus-pushgateway"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1prometheus-pushgateway.nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1prometheus-pushgateway.nameOverride:t"
@@ -3295,16 +3407,19 @@
     },
     "constrains/prometheus-pushgateway.nameOverride:t": {
       "not": {
-        "properties": {
-          "prometheus-pushgateway": {
-            "$ref": "#/$defs/constrains~1nameOverride:t@5"
-          }
-        },
-        "required": [
-          "prometheus-pushgateway"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.nameOverride:t@2"
       }
+    },
+    "constrains/prometheus-pushgateway.nameOverride:t@2": {
+      "properties": {
+        "prometheus-pushgateway": {
+          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        }
+      },
+      "required": [
+        "prometheus-pushgateway"
+      ],
+      "type": "object"
     },
     "constrains/prometheus-pushgateway.readiness+prometheus-pushgateway.readiness.enabled:t+4more": {
       "anyOf": [
@@ -3576,6 +3691,25 @@
       ],
       "type": "object"
     },
+    "constrains/prometheus-pushgateway.serviceMonitor.enabled:t": {
+      "properties": {
+        "prometheus-pushgateway": {
+          "properties": {
+            "serviceMonitor": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "serviceMonitor"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "prometheus-pushgateway"
+      ],
+      "type": "object"
+    },
     "constrains/prometheus-pushgateway.webConfiguration.basicAuthUsers": {
       "properties": {
         "prometheus-pushgateway": {
@@ -3708,12 +3842,12 @@
       "type": "object"
     },
     "constrains/server.fullnameOverride": {
-      "$ref": "#/$defs/constrains~1server.fullnameOverride@2"
+      "$ref": "#/$defs/constrains~1server.fullnameOverride@8"
     },
     "constrains/server.fullnameOverride+server.fullnameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -3723,7 +3857,7 @@
     "constrains/server.fullnameOverride+server.fullnameOverride:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
@@ -3733,20 +3867,20 @@
     "constrains/server.fullnameOverride+server.fullnameOverride:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
         }
       ]
     },
     "constrains/server.fullnameOverride+server.fullnameOverride:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
         },
         {
-          "$ref": "#/$defs/constrains~1server.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1server.fullnameOverride:t"
         }
       ]
     },
@@ -3778,11 +3912,29 @@
       "type": "object"
     },
     "constrains/server.fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
-      }
+      "$ref": "#/$defs/when~1server.fullnameOverride~1then~1any~1else~1fail"
     },
     "constrains/server.fullnameOverride@3": {
+      "$ref": "#/$defs/when~1server.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/server.fullnameOverride@4": {
+      "$ref": "#/$defs/when~1server.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/server.fullnameOverride@5": {
+      "$ref": "#/$defs/when~1server.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/server.fullnameOverride@6": {
+      "$ref": "#/$defs/when~1server.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/server.fullnameOverride@7": {
+      "$ref": "#/$defs/when~1server.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/server.fullnameOverride@8": {
+      "not": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+      }
+    },
+    "constrains/server.fullnameOverride@9": {
       "properties": {
         "server": {
           "$ref": "#/$defs/constrains~1fullnameOverride@2"
@@ -3792,6 +3944,50 @@
         "server"
       ],
       "type": "object"
+    },
+    "constrains/server.service+server.service=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "server": {
+              "properties": {
+                "service": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "server"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "server": {
+                "properties": {
+                  "service": {}
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "server"
+            ],
+            "type": "object"
+          }
+        }
+      ]
     },
     "constrains/server.service.clusterIP:t": {
       "properties": {
@@ -3921,10 +4117,10 @@
       "type": "object"
     },
     "constrains/server.verticalAutoscaler.enabled:t": {
-      "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@3"
+      "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@4"
     },
     "constrains/server.verticalAutoscaler.enabled:t@2": {
-      "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@4"
+      "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@3"
     },
     "constrains/server.verticalAutoscaler.enabled:t@3": {
       "not": {
@@ -3968,6 +4164,62 @@
       ],
       "type": "object"
     },
+    "constrains/serviceAccounts+serviceAccounts=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "serviceAccounts": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "serviceAccounts"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "serviceAccounts": {}
+            },
+            "required": [
+              "serviceAccounts"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/serviceAccounts.server+serviceAccounts.server=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "serviceAccounts": {
+                "$ref": "#/$defs/constrains~1server"
+              }
+            },
+            "required": [
+              "serviceAccounts"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "serviceAccounts": {
+              "$ref": "#/$defs/constrains~1server=null"
+            }
+          },
+          "required": [
+            "serviceAccounts"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/serviceAccounts.server.automountServiceAccountToken": {
       "properties": {
         "serviceAccounts": {
@@ -3980,7 +4232,7 @@
       "type": "object"
     },
     "constrains/serviceAccounts.server.create:t": {
-      "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@2"
+      "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@3"
     },
     "constrains/serviceAccounts.server.create:t@2": {
       "not": {
@@ -4104,6 +4356,330 @@
         }
       }
     },
+    "when/alertmanager+alertmanager.enabled+alertmanager.enabled=null/then/alertmanager.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/alertmanager+alertmanager.enabled+alertmanager.enabled=null/then/alertmanager.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/alertmanager+alertmanager.enabled+alertmanager.enabled=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null@4"
+      },
+      "then": true
+    },
+    "when/alertmanager.enabled:t/then/alertmanager.fullnameOverride+alertmanager.fullnameOverride:t+4more/else/alertmanager+alertmanager.enabled+alertmanager.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+3more~1else~1alertmanager.nameOverride+alertmanager.nameOverride:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride:t~1then~1alertmanager.fullnameOverride+alertmanager.verticalPodAutoscaler.enabled:t+1more~1else~1alertmanager.nameOverride+alertmanager.nameOverride:t"
+      }
+    },
+    "when/alertmanager.enabled:t/then/alertmanager.fullnameOverride:t+alertmanager.nameOverride:t+1more/else/alertmanager+alertmanager.enabled+alertmanager.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride:t~1then~1fail~1else~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride:t~1then~1fail~1else~1alertmanager.nameOverride:t+alertmanager.verticalPodAutoscaler.enabled:t"
+      }
+    },
+    "when/alertmanager.enabled:t/then/alertmanager.fullnameOverride:t+alertmanager.verticalPodAutoscaler/else/alertmanager+alertmanager.enabled+alertmanager.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride:t~1then~1alertmanager.verticalPodAutoscaler.enabled:t~1else~1fail"
+      }
+    },
+    "when/alertmanager.fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "alertmanager": {
+            "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          }
+        },
+        "required": [
+          "alertmanager"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "when/alertmanager.fullnameOverride:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1else~1fail"
+      }
+    },
+    "when/alertmanager.fullnameOverride:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+3more/else/alertmanager.nameOverride+alertmanager.nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.nameOverride:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+2more~1else~1fail"
+      }
+    },
+    "when/alertmanager.fullnameOverride:t/then/alertmanager.fullnameOverride+alertmanager.verticalPodAutoscaler.enabled:t+1more/else/alertmanager.nameOverride+alertmanager.nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.nameOverride:t~1then~1alertmanager.nameOverride+alertmanager.verticalPodAutoscaler.enabled:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager.fullnameOverride+alertmanager.verticalPodAutoscaler.recommenders:t~1else~1fail"
+      }
+    },
+    "when/alertmanager.fullnameOverride:t/then/alertmanager.verticalPodAutoscaler.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/alertmanager.fullnameOverride:t/then/fail/else/alertmanager+alertmanager.enabled+alertmanager.enabled=null+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.nameOverride:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.fullnameOverride:t"
+      },
+      "then": false
+    },
+    "when/alertmanager.fullnameOverride:t/then/fail/else/alertmanager.nameOverride:t+alertmanager.verticalPodAutoscaler.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.nameOverride:t~1then~1alertmanager.verticalPodAutoscaler.enabled:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.fullnameOverride:t"
+      },
+      "then": false
+    },
+    "when/alertmanager.nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "alertmanager": {
+            "$ref": "#/$defs/constrains~1nameOverride@11"
+          }
+        },
+        "required": [
+          "alertmanager"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "when/alertmanager.nameOverride:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1else~1fail@2"
+      }
+    },
+    "when/alertmanager.nameOverride:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+2more~1else~1fail@2"
+      }
+    },
+    "when/alertmanager.nameOverride:t/then/alertmanager.nameOverride+alertmanager.verticalPodAutoscaler.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager.verticalPodAutoscaler.recommenders:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1alertmanager.nameOverride+alertmanager.verticalPodAutoscaler.recommenders:t~1else~1fail"
+      }
+    },
+    "when/alertmanager.nameOverride:t/then/alertmanager.verticalPodAutoscaler.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.enabled:t~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.recommenders:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.recommenders:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.recommenders:t~1then~1alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more~1else~1fail@2"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null@2"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager.fullnameOverride+alertmanager.verticalPodAutoscaler.recommenders:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.recommenders:t~1then~1alertmanager.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager.nameOverride+alertmanager.verticalPodAutoscaler.recommenders:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.recommenders:t~1then~1alertmanager.nameOverride~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/alertmanager.verticalPodAutoscaler.recommenders:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.verticalPodAutoscaler.recommenders:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": true
+    },
+    "when/alertmanager.verticalPodAutoscaler.enabled:t/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+      },
+      "then": true
+    },
+    "when/alertmanager.verticalPodAutoscaler.recommenders:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1then~1alertmanager.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.recommenders:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager+alertmanager.enabled+alertmanager.enabled=null~1then~1alertmanager.nameOverride~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.recommenders:t/then/alertmanager+alertmanager.enabled+alertmanager.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null@3"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.recommenders:t/then/alertmanager.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.recommenders:t/then/alertmanager.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1alertmanager.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/alertmanager.verticalPodAutoscaler.recommenders:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+      },
+      "then": true
+    },
     "when/fullnameOverride!=null+nameOverride!=null+verticalPodAutoscaler.enabled!=null/then/fail": {
       "if": {
         "allOf": [
@@ -4163,6 +4739,784 @@
         ]
       },
       "then": false
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      },
+      "then": true
+    },
+    "when/nameOverride/then/server.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+      }
+    },
+    "when/nameOverride/then/server.fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@4"
+      }
+    },
+    "when/nameOverride/then/server.fullnameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@5"
+      }
+    },
+    "when/nameOverride/then/server.fullnameOverride/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@6"
+      }
+    },
+    "when/nameOverride/then/server.fullnameOverride/else/fail@5": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@7"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+server.fullnameOverride+server.fullnameOverride:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1server.fullnameOverride+server.verticalAutoscaler.enabled:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+server.fullnameOverride+server.fullnameOverride:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1server.fullnameOverride+server.verticalAutoscaler.enabled:t~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+server.fullnameOverride+server.fullnameOverride:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1server.fullnameOverride+server.service.enabled:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1nameOverride+server.fullnameOverride+server.service.enabled:t+1more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+server.fullnameOverride+server.fullnameOverride:t+2more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+server.fullnameOverride+server.fullnameOverride:t+2more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+server.fullnameOverride:t+server.service.enabled:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1server.service.enabled:t+server.verticalAutoscaler+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1nameOverride+server.service.enabled:t+server.verticalAutoscaler+1more~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/server.fullnameOverride+server.fullnameOverride:t+server.service.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.fullnameOverride:t~1then~1server.fullnameOverride+server.service.enabled:t+server.verticalAutoscaler+1more~1else~1any"
+      }
+    },
+    "when/prometheus-pushgateway+prometheus-pushgateway.enabled+1more/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more"
+      },
+      "then": true
+    },
+    "when/prometheus-pushgateway+prometheus-pushgateway.enabled+1more/then/prometheus-pushgateway.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/prometheus-pushgateway.enabled:t/then/prometheus-pushgateway.fullnameOverride:t+prometheus-pushgateway.nameOverride+3more/else/prometheus-pushgateway+prometheus-pushgateway.enabled+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.fullnameOverride:t~1then~1prometheus-pushgateway+prometheus-pushgateway.enabled+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.fullnameOverride:t~1then~1prometheus-pushgateway.nameOverride+prometheus-pushgateway.nameOverride:t+2more~1else~1fail"
+      }
+    },
+    "when/prometheus-pushgateway.fullnameOverride:t/then/prometheus-pushgateway+prometheus-pushgateway.enabled+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.nameOverride:t~1then~1prometheus-pushgateway+prometheus-pushgateway.enabled+4more~1else~1any"
+      }
+    },
+    "when/prometheus-pushgateway.fullnameOverride:t/then/prometheus-pushgateway.nameOverride+prometheus-pushgateway.nameOverride:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.nameOverride:t~1then~1prometheus-pushgateway.nameOverride+prometheus-pushgateway.runAsStatefulSet:t+1more~1else~1any"
+      }
+    },
+    "when/prometheus-pushgateway.nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.nameOverride"
+      },
+      "then": true
+    },
+    "when/prometheus-pushgateway.nameOverride:t/then/prometheus-pushgateway+prometheus-pushgateway.enabled+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.runAsStatefulSet:t~1then~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more~1else~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.runAsStatefulSet:t~1then~1prometheus-pushgateway+prometheus-pushgateway.enabled+2more~1else~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      }
+    },
+    "when/prometheus-pushgateway.nameOverride:t/then/prometheus-pushgateway.nameOverride+prometheus-pushgateway.runAsStatefulSet:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.runAsStatefulSet:t~1then~1any~1else~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.runAsStatefulSet:t~1then~1prometheus-pushgateway.nameOverride~1else~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      }
+    },
+    "when/prometheus-pushgateway.runAsStatefulSet:t/then/any/else/prometheus-pushgateway.serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.serviceMonitor.enabled:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.runAsStatefulSet:t"
+      },
+      "then": true
+    },
+    "when/prometheus-pushgateway.runAsStatefulSet:t/then/prometheus-pushgateway+prometheus-pushgateway.enabled+1more/else/prometheus-pushgateway.serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.serviceMonitor.enabled:t~1then~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.runAsStatefulSet:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more~1then~1any~1else~1fail"
+      }
+    },
+    "when/prometheus-pushgateway.runAsStatefulSet:t/then/prometheus-pushgateway+prometheus-pushgateway.enabled+2more/else/prometheus-pushgateway.serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.serviceMonitor.enabled:t~1then~1prometheus-pushgateway+prometheus-pushgateway.enabled+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.runAsStatefulSet:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more~1then~1prometheus-pushgateway.nameOverride~1else~1fail"
+      }
+    },
+    "when/prometheus-pushgateway.runAsStatefulSet:t/then/prometheus-pushgateway.nameOverride/else/prometheus-pushgateway.serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.serviceMonitor.enabled:t~1then~1prometheus-pushgateway.nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.runAsStatefulSet:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/prometheus-pushgateway.serviceMonitor.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      },
+      "then": true
+    },
+    "when/prometheus-pushgateway.serviceMonitor.enabled:t/then/prometheus-pushgateway+prometheus-pushgateway.enabled+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more~1then~1any~1else~1fail"
+      }
+    },
+    "when/prometheus-pushgateway.serviceMonitor.enabled:t/then/prometheus-pushgateway+prometheus-pushgateway.enabled+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more~1then~1prometheus-pushgateway.nameOverride~1else~1fail"
+      }
+    },
+    "when/prometheus-pushgateway.serviceMonitor.enabled:t/then/prometheus-pushgateway.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway.serviceMonitor.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/server.fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@9"
+      },
+      "then": true
+    },
+    "when/server.fullnameOverride:t/then/nameOverride+server.fullnameOverride+server.service.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1nameOverride+server.service.loadBalancerSourceRanges:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1nameOverride+server.fullnameOverride+server.service.loadBalancerSourceRanges:t~1else~1fail"
+      }
+    },
+    "when/server.fullnameOverride:t/then/nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride~1else~1serviceAccounts.server.create:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride+server.fullnameOverride~1else~1serviceAccounts.server.create:t"
+      }
+    },
+    "when/server.fullnameOverride:t/then/nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride~1else~1serviceAccounts.server.create:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride+server.fullnameOverride~1else~1serviceAccounts.server.create:t@2"
+      }
+    },
+    "when/server.fullnameOverride:t/then/nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride+server.fullnameOverride~1else~1any"
+      }
+    },
+    "when/server.fullnameOverride:t/then/nameOverride+server.fullnameOverride+server.verticalAutoscaler.enabled:t/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1nameOverride+server.fullnameOverride~1else~1any@2"
+      }
+    },
+    "when/server.fullnameOverride:t/then/nameOverride+server.service.enabled:t+server.verticalAutoscaler+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1nameOverride+server.verticalAutoscaler~1else~1serviceAccounts.server.create:t"
+      }
+    },
+    "when/server.fullnameOverride:t/then/server.fullnameOverride+server.service.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1server.service.loadBalancerSourceRanges:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1server.fullnameOverride+server.service.loadBalancerSourceRanges:t~1else~1fail"
+      }
+    },
+    "when/server.fullnameOverride:t/then/server.fullnameOverride+server.service.enabled:t+server.verticalAutoscaler+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1any~1else~1server.verticalAutoscaler+serviceAccounts.server.create:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1server.fullnameOverride+server.verticalAutoscaler~1else~1serviceAccounts.server.create:t"
+      }
+    },
+    "when/server.fullnameOverride:t/then/server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1server.fullnameOverride~1else~1serviceAccounts.server.create:t@2"
+      }
+    },
+    "when/server.fullnameOverride:t/then/server.fullnameOverride+server.verticalAutoscaler.enabled:t+1more/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1server.fullnameOverride~1else~1serviceAccounts.server.create:t@3"
+      }
+    },
+    "when/server.fullnameOverride:t/then/server.fullnameOverride+server.verticalAutoscaler.enabled:t/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1server.fullnameOverride~1else~1any@2"
+      }
+    },
+    "when/server.fullnameOverride:t/then/server.fullnameOverride+server.verticalAutoscaler.enabled:t/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1server.fullnameOverride~1else~1any@3"
+      }
+    },
+    "when/server.fullnameOverride:t/then/server.service.enabled:t+server.verticalAutoscaler+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.enabled:t~1then~1any~1else~1server.verticalAutoscaler+serviceAccounts.server.create:t@2"
+      }
+    },
+    "when/server.service.enabled:t/then/any/else/server.verticalAutoscaler+serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1any~1else~1serviceAccounts.server.create:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": true
+    },
+    "when/server.service.enabled:t/then/any/else/server.verticalAutoscaler+serviceAccounts.server.create:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1any~1else~1serviceAccounts.server.create:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": true
+    },
+    "when/server.service.enabled:t/then/nameOverride+server.fullnameOverride+server.service.loadBalancerSourceRanges:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.loadBalancerSourceRanges:t~1then~1nameOverride+server.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/server.service.enabled:t/then/nameOverride+server.service.loadBalancerSourceRanges:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.loadBalancerSourceRanges:t~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/server.service.enabled:t/then/nameOverride+server.verticalAutoscaler/else/serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1any~1else~1nameOverride+serviceAccounts.server.create:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1any~1else~1nameOverride"
+      }
+    },
+    "when/server.service.enabled:t/then/server.fullnameOverride+server.service.loadBalancerSourceRanges:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.loadBalancerSourceRanges:t~1then~1server.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/server.service.enabled:t/then/server.fullnameOverride+server.verticalAutoscaler/else/serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1server.fullnameOverride~1else~1serviceAccounts.server.create:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.verticalAutoscaler.enabled:t~1then~1server.fullnameOverride~1else~1any"
+      }
+    },
+    "when/server.service.enabled:t/then/server.service.loadBalancerSourceRanges:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.service.loadBalancerSourceRanges:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/server.service.loadBalancerSourceRanges:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
+      },
+      "then": true
+    },
+    "when/server.service.loadBalancerSourceRanges:t/then/nameOverride+server.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1server.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/server.service.loadBalancerSourceRanges:t/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/server.service.loadBalancerSourceRanges:t/then/server.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.service.loadBalancerSourceRanges:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@3"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/any/else/nameOverride": {
+      "else": {
+        "$ref": "#/$defs/constrains~1nameOverride@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": true
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/any/else/nameOverride+serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": true
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/any/else/serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": true
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/any/else/serviceAccounts.server.create:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1any~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": true
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride+server.fullnameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1server.fullnameOverride~1else~1fail@2"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride+server.fullnameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1server.fullnameOverride~1else~1fail@4"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride+server.fullnameOverride/else/serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1nameOverride+server.fullnameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1server.fullnameOverride~1else~1fail@3"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride+server.fullnameOverride/else/serviceAccounts.server.create:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1nameOverride+server.fullnameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1server.fullnameOverride~1else~1fail@5"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@3"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@5"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride/else/serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@4"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/nameOverride/else/serviceAccounts.server.create:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/server.fullnameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@2"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/server.fullnameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@4"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/server.fullnameOverride/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@6"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/server.fullnameOverride/else/serviceAccounts.server.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@2"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/server.fullnameOverride/else/serviceAccounts.server.create:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1server.fullnameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@5"
+      }
+    },
+    "when/server.verticalAutoscaler.enabled:t/then/server.fullnameOverride/else/serviceAccounts.server.create:t@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccounts.server.create:t~1then~1server.fullnameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@7"
+      }
+    },
+    "when/serviceAccounts.server.create:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": true
+    },
+    "when/serviceAccounts.server.create:t/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": true
+    },
+    "when/serviceAccounts.server.create:t/then/nameOverride+server.fullnameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1server.fullnameOverride~1else~1fail@3"
+      }
+    },
+    "when/serviceAccounts.server.create:t/then/nameOverride+server.fullnameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1server.fullnameOverride~1else~1fail@5"
+      }
+    },
+    "when/serviceAccounts.server.create:t/then/nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@4"
+      }
+    },
+    "when/serviceAccounts.server.create:t/then/nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      }
+    },
+    "when/serviceAccounts.server.create:t/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@7"
+      }
+    },
+    "when/serviceAccounts.server.create:t/then/server.fullnameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@5"
+      }
+    },
+    "when/serviceAccounts.server.create:t/then/server.fullnameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccounts.server.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1server.fullnameOverride@7"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -4170,17 +5524,132 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+16more@3"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccounts.server+serviceAccounts.server=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "server": {
+                    "properties": {
+                      "statefulSet": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "statefulSet"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "server": {
+                      "properties": {
+                        "statefulSet": {}
+                      },
+                      "required": [
+                        "statefulSet"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+server.fullnameOverride+server.fullnameOverride:t+2more~1else~1any"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "prometheus-pushgateway": {
+          "server": {
             "additionalProperties": {},
-            "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
             "properties": {
-              "webConfiguration": {
-                "description": "Sets web configuration\nTo enable basic authentication, provide basicAuthUsers as a map\nIf serviceMonitor.enabled is set, a secret with these credentials will be created\nand configured in serviceMonitor. serviceMonitor.basicAuth overrides this secret.\nbasicAuthUsers:\nusername: password",
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "loadBalancerSourceRanges": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@28"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@6"
+          },
+          {
+            "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "server": {
+            "additionalProperties": {},
+            "properties": {
+              "statefulSet": {
                 "type": "object"
               }
             }
@@ -4190,7 +5659,14 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+5more"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.automountServiceAccountToken+5more"
+          },
+          {
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+server.fullnameOverride+server.fullnameOverride:t+1more~1else~1any"
+          }
+        ]
       },
       "then": {
         "allOf": [
@@ -4218,34 +5694,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "server": {
-            "additionalProperties": {},
-            "properties": {
-              "statefulSet": {
-                "type": "object"
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -4313,44 +5761,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+3more@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccounts": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccounts"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccounts": {}
-                  },
-                  "required": [
-                    "serviceAccounts"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "additionalProperties": {},
@@ -4432,7 +5842,66 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+7more"
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+3more@3"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccounts+serviceAccounts=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1prometheus-pushgateway.enabled:t~1then~1prometheus-pushgateway.fullnameOverride:t+prometheus-pushgateway.nameOverride+3more~1else~1prometheus-pushgateway+prometheus-pushgateway.enabled+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus-pushgateway": {
+            "additionalProperties": {},
+            "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
+            "properties": {
+              "fullnameOverride": {
+                "description": "Provide a name to substitute for the full names of resources",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled:t+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "alertmanager": {
+            "additionalProperties": {},
+            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+            "properties": {
+              "verticalPodAutoscaler": {
+                "description": "--- Vertical Pod Autoscaler",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+server.fullnameOverride:t+server.service.enabled:t+2more~1else~1any"
       },
       "then": {
         "additionalProperties": {},
@@ -4440,8 +5909,9 @@
           "server": {
             "additionalProperties": {},
             "properties": {
-              "service": {
-                "type": "object"
+              "fullnameOverride": {
+                "description": "Override the prometheus.server.fullname for all objects related to the Prometheus server",
+                "type": "string"
               }
             }
           }
@@ -4530,6 +6000,25 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1alertmanager.enabled:t~1then~1alertmanager.fullnameOverride:t+alertmanager.verticalPodAutoscaler~1else~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "alertmanager": {
+            "additionalProperties": {},
+            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+            "properties": {
+              "fullnameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/constrains~1server=null"
@@ -4547,51 +6036,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+7more@2"
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+server.fullnameOverride+server.fullnameOverride:t+1more~1else~1any@2"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "server": {
-                    "properties": {
-                      "service": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "service"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "server": {
-                      "properties": {
-                        "service": {}
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "server"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/$defs/constrains~1serviceAccounts.server+serviceAccounts.server=null"
           }
         ]
       },
@@ -4599,7 +6047,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled:t+1more"
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1server.fullnameOverride+server.fullnameOverride:t+server.service.enabled:t+2more~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1alertmanager.enabled:t~1then~1alertmanager.fullnameOverride+alertmanager.fullnameOverride:t+4more~1else~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
       },
       "then": {
         "additionalProperties": {},
@@ -4609,19 +6070,23 @@
             "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
             "properties": {
               "verticalPodAutoscaler": {
+                "additionalProperties": {},
                 "description": "--- Vertical Pod Autoscaler",
-                "type": "object"
+                "properties": {
+                  "recommenders": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
               }
             }
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+2more@26"
-      },
-      "then": false
     },
     {
       "if": {
@@ -4749,66 +6214,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1server.verticalAutoscaler.enabled:t@5"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "server": {
-                    "properties": {
-                      "statefulSet": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "statefulSet"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "server": {
-                      "properties": {
-                        "statefulSet": {}
-                      },
-                      "required": [
-                        "statefulSet"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "server"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -4907,6 +6312,32 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+7more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1server.service+server.service=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+server.fullnameOverride+server.fullnameOverride:t+2more~1else~1any@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1server.service+server.service=null"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -5024,9 +6455,28 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@18"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+server.fullnameOverride+server.fullnameOverride:t+2more~1else~1any@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+7more"
+          }
+        ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "server": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "additionalProperties": {},
@@ -5039,6 +6489,19 @@
           ]
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+server.fullnameOverride+server.fullnameOverride:t+1more~1else~1any@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccounts+serviceAccounts=null"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -5061,9 +6524,23 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+3more@3"
+        "$ref": "#/$defs/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+16more@3"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus-pushgateway": {
+            "additionalProperties": {},
+            "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
+            "properties": {
+              "webConfiguration": {
+                "description": "Sets web configuration\nTo enable basic authentication, provide basicAuthUsers as a map\nIf serviceMonitor.enabled is set, a secret with these credentials will be created\nand configured in serviceMonitor. serviceMonitor.basicAuth overrides this secret.\nbasicAuthUsers:\nusername: password",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -5114,39 +6591,26 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+3more@2"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccounts": {
-                      "$ref": "#/$defs/constrains~1server"
-                    }
-                  },
-                  "required": [
-                    "serviceAccounts"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceAccounts": {
-                    "$ref": "#/$defs/constrains~1server=null"
-                  }
-                },
-                "required": [
-                  "serviceAccounts"
-                ],
-                "type": "object"
+        "$ref": "#/$defs/when~1alertmanager.enabled:t~1then~1alertmanager.fullnameOverride:t+alertmanager.nameOverride:t+1more~1else~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "alertmanager": {
+            "additionalProperties": {},
+            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+            "properties": {
+              "nameOverride": {
+                "type": "string"
               }
-            ]
+            }
           }
-        ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+server.fullnameOverride+server.fullnameOverride:t+1more@18"
       },
       "then": false
     },
@@ -5232,10 +6696,7 @@
                 "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null"
-              },
-              {
-                "type": "object"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -5250,7 +6711,10 @@
                 "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null"
+              },
+              {
+                "type": "object"
               }
             ]
           },

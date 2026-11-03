@@ -8,10 +8,10 @@
     "constrains/fullnameOverride+fullnameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         }
       ]
     },
@@ -30,17 +30,17 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+zabbixProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+zabbixProxy.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+zabbixProxy.enabled:t"
@@ -56,7 +56,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
         }
       ]
     },
@@ -66,7 +66,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         }
       ]
     },
@@ -91,26 +91,26 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+zabbixProxy.enabled:t": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t"
+          "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
         }
       ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
@@ -152,10 +152,10 @@
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         }
       ]
     },
@@ -165,7 +165,7 @@
           "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
@@ -202,6 +202,15 @@
       "type": "object"
     },
     "constrains/zabbixProxy.enabled:t": {
+      "$ref": "#/$defs/when~1zabbixProxy.enabled:t~1then~1any~1else~1fail"
+    },
+    "constrains/zabbixProxy.enabled:t@2": {
+      "$ref": "#/$defs/when~1zabbixProxy.enabled:t~1then~1any~1else~1fail"
+    },
+    "constrains/zabbixProxy.enabled:t@3": {
+      "$ref": "#/$defs/when~1zabbixProxy.enabled:t~1then~1any~1else~1fail"
+    },
+    "constrains/zabbixProxy.enabled:t@4": {
       "properties": {
         "zabbixProxy": {
           "properties": {
@@ -244,6 +253,150 @@
           "const": true
         }
       ]
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+zabbixProxy.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+zabbixProxy.enabled:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+zabbixProxy.enabled:t~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t+zabbixProxy.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1zabbixProxy.enabled:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+zabbixProxy.enabled:t~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/zabbixProxy.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@3"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/fullnameOverride+nameOverride+zabbixProxy.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1zabbixProxy.enabled:t~1then~1fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1zabbixProxy.enabled:t~1then~1fullnameOverride+nameOverride~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+zabbixProxy.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1zabbixProxy.enabled:t~1then~1fullnameOverride~1else~1fail@2"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+zabbixProxy.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1zabbixProxy.enabled:t~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/zabbixProxy.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t"
+      }
+    },
+    "when/zabbixProxy.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
+      },
+      "then": true
+    },
+    "when/zabbixProxy.enabled:t/then/fullnameOverride+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/zabbixProxy.enabled:t/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/zabbixProxy.enabled:t/then/fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/zabbixProxy.enabled:t/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -251,7 +404,29 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1zabbixProxy.enabled:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
           {
             "anyOf": [
               {
@@ -281,20 +456,24 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t"
+            "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t+zabbixProxy.enabled:t~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -306,63 +485,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "zabbixAgent": {}
-                  },
-                  "required": [
-                    "zabbixAgent"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "zabbixAgent": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "zabbixAgent"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t"
+            "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
           }
         ]
       },
@@ -419,6 +551,77 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1zabbixProxy.enabled:t@4"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "zabbixAgent": {}
+                  },
+                  "required": [
+                    "zabbixAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "zabbixAgent": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "zabbixAgent"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+zabbixProxy.enabled:t~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "zabbixProxy": {
+            "additionalProperties": {},
+            "description": "**Zabbix Proxy** configurations",
+            "properties": {
+              "extraStatefulSetAnnotations": {
+                "description": "Annotations to add to the statefulset",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "properties": {

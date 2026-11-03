@@ -2,16 +2,30 @@
   "$defs": {
     "constrains/fullnameOverride": {
       "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
       }
+    },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -37,6 +51,29 @@
           "const": true
         }
       ]
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": true
+    },
+    "when/fullnameOverride:t/then/fullnameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -44,24 +81,47 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "labels": {
+            "description": "additionals labels",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1fullnameOverride"
           },
           {
-            "properties": {
-              "fullnameOverride": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1fullnameOverride:t"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "properties": {

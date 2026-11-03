@@ -68,6 +68,54 @@
           "const": true
         }
       ]
+    },
+    "when/ingress.enabled:t/then/ingress.secrets:t/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.secrets:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/ingress.secrets:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "secrets": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "secrets"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -103,6 +151,31 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1ingress.secrets:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Configure the ingress resource that allows you to access the\nSpark installation. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+            "properties": {
+              "secrets": {
+                "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: spark.local-tls\nkey:\ncertificate:",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "properties": {

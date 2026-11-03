@@ -1,5 +1,16 @@
 {
   "$defs": {
+    "constrains/auth:t": {
+      "properties": {
+        "auth": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
     "constrains/existingSecret": {
       "not": {
         "properties": {
@@ -12,6 +23,17 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/existingSecret:t": {
+      "properties": {
+        "existingSecret": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "existingSecret"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -37,6 +59,38 @@
           "const": true
         }
       ]
+    },
+    "when/sentinel.auth:t/then/sentinel.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "sentinel": {
+            "$ref": "#/$defs/constrains~1auth:t"
+          }
+        },
+        "required": [
+          "sentinel"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sentinel.existingSecret:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/sentinel.existingSecret:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "sentinel": {
+            "$ref": "#/$defs/constrains~1existingSecret:t"
+          }
+        },
+        "required": [
+          "sentinel"
+        ],
+        "type": "object"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -72,6 +126,26 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sentinel": {
+            "additionalProperties": {},
+            "description": "Sentinel specific configuration options",
+            "properties": {
+              "existingSecret": {
+                "description": "An existing secret containing a key defined by `sentinel.authKey` that configures `requirepass`\nin the conf parameters (Requires `sentinel.auth: enabled`, cannot be used in conjunction with `.Values.sentinel.password`)\nSupports templates like \"{{ .Release.Name }}-sentinel-creds\"",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "properties": {
@@ -196,29 +270,13 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "auth": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/constrains~1auth:t"
               },
               {
                 "$ref": "#/$defs/constrains~1existingSecret"
               },
               {
-                "properties": {
-                  "existingSecret": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "existingSecret"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/constrains~1existingSecret:t"
               }
             ]
           },

@@ -1,7 +1,13 @@
 {
   "$defs": {
+    "constrains/creator": {
+      "$ref": "#/$defs/when~1creator~1then~1fail~1else~1any"
+    },
     "constrains/creator+creator=null": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@3"
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator"
+    },
+    "constrains/creator+creator=null+fullnameOverride": {
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator+fullnameOverride"
     },
     "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more": {
       "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@2"
@@ -12,13 +18,13 @@
           "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
+          "$ref": "#/$defs/constrains~1creator+creator=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         }
       ]
     },
@@ -36,13 +42,13 @@
           "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget.enabled:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
+          "$ref": "#/$defs/constrains~1creator+creator=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         }
       ]
     },
@@ -58,13 +64,13 @@
           "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
+          "$ref": "#/$defs/constrains~1creator+creator=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         }
       ]
     },
@@ -83,23 +89,23 @@
           "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
+          "$ref": "#/$defs/constrains~1creator+creator=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         }
       ]
     },
     "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+15more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+15more"
+          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+12more"
         },
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+12more"
+          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+15more"
         },
         {
           "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+11more"
@@ -112,26 +118,26 @@
     "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
+          "$ref": "#/$defs/constrains~1creator+creator=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         }
       ]
     },
     "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null@6"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1creator+creator=null@10"
         }
       ]
     },
@@ -141,10 +147,10 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
         }
       ]
     },
@@ -153,58 +159,125 @@
         "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more"
       }
     },
+    "constrains/creator+creator=null+fullnameOverride@2": {
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride~1else~1creator@3"
+    },
+    "constrains/creator+creator=null+fullnameOverride@3": {
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride~1else~1creator"
+    },
+    "constrains/creator+creator=null+nameOverride": {
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator+nameOverride"
+    },
+    "constrains/creator+creator=null+nameOverride@2": {
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride~1else~1creator@3"
+    },
+    "constrains/creator+creator=null+nameOverride@3": {
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride~1else~1creator"
+    },
+    "constrains/creator+creator=null@10": {
+      "not": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@3"
+      }
+    },
     "constrains/creator+creator=null@2": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@4"
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1any~1else~1creator@3"
     },
     "constrains/creator+creator=null@3": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@5"
+      "$ref": "#/$defs/constrains~1creator+creator=null@7"
     },
     "constrains/creator+creator=null@4": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@5"
+      "$ref": "#/$defs/constrains~1creator+creator=null@6"
     },
     "constrains/creator+creator=null@5": {
+      "$ref": "#/$defs/when~1creator+creator=null~1then~1any~1else~1creator"
+    },
+    "constrains/creator+creator=null@6": {
+      "$ref": "#/$defs/constrains~1creator+creator=null@8"
+    },
+    "constrains/creator+creator=null@7": {
+      "$ref": "#/$defs/constrains~1creator+creator=null@8"
+    },
+    "constrains/creator+creator=null@8": {
       "anyOf": [
         {
-          "properties": {
-            "creator": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "creator"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1creator=null"
         },
         {
-          "properties": {
-            "creator": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "creator"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1creator@5"
         },
         {
-          "not": {
-            "properties": {
-              "creator": {}
-            },
-            "required": [
-              "creator"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1creator@4"
         }
       ]
     },
-    "constrains/creator+creator=null@6": {
+    "constrains/creator+creator=null@9": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1creator=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1creator@4"
+        }
+      ]
+    },
+    "constrains/creator+fullnameOverride": {
+      "$ref": "#/$defs/when~1creator~1then~1fail~1else~1fullnameOverride"
+    },
+    "constrains/creator+fullnameOverride@2": {
+      "$ref": "#/$defs/when~1creator~1then~1fullnameOverride~1else~1fail@2"
+    },
+    "constrains/creator+fullnameOverride@3": {
+      "$ref": "#/$defs/when~1creator~1then~1fullnameOverride~1else~1fail"
+    },
+    "constrains/creator+nameOverride": {
+      "$ref": "#/$defs/when~1creator~1then~1fail~1else~1nameOverride"
+    },
+    "constrains/creator+nameOverride@2": {
+      "$ref": "#/$defs/when~1creator~1then~1nameOverride~1else~1fail@2"
+    },
+    "constrains/creator+nameOverride@3": {
+      "$ref": "#/$defs/when~1creator~1then~1nameOverride~1else~1fail"
+    },
+    "constrains/creator=null": {
+      "properties": {
+        "creator": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "creator"
+      ],
+      "type": "object"
+    },
+    "constrains/creator@2": {
+      "$ref": "#/$defs/when~1creator~1then~1any~1else~1fail@2"
+    },
+    "constrains/creator@3": {
+      "$ref": "#/$defs/when~1creator~1then~1any~1else~1fail"
+    },
+    "constrains/creator@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@2"
+        "properties": {
+          "creator": {}
+        },
+        "required": [
+          "creator"
+        ],
+        "type": "object"
       }
+    },
+    "constrains/creator@5": {
+      "properties": {
+        "creator": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "creator"
+      ],
+      "type": "object"
     },
     "constrains/enabled:t": {
       "properties": {
@@ -218,20 +291,18 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
+      "$ref": "#/$defs/constrains~1fullnameOverride@4"
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
+      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@5"
     },
     "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@5"
+      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
     },
     "constrains/fullnameOverride+fullnameOverride:t@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride@6"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
@@ -241,17 +312,17 @@
     "constrains/fullnameOverride+fullnameOverride:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@7"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride@7"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -264,28 +335,28 @@
       }
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@4"
+      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@5"
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@5"
+      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@4"
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@6"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
@@ -295,7 +366,7 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride@6"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
@@ -322,6 +393,23 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
+      "$ref": "#/$defs/constrains~1fullnameOverride@3"
+    },
+    "constrains/fullnameOverride@3": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@4": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@5": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      }
+    },
+    "constrains/fullnameOverride@7": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -332,24 +420,68 @@
       ],
       "type": "object"
     },
+    "constrains/global.podSecurityPolicy+global.podSecurityPolicy=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {
+                "properties": {
+                  "podSecurityPolicy": {}
+                },
+                "required": [
+                  "podSecurityPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "global": {
+              "properties": {
+                "podSecurityPolicy": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "podSecurityPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/global.rbac.create:t": {
       "not": {
         "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
       }
     },
     "constrains/global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more": {
-      "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+      "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@3"
     },
     "constrains/global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2": {
       "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@5"
+        },
         {
           "$ref": "#/$defs/constrains~1global.rbac.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
         },
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
@@ -364,7 +496,7 @@
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
@@ -380,7 +512,7 @@
           "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
@@ -395,7 +527,7 @@
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
@@ -435,20 +567,12 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
+      "$ref": "#/$defs/constrains~1nameOverride@5"
     },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride@6"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
@@ -461,23 +585,48 @@
       }
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@3": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "$ref": "#/$defs/constrains~1nameOverride@3"
+    },
+    "constrains/nameOverride@3": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@4": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@5": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@6": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
     },
     "constrains/prometheus.enabled:t": {
       "properties": {
@@ -520,7 +669,7 @@
     "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@5"
         },
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
@@ -529,7 +678,7 @@
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@4"
         },
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
@@ -574,7 +723,7 @@
     },
     "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@7": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
       }
     },
     "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@8": {
@@ -584,7 +733,7 @@
     },
     "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@9": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
       }
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic": {
@@ -623,6 +772,9 @@
       }
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic+1more": {
+      "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+    },
+    "constrains/webhook.config.metricsTLSConfig.dynamic+1more@2": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
@@ -632,53 +784,23 @@
         }
       ]
     },
-    "constrains/webhook.config.metricsTLSConfig.dynamic+1more@2": {
+    "constrains/webhook.config.metricsTLSConfig.dynamic+1more@3": {
       "not": {
         "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
       }
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
-      "not": {
-        "properties": {
-          "webhook": {
-            "properties": {
-              "config": {
-                "properties": {
-                  "metricsTLSConfig": {
-                    "properties": {
-                      "dynamic": {
-                        "properties": {
-                          "secretNamespace": {}
-                        },
-                        "required": [
-                          "secretNamespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "dynamic"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metricsTLSConfig"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          }
+      "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1then~1any~1else~1fail@2"
+    },
+    "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
         },
-        "required": [
-          "webhook"
-        ],
-        "type": "object"
-      }
+        {
+          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@4"
+        }
+      ]
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace=null": {
       "properties": {
@@ -726,6 +848,55 @@
       "type": "object"
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace@2": {
+      "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1then~1any~1else~1fail"
+    },
+    "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace@3": {
+      "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1then~1fail~1else~1any"
+    },
+    "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace@4": {
+      "not": {
+        "properties": {
+          "webhook": {
+            "properties": {
+              "config": {
+                "properties": {
+                  "metricsTLSConfig": {
+                    "properties": {
+                      "dynamic": {
+                        "properties": {
+                          "secretNamespace": {}
+                        },
+                        "required": [
+                          "secretNamespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "dynamic"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metricsTLSConfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhook"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace@5": {
       "properties": {
         "webhook": {
           "properties": {
@@ -921,10 +1092,10 @@
     "constrains/webhook.podDisruptionBudget+webhook.podDisruptionBudget.minAvailable?+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget=null@3"
+          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget=null@2"
+          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget=null@3"
         },
         {
           "properties": {
@@ -1062,6 +1233,2046 @@
           "const": true
         }
       ]
+    },
+    "when/creator+creator=null/then/any/else/creator": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": true
+    },
+    "when/creator+creator=null/then/any/else/creator@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": true
+    },
+    "when/creator+creator=null/then/any/else/creator@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": true
+    },
+    "when/creator+creator=null/then/any/else/creator@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": true
+    },
+    "when/creator+creator=null/then/fail/else/creator": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": false
+    },
+    "when/creator+creator=null/then/fail/else/creator+fullnameOverride": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": false
+    },
+    "when/creator+creator=null/then/fail/else/creator+fullnameOverride@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": false
+    },
+    "when/creator+creator=null/then/fail/else/creator+nameOverride": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": false
+    },
+    "when/creator+creator=null/then/fail/else/creator+nameOverride@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": false
+    },
+    "when/creator+creator=null/then/fail/else/creator@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": false
+    },
+    "when/creator+creator=null/then/fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1fullnameOverride+webhook.config.metricsTLSConfig+4more"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@4": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1fullnameOverride+webhook.config.metricsTLSConfig+4more@2"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@5": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@6": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@4"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride/else/creator": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride/else/creator@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride/else/creator@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/creator+creator=null/then/fullnameOverride/else/creator@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1nameOverride+webhook.config.metricsTLSConfig+4more"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@4": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1nameOverride+webhook.config.metricsTLSConfig+4more@2"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@5": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@6": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@4"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride/else/creator": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride/else/creator@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride/else/creator@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/creator+creator=null/then/nameOverride/else/creator@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      }
+    },
+    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      }
+    },
+    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      }
+    },
+    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@4": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      }
+    },
+    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@5": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      }
+    },
+    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@6": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@9"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@4"
+      }
+    },
+    "when/creator/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": true
+    },
+    "when/creator/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": true
+    },
+    "when/creator/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": false
+    },
+    "when/creator/then/fail/else/fullnameOverride": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": false
+    },
+    "when/creator/then/fail/else/nameOverride": {
+      "else": {
+        "$ref": "#/$defs/constrains~1nameOverride@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": false
+    },
+    "when/creator/then/fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@3"
+      }
+    },
+    "when/creator/then/fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail"
+      }
+    },
+    "when/creator/then/fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@2"
+      }
+    },
+    "when/creator/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/creator/then/fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/creator/then/nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1nameOverride@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@2"
+      }
+    },
+    "when/creator/then/nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail"
+      }
+    },
+    "when/creator/then/nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@3"
+      }
+    },
+    "when/creator/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/creator/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/creator/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@3"
+      }
+    },
+    "when/creator/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      }
+    },
+    "when/creator/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1creator@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      }
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      }
+    },
+    "when/fullnameOverride/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      }
+    },
+    "when/fullnameOverride/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@3"
+      }
+    },
+    "when/fullnameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": true
+    },
+    "when/fullnameOverride:t/then/creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more/else/nameOverride+nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1global.rbac.create:t~1then~1creator+creator=null+nameOverride+nameOverride:t+webhook.config+7more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.rbac.create:t~1then~1creator+creator=null+fullnameOverride+webhook.config+7more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more/else/nameOverride+nameOverride:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.rbac.create:t~1then~1creator+creator=null+nameOverride+nameOverride:t+webhook.config+7more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.rbac.create:t~1then~1creator+creator=null+fullnameOverride+webhook.config+7more~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more/else/nameOverride+nameOverride:t@3": {
+      "else": {
+        "$ref": "#/$defs/when~1global.rbac.create:t~1then~1creator+creator=null+nameOverride+nameOverride:t+webhook.config+7more~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.rbac.create:t~1then~1creator+creator=null+fullnameOverride+webhook.config+7more~1else~1any@3"
+      }
+    },
+    "when/fullnameOverride:t/then/fail/else/nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": false
+    },
+    "when/global.rbac.create:t/then/creator+creator=null+fullnameOverride+webhook.config+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride~1else~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+fullnameOverride+webhook.config+6more~1else~1any"
+      }
+    },
+    "when/global.rbac.create:t/then/creator+creator=null+fullnameOverride+webhook.config+7more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator+fullnameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+fullnameOverride+webhook.config+6more~1else~1any@2"
+      }
+    },
+    "when/global.rbac.create:t/then/creator+creator=null+fullnameOverride+webhook.config+7more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride~1else~1creator@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+fullnameOverride+webhook.config+6more~1else~1any@3"
+      }
+    },
+    "when/global.rbac.create:t/then/creator+creator=null+nameOverride+nameOverride:t+webhook.config+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1creator+creator=null+nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+6more~1else~1any"
+      }
+    },
+    "when/global.rbac.create:t/then/creator+creator=null+nameOverride+nameOverride:t+webhook.config+7more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1creator+creator=null+nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+6more~1else~1any@2"
+      }
+    },
+    "when/global.rbac.create:t/then/creator+creator=null+nameOverride+nameOverride:t+webhook.config+7more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1creator+creator=null+nameOverride~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+6more~1else~1any@3"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      },
+      "then": true
+    },
+    "when/nameOverride/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      }
+    },
+    "when/nameOverride/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@3"
+      }
+    },
+    "when/nameOverride/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      }
+    },
+    "when/nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+6more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+6more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+6more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1any@3"
+      }
+    },
+    "when/nameOverride:t/then/creator+creator=null+nameOverride/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1any~1else~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride~1else~1creator@2"
+      }
+    },
+    "when/nameOverride:t/then/creator+creator=null+nameOverride/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator+nameOverride@2"
+      }
+    },
+    "when/nameOverride:t/then/creator+creator=null+nameOverride/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1any~1else~1creator@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride~1else~1creator@4"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1any~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1any~1else~1webhook.config.metricsTLSConfig.dynamic+2more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@4": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@5"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic+2more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic+2more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/fullnameOverride+webhook.config.metricsTLSConfig+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1fullnameOverride+webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/fullnameOverride+webhook.config.metricsTLSConfig+4more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1fullnameOverride+webhook.config.metricsTLSConfig+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/nameOverride+webhook.config.metricsTLSConfig+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1nameOverride+webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/nameOverride+webhook.config.metricsTLSConfig+4more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1nameOverride+webhook.config.metricsTLSConfig+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@4": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic+2more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@4": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/any/else/webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1any~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/any/else/webhook.config.metricsTLSConfig.dynamic+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1any~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null+fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null+nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@5"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+nameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+nameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+nameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic+2more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/fullnameOverride+webhook.config.metricsTLSConfig+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1fullnameOverride+webhook.config.metricsTLSConfig+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/fullnameOverride+webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/nameOverride+webhook.config.metricsTLSConfig+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1nameOverride+webhook.config.metricsTLSConfig+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/nameOverride+webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/nameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/nameOverride/else/webhook.config.metricsTLSConfig.dynamic+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/any/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1any~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/any/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/any/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null+fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null+nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null+nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@5"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+creator=null@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+nameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+nameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+nameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator+nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator@3"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1creator@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/fullnameOverride+webhook.config.metricsTLSConfig+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1fullnameOverride+webhook.config.metricsTLSConfig+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/fullnameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/nameOverride+webhook.config.metricsTLSConfig+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1nameOverride+webhook.config.metricsTLSConfig+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/nameOverride+webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fullnameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fullnameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/nameOverride/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1nameOverride~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/nameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/nameOverride/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@5"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@5"
+      },
+      "then": true
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@5"
+      },
+      "then": false
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+fullnameOverride+webhook.config+6more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride~1else~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+fullnameOverride+webhook.config+6more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator+fullnameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@4"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+fullnameOverride+webhook.config+6more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride~1else~1creator@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fullnameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@6"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride~1else~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator+nameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@4"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride~1else~1creator@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1nameOverride+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@6"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1any~1else~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@2"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@4"
+      }
+    },
+    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1any~1else~1creator@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@6"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1071,63 +3282,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t@2"
+            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "mutatingWebhookConfiguration": {}
-                      },
-                      "required": [
-                        "mutatingWebhookConfiguration"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "mutatingWebhookConfiguration": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mutatingWebhookConfiguration"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@5"
           }
         ]
       },
@@ -1137,72 +3295,11 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
             "anyOf": [
               {
                 "not": {
                   "properties": {
-                    "webhook": {}
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {}
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "global": {}
                   },
                   "required": [
                     "global"
@@ -1213,21 +3310,88 @@
               {
                 "properties": {
                   "global": {
-                    "properties": {
-                      "rbac": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
+                    "enum": [
+                      null
+                    ]
                   }
                 },
                 "required": [
                   "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {}
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "prometheus": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "prometheus"
                 ],
                 "type": "object"
               }
@@ -1241,19 +3405,104 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
+            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null@2"
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@7"
           },
           {
             "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "serviceAccount": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
           }
         ]
       },
@@ -1270,6 +3519,52 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@6"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
+                "properties": {
+                  "metricsTLSConfig": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more~1else~1nameOverride+nameOverride:t@2"
+      },
+      "then": false
     },
     {
       "if": {
@@ -1319,13 +3614,13 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
           }
         ]
       },
@@ -1335,47 +3630,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@7"
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@8"
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
           },
           {
             "anyOf": [
@@ -1432,178 +3693,63 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@6"
-          },
-          {
             "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
           },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                "properties": {
-                  "metricsTLSConfig": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+15more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
           {
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
+            "$ref": "#/$defs/constrains~1creator+creator=null@3"
           },
           {
             "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
+          },
+          {
             "anyOf": [
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "config": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "config"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              },
               {
                 "not": {
                   "properties": {
                     "webhook": {
                       "properties": {
-                        "config": {}
+                        "mutatingWebhookConfiguration": {}
                       },
                       "required": [
-                        "config"
+                        "mutatingWebhookConfiguration"
                       ],
                       "type": "object"
                     }
@@ -1613,20 +3759,29 @@
                   ],
                   "type": "object"
                 }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "mutatingWebhookConfiguration": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mutatingWebhookConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
           }
         ]
       },
@@ -1634,7 +3789,27 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@2"
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more~1else~1nameOverride+nameOverride:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@2"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -1658,10 +3833,88 @@
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null@2"
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {}
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@9"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@8"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
           },
           {
             "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1prometheus.enabled:t"
@@ -1685,88 +3938,16 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@9"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
-          }
-        ]
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
       },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "validatingWebhookConfiguration": {}
-                      },
-                      "required": [
-                        "validatingWebhookConfiguration"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "validatingWebhookConfiguration": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "validatingWebhookConfiguration"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
           }
-        ]
-      },
-      "then": false
+        }
+      }
     },
     {
       "if": {
@@ -1860,10 +4041,19 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@5"
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@4"
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.podSecurityPolicy+global.podSecurityPolicy=null"
           }
         ]
       },
@@ -1871,18 +4061,37 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more~1else~1nameOverride+nameOverride:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+15more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "podDisruptionBudget": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more~1else~1nameOverride+nameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget=null"
@@ -1895,136 +4104,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "serviceAccount": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "podSecurityPolicy": {}
-                      },
-                      "required": [
-                        "podSecurityPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "podSecurityPolicy": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "podSecurityPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
           },
           {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
+            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@3"
           },
           {
             "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@5"
@@ -2033,10 +4119,10 @@
             "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null@2"
+            "$ref": "#/$defs/constrains~1creator+creator=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
@@ -2072,41 +4158,193 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1creator+creator=null+fullnameOverride+global.rbac.create:t+webhook.config+7more~1else~1nameOverride+nameOverride:t"
           },
           {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
+            "$ref": "#/$defs/constrains~1global.podSecurityPolicy+global.podSecurityPolicy=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "anyOf": [
               {
                 "not": {
                   "properties": {
-                    "prometheus": {}
+                    "webhook": {
+                      "properties": {
+                        "validatingWebhookConfiguration": {}
+                      },
+                      "required": [
+                        "validatingWebhookConfiguration"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "prometheus"
+                    "webhook"
                   ],
                   "type": "object"
                 }
               },
               {
                 "properties": {
-                  "prometheus": {
-                    "enum": [
-                      null
-                    ]
+                  "webhook": {
+                    "properties": {
+                      "validatingWebhookConfiguration": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "validatingWebhookConfiguration"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "prometheus"
+                  "webhook"
                 ],
                 "type": "object"
               }
             ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "config": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "config": {}
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1creator+creator=null@4"
           }
         ]
       },

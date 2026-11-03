@@ -58,23 +58,23 @@
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaced@2"
+          "$ref": "#/$defs/constrains~1namespaced@7"
         },
         {
           "$ref": "#/$defs/constrains~1rbacRules@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t@3"
@@ -96,7 +96,7 @@
           "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaced@2"
+          "$ref": "#/$defs/constrains~1namespaced@7"
         },
         {
           "$ref": "#/$defs/constrains~1useLegacyNames:t@2"
@@ -118,7 +118,7 @@
           "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaced@2"
+          "$ref": "#/$defs/constrains~1namespaced@7"
         }
       ]
     },
@@ -128,16 +128,16 @@
           "$ref": "#/$defs/constrains~1rbacRules"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaced@2"
+          "$ref": "#/$defs/constrains~1namespaced@7"
         }
       ]
     },
@@ -149,19 +149,19 @@
     "constrains/nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+4more": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1namespaced+serviceAccountName+serviceAccountName:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+3more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaced"
+          "$ref": "#/$defs/constrains~1namespaced@6"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+3more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaced+serviceAccountName+serviceAccountName:t"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+3more@3"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+namespaced+serviceAccountName+1more"
@@ -171,36 +171,38 @@
     "constrains/nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
       }
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@3": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
     },
     "constrains/namespaceOverride": {
       "properties": {
@@ -225,14 +227,14 @@
           "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaced@2"
+          "$ref": "#/$defs/constrains~1namespaced@7"
         }
       ]
     },
     "constrains/namespaceOverride+namespaceOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride"
@@ -245,7 +247,7 @@
           "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         }
       ]
     },
@@ -255,28 +257,28 @@
       }
     },
     "constrains/namespaceOverride:t": {
-      "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      }
     },
     "constrains/namespaceOverride:t@2": {
-      "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      }
     },
     "constrains/namespaceOverride:t@3": {
-      "not": {
-        "properties": {
-          "namespaceOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
     },
     "constrains/namespaced": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaced@2"
-      }
+      "$ref": "#/$defs/when~1namespaced~1then~1any~1else~1fail"
     },
     "constrains/namespaced+serviceAccountName+serviceAccountName:t": {
       "allOf": [
@@ -284,11 +286,28 @@
           "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaced@2"
+          "$ref": "#/$defs/constrains~1namespaced@7"
         }
       ]
     },
     "constrains/namespaced@2": {
+      "$ref": "#/$defs/when~1namespaced~1then~1any~1else~1fail"
+    },
+    "constrains/namespaced@3": {
+      "$ref": "#/$defs/when~1namespaced~1then~1any~1else~1fail"
+    },
+    "constrains/namespaced@4": {
+      "$ref": "#/$defs/when~1namespaced~1then~1any~1else~1fail"
+    },
+    "constrains/namespaced@5": {
+      "$ref": "#/$defs/when~1namespaced~1then~1any~1else~1fail"
+    },
+    "constrains/namespaced@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1namespaced@7"
+      }
+    },
+    "constrains/namespaced@7": {
       "properties": {
         "namespaced": {
           "type": "boolean"
@@ -316,15 +335,7 @@
       "type": "object"
     },
     "constrains/serviceAccountName": {
-      "properties": {
-        "serviceAccountName": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "serviceAccountName"
-      ],
-      "type": "object"
+      "$ref": "#/$defs/when~1serviceAccountName~1then~1any~1else~1fail"
     },
     "constrains/serviceAccountName+serviceAccountName:t": {
       "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t@2"
@@ -335,14 +346,14 @@
           "$ref": "#/$defs/constrains~1serviceAccountName:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccountName"
+          "$ref": "#/$defs/constrains~1serviceAccountName@5"
         }
       ]
     },
     "constrains/serviceAccountName+serviceAccountName:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccountName"
+          "$ref": "#/$defs/constrains~1serviceAccountName@5"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccountName:t@2"
@@ -355,23 +366,45 @@
       }
     },
     "constrains/serviceAccountName:t": {
-      "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      }
     },
     "constrains/serviceAccountName:t@2": {
-      "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      }
     },
     "constrains/serviceAccountName:t@3": {
-      "not": {
-        "properties": {
-          "serviceAccountName": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "serviceAccountName"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "serviceAccountName": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "serviceAccountName"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccountName@2": {
+      "$ref": "#/$defs/when~1serviceAccountName~1then~1any~1else~1fail"
+    },
+    "constrains/serviceAccountName@3": {
+      "$ref": "#/$defs/when~1serviceAccountName~1then~1any~1else~1fail"
+    },
+    "constrains/serviceAccountName@4": {
+      "$ref": "#/$defs/when~1serviceAccountName~1then~1any~1else~1fail"
+    },
+    "constrains/serviceAccountName@5": {
+      "properties": {
+        "serviceAccountName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "serviceAccountName"
+      ],
+      "type": "object"
     },
     "constrains/useLegacyNames:t": {
       "not": {
@@ -431,6 +464,407 @@
       "not": {
         "$ref": "#/$defs/values~1namespaced~1boolean"
       }
+    },
+    "when/nameOverride/then/namespaceOverride+namespaced+serviceAccountName/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced+serviceAccountName~1else~1fail"
+      }
+    },
+    "when/nameOverride/then/namespaceOverride+namespaced+serviceAccountName/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced+serviceAccountName~1else~1fail@3"
+      }
+    },
+    "when/nameOverride/then/namespaceOverride+namespaced/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced~1else~1fail"
+      }
+    },
+    "when/nameOverride/then/namespaceOverride+namespaced/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced~1else~1fail@3"
+      }
+    },
+    "when/nameOverride/then/namespaced+serviceAccountName/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail"
+      }
+    },
+    "when/nameOverride/then/namespaced+serviceAccountName/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail@4"
+      }
+    },
+    "when/nameOverride/then/namespaced/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1namespaced"
+      }
+    },
+    "when/nameOverride/then/namespaced/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1namespaced@4"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+namespaceOverride+namespaceOverride:t+namespaced+serviceAccountName+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1namespaceOverride+namespaced+serviceAccountName+serviceAccountName:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1nameOverride+namespaceOverride+namespaced+serviceAccountName+1more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+namespaceOverride+namespaceOverride:t+namespaced+serviceAccountName+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1namespaceOverride+namespaced+serviceAccountName+serviceAccountName:t~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1nameOverride+namespaceOverride+namespaced+serviceAccountName+1more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/namespaceOverride+namespaceOverride:t+namespaced+serviceAccountName+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1namespaceOverride+namespaced+serviceAccountName+serviceAccountName:t~1else~1any@2"
+      }
+    },
+    "when/namespaceOverride/then/namespaced+serviceAccountName/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail"
+      }
+    },
+    "when/namespaceOverride/then/namespaced+serviceAccountName/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail@2"
+      }
+    },
+    "when/namespaceOverride/then/namespaced+serviceAccountName/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail@4"
+      }
+    },
+    "when/namespaceOverride/then/namespaced/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1namespaced"
+      }
+    },
+    "when/namespaceOverride/then/namespaced/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1namespaced@2"
+      }
+    },
+    "when/namespaceOverride/then/namespaced/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1namespaced@4"
+      }
+    },
+    "when/namespaceOverride:t/then/nameOverride+namespaceOverride+namespaced+serviceAccountName+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1nameOverride+namespaced+serviceAccountName~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1nameOverride+namespaceOverride+namespaced+serviceAccountName~1else~1any"
+      }
+    },
+    "when/namespaceOverride:t/then/nameOverride+namespaceOverride+namespaced+serviceAccountName+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1nameOverride+namespaced+serviceAccountName~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1nameOverride+namespaceOverride+namespaced+serviceAccountName~1else~1any@2"
+      }
+    },
+    "when/namespaceOverride:t/then/namespaceOverride+namespaced+serviceAccountName+serviceAccountName:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaced+serviceAccountName~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaceOverride+namespaced+serviceAccountName~1else~1any"
+      }
+    },
+    "when/namespaceOverride:t/then/namespaceOverride+namespaced+serviceAccountName+serviceAccountName:t/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaced+serviceAccountName~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaceOverride+namespaced+serviceAccountName~1else~1any@2"
+      }
+    },
+    "when/namespaceOverride:t/then/namespaceOverride+namespaced+serviceAccountName+serviceAccountName:t/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaced+serviceAccountName~1else~1any@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaceOverride+namespaced+serviceAccountName~1else~1any@3"
+      }
+    },
+    "when/namespaceOverride:t/then/namespaced+serviceAccountName+serviceAccountName:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaced+serviceAccountName~1else~1any@3"
+      }
+    },
+    "when/namespaced/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaced@7"
+      },
+      "then": true
+    },
+    "when/namespaced/then/serviceAccountName/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaced@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1serviceAccountName"
+      }
+    },
+    "when/namespaced/then/serviceAccountName/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaced@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1serviceAccountName@2"
+      }
+    },
+    "when/namespaced/then/serviceAccountName/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaced@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1serviceAccountName@3"
+      }
+    },
+    "when/namespaced/then/serviceAccountName/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaced@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1serviceAccountName@4"
+      }
+    },
+    "when/serviceAccountName/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName@5"
+      },
+      "then": true
+    },
+    "when/serviceAccountName:t/then/nameOverride+namespaceOverride+namespaced+serviceAccountName/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaceOverride+namespaced~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaceOverride+namespaced+serviceAccountName~1else~1fail"
+      }
+    },
+    "when/serviceAccountName:t/then/nameOverride+namespaceOverride+namespaced+serviceAccountName/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaceOverride+namespaced~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaceOverride+namespaced+serviceAccountName~1else~1fail@2"
+      }
+    },
+    "when/serviceAccountName:t/then/nameOverride+namespaced+serviceAccountName/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaced~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaced+serviceAccountName~1else~1fail"
+      }
+    },
+    "when/serviceAccountName:t/then/nameOverride+namespaced+serviceAccountName/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaced~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1namespaced+serviceAccountName~1else~1fail@2"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaceOverride+namespaced+serviceAccountName/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced+serviceAccountName~1else~1fail"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaceOverride+namespaced+serviceAccountName/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced+serviceAccountName~1else~1fail@2"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaceOverride+namespaced+serviceAccountName/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1namespaced+serviceAccountName~1else~1fail@3"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaced+serviceAccountName/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1namespaced"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaced+serviceAccountName/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1namespaced@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail@2"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaced+serviceAccountName/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1namespaced@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail@3"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaced+serviceAccountName/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1namespaced@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaced~1then~1serviceAccountName~1else~1fail@4"
+      }
+    },
+    "when/serviceAccountName:t/then/namespaced/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccountName:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1namespaced@5"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -438,50 +872,57 @@
   "allOf": [
     {
       "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "namespaced": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "namespaced"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "namespaced": {}
+              },
+              "required": [
+                "namespaced"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+namespaceOverride+namespaceOverride:t+namespaced+serviceAccountName+1more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbacRules": {
+            "description": "Rules to be applied to ClusterRole or Role\nSet as a string so that it can be templated to allow further customization",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1namespaced@7"
+          },
           {
             "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global=null@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1namespaced@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+3more@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+4more"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1namespaced@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
           },
           {
             "$ref": "#/$defs/constrains~1global+global=null@4"
@@ -499,6 +940,131 @@
         "properties": {
           "global": {
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+namespaced+3more@5"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global=null@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccountName+serviceAccountName:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespaced@7"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "namespaced": {
+          "description": "restrict the controller to only watch resources in it's current namespace",
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+namespaceOverride+namespaceOverride:t+namespaced+serviceAccountName+1more~1else~1any@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "rbacRules": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "rbacRules"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "rbacRules": {}
+                  },
+                  "required": [
+                    "rbacRules"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1namespaceOverride+namespaceOverride:t+namespaced+serviceAccountName+1more~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1namespaced+serviceAccountName+serviceAccountName:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1serviceAccountName:t~1then~1namespaced~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccountName": {
+            "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true",
+            "type": "string"
           }
         }
       }

@@ -1,6 +1,21 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "projects": {
+          "description": "Deploy Argo CD Projects within this helm release\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/\nguestbook:\nnamespace: argocd\nadditionalLabels: {}\nadditionalAnnotations: {}\npermitOnlyProjectScopedClusters: false\nfinalizers:\n- resources-finalizer.argocd.argoproj.io\ndescription: Example Project\nsourceRepos:\n- '*'\ndestinations:\n- namespace: guestbook\nserver: https://kubernetes.default.svc\nclusterResourceWhitelist: []\nclusterResourceBlacklist: []\nnamespaceResourceBlacklist:\n- group: ''\nkind: ResourceQuota\n- group: ''\nkind: LimitRange\n- group: ''\nkind: NetworkPolicy\norphanedResources: {}\nroles: []\nnamespaceResourceWhitelist:\n- group: 'apps'\nkind: Deployment\n- group: 'apps'\nkind: StatefulSet\norphanedResources: {}\nroles: []\nsyncWindows:\n- kind: allow\nschedule: '10 1 * * *'\nduration: 1h\napplications:\n- '*-prod'\nmanualSync: true\nsignatureKeys:\n- keyID: ABCDEF1234567890\nsourceNamespaces:\n- argocd",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
+        }
+      }
+    }
+  ],
   "properties": {
     "applications": {
       "description": "Deploy Argo CD Applications within this helm release\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/\nguestbook:\nnamespace: argocd\nadditionalLabels: {}\nadditionalAnnotations: {}\nfinalizers:\n- resources-finalizer.argocd.argoproj.io\nproject: guestbook\nsource:\nrepoURL: https://github.com/argoproj/argocd-example-apps.git\ntargetRevision: HEAD\npath: guestbook\ndirectory:\nrecurse: true\nArgoCD v2.6 or later\nsources:\n- chart: elasticsearch\nrepoURL: https://helm.elastic.co\ntargetRevision: 8.5.1\n- repoURL: https://github.com/argoproj/argocd-example-apps.git\npath: guestbook\ntargetRevision: HEAD\ndestination:\nserver: https://kubernetes.default.svc\nnamespace: guestbook\nsyncPolicy:\nautomated:\nprune: false\nselfHeal: false\nsyncOptions:\n- CreateNamespace=true\nrevisionHistoryLimit: null\nignoreDifferences:\n- group: apps\nkind: Deployment\njsonPointers:\n- /spec/replicas\ninfo:\n- name: url\nvalue: https://argoproj.github.io/\nArgoCD Manifest Hydrator (requires hydrator.enabled=true in argocd-cmd-params-cm)\nsourceHydrator:\ndrySource:\nrepoURL: https://github.com/argoproj/argocd-example-apps.git\npath: helm-guestbook\ntargetRevision: HEAD\nsyncSource:\ntargetBranch: environments/prod\npath: helm-guestbook-hydrated"

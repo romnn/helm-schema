@@ -1,452 +1,338 @@
 {
   "$defs": {
-    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+8more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@3"
-        }
-      ]
-    },
-    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+5more": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
         },
         {
           "$ref": "#/$defs/constrains~1tls+tls=null"
         },
         {
-          "$ref": "#/$defs/constrains~1tls=external@2"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@5"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more"
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
         }
       ]
     },
-    "constrains/gateway.gatewayClass+gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+12more": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
+          "$ref": "#/$defs/constrains~1tls=external@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
         },
         {
           "$ref": "#/$defs/constrains~1tls+tls=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
-        },
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@2"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@4": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@5"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
         },
         {
           "$ref": "#/$defs/constrains~1tls=external"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+13more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+13more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@4"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt": {
-      "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@4"
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+tls=external"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+nameOverride+nameOverride:t+1more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more": {
-      "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more@2"
-    },
-    "constrains/gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=rancher@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+12more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
         },
         {
           "$ref": "#/$defs/constrains~1tls+tls=null"
         },
         {
-          "$ref": "#/$defs/constrains~1tls=external@2"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+13more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1tls=external"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
         },
         {
           "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+12more@2": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+13more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
         },
         {
           "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@7"
         },
         {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+13more": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+14more": {
       "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
-        },
         {
           "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null@2"
+          "$ref": "#/$defs/constrains~1tls=external"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+12more@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+13more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@7": {
-      "not": {
-        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@4"
-      }
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
         },
         {
           "$ref": "#/$defs/constrains~1tls+tls=null"
         },
         {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@3": {
+      "allOf": [
+        {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+9more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+13more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+13more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+14more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@4"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@8": {
+      "not": {
+        "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@3"
+      }
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+18more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null"
@@ -462,19 +348,44 @@
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@2": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+18more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+9more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure.type=ingress@3"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+18more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
         },
         {
           "$ref": "#/$defs/constrains~1tls+tls=null"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null"
@@ -487,19 +398,13 @@
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@3": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@5"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null@2"
+          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
@@ -508,61 +413,10 @@
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1networkExposure.type=ingress@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+12more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+12more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
           "$ref": "#/$defs/constrains~1tls+tls=null"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null"
@@ -571,32 +425,38 @@
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure.type=ingress@3"
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more@2": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@5"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+9more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
         },
         {
           "$ref": "#/$defs/constrains~1tls+tls=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t+ingress.enabled:t+nameOverride+nameOverride:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet+ingress.configurationSnippet:t+ingress.enabled:t+2more"
@@ -605,33 +465,455 @@
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet+ingress.configurationSnippet:t+ingress.enabled:t+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t+ingress.enabled:t+nameOverride+nameOverride:t+1more"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet+ingress.configurationSnippet:t+ingress.enabled:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more@3": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+18more"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@2"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more"
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more@4": {
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more@2"
+        "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more@2"
       }
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+12more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1tls=external@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+13more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1tls=external@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+17more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+12more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+18more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=rancher@3"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more@2"
+      }
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more": {
+      "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@6"
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2": {
+      "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@5"
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@4"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@5"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+ingress.tls+ingress.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@3"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@3"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more"
+        }
+      ]
+    },
+    "constrains/gateway+gateway.gatewayClass+ingress.tls+ingress.tls.source+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@3"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+tls=external@2"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more@3"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+6more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+1more"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+9more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+6more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@6"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+9more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.enabled:t+ingress.tls.source=letsEncrypt+9more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+8more"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt": {
+      "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@5"
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+tls=external@2"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@3"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+3more"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+8more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@2"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@3"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@4"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+tls=external"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+tls=external@2"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+tls=external": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external@3"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt+tls=external@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+tls=external"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@2": {
+      "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@6"
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@3"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+13more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+18more@3"
+        }
+      ]
     },
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more": {
       "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@2"
@@ -648,10 +930,10 @@
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=null"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@5"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
         }
       ]
     },
@@ -668,52 +950,52 @@
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@5"
+          "$ref": "#/$defs/constrains~1tls=external@5"
         },
         {
-          "$ref": "#/$defs/constrains~1tls=external@5"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@5"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@6"
+          "$ref": "#/$defs/constrains~1tls=external@5"
         },
         {
-          "$ref": "#/$defs/constrains~1tls=external@5"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@6"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more"
-        },
-        {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=null"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=null"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
         }
       ]
     },
@@ -730,16 +1012,6 @@
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@3": {
-      "allOf": [
-        {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+tls=external@4"
         },
         {
@@ -747,7 +1019,7 @@
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@4": {
+    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@3": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@4"
@@ -757,82 +1029,36 @@
         }
       ]
     },
+    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more"
+        }
+      ]
+    },
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@6": {
-      "anyOf": [
-        {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more": {
-      "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@7"
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2": {
-      "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@6"
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@4"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@5"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@4"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@2"
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@7": {
-      "anyOf": [
+    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more": {
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@5"
+          "$ref": "#/$defs/constrains~1tls=external"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@4"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls+tls=null"
         }
       ]
     },
@@ -842,13 +1068,13 @@
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@3"
+          "$ref": "#/$defs/constrains~1tls=external@2"
         },
         {
           "$ref": "#/$defs/constrains~1tls+tls=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1tls=external"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more@3"
         }
       ]
     },
@@ -858,181 +1084,38 @@
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
         },
         {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
+          "$ref": "#/$defs/constrains~1tls=external"
         },
         {
-          "$ref": "#/$defs/constrains~1tls=external@2"
+          "$ref": "#/$defs/constrains~1tls+tls=null"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more"
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+8more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=rancher@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+8more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+8more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+8more@2"
-      }
-    },
     "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls+tls=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls=external"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@5": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@3"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more"
+          "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@4"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls.source": {
-      "not": {
-        "properties": {
-          "gateway": {
-            "properties": {
-              "gatewayClass": {
-                "$ref": "#/$defs/constrains~1tls.source@2"
-              }
-            },
-            "required": [
-              "gatewayClass"
-            ],
-            "type": "object"
-          }
+      "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1any~1else~1fail"
+    },
+    "constrains/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=null"
         },
-        "required": [
-          "gateway"
-        ],
-        "type": "object"
-      }
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@5"
+        }
+      ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt": {
       "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@3"
@@ -1040,27 +1123,17 @@
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@4"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@3"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@2"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+5more"
@@ -1068,16 +1141,6 @@
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+5more@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more@3": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+1more"
@@ -1087,18 +1150,8 @@
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more@2"
-        }
-      ]
-    },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more": {
-      "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@4"
+      "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@3"
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@2": {
       "allOf": [
@@ -1106,21 +1159,11 @@
           "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@7"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more@3"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more@2"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+6more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@6"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@4": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+8more"
@@ -1130,30 +1173,10 @@
         }
       ]
     },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+ingress.enabled:t+9more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+8more@2"
-        }
-      ]
-    },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@6"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@4"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@2"
         },
         {
           "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@7"
@@ -1161,16 +1184,6 @@
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt+letsEncrypt+5more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+5more@2": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+3more"
@@ -1183,37 +1196,17 @@
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+8more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null"
-        },
-        {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+5more"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+8more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+letsEncrypt+5more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+nameOverride+nameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt"
+          "$ref": "#/$defs/constrains~1networkExposure+networkExposure.type+networkExposure.type=null"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external@3"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external@4"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt"
@@ -1221,29 +1214,9 @@
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@2"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@3": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+tls=external"
-        }
-      ]
-    },
-    "constrains/gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress+tls=external@2"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+tls=external@2"
@@ -1304,7 +1277,7 @@
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@2"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more"
@@ -1314,10 +1287,10 @@
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+nameOverride+nameOverride:t+1more@2"
         }
       ]
     },
@@ -1344,20 +1317,20 @@
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+tls=external@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=letsEncrypt+tls=external@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+tls=external@2"
         }
       ]
     },
@@ -1415,24 +1388,46 @@
       }
     },
     "constrains/gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more": {
-      "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+      "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@4"
     },
     "constrains/gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2": {
+      "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@3"
+    },
+    "constrains/gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@2"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=rancher"
+          "$ref": "#/$defs/constrains~1tls=external@5"
         },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=rancher"
+        }
+      ]
+    },
+    "constrains/gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@4": {
+      "anyOf": [
         {
           "$ref": "#/$defs/constrains~1tls=external@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=rancher@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
@@ -1459,20 +1454,20 @@
     "constrains/gateway.gatewayClass.tls.source=rancher+tls=external@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+tls=external"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@2"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+tls=external"
         }
       ]
     },
     "constrains/gateway.gatewayClass.tls.source=rancher+tls=external@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+tls=external@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@2"
+          "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+tls=external@2"
         }
       ]
     },
@@ -1501,6 +1496,36 @@
       "type": "object"
     },
     "constrains/gateway.gatewayClass.tls.source@2": {
+      "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1any~1else~1fail"
+    },
+    "constrains/gateway.gatewayClass.tls.source@3": {
+      "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1any~1else~1fail"
+    },
+    "constrains/gateway.gatewayClass.tls.source@4": {
+      "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1any~1else~1fail"
+    },
+    "constrains/gateway.gatewayClass.tls.source@5": {
+      "not": {
+        "properties": {
+          "gateway": {
+            "properties": {
+              "gatewayClass": {
+                "$ref": "#/$defs/constrains~1tls.source@2"
+              }
+            },
+            "required": [
+              "gatewayClass"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "gateway"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/gateway.gatewayClass.tls.source@6": {
       "properties": {
         "gateway": {
           "properties": {
@@ -1536,16 +1561,16 @@
     "constrains/ingress.configurationSnippet+ingress.configurationSnippet:t+ingress.enabled:t+2more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet@3"
@@ -1555,16 +1580,16 @@
     "constrains/ingress.configurationSnippet+ingress.configurationSnippet:t+ingress.enabled:t+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet@3"
@@ -1574,22 +1599,22 @@
     "constrains/ingress.configurationSnippet+ingress.configurationSnippet:t+ingress.enabled:t+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
         }
       ]
     },
@@ -1604,13 +1629,13 @@
           "$ref": "#/$defs/constrains~1ingress.configurationSnippet:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
@@ -1672,7 +1697,7 @@
     "constrains/ingress.enabled:t+networkExposure+networkExposure.type+networkExposure.type=null@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1networkExposure.type"
@@ -1688,20 +1713,20 @@
     "constrains/ingress.enabled:t+networkExposure.type=gateway": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+          "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
         },
         {
-          "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
         }
       ]
     },
     "constrains/ingress.enabled:t+networkExposure.type=gateway@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
+          "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
         }
       ]
     },
@@ -1716,16 +1741,19 @@
       }
     },
     "constrains/ingress.enabled:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      }
+      "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
     },
     "constrains/ingress.enabled:t@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        "$ref": "#/$defs/constrains~1ingress.enabled:t@5"
       }
     },
     "constrains/ingress.enabled:t@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1ingress.enabled:t@5"
+      }
+    },
+    "constrains/ingress.enabled:t@5": {
       "properties": {
         "ingress": {
           "properties": {
@@ -1773,6 +1801,34 @@
         "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls.source+ingress.tls.source=null@2"
       }
     },
+    "constrains/ingress.tls+ingress.tls=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "ingress": {
+                "$ref": "#/$defs/constrains~1tls@7"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "ingress": {
+              "$ref": "#/$defs/constrains~1tls=null"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/ingress.tls.source": {
       "not": {
         "properties": {
@@ -1785,6 +1841,16 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/ingress.tls.source+ingress.tls.source=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source"
+        }
+      ]
     },
     "constrains/ingress.tls.source=letsEncrypt": {
       "not": {
@@ -1804,10 +1870,10 @@
     "constrains/ingress.tls.source=letsEncrypt+nameOverride+nameOverride:t+tls=external@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+tls=external@4"
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+tls=external@4"
         }
       ]
     },
@@ -1988,10 +2054,36 @@
         "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
       }
     },
+    "constrains/letsEncrypt+letsEncrypt=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "letsEncrypt": {}
+            },
+            "required": [
+              "letsEncrypt"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "letsEncrypt": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "letsEncrypt"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/nameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
     },
     "constrains/nameOverride+nameOverride:t": {
       "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
@@ -1999,27 +2091,27 @@
     "constrains/nameOverride+nameOverride:t+tls=external": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t+tls=external@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+tls=external@3"
+          "$ref": "#/$defs/constrains~1nameOverride@3"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+tls=external@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t+tls=external@4"
+          "$ref": "#/$defs/constrains~1nameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t+tls=external@4"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+tls=external@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@5"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+tls=external"
@@ -2029,10 +2121,10 @@
     "constrains/nameOverride+nameOverride:t+tls=external@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+tls=external@2"
+          "$ref": "#/$defs/constrains~1nameOverride@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+tls=external@2"
         }
       ]
     },
@@ -2042,30 +2134,30 @@
     "constrains/nameOverride+nameOverride:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@5"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@5": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      "$ref": "#/$defs/constrains~1nameOverride:t@3"
     },
     "constrains/nameOverride:t+tls=external": {
       "allOf": [
@@ -2090,7 +2182,7 @@
     "constrains/nameOverride:t+tls=external@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t+tls=external"
@@ -2103,7 +2195,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t+tls=external@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
@@ -2129,11 +2221,19 @@
       "type": "object"
     },
     "constrains/nameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
     },
     "constrains/nameOverride@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@5"
+      }
+    },
+    "constrains/nameOverride@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@5"
+      }
+    },
+    "constrains/nameOverride@5": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -2289,13 +2389,7 @@
       "type": "object"
     },
     "constrains/tls": {
-      "properties": {
-        "tls": {}
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
+      "$ref": "#/$defs/constrains~1tls@3"
     },
     "constrains/tls+tls=null": {
       "$ref": "#/$defs/constrains~1tls+tls=null@4"
@@ -2313,19 +2407,11 @@
       "anyOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1tls"
+            "$ref": "#/$defs/constrains~1tls@7"
           }
         },
         {
-          "properties": {
-            "tls": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "tls"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1tls@6"
         },
         {
           "$ref": "#/$defs/constrains~1tls=null"
@@ -2333,6 +2419,18 @@
       ]
     },
     "constrains/tls+tls=null@6": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1tls@7"
+          }
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls=null"
+        }
+      ]
+    },
+    "constrains/tls+tls=null@7": {
       "not": {
         "$ref": "#/$defs/constrains~1tls+tls=null@2"
       }
@@ -2478,6 +2576,38 @@
       ],
       "type": "object"
     },
+    "constrains/tls@2": {
+      "$ref": "#/$defs/when~1tls~1then~1any~1else~1fail"
+    },
+    "constrains/tls@3": {
+      "$ref": "#/$defs/when~1tls~1then~1any~1else~1fail"
+    },
+    "constrains/tls@4": {
+      "$ref": "#/$defs/when~1tls~1then~1any~1else~1fail"
+    },
+    "constrains/tls@5": {
+      "$ref": "#/$defs/when~1tls~1then~1any~1else~1fail"
+    },
+    "constrains/tls@6": {
+      "properties": {
+        "tls": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls@7": {
+      "properties": {
+        "tls": {}
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
     "t": {
       "anyOf": [
         {
@@ -2523,6 +2653,1716 @@
           "description": "options: rancher, letsEncrypt, secret"
         }
       }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/any/else/gateway.gatewayClass.tls.source": {
+      "else": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": true
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/any/else/gateway.gatewayClass.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": true
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/any/else/gateway.gatewayClass.tls.source@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": true
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/any/else/gateway.gatewayClass.tls.source@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": true
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+nameOverride+tls+2more/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+6more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+2more~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+nameOverride+tls+2more/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+6more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+2more~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+tls+tls=external+1more/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=external+tls=null~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+tls+tls=external+1more/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+5more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source=letsEncrypt~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=external+tls=null~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+nameOverride+tls+tls=external+tls=null/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+nameOverride+tls+2more~1else~1ingress"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=external+tls=null~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+nameOverride+tls+tls=external+tls=null/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+nameOverride+tls+2more~1else~1ingress@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=external+tls=null~1else~1ingress.tls.source"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+nameOverride+tls+tls=null/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source+nameOverride+tls+tls=null~1else~1ingress"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=null~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+nameOverride+tls+tls=null/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source+nameOverride+tls+tls=null~1else~1ingress@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=null~1else~1ingress.tls.source"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+nameOverride/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source+nameOverride~1else~1ingress"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+nameOverride/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source+nameOverride~1else~1ingress@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride~1else~1ingress.tls.source"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+tls+tls=external+tls=null/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+tls+tls=external+1more~1else~1ingress"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=external+tls=null~1else~1ingress.tls.source"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+tls+tls=external+tls=null/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+tls+tls=external+1more~1else~1ingress@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=external+tls=null~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+tls+tls=null/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source+tls+tls=null~1else~1ingress"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=null~1else~1ingress.tls.source"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source+tls+tls=null/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source+tls+tls=null~1else~1ingress@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=null~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source/else/gateway.gatewayClass": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source~1else~1ingress"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1any~1else~1ingress.tls.source"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/ingress+ingress.tls.source/else/gateway.gatewayClass@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway.gatewayClass.tls.source~1else~1ingress@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1any~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/nameOverride+tls+tls=external+tls=null/else/gateway.gatewayClass.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1nameOverride+tls+tls=null"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/nameOverride+tls+tls=external+tls=null/else/gateway.gatewayClass.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1nameOverride+tls+tls=null@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/nameOverride+tls+tls=null/else/gateway.gatewayClass.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+nameOverride~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls@3"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/nameOverride+tls+tls=null/else/gateway.gatewayClass.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+nameOverride~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/nameOverride/else/gateway.gatewayClass.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/nameOverride/else/gateway.gatewayClass.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=external+tls=null/else/gateway.gatewayClass.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1tls+tls=null"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=external+tls=null/else/gateway.gatewayClass.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1tls+tls=null@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=external+tls=null/else/gateway.gatewayClass.tls.source@3": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1tls+tls=null@3"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=external+tls=null/else/gateway.gatewayClass.tls.source@4": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1tls+tls=null@4"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=null/else/gateway.gatewayClass.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=null/else/gateway.gatewayClass.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@3"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=null/else/gateway.gatewayClass.tls.source@3": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source~1else~1tls@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@5"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null/then/tls+tls=null/else/gateway.gatewayClass.tls.source@4": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source~1else~1tls@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@7"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": true
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress+nameOverride+tls/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride+tls~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress+nameOverride+tls/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride+tls~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress+tls/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1tls~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress+tls/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1tls~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1any~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/ingress/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/nameOverride+tls/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1tls~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/nameOverride+tls/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1tls~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/tls/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/tls/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls@4"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/tls/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source/then/tls/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls@5"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=letsEncrypt/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+7more/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+tls+tls=external+1more~1else~1gateway.gatewayClass"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=rancher~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+6more~1else~1any"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=letsEncrypt/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+7more/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+tls+tls=external+1more~1else~1gateway.gatewayClass@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=rancher~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+6more~1else~1any@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=letsEncrypt/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+8more/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+nameOverride+tls+2more~1else~1gateway.gatewayClass"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=rancher~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+7more~1else~1any"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=letsEncrypt/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+8more/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+ingress.tls.source=letsEncrypt+nameOverride+tls+2more~1else~1gateway.gatewayClass@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=rancher~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+7more~1else~1any@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=letsEncrypt/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=rancher~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more~1else~1fail"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=letsEncrypt/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=rancher~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more~1else~1fail@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=rancher/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+6more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+tls+tls=external+tls=null~1else~1gateway.gatewayClass"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=rancher/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+6more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+tls+tls=external+tls=null~1else~1gateway.gatewayClass@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=rancher/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1nameOverride+tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+nameOverride+tls+tls=external+tls=null~1else~1gateway.gatewayClass"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=rancher/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+7more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1nameOverride+tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+nameOverride+tls+tls=external+tls=null~1else~1gateway.gatewayClass@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=rancher/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source@2"
+      }
+    },
+    "when/gateway.gatewayClass.tls.source=rancher/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=external+tls=null~1else~1gateway.gatewayClass.tls.source@4"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/any/else/ingress.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": true
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/any/else/ingress.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1any~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": true
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+nameOverride+tls+2more/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass+gateway.gatewayClass.tls.source+6more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+nameOverride+tls+2more/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass+gateway.gatewayClass.tls.source+6more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+tls+tls=external+1more/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass+gateway.gatewayClass.tls.source+5more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+tls+tls=external+1more/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass+gateway.gatewayClass.tls.source+5more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@3"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source+nameOverride+tls+tls=null/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+ingress+nameOverride~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+nameOverride~1else~1tls@2"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source+nameOverride+tls+tls=null/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+ingress+nameOverride~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+nameOverride~1else~1tls"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source+nameOverride/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source+nameOverride/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source+tls+tls=null/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+ingress~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source~1else~1tls"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source+tls+tls=null/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source+ingress~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls.source~1else~1tls@3"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source/else/ingress": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/gateway.gatewayClass.tls.source/else/ingress@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@3"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/nameOverride+tls+tls=external+tls=null/else/ingress.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+tls=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1nameOverride+tls+tls=null@2"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/nameOverride+tls+tls=external+tls=null/else/ingress.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+tls=null@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1nameOverride+tls+tls=null"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/nameOverride+tls+tls=null/else/ingress.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls.source+nameOverride~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls@3"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/nameOverride+tls+tls=null/else/ingress.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls.source+nameOverride~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/nameOverride/else/ingress.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/nameOverride/else/ingress.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/tls+tls=external+tls=null/else/ingress.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1tls+tls=null"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/tls+tls=external+tls=null/else/ingress.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=null@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls=external~1then~1fail~1else~1tls+tls=null@3"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/tls+tls=null/else/ingress.tls.source": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls.source~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls"
+      }
+    },
+    "when/ingress.tls.source+ingress.tls.source=null/then/tls+tls=null/else/ingress.tls.source@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls.source~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source+ingress.tls.source=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@5"
+      }
+    },
+    "when/ingress.tls.source/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": true
+    },
+    "when/ingress.tls.source/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": true
+    },
+    "when/ingress.tls.source/then/nameOverride+tls/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1tls~1else~1fail@2"
+      }
+    },
+    "when/ingress.tls.source/then/nameOverride+tls/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1tls~1else~1fail"
+      }
+    },
+    "when/ingress.tls.source/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/ingress.tls.source/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/ingress.tls.source/then/tls/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls"
+      }
+    },
+    "when/ingress.tls.source/then/tls/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls@2"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+tls+tls=external+1more~1else~1ingress"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+5more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+tls+tls=external+1more~1else~1ingress@2"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+6more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+nameOverride+tls+2more~1else~1ingress"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+ingress+6more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source+nameOverride+tls+2more~1else~1ingress@2"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=external+tls=null~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=external+tls=null~1else~1ingress.tls.source"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=external+tls=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=external+tls=null~1else~1ingress.tls.source"
+      }
+    },
+    "when/ingress.tls.source=letsEncrypt/then/ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=external+tls=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=external+tls=null~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@5"
+      },
+      "then": true
+    },
+    "when/nameOverride/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@5"
+      },
+      "then": true
+    },
+    "when/nameOverride/then/tls/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls@2"
+      }
+    },
+    "when/nameOverride/then/tls/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls"
+      }
+    },
+    "when/nameOverride:t/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+9more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=letsEncrypt~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+7more~1else~1ingress"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=letsEncrypt~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+8more~1else~1ingress"
+      }
+    },
+    "when/nameOverride:t/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+9more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=letsEncrypt~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+7more~1else~1ingress@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=letsEncrypt~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+8more~1else~1ingress@2"
+      }
+    },
+    "when/tls+tls=null/then/any/else/tls": {
+      "else": {
+        "$ref": "#/$defs/constrains~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/any/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/any/else/tls@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1tls@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/any/else/tls@4": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/any/else/tls@5": {
+      "else": {
+        "$ref": "#/$defs/constrains~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/any/else/tls@6": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/any/else/tls@7": {
+      "else": {
+        "$ref": "#/$defs/constrains~1tls@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/any/else/tls@8": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": true
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+3more/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+tls+tls=null~1else~1gateway.gatewayClass"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source~1else~1gateway.gatewayClass"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+3more/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+tls+tls=null~1else~1gateway.gatewayClass@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source~1else~1gateway.gatewayClass@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+4more/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+nameOverride+tls+tls=null~1else~1gateway.gatewayClass"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+nameOverride~1else~1gateway.gatewayClass@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass+gateway.gatewayClass.tls.source+4more/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+nameOverride+tls+tls=null~1else~1gateway.gatewayClass@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1ingress+ingress.tls.source+nameOverride~1else~1gateway.gatewayClass"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=null~1else~1gateway.gatewayClass.tls.source"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1any~1else~1gateway.gatewayClass.tls.source"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=null~1else~1gateway.gatewayClass.tls.source@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1any~1else~1gateway.gatewayClass.tls.source@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more/else/tls@3": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=null~1else~1gateway.gatewayClass.tls.source@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1any~1else~1gateway.gatewayClass.tls.source@3"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more/else/tls@4": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1tls+tls=null~1else~1gateway.gatewayClass.tls.source@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1any~1else~1gateway.gatewayClass.tls.source@4"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1nameOverride+tls+tls=null~1else~1gateway.gatewayClass.tls.source"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1nameOverride~1else~1gateway.gatewayClass.tls.source"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1nameOverride+tls+tls=null~1else~1gateway.gatewayClass.tls.source@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source+gateway.gatewayClass.tls.source=null~1then~1nameOverride~1else~1gateway.gatewayClass.tls.source@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source+ingress+nameOverride/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+nameOverride+tls~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+nameOverride~1else~1fail@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source+ingress+nameOverride/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+nameOverride+tls~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+nameOverride~1else~1fail"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source+ingress/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+tls~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress~1else~1fail"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source+ingress/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress+tls~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1ingress~1else~1fail@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source+nameOverride/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride+tls~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source+nameOverride/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride+tls~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1tls~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1tls~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@2"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source/else/tls@3": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1tls~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@3"
+      }
+    },
+    "when/tls+tls=null/then/gateway.gatewayClass.tls.source/else/tls@4": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source~1then~1tls~1else~1fail@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source@4"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=null~1else~1ingress.tls.source"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride+tls+tls=null~1else~1ingress.tls.source@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1nameOverride~1else~1ingress.tls.source"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls+ingress.tls.source+ingress.tls.source=null/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=null~1else~1ingress.tls.source"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1any~1else~1ingress.tls.source"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls+ingress.tls.source+ingress.tls.source=null/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1tls+tls=null~1else~1ingress.tls.source@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source+ingress.tls.source=null~1then~1any~1else~1ingress.tls.source@2"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls.source+nameOverride/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride+tls~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls.source+nameOverride/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride+tls~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls.source/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1tls~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1any~1else~1fail"
+      }
+    },
+    "when/tls+tls=null/then/ingress.tls.source/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1tls~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.tls.source~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/tls+tls=null/then/nameOverride/else/tls": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1tls~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/tls+tls=null/then/nameOverride/else/tls@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/tls+tls=null/then/nameOverride/else/tls@3": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1tls~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/tls+tls=null/then/nameOverride/else/tls@4": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls+tls=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/tls/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls@6"
+      },
+      "then": true
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass+gateway.gatewayClass.tls.source+5more": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+3more~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass+gateway.gatewayClass.tls.source+5more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+3more~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass+gateway.gatewayClass.tls.source+6more": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+4more~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass+gateway.gatewayClass.tls.source+6more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+4more~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more~1else~1tls@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+3more@4": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+1more~1else~1tls@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+2more~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+tls=null": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride+tls+tls=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null+nameOverride~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=null": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null~1else~1tls"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/ingress.tls+ingress.tls.source+ingress.tls.source=null+tls+tls=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1ingress.tls+ingress.tls.source+ingress.tls.source=null~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/nameOverride+tls+tls=null": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/nameOverride+tls+tls=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1nameOverride~1else~1tls@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/tls+tls=null": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/tls+tls=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/tls+tls=null@3": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@6"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
+    },
+    "when/tls=external/then/fail/else/tls+tls=null@4": {
+      "else": {
+        "$ref": "#/$defs/when~1tls+tls=null~1then~1any~1else~1tls@8"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls=external@5"
+      },
+      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2532,34 +4372,34 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
+            "$ref": "#/$defs/constrains~1tls=external"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
           },
           {
             "$ref": "#/$defs/constrains~1tls+tls=null"
           },
           {
-            "$ref": "#/$defs/constrains~1tls=external@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
           },
           {
             "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null"
           },
           {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure.type=gateway@3"
+          },
+          {
             "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure+networkExposure.type+networkExposure.type=null"
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure.type=gateway@3"
           },
           {
             "anyOf": [
@@ -2597,10 +4437,23 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1tls+tls=null@2"
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1tls=external"
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1tls=external@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tls+tls=null@2"
           }
         ]
       },
@@ -2655,290 +4508,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1tls+tls=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tls=external@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "gateway": {
-                    "properties": {
-                      "gatewayClass": {
-                        "$ref": "#/$defs/constrains~1tls=null"
-                      }
-                    },
-                    "required": [
-                      "gatewayClass"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "gateway"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "gateway": {
-                      "properties": {
-                        "gatewayClass": {
-                          "$ref": "#/$defs/constrains~1tls"
-                        }
-                      },
-                      "required": [
-                        "gatewayClass"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "gateway"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tls+tls=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tls=external@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=rancher+nameOverride+nameOverride:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "letsEncrypt": {}
-                  },
-                  "required": [
-                    "letsEncrypt"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "letsEncrypt": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "letsEncrypt"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@6"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "networkExposure": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "networkExposure"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "networkExposure": {}
-                  },
-                  "required": [
-                    "networkExposure"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@6"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
-            "properties": {
-              "tls": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more@5"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ingress": {
-                      "$ref": "#/$defs/constrains~1tls"
-                    }
-                  },
-                  "required": [
-                    "ingress"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ingress": {
-                    "$ref": "#/$defs/constrains~1tls=null"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@4"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1ingress"
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tls+tls=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure.type=gateway@4"
-          },
-          {
             "$ref": "#/$defs/constrains~1tls=external"
           },
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure+networkExposure.type+networkExposure.type=null@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "letsEncrypt": {
-            "additionalProperties": {},
-            "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
-            "properties": {
-              "ingress": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1tls+tls=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tls=external@2"
           },
           {
             "anyOf": [
@@ -2992,10 +4565,54 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+8more@3"
+            "anyOf": [
+              {
+                "properties": {
+                  "gateway": {
+                    "properties": {
+                      "gatewayClass": {
+                        "$ref": "#/$defs/constrains~1tls=null"
+                      }
+                    },
+                    "required": [
+                      "gatewayClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "gateway"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "gateway": {
+                      "properties": {
+                        "gatewayClass": {
+                          "$ref": "#/$defs/constrains~1tls@7"
+                        }
+                      },
+                      "required": [
+                        "gatewayClass"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "gateway"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           {
-            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+8more"
+            "$ref": "#/$defs/constrains~1tls=external"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tls+tls=null"
           }
         ]
       },
@@ -3005,10 +4622,35 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more@4"
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@7"
           },
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+19more@3"
+            "anyOf": [
+              {
+                "properties": {
+                  "networkExposure": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "networkExposure"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "networkExposure": {}
+                  },
+                  "required": [
+                    "networkExposure"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -3016,7 +4658,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more@5"
+        "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress+17more"
       },
       "then": {
         "additionalProperties": {},
@@ -3032,10 +4674,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@7"
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+9more"
           },
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more@5"
+            "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls=null"
           }
         ]
       },
@@ -3045,10 +4687,235 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+20more@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+9more~1else~1any"
+          },
+          {
+            "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@6"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkExposure": {
+            "description": "Network exposure configuration\nChoose between 'ingress' or 'gateway'",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1tls=external"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+          },
+          {
             "$ref": "#/$defs/constrains~1tls+tls=null"
           },
           {
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
+          },
+          {
+            "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+17more"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1ingress"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1ingress=null"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1tls=external@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1letsEncrypt+letsEncrypt.environment+letsEncrypt.environment=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure.type=gateway@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure+networkExposure.type+networkExposure.type=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tls+tls=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "letsEncrypt": {
+            "additionalProperties": {},
+            "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
+            "properties": {
+              "ingress": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1gateway.gatewayClass+gateway.gatewayClass.tls.source+9more~1else~1any@2"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1tls=external@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1tls+tls=null@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=rancher+ingress.tls+3more@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "letsEncrypt": {
+            "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=letsEncrypt~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more~1else~1any@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+10more@5"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
+            "properties": {
+              "tls": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@8"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gateway+gateway.gatewayClass+gateway.gatewayClass.tls.source=letsEncrypt+17more@5"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1tls=external"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tls+tls=null"
           },
           {
             "anyOf": [
@@ -3086,51 +4953,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+4more@2"
+            "$ref": "#/$defs/when~1gateway.gatewayClass.tls.source=letsEncrypt~1then~1gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+5more~1else~1any"
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tls+tls=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=rancher+ingress+nameOverride+nameOverride:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tls=external"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+ingress.tls+ingress.tls.source+2more"
+            "$ref": "#/$defs/constrains~1ingress.tls+ingress.tls=null"
           }
         ]
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "letsEncrypt": {
-            "description": "LetsEncrypt config ###\nProTip: The production environment only allows you to register a name 5 times a week.\nUse staging until you have your config right.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1gateway.gatewayClass+gateway.gatewayClass.tls+gateway.gatewayClass.tls.source+16more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "networkExposure": {
-            "description": "Network exposure configuration\nChoose between 'ingress' or 'gateway'",
-            "type": "object"
-          }
-        }
-      }
+      "then": false
     }
   ],
   "properties": {

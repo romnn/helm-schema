@@ -1,33 +1,72 @@
 {
   "$defs": {
+    "constrains/daemonset.autoscaling.enabled:t": {
+      "properties": {
+        "daemonset": {
+          "properties": {
+            "autoscaling": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "autoscaling"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "daemonset"
+      ],
+      "type": "object"
+    },
+    "constrains/daemonset.enabled:t": {
+      "properties": {
+        "daemonset": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "daemonset"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@6"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.annotations+10more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.annotations+10more"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@6"
         }
       ]
     },
@@ -37,36 +76,36 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.annotations+10more@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@5"
+          "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.annotations+10more@2"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@6"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@6"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@3"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+5more@4"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+5more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@3"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+5more@2"
@@ -94,29 +133,29 @@
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1image.tag@2"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1image.tag@20"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1image.tag@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1image.tag@20"
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor:t@4"
@@ -132,10 +171,10 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1image.tag@2"
+          "$ref": "#/$defs/constrains~1image.tag@20"
         }
       ]
     },
@@ -151,17 +190,17 @@
           "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1image.tag@2"
+          "$ref": "#/$defs/constrains~1image.tag@20"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
         }
       ]
     },
@@ -188,10 +227,10 @@
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@4"
+          "$ref": "#/$defs/constrains~1serviceMonitor:t@2"
         }
       ]
     },
@@ -201,17 +240,17 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+3more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+2more@2"
+          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@5"
         }
       ]
     },
@@ -221,7 +260,9 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor"
+          "not": {
+            "$ref": "#/$defs/constrains~1serviceMonitor"
+          }
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor=null"
@@ -234,7 +275,9 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor"
+          "not": {
+            "$ref": "#/$defs/constrains~1serviceMonitor"
+          }
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor=null"
@@ -250,7 +293,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+3more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@3"
+          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
         }
       ]
     },
@@ -260,7 +303,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+3more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@3"
+          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
         }
       ]
     },
@@ -270,27 +313,27 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@5"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more@3"
+          "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@6"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
+          "$ref": "#/$defs/constrains~1image.tag@19"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
@@ -299,20 +342,20 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1image.tag"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+5more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@7"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@7"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
@@ -321,7 +364,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         }
       ]
     },
@@ -331,10 +374,10 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
@@ -344,58 +387,76 @@
     "constrains/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+5more@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@7"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@7"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride@5"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@6"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@6"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride@6"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
         }
       ]
+    },
+    "constrains/fullnameOverride+image.tag": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail"
+    },
+    "constrains/fullnameOverride+image.tag+nameOverride": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail"
+    },
+    "constrains/fullnameOverride+image.tag+nameOverride@2": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@4"
+    },
+    "constrains/fullnameOverride+image.tag+nameOverride@3": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@11"
+    },
+    "constrains/fullnameOverride+image.tag@2": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@4"
+    },
+    "constrains/fullnameOverride+image.tag@3": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@10"
     },
     "constrains/fullnameOverride:t": {
       "not": {
@@ -405,10 +466,10 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@20"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
@@ -432,11 +493,22 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
     },
     "constrains/fullnameOverride@3": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      }
+    },
+    "constrains/fullnameOverride@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      }
+    },
+    "constrains/fullnameOverride@6": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -448,11 +520,59 @@
       "type": "object"
     },
     "constrains/image.tag": {
+      "$ref": "#/$defs/constrains~1image.tag@6"
+    },
+    "constrains/image.tag+nameOverride": {
+      "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail"
+    },
+    "constrains/image.tag+nameOverride@2": {
+      "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@4"
+    },
+    "constrains/image.tag+nameOverride@3": {
+      "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@11"
+    },
+    "constrains/image.tag+nameOverride@4": {
+      "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@2"
+    },
+    "constrains/image.tag+nameOverride@5": {
+      "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@8"
+    },
+    "constrains/image.tag@10": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@11": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@12": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@13": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@14": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@15": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@16": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@17": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@18": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@19": {
       "not": {
-        "$ref": "#/$defs/constrains~1image.tag@2"
+        "$ref": "#/$defs/constrains~1image.tag@20"
       }
     },
     "constrains/image.tag@2": {
+      "$ref": "#/$defs/constrains~1image.tag@9"
+    },
+    "constrains/image.tag@20": {
       "properties": {
         "image": {
           "properties": {
@@ -471,68 +591,87 @@
       ],
       "type": "object"
     },
+    "constrains/image.tag@3": {
+      "$ref": "#/$defs/constrains~1image.tag@15"
+    },
+    "constrains/image.tag@4": {
+      "$ref": "#/$defs/constrains~1image.tag@7"
+    },
+    "constrains/image.tag@5": {
+      "$ref": "#/$defs/constrains~1image.tag@13"
+    },
+    "constrains/image.tag@6": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@7": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@8": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
+    "constrains/image.tag@9": {
+      "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
+    },
     "constrains/nameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
+      "$ref": "#/$defs/constrains~1nameOverride@5"
     },
     "constrains/nameOverride+nameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@18"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@19"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@20"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@20"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride@20"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@20"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         }
       ]
     },
@@ -542,30 +681,64 @@
       }
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@3": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@10": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@11": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@12": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@13": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@14": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@15": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@16": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@17": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@18": {
       "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1nameOverride@20"
+      }
+    },
+    "constrains/nameOverride@19": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@20"
       }
     },
     "constrains/nameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
+      "$ref": "#/$defs/constrains~1nameOverride@8"
     },
-    "constrains/nameOverride@3": {
+    "constrains/nameOverride@20": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -575,6 +748,27 @@
         "nameOverride"
       ],
       "type": "object"
+    },
+    "constrains/nameOverride@3": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@4": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@5": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@6": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@7": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@8": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride@9": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
     },
     "constrains/namespace": {
       "allOf": [
@@ -590,25 +784,22 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace@7"
+          "$ref": "#/$defs/constrains~1namespace@6"
         }
       ]
     },
     "constrains/namespace+namespace:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace@3"
+          "$ref": "#/$defs/constrains~1namespace:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace:t"
+          "$ref": "#/$defs/constrains~1namespace@3"
         }
       ]
     },
     "constrains/namespace+namespace:t+serviceAccount+serviceAccount.annotations+10more": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+4more"
-        },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
         },
@@ -617,6 +808,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations+4more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+4more"
         }
       ]
     },
@@ -628,50 +822,50 @@
     "constrains/namespace+namespace:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace+namespace:t@5"
-        },
-        {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1namespace+namespace:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/namespace+namespace:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace@6"
+          "$ref": "#/$defs/constrains~1namespace:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace:t"
+          "$ref": "#/$defs/constrains~1namespace@7"
         }
       ]
     },
     "constrains/namespace+namespace:t@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace@4"
+          "$ref": "#/$defs/constrains~1namespace:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace:t"
+          "$ref": "#/$defs/constrains~1namespace@5"
         }
       ]
     },
     "constrains/namespace+namespace:t@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace@5"
+          "$ref": "#/$defs/constrains~1namespace:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace:t"
+          "$ref": "#/$defs/constrains~1namespace@4"
         }
       ]
     },
     "constrains/namespace+namespace:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace+namespace:t@4"
+          "$ref": "#/$defs/constrains~1namespace+namespace:t"
         },
         {
           "$ref": "#/$defs/constrains~1namespace+namespace:t@2"
@@ -680,7 +874,7 @@
           "$ref": "#/$defs/constrains~1namespace+namespace:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace+namespace:t"
+          "$ref": "#/$defs/constrains~1namespace+namespace:t@4"
         }
       ]
     },
@@ -1435,17 +1629,17 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace@7"
+          "$ref": "#/$defs/constrains~1namespace@6"
         }
       ]
     },
     "constrains/namespace@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace"
+          "$ref": "#/$defs/constrains~1namespace@8"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace@8"
+          "$ref": "#/$defs/constrains~1namespace"
         },
         {
           "properties": {
@@ -1463,8 +1657,15 @@
     "constrains/namespace@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespace"
+          "$ref": "#/$defs/constrains~1namespace@8"
         },
+        {
+          "$ref": "#/$defs/constrains~1namespace"
+        }
+      ]
+    },
+    "constrains/namespace@5": {
+      "anyOf": [
         {
           "$ref": "#/$defs/constrains~1namespace@8"
         },
@@ -1478,49 +1679,13 @@
             "namespace"
           ],
           "type": "object"
-        }
-      ]
-    },
-    "constrains/namespace@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1namespace@8"
+          "$ref": "#/$defs/constrains~1namespace"
         }
       ]
     },
     "constrains/namespace@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespace@2"
-        },
-        {
-          "properties": {
-            "namespace": {
-              "$ref": "#/$defs/constrains~1namespace~1string;pattern-x20-x2e"
-            }
-          },
-          "required": [
-            "namespace"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "namespace": {
-              "$ref": "#/$defs/constrains~1namespace~1allOf~1not~1object+object@4"
-            }
-          },
-          "required": [
-            "namespace"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/namespace@7": {
       "anyOf": [
         {
           "not": {
@@ -1547,6 +1712,35 @@
         }
       ]
     },
+    "constrains/namespace@7": {
+      "anyOf": [
+        {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/constrains~1namespace~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace@2"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/constrains~1namespace~1allOf~1not~1object+object@4"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/namespace@8": {
       "properties": {
         "namespace": {
@@ -1555,6 +1749,17 @@
       },
       "required": [
         "namespace"
+      ],
+      "type": "object"
+    },
+    "constrains/service.enabled:t": {
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "service"
       ],
       "type": "object"
     },
@@ -1608,7 +1813,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.annotations"
@@ -1620,7 +1825,7 @@
           "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         },
         {
           "properties": {
@@ -1672,13 +1877,13 @@
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        },
-        {
           "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         }
       ]
     },
@@ -1773,6 +1978,12 @@
           "type": "object"
         },
         {
+          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
+        },
+        {
           "properties": {
             "serviceAccount": {
               "properties": {
@@ -1790,12 +2001,6 @@
             "serviceAccount"
           ],
           "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
         },
         {
           "properties": {
@@ -1862,23 +2067,23 @@
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+2more"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name+serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+2more"
         }
       ]
     },
@@ -1971,13 +2176,13 @@
     "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@2"
+          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t"
@@ -2430,16 +2635,19 @@
       }
     },
     "constrains/serviceAccount.create:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-      }
+      "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
     },
     "constrains/serviceAccount.create:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
       }
     },
     "constrains/serviceAccount.create:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      }
+    },
+    "constrains/serviceAccount.create:t@4": {
       "properties": {
         "serviceAccount": {
           "properties": {
@@ -2543,68 +2751,68 @@
       "type": "object"
     },
     "constrains/serviceMonitor": {
-      "not": {
-        "properties": {
-          "serviceMonitor": {}
-        },
-        "required": [
-          "serviceMonitor"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "serviceMonitor": {}
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
     },
     "constrains/serviceMonitor+serviceMonitor=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor=null"
-        }
-      ]
+      "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
     },
     "constrains/serviceMonitor+serviceMonitor=null@2": {
+      "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+    },
+    "constrains/serviceMonitor+serviceMonitor=null@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor"
+          "not": {
+            "$ref": "#/$defs/constrains~1serviceMonitor"
+          }
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor=null"
         }
       ]
     },
-    "constrains/serviceMonitor+serviceMonitor=null@3": {
+    "constrains/serviceMonitor+serviceMonitor=null@4": {
       "not": {
         "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null"
       }
     },
-    "constrains/serviceMonitor+serviceMonitor=null@4": {
+    "constrains/serviceMonitor+serviceMonitor=null@5": {
       "not": {
         "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@2"
       }
     },
     "constrains/serviceMonitor.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@3"
-      }
+      "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
     },
     "constrains/serviceMonitor.enabled:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@3"
-      }
+      "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
     },
     "constrains/serviceMonitor.enabled:t@3": {
+      "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
+    },
+    "constrains/serviceMonitor.enabled:t@4": {
+      "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
+    },
+    "constrains/serviceMonitor.enabled:t@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      }
+    },
+    "constrains/serviceMonitor.enabled:t@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      }
+    },
+    "constrains/serviceMonitor.enabled:t@7": {
       "properties": {
         "serviceMonitor": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1enabled:t"
         }
       },
       "required": [
@@ -2664,6 +2872,25 @@
       ],
       "type": "object"
     },
+    "constrains/sidecar.configReloader.enabled:t": {
+      "properties": {
+        "sidecar": {
+          "properties": {
+            "configReloader": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "configReloader"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "sidecar"
+      ],
+      "type": "object"
+    },
     "helm-marker-free": {
       "anyOf": [
         {
@@ -2718,6 +2945,3310 @@
           "const": true
         }
       ]
+    },
+    "when/daemonset.autoscaling.enabled:t/then/daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.autoscaling.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1daemonset.enabled:t~1then~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t~1else~1serviceAccount.create:t+serviceMonitor"
+      }
+    },
+    "when/daemonset.autoscaling.enabled:t/then/daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+3more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+1more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.autoscaling.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1daemonset.enabled:t~1then~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t~1else~1serviceAccount.create:t+serviceMonitor@2"
+      }
+    },
+    "when/daemonset.autoscaling.enabled:t/then/daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+service.enabled:t+2more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.autoscaling.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1daemonset.enabled:t~1then~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t~1else~1service+serviceAccount.create:t+serviceMonitor"
+      }
+    },
+    "when/daemonset.autoscaling.enabled:t/then/daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+4more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.autoscaling.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1daemonset.enabled:t~1then~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t~1else~1serviceMonitor+serviceMonitor:t+serviceMonitor=null"
+      }
+    },
+    "when/daemonset.autoscaling.enabled:t/then/daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+4more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.autoscaling.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1daemonset.enabled:t~1then~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t~1else~1serviceMonitor+serviceMonitor:t+serviceMonitor=null@2"
+      }
+    },
+    "when/daemonset.autoscaling.enabled:t/then/daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.autoscaling.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1daemonset.enabled:t~1then~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t~1else~1serviceAccount.create:t+serviceMonitor+serviceMonitor:t+serviceMonitor=null"
+      }
+    },
+    "when/daemonset.autoscaling.enabled:t/then/daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+5more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+3more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.autoscaling.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1daemonset.enabled:t~1then~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t~1else~1serviceAccount.create:t+serviceMonitor+serviceMonitor:t+serviceMonitor=null@2"
+      }
+    },
+    "when/daemonset.enabled:t/then/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t/else/service+serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+service.enabled:t+2more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t~1else~1any"
+      }
+    },
+    "when/daemonset.enabled:t/then/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t~1else~1any@2"
+      }
+    },
+    "when/daemonset.enabled:t/then/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t/else/serviceAccount.create:t+serviceMonitor+serviceMonitor:t+serviceMonitor=null": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t~1else~1any@4"
+      }
+    },
+    "when/daemonset.enabled:t/then/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t/else/serviceAccount.create:t+serviceMonitor+serviceMonitor:t+serviceMonitor=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+3more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t~1else~1any@7"
+      }
+    },
+    "when/daemonset.enabled:t/then/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t/else/serviceAccount.create:t+serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+1more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t~1else~1any@5"
+      }
+    },
+    "when/daemonset.enabled:t/then/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t/else/serviceMonitor+serviceMonitor:t+serviceMonitor=null": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t~1else~1any@3"
+      }
+    },
+    "when/daemonset.enabled:t/then/fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t/else/serviceMonitor+serviceMonitor:t+serviceMonitor=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1daemonset.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t~1else~1any@6"
+      }
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@10": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@10"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@11": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@3"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@12": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@12"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@13": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@13"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@4"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@3"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@2"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@5": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@5"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@6": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@6"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@7": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@7"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@8": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@5"
+      }
+    },
+    "when/fullnameOverride/then/image.tag+nameOverride/else/fail@9": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@9"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@10": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@3"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@11": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@16"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@12": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@17"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@13": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@18"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@4"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@8"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@2"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@5": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@10"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@6": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@11"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@7": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@12"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@8": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@5"
+      }
+    },
+    "when/fullnameOverride/then/image.tag/else/fail@9": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@14"
+      }
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+service.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+service.enabled:t+serviceMonitor~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+service.enabled:t+serviceMonitor~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+service.enabled:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+service.enabled:t+serviceMonitor~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+service.enabled:t+serviceMonitor~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+service.enabled:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+service.enabled:t+2more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceAccount.create:t+serviceMonitor.enabled:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+1more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceAccount.create:t+serviceMonitor.enabled:t~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+1more~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+serviceMonitor:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+2more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceAccount.create:t+3more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+serviceMonitor:t+1more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+2more~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1any@3"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more~1else~1any@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1any@4"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+2more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+3more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+4more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+2more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+3more~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@3"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride~1else~1any@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@4"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t/else/any@5": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride~1else~1any@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@5"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t/else/any@6": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride~1else~1any@6"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@6"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+image.tag+nameOverride+nameOverride:t/else/any@7": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride~1else~1any@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@7"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+service.enabled:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+service.enabled:t+serviceAccount.create:t+1more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+service.enabled:t+2more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+service.enabled:t+serviceAccount.create:t+1more~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t+service.enabled:t+serviceAccount.create:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1service.enabled:t+serviceAccount.create:t+serviceMonitor~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/service.enabled:t+serviceAccount.create:t+serviceMonitor/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1any~1else~1serviceAccount.create:t+serviceMonitor@2"
+      }
+    },
+    "when/image.tag/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": true
+    },
+    "when/image.tag/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@3"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@10": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@14"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@11": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@15"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@12": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@16"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@13": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@17"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@4"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@6"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@7"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@5": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@9"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@6": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@10"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@7": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@11"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@8": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@12"
+      }
+    },
+    "when/image.tag/then/nameOverride/else/fail@9": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1image.tag@20"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@13"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@20"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+service.enabled:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+image.tag~1else~1serviceAccount.create:t+serviceMonitor"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1serviceAccount.create:t+serviceMonitor"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+service.enabled:t+serviceMonitor/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+image.tag~1else~1serviceMonitor"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1serviceMonitor"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+service.enabled:t+serviceMonitor/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+image.tag~1else~1serviceMonitor@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1serviceMonitor@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag~1else~1serviceMonitor.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1serviceMonitor.enabled:t@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag~1else~1serviceMonitor.enabled:t@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1serviceMonitor.enabled:t@3"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor:t+1more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+2more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor:t+1more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1fail@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+3more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1fail@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@3"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride/else/any@5": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@8"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@8"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride/else/any@6": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@9"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@9"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+image.tag+nameOverride/else/any@7": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@3"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+nameOverride+service.enabled:t+serviceAccount.create:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride~1else~1serviceAccount.create:t+serviceMonitor"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+nameOverride~1else~1serviceAccount.create:t+serviceMonitor@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+nameOverride+service.enabled:t+serviceAccount.create:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride~1else~1serviceAccount.create:t+serviceMonitor@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride+nameOverride~1else~1serviceAccount.create:t+serviceMonitor"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1fullnameOverride~1else~1serviceAccount.create:t+serviceMonitor@3"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1image.tag~1else~1serviceAccount.create:t+serviceMonitor"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1image.tag+nameOverride~1else~1serviceAccount.create:t+serviceMonitor"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+service.enabled:t+serviceMonitor/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1image.tag~1else~1serviceMonitor"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1image.tag+nameOverride~1else~1serviceMonitor"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+service.enabled:t+serviceMonitor/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1image.tag~1else~1serviceMonitor@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1image.tag+nameOverride~1else~1serviceMonitor@2"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+serviceMonitor:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor:t+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceAccount.create:t+serviceMonitor+serviceMonitor:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor:t+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceAccount.create:t+serviceMonitor.enabled:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag~1else~1serviceMonitor.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag+nameOverride~1else~1serviceMonitor.enabled:t@2"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceAccount.create:t+serviceMonitor.enabled:t/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag~1else~1serviceMonitor.enabled:t@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag+nameOverride~1else~1serviceMonitor.enabled:t@3"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+1more/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more~1else~1fail@2"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor:t+2more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null+1more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more~1else~1fail@2"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@4"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@8"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@3"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@2"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride/else/any@5": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@5"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride/else/any@6": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@14"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@9"
+      }
+    },
+    "when/nameOverride:t/then/image.tag+nameOverride/else/any@7": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@3"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1any~1else~1serviceAccount.create:t+serviceMonitor@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1nameOverride~1else~1serviceAccount.create:t+serviceMonitor"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+service.enabled:t+serviceAccount.create:t+serviceMonitor/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1any~1else~1serviceAccount.create:t+serviceMonitor@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1nameOverride~1else~1serviceAccount.create:t+serviceMonitor@2"
+      }
+    },
+    "when/nameOverride:t/then/service.enabled:t+serviceAccount.create:t+serviceMonitor/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.enabled:t~1then~1any~1else~1serviceAccount.create:t+serviceMonitor"
+      }
+    },
+    "when/service.enabled:t/then/any/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": true
+    },
+    "when/service.enabled:t/then/any/else/serviceAccount.create:t+serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": true
+    },
+    "when/service.enabled:t/then/any/else/serviceAccount.create:t+serviceMonitor@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": true
+    },
+    "when/service.enabled:t/then/any/else/serviceAccount.create:t+serviceMonitor@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": true
+    },
+    "when/service.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@5"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@10"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride+image.tag/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+image.tag~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride+image.tag/else/serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@5"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride+image.tag/else/serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@11"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride+nameOverride/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+nameOverride~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride+nameOverride/else/serviceAccount.create:t+serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride+nameOverride~1else~1serviceMonitor.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride~1else~1serviceMonitor.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride/else/serviceAccount.create:t+serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/service.enabled:t/then/fullnameOverride/else/serviceAccount.create:t+serviceMonitor@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1fullnameOverride~1else~1serviceMonitor.enabled:t@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+      }
+    },
+    "when/service.enabled:t/then/image.tag+nameOverride/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag+nameOverride~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride"
+      }
+    },
+    "when/service.enabled:t/then/image.tag+nameOverride/else/serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@5"
+      }
+    },
+    "when/service.enabled:t/then/image.tag+nameOverride/else/serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@10"
+      }
+    },
+    "when/service.enabled:t/then/image.tag/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1image.tag~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag"
+      }
+    },
+    "when/service.enabled:t/then/image.tag/else/serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@10"
+      }
+    },
+    "when/service.enabled:t/then/image.tag/else/serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@16"
+      }
+    },
+    "when/service.enabled:t/then/nameOverride/else/serviceAccount.create:t+serviceMonitor": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1nameOverride~1else~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/service.enabled:t/then/nameOverride/else/serviceAccount.create:t+serviceMonitor@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1nameOverride~1else~1serviceMonitor.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1service.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/serviceAccount.create:t/then/any/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": true
+    },
+    "when/serviceAccount.create:t/then/any/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": true
+    },
+    "when/serviceAccount.create:t/then/any/else/serviceMonitor.enabled:t@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": true
+    },
+    "when/serviceAccount.create:t/then/any/else/serviceMonitor.enabled:t@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": true
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor:t+1more/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor:t+1more/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag+nameOverride/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag+nameOverride/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag+nameOverride/else/serviceMonitor.enabled:t@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@8"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+image.tag/else/serviceMonitor.enabled:t@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@8"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+nameOverride/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride+nameOverride/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/fullnameOverride/else/serviceMonitor.enabled:t@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor:t+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor:t+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag+nameOverride/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag+nameOverride/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@4"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag+nameOverride/else/serviceMonitor.enabled:t@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@5"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag+serviceMonitor+serviceMonitor:t+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@4"
+      }
+    },
+    "when/serviceAccount.create:t/then/image.tag/else/serviceMonitor.enabled:t@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@5"
+      }
+    },
+    "when/serviceAccount.create:t/then/nameOverride/else/serviceMonitor.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/serviceAccount.create:t/then/nameOverride/else/serviceMonitor.enabled:t@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceAccount.create:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag+nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag+nameOverride@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag+nameOverride@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@9"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag+nameOverride@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@9"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/fullnameOverride+image.tag@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@8"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag+nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag+nameOverride@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag+nameOverride@3": {
+      "else": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@9"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag+nameOverride@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@14"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/any/else/image.tag@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": true
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@6"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@6"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride@5": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@12"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride@6": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride@7": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@13"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag+nameOverride@8": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag@3": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag@5": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@12"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag@6": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag@7": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@13"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/fullnameOverride+image.tag@8": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@11"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@6"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride@3": {
+      "else": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride@5": {
+      "else": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@12"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride@6": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride@7": {
+      "else": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@13"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag+nameOverride@8": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag@2": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@12"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag@5": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@17"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag@6": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag@7": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@18"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fail/else/image.tag@8": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag@7"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": false
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag+nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag+nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@3"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag+nameOverride/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag+nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag+nameOverride/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@3"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@3"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/fullnameOverride+image.tag/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@3"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag+nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag+nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@3"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag+nameOverride/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag+nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag+nameOverride/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag+nameOverride~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@3"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@3"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@2"
+      }
+    },
+    "when/serviceMonitor+serviceMonitor=null/then/image.tag/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@3"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": true
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag+nameOverride@4"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride@6"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@8"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@5"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag+nameOverride~1else~1fail@10"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1fullnameOverride+image.tag@4"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag@6"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@8"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@5"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+image.tag/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1image.tag~1else~1fail@11"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/fullnameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null+sidecar.configReloader/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null+sidecar.configReloader/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag+nameOverride@4"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride@6"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@4"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@5"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@5"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail@10"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null+sidecar.configReloader/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null+sidecar.configReloader/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1sidecar.configReloader.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1any~1else~1image.tag@4"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag@6"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@4"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@5"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@10"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/image.tag/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1image.tag@16"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/serviceMonitor.enabled:t/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null+1more~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null+1more~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@3"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag+nameOverride~1else~1any@4"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null+1more~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor.enabled:t+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null+1more~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag~1else~1any@3"
+      }
+    },
+    "when/serviceMonitor:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fullnameOverride+image.tag~1else~1any@4"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null+sidecar.configReloader~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor.enabled:t+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+nameOverride+serviceMonitor+serviceMonitor=null+sidecar.configReloader~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag+nameOverride~1else~1any@3"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag+nameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag+nameOverride~1else~1any@4"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null+sidecar.configReloader~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null+sidecar.configReloader~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1any"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1any@2"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1fail"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor.enabled:t+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1image.tag+serviceMonitor+serviceMonitor=null~1else~1fail@2"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag~1else~1any@3"
+      }
+    },
+    "when/serviceMonitor:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1image.tag@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1serviceMonitor:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1image.tag~1else~1any@4"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride@4"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/fullnameOverride+image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag+nameOverride@8"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag@4"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/fullnameOverride+image.tag+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1fullnameOverride+image.tag@8"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride@4"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/image.tag+nameOverride+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag+nameOverride@8"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag@4"
+      }
+    },
+    "when/sidecar.configReloader.enabled:t/then/image.tag+serviceMonitor+serviceMonitor=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sidecar.configReloader.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1serviceMonitor+serviceMonitor=null~1then~1fail~1else~1image.tag@8"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2725,9 +6256,196 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more~1else~1any@4"
+      },
+      "then": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@6"
+            "additionalProperties": {},
+            "properties": {
+              "sidecar": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReloader": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "sidecar": {
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1service.enabled:t+serviceAccount.create:t+serviceMonitor~1else~1fail"
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "fullnameOverride": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "fullnameOverride": {
+              "description": "Overrides the chart's computed fullname",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1daemonset.autoscaling.enabled:t~1then~1daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+5more~1else~1any@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1daemonset.autoscaling.enabled:t~1then~1daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+3more~1else~1any@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "service": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {}
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+service.enabled:t+1more~1else~1any@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+service.enabled:t+2more~1else~1any@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "properties": {
+                  "tag": {
+                    "description": "Overrides the image tag whose default is the chart's appVersion",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1daemonset.autoscaling.enabled:t~1then~1daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+5more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "description": "ServiceMonitor configuration",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1daemonset.autoscaling.enabled:t~1then~1daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+4more~1else~1any@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.annotations+10more"
           },
           {
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@7"
@@ -2736,14 +6454,410 @@
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+4more@5"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+18more@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1namespace+namespace:t+serviceAccount+serviceAccount.annotations+10more"
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+image.tag+nameOverride+nameOverride:t+1more@6"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+service.enabled:t+1more~1else~1any"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {}
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+4more~1else~1any@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sidecar": {
+            "additionalProperties": {},
+            "properties": {
+              "configReloader": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more~1else~1any@2"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "configReloader": {}
+                      },
+                      "required": [
+                        "configReloader"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "sidecar": {
+                    "properties": {
+                      "configReloader": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "configReloader"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "sidecar"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t+service.enabled:t+serviceAccount.create:t+1more~1else~1any"
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "nameOverride": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "nameOverride": {
+              "description": "Overrides the chart's name",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "sidecar": {
+                      "properties": {
+                        "configReloader": {
+                          "$ref": "#/$defs/constrains~1serviceMonitor"
+                        }
+                      },
+                      "required": [
+                        "configReloader"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "sidecar": {
+                    "properties": {
+                      "configReloader": {
+                        "$ref": "#/$defs/constrains~1serviceMonitor=null"
+                      }
+                    },
+                    "required": [
+                      "configReloader"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "sidecar"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+4more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+service.enabled:t+2more~1else~1any"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "tag": {}
+                      },
+                      "required": [
+                        "tag"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "tag": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+service.enabled:t+2more~1else~1any"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1daemonset.autoscaling.enabled:t~1then~1daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+4more~1else~1any@3"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+image.tag+nameOverride+nameOverride:t+serviceMonitor+3more~1else~1any@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "sidecar": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "sidecar"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sidecar": {}
+                  },
+                  "required": [
+                    "sidecar"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1daemonset.autoscaling.enabled:t~1then~1daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+3more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1daemonset.autoscaling.enabled:t~1then~1daemonset+fullnameOverride+fullnameOverride:t+image.tag+nameOverride+4more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraPorts": {
+            "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
     }
   ],
   "properties": {

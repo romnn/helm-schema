@@ -42,7 +42,7 @@
     "constrains/dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride"
@@ -52,7 +52,7 @@
     "constrains/dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride"
@@ -120,7 +120,7 @@
     "constrains/dask-gateway.nameOverride+dask-gateway.nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1dask-gateway.nameOverride"
@@ -130,7 +130,7 @@
     "constrains/dask-gateway.nameOverride+dask-gateway.nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t"
+          "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1dask-gateway.nameOverride"
@@ -138,23 +138,25 @@
       ]
     },
     "constrains/dask-gateway.nameOverride:t": {
-      "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      }
     },
     "constrains/dask-gateway.nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      }
     },
     "constrains/dask-gateway.nameOverride:t@3": {
-      "not": {
-        "properties": {
-          "dask-gateway": {
-            "$ref": "#/$defs/constrains~1nameOverride:t@3"
-          }
-        },
-        "required": [
-          "dask-gateway"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "dask-gateway": {
+          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        }
+      },
+      "required": [
+        "dask-gateway"
+      ],
+      "type": "object"
     },
     "constrains/dask-kubernetes.enabled:t": {
       "properties": {
@@ -240,10 +242,10 @@
     "constrains/fullnameOverride+fullnameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         }
       ]
     },
@@ -258,20 +260,20 @@
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t@3"
         }
       ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -389,16 +391,16 @@
     "constrains/nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t": {
@@ -436,7 +438,7 @@
     "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
+          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+2more"
         },
         {
           "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@3"
@@ -445,7 +447,7 @@
           "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+2more"
+          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
         },
         {
           "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@3"
@@ -603,10 +605,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount+1more"
+          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name:t"
+          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount+1more"
         },
         {
           "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
@@ -2042,6 +2044,101 @@
       },
       "then": false
     },
+    "when/dask-gateway.fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride"
+      },
+      "then": true
+    },
+    "when/dask-gateway.fullnameOverride/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride"
+      },
+      "then": true
+    },
+    "when/dask-gateway.fullnameOverride/then/dask-gateway.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1dask-gateway.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/dask-gateway.fullnameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t@3"
+      },
+      "then": true
+    },
+    "when/dask-gateway.fullnameOverride:t/then/dask-gateway.fullnameOverride+dask-gateway.nameOverride+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1dask-gateway.nameOverride:t~1then~1dask-gateway.nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1dask-gateway.nameOverride:t~1then~1dask-gateway.fullnameOverride+dask-gateway.nameOverride~1else~1any"
+      }
+    },
+    "when/dask-gateway.fullnameOverride:t/then/dask-gateway.fullnameOverride+dask-gateway.nameOverride:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1dask-gateway.nameOverride:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1dask-gateway.nameOverride:t~1then~1dask-gateway.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/dask-gateway.nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.nameOverride"
+      },
+      "then": true
+    },
+    "when/dask-gateway.nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      },
+      "then": true
+    },
+    "when/dask-gateway.nameOverride:t/then/dask-gateway.fullnameOverride+dask-gateway.nameOverride/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride~1then~1dask-gateway.nameOverride~1else~1fail"
+      }
+    },
+    "when/dask-gateway.nameOverride:t/then/dask-gateway.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/dask-gateway.nameOverride:t/then/dask-gateway.nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1dask-gateway.nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1dask-gateway.nameOverride~1then~1any~1else~1fail"
+      }
+    },
     "when/fullnameOverride!=null+nameOverride!=null/then/fail": {
       "if": {
         "allOf": [
@@ -2094,26 +2191,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway+dask-gateway=null"
-          },
-          {
             "properties": {
               "dask-gateway": {
                 "allOf": [
                   {
-                    "type": "object"
+                    "$ref": "#/$defs/constrains~1traefik+traefik=null"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1traefik.service+traefik.service=null"
+                    "type": "object"
                   }
                 ]
               }
@@ -2122,11 +2207,42 @@
               "dask-gateway"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway+dask-gateway=null"
           }
         ]
       },
       "then": {
         "$ref": "#/$defs/when~1dask-gateway.fullnameOverride!=null+dask-gateway.nameOverride!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "description": "Provide a name to substitute for the full names of resources",
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -2184,45 +2300,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway+dask-gateway=null"
-          },
-          {
-            "properties": {
-              "dask-gateway": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1gateway+gateway=null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "dask-gateway"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride!=null+dask-gateway.nameOverride!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "anyOf": [
               {
                 "not": {
@@ -2264,10 +2341,49 @@
             "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t@2"
           },
           {
+            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway+dask-gateway=null"
+          },
+          {
+            "properties": {
+              "dask-gateway": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1traefik.service+traefik.service=null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "dask-gateway"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride!=null+dask-gateway.nameOverride!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t"
+          },
+          {
             "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t"
           }
         ]
       },
@@ -2465,16 +2581,77 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride:t~1then~1dask-gateway.fullnameOverride+dask-gateway.nameOverride:t~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "description": "Provide a name to partially substitute for the full names of resources (will maintain the release name)",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride:t~1then~1dask-gateway.fullnameOverride+dask-gateway.nameOverride+1more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "traefik": {
+                "additionalProperties": {},
+                "description": "traefik nested config relates to the traefik Pod and Traefik running within it\nthat is acting as a proxy for traffic towards the gateway or user created\nDaskCluster resources.",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "Any additional arguments to forward to traefik",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1dask-gateway+dask-gateway=null"
+          },
           {
             "properties": {
               "dask-gateway": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1traefik+traefik=null"
+                    "type": "object"
                   },
                   {
-                    "type": "object"
+                    "$ref": "#/$defs/constrains~1gateway+gateway=null"
                   }
                 ]
               }
@@ -2483,18 +2660,6 @@
               "dask-gateway"
             ],
             "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-gateway+dask-gateway=null"
           }
         ]
       },
@@ -2525,13 +2690,13 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t@2"
+            "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride+dask-gateway.fullnameOverride:t"
           },
           {
             "$ref": "#/$defs/constrains~1dask-gateway.fullnameOverride:t+dask-gateway.nameOverride+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1dask-gateway.nameOverride+dask-gateway.nameOverride:t"
           }
         ]
       },
@@ -2564,19 +2729,19 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1traefik+traefik=null"
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
               },
               {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+                "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
               },
               {
                 "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+                "$ref": "#/$defs/constrains~1traefik+traefik=null"
+              },
+              {
+                "type": "object"
               }
             ]
           },
@@ -2588,16 +2753,40 @@
           "if": {
             "allOf": [
               {
-                "type": "object"
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
               },
               {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+                "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
               },
               {
                 "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
               },
               {
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1traefik.service+traefik.service=null"
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+              },
+              {
                 "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+              },
+              {
+                "type": "object"
               },
               {
                 "$ref": "#/$defs/constrains~1gateway+gateway=null"
@@ -2611,30 +2800,6 @@
         {
           "if": {
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          "then": {
-            "$ref": "#/$defs/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1traefik.service+traefik.service=null"
-              }
-            ]
           },
           "then": {
             "$ref": "#/$defs/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
@@ -2863,10 +3028,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
+                "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+2more"
               },
               {
                 "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@3"
@@ -2875,7 +3037,10 @@
                 "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+1more"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+2more"
+                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@3"

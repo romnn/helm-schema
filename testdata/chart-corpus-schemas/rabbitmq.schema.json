@@ -47,6 +47,9 @@
     "constrains/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+2more": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative"
         },
         {
@@ -57,9 +60,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
         }
       ]
     },
@@ -85,10 +85,10 @@
     "constrains/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@4"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@4"
         },
         {
           "$ref": "#/$defs/constrains~1resources.limits?"
@@ -110,6 +110,12 @@
     "constrains/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@2": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@6"
+        },
+        {
           "$ref": "#/$defs/constrains~1resources.limits?"
         },
         {
@@ -122,12 +128,6 @@
           "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@3"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@5"
-        },
-        {
           "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@3"
         }
       ]
@@ -135,20 +135,20 @@
     "constrains/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more"
         }
       ]
     },
     "constrains/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@2"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@2"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@2"
         }
       ]
     },
@@ -158,7 +158,7 @@
           "$ref": "#/$defs/constrains~1resources:t"
         },
         {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
+          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
         },
         {
           "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
@@ -167,10 +167,10 @@
           "$ref": "#/$defs/constrains~1resourcesPreset"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@4"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@6"
         },
         {
           "$ref": "#/$defs/constrains~1resources.limits?"
@@ -201,26 +201,29 @@
     "constrains/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more"
         }
       ]
     },
     "constrains/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null": {
+      "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
+    },
+    "constrains/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@4"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@6"
         }
       ]
     },
@@ -232,7 +235,7 @@
     "constrains/memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
         },
         {
           "$ref": "#/$defs/constrains~1resources.limits?"
@@ -254,6 +257,9 @@
     "constrains/memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@2": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+        },
+        {
           "$ref": "#/$defs/constrains~1resources.limits?"
         },
         {
@@ -261,9 +267,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@5"
         },
         {
           "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
@@ -279,7 +282,7 @@
           "$ref": "#/$defs/constrains~1resources:t"
         },
         {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
+          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
         },
         {
           "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
@@ -329,10 +332,10 @@
     "constrains/memoryHighWatermark.enabled:t+memoryHighWatermark.type=relative@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@3"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
+          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@3"
         }
       ]
     },
@@ -366,7 +369,7 @@
       }
     },
     "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null": {
-      "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+      "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@5"
     },
     "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@2": {
       "anyOf": [
@@ -518,6 +521,50 @@
       ],
       "type": "object"
     },
+    "constrains/resources.limits+resources.limits=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "resources": {
+              "properties": {
+                "limits": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "limits"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "resources"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "resources": {
+                "properties": {
+                  "limits": {}
+                },
+                "required": [
+                  "limits"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "resources"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/resources.limits.memory:t": {
       "properties": {
         "resources": {
@@ -583,65 +630,73 @@
     },
     "constrains/resources:t": {
       "not": {
-        "properties": {
-          "resources": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "resources"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1resources:t@2"
       }
+    },
+    "constrains/resources:t@2": {
+      "properties": {
+        "resources": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
     },
     "constrains/resourcesPreset": {
       "not": {
-        "properties": {
-          "resourcesPreset": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "resourcesPreset"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1resourcesPreset@2"
       }
     },
     "constrains/resourcesPreset+resourcesPreset=null": {
-      "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-    },
-    "constrains/resourcesPreset+resourcesPreset=null@2": {
-      "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-    },
-    "constrains/resourcesPreset+resourcesPreset=null@3": {
-      "not": {
-        "anyOf": [
-          {
+      "anyOf": [
+        {
+          "properties": {
+            "resourcesPreset": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "resourcesPreset"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
             "properties": {
-              "resourcesPreset": {
-                "enum": [
-                  null
-                ]
-              }
+              "resourcesPreset": {}
             },
             "required": [
               "resourcesPreset"
             ],
             "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "resourcesPreset": {}
-              },
-              "required": [
-                "resourcesPreset"
-              ],
-              "type": "object"
-            }
           }
-        ]
+        }
+      ]
+    },
+    "constrains/resourcesPreset+resourcesPreset=null@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
       }
+    },
+    "constrains/resourcesPreset+resourcesPreset=null@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
+      }
+    },
+    "constrains/resourcesPreset@2": {
+      "properties": {
+        "resourcesPreset": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "resourcesPreset"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -667,6 +722,319 @@
           "const": true
         }
       ]
+    },
+    "when/memoryHighWatermark.enabled:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type=relative~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+2more~1else~1fail@2"
+      }
+    },
+    "when/memoryHighWatermark.enabled:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+3more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type=relative~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+2more~1else~1fail"
+      }
+    },
+    "when/memoryHighWatermark.enabled:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null~1else~1memoryHighWatermark.type=relative+resources+resources.limits+3more"
+      }
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": false
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type@2": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": false
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits+resources.limits.memory?+resourcesPreset+1more/else/memoryHighWatermark.type": {
+      "else": {
+        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1memoryHighWatermark.type~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+      }
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits+resources.limits.memory?+resourcesPreset+1more/else/memoryHighWatermark.type@2": {
+      "else": {
+        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset@2"
+      }
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits?/else/memoryHighWatermark.type": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1resources+resources.limits?~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources~1then~1resources.limits?~1else~1fail"
+      }
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits?/else/memoryHighWatermark.type@2": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits?~1else~1memoryHighWatermark.type"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources~1then~1resources.limits?~1else~1fail"
+      }
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits?/else/memoryHighWatermark.type@3": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1resources+resources.limits?~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources~1then~1resources.limits?~1else~1fail@2"
+      }
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits?/else/memoryHighWatermark.type@4": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits?~1else~1memoryHighWatermark.type@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources~1then~1resources.limits?~1else~1fail@2"
+      }
+    },
+    "when/memoryHighWatermark.type/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
+      },
+      "then": false
+    },
+    "when/memoryHighWatermark.type/then/resources+resources.limits+resources.limits.memory?+resourcesPreset/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
+      }
+    },
+    "when/memoryHighWatermark.type/then/resources+resources.limits?/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources~1then~1resources.limits?~1else~1fail"
+      }
+    },
+    "when/memoryHighWatermark.type/then/resources+resources.limits?/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources~1then~1resources.limits?~1else~1fail@2"
+      }
+    },
+    "when/memoryHighWatermark.type=relative/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits?~1else~1memoryHighWatermark.type@2"
+      }
+    },
+    "when/memoryHighWatermark.type=relative/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits?~1else~1memoryHighWatermark.type@4"
+      }
+    },
+    "when/memoryHighWatermark.type=relative/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more~1else~1memoryHighWatermark.type@2"
+      }
+    },
+    "when/resources.limits.memory:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+6more/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1resources.limits.memory:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type=relative~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+5more~1else~1any"
+      }
+    },
+    "when/resources.limits.memory?/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources.limits.memory?"
+      },
+      "then": true
+    },
+    "when/resources.limits/then/resources.limits.memory?+resources.limits?+resourcesPreset/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources.limits"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resourcesPreset~1then~1fail~1else~1resources.limits.memory?+resources.limits?"
+      }
+    },
+    "when/resources.limits?/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources.limits?"
+      },
+      "then": true
+    },
+    "when/resources.limits?/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources.limits?"
+      },
+      "then": true
+    },
+    "when/resources.limits?/then/resources.limits.memory?/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources.limits?"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources.limits.memory?~1then~1any~1else~1fail"
+      }
+    },
+    "when/resources/then/resources+resources.limits+resources.limits.memory?+resourcesPreset/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources.limits~1then~1resources.limits.memory?+resources.limits?+resourcesPreset~1else~1fail"
+      }
+    },
+    "when/resources/then/resources.limits?/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources.limits?~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/resources/then/resources.limits?/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1resources"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1resources.limits?~1then~1any~1else~1fail"
+      }
+    },
+    "when/resources:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null/else/memoryHighWatermark.type=relative+resources+resources.limits+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1resources.limits.memory:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+6more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1resources:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
+      }
+    },
+    "when/resourcesPreset+resourcesPreset=null/then/fail/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
+      "else": {
+        "$ref": "#/$defs/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
+      },
+      "then": false
+    },
+    "when/resourcesPreset+resourcesPreset=null/then/fail/else/resources+resources.limits+resources.limits.memory?+resourcesPreset@2": {
+      "else": {
+        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
+      },
+      "then": false
+    },
+    "when/resourcesPreset+resourcesPreset=null/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more~1else~1memoryHighWatermark.type"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
+      }
+    },
+    "when/resourcesPreset+resourcesPreset=null/then/memoryHighWatermark.type/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
+      "else": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
+      }
+    },
+    "when/resourcesPreset/then/fail/else/resources.limits.memory?+resources.limits?": {
+      "else": {
+        "$ref": "#/$defs/when~1resources.limits?~1then~1resources.limits.memory?~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1resourcesPreset@2"
+      },
+      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -674,7 +1042,57 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@4"
+        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more@2"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+3more~1else~1fail@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1resources.limits+resources.limits=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type=relative"
+          },
+          {
+            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "resources": {
+            "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure RabbitMQ containers' extra options for liveness probe\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@3"
+          },
+          {
+            "$ref": "#/$defs/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+3more~1else~1fail"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -690,6 +1108,25 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1resources.limits+resources.limits=null"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -732,36 +1169,6 @@
             "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@3"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t+memoryHighWatermark.type=relative"
-          },
-          {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "resources": {
-            "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure RabbitMQ containers' extra options for liveness probe\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more@2"
       },
       "then": false
     },
@@ -822,60 +1229,6 @@
               ],
               "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+4more@3"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "resources": {
-                    "properties": {
-                      "limits": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "limits"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "resources"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "resources": {
-                      "properties": {
-                        "limits": {}
-                      },
-                      "required": [
-                        "limits"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "resources"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
           }
         ]
       },

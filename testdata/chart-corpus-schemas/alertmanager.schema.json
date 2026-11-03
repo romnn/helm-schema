@@ -2,15 +2,7 @@
   "$defs": {
     "constrains/fullnameOverride": {
       "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
       }
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
@@ -44,21 +36,13 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+verticalPodAutoscaler.enabled:t": {
       "allOf": [
         {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
@@ -76,18 +60,43 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1nameOverride@2"
       }
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
     },
     "constrains/verticalPodAutoscaler.enabled:t": {
       "properties": {
@@ -99,6 +108,25 @@
           },
           "required": [
             "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "verticalPodAutoscaler"
+      ],
+      "type": "object"
+    },
+    "constrains/verticalPodAutoscaler.recommenders:t": {
+      "properties": {
+        "verticalPodAutoscaler": {
+          "properties": {
+            "recommenders": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "recommenders"
           ],
           "type": "object"
         }
@@ -132,6 +160,135 @@
           "const": true
         }
       ]
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride:t/then/fail/else/nameOverride:t+verticalPodAutoscaler.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1verticalPodAutoscaler.enabled:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      },
+      "then": false
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+verticalPodAutoscaler.enabled:t+1more/else/nameOverride+nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+verticalPodAutoscaler.enabled:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1fullnameOverride+verticalPodAutoscaler.recommenders:t~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/verticalPodAutoscaler.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/nameOverride+verticalPodAutoscaler.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1verticalPodAutoscaler.recommenders:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1nameOverride+verticalPodAutoscaler.recommenders:t~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/verticalPodAutoscaler.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.enabled:t~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": true
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": true
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/fullnameOverride+verticalPodAutoscaler.recommenders:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.recommenders:t~1then~1fullnameOverride~1else~1fail"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/nameOverride+verticalPodAutoscaler.recommenders:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.recommenders:t~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/verticalPodAutoscaler.enabled:t/then/verticalPodAutoscaler.recommenders:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1verticalPodAutoscaler.recommenders:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/verticalPodAutoscaler.recommenders:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.recommenders:t"
+      },
+      "then": true
+    },
+    "when/verticalPodAutoscaler.recommenders:t/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.recommenders:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/verticalPodAutoscaler.recommenders:t/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1verticalPodAutoscaler.recommenders:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -173,6 +330,56 @@
         "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+verticalPodAutoscaler.enabled:t+1more~1else~1nameOverride+nameOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "verticalPodAutoscaler": {
+            "additionalProperties": {},
+            "description": "--- Vertical Pod Autoscaler",
+            "properties": {
+              "recommenders": {
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t+verticalPodAutoscaler.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1verticalPodAutoscaler.enabled:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "properties": {

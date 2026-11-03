@@ -34,6 +34,25 @@
         }
       ]
     },
+    "constrains/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null": {
+      "$ref": "#/$defs/when~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@2": {
+      "$ref": "#/$defs/when~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@3": {
+      "$ref": "#/$defs/when~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled"
+        },
+        {
+          "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled=null"
+        }
+      ]
+    },
     "constrains/collectors.kubernetes.enabled:t": {
       "properties": {
         "collectors": {
@@ -69,6 +88,60 @@
       },
       "required": [
         "collectors"
+      ],
+      "type": "object"
+    },
+    "constrains/config.tlsserver.notlspaths": {
+      "properties": {
+        "config": {
+          "properties": {
+            "tlsserver": {
+              "properties": {
+                "notlspaths": {}
+              },
+              "required": [
+                "notlspaths"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tlsserver"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.tlsserver.notlspaths=null": {
+      "properties": {
+        "config": {
+          "properties": {
+            "tlsserver": {
+              "properties": {
+                "notlspaths": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "notlspaths"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tlsserver"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
       ],
       "type": "object"
     },
@@ -156,10 +229,10 @@
     "constrains/falco-talon.nameOverride+falco-talon.nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1falco-talon.nameOverride@2"
+          "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t"
+          "$ref": "#/$defs/constrains~1falco-talon.nameOverride@2"
         }
       ]
     },
@@ -190,6 +263,155 @@
       ],
       "type": "object"
     },
+    "constrains/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null": {
+      "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@2": {
+      "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@3": {
+      "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@4": {
+      "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@5": {
+      "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6": {
+      "anyOf": [
+        {
+          "properties": {
+            "falcosidekick": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/constrains~1enabled"
+                      }
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1enabled=null"
+                    }
+                  ]
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "falcosidekick"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "falcosidekick": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/falcosidekick.config.tlsserver.notlspaths": {
+      "properties": {
+        "falcosidekick": {
+          "properties": {
+            "config": {
+              "properties": {
+                "tlsserver": {
+                  "properties": {
+                    "notlspaths": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "notlspaths"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tlsserver"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "config"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "falcosidekick"
+      ],
+      "type": "object"
+    },
+    "constrains/falcosidekick.config.tlsserver.notlspaths+1more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "falcosidekick": {
+                "$ref": "#/$defs/constrains~1config.tlsserver.notlspaths"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "falcosidekick": {
+              "$ref": "#/$defs/constrains~1config.tlsserver.notlspaths=null"
+            }
+          },
+          "required": [
+            "falcosidekick"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/falcosidekick.config.tlsserver.notlspaths+1more@2": {
+      "properties": {
+        "falcosidekick": {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/constrains~1config.tlsserver.notlspaths"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/constrains~1config.tlsserver.notlspaths=null"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "falcosidekick"
+      ],
+      "type": "object"
+    },
     "constrains/falcosidekick.enabled": {
       "not": {
         "properties": {
@@ -202,6 +424,130 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/falcosidekick.enabled:t": {
+      "properties": {
+        "falcosidekick": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "falcosidekick"
+      ],
+      "type": "object"
+    },
+    "constrains/falcosidekick.fullnameOverride": {
+      "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@5"
+    },
+    "constrains/falcosidekick.fullnameOverride+falcosidekick.nameOverride": {
+      "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1falcosidekick.nameOverride~1else~1fail@2"
+    },
+    "constrains/falcosidekick.fullnameOverride+falcosidekick.nameOverride@2": {
+      "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1falcosidekick.nameOverride~1else~1fail@3"
+    },
+    "constrains/falcosidekick.fullnameOverride:t": {
+      "properties": {
+        "falcosidekick": {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        }
+      },
+      "required": [
+        "falcosidekick"
+      ],
+      "type": "object"
+    },
+    "constrains/falcosidekick.fullnameOverride@2": {
+      "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@6"
+    },
+    "constrains/falcosidekick.fullnameOverride@3": {
+      "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick.fullnameOverride@4": {
+      "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick.fullnameOverride@5": {
+      "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick.fullnameOverride@6": {
+      "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick.fullnameOverride@7": {
+      "properties": {
+        "falcosidekick": {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        }
+      },
+      "required": [
+        "falcosidekick"
+      ],
+      "type": "object"
+    },
+    "constrains/falcosidekick.nameOverride": {
+      "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@4"
+    },
+    "constrains/falcosidekick.nameOverride:t": {
+      "properties": {
+        "falcosidekick": {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        }
+      },
+      "required": [
+        "falcosidekick"
+      ],
+      "type": "object"
+    },
+    "constrains/falcosidekick.nameOverride@2": {
+      "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@5"
+    },
+    "constrains/falcosidekick.nameOverride@3": {
+      "$ref": "#/$defs/when~1falcosidekick.nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick.nameOverride@4": {
+      "$ref": "#/$defs/when~1falcosidekick.nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick.nameOverride@5": {
+      "$ref": "#/$defs/when~1falcosidekick.nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/falcosidekick.webui.enabled:t": {
+      "properties": {
+        "falcosidekick": {
+          "properties": {
+            "webui": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "webui"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "falcosidekick"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
     },
     "constrains/k8s-metacollector.fullnameOverride": {
       "not": {
@@ -224,13 +570,13 @@
     "constrains/k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+3more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace"
+        },
+        {
           "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
         },
         {
           "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace"
         },
         {
           "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t@2"
@@ -246,9 +592,6 @@
           "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t+k8s-metacollector.nameOverride+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t+k8s-metacollector.nameOverride:t+3more"
-        },
-        {
           "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t+k8s-metacollector.nameOverride+4more"
         },
         {
@@ -256,6 +599,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t+k8s-metacollector.nameOverride:t+3more"
         }
       ]
     },
@@ -283,16 +629,16 @@
     "constrains/k8s-metacollector.fullnameOverride:t+k8s-metacollector.nameOverride+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace"
+        },
+        {
+          "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
@@ -308,13 +654,13 @@
           "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace"
+        },
+        {
+          "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
         },
         {
           "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
@@ -324,15 +670,7 @@
     "constrains/k8s-metacollector.fullnameOverride:t@2": {
       "properties": {
         "k8s-metacollector": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         }
       },
       "required": [
@@ -343,15 +681,7 @@
     "constrains/k8s-metacollector.fullnameOverride@2": {
       "properties": {
         "k8s-metacollector": {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         }
       },
       "required": [
@@ -537,6 +867,16 @@
         }
       ]
     },
+    "constrains/responseActions.enabled+responseActions.enabled=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1responseActions.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1responseActions.enabled"
+        }
+      ]
+    },
     "constrains/responseActions.enabled:t": {
       "properties": {
         "responseActions": {
@@ -632,6 +972,64 @@
       "description": "targetPort is the port on which the Pod is listening.",
       "type": "string"
     },
+    "when/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@4"
+      },
+      "then": true
+    },
+    "when/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null/then/k8s-metacollector.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null/then/k8s-metacollector.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/collectors.kubernetes.enabled:t/then/k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+4more/else/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+3more~1else~1k8s-metacollector.nameOverride+k8s-metacollector.nameOverride:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride:t~1then~1k8s-metacollector.fullnameOverride+k8s-metacollector.serviceMonitor.create:t+1more~1else~1k8s-metacollector.nameOverride+k8s-metacollector.nameOverride:t"
+      }
+    },
+    "when/collectors.kubernetes.enabled:t/then/k8s-metacollector.fullnameOverride:t+k8s-metacollector.nameOverride:t+1more/else/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride:t~1then~1fail~1else~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride:t~1then~1fail~1else~1k8s-metacollector.nameOverride:t+k8s-metacollector.serviceMonitor.create:t"
+      }
+    },
+    "when/collectors.kubernetes.enabled:t/then/k8s-metacollector.fullnameOverride:t+k8s-metacollector.serviceMonitor.create:t/else/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride:t~1then~1k8s-metacollector.serviceMonitor.create:t~1else~1fail"
+      }
+    },
     "when/falco-talon.nameOverride!=null/then/fail": {
       "if": {
         "properties": {
@@ -645,6 +1043,1058 @@
         "type": "object"
       },
       "then": false
+    },
+    "when/falco-talon.nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falco-talon.nameOverride@2"
+      },
+      "then": true
+    },
+    "when/falco-talon.nameOverride:t/then/falco-talon.nameOverride+responseActions.enabled+responseActions.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1responseActions.enabled:t~1then~1any~1else~1responseActions.enabled+responseActions.enabled=null@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1responseActions.enabled:t~1then~1falco-talon.nameOverride~1else~1responseActions.enabled+responseActions.enabled=null"
+      }
+    },
+    "when/falco-talon.nameOverride:t/then/responseActions.enabled+responseActions.enabled:t+responseActions.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1responseActions.enabled:t~1then~1any~1else~1responseActions.enabled+responseActions.enabled=null"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": true
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths+falcosidekick.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.nameOverride~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths+falcosidekick.nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.config.tlsserver.notlspaths/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1any~1else~1fail"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@2"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@3"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.fullnameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@4"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.fullnameOverride/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@3"
+      }
+    },
+    "when/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/then/falcosidekick.nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@6"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/any/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1any~1else~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": true
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/any/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1any~1else~1falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": true
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/any/else/falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": true
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/any/else/falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1any~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": true
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@3": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick.config.tlsserver.notlspaths@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride~1else~1fail@4"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@4": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick.config.tlsserver.notlspaths@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.nameOverride~1else~1fail@3"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths+falcosidekick.nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick.config.tlsserver.notlspaths@3": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride~1else~1fail@4"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/falcosidekick.config.tlsserver.notlspaths@4": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths+falcosidekick.nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.nameOverride~1else~1fail@3"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more~1else~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more~1else~1falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail@3"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more/else/falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more/else/falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths+falcosidekick.fullnameOverride+1more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail@3"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1else~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1else~1falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@5"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/else/falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/else/falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.config.tlsserver.notlspaths~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@5"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride~1else~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride~1else~1falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride/else/falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.fullnameOverride/else/falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.fullnameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.nameOverride/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.nameOverride~1else~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.nameOverride/else/falcosidekick+falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.nameOverride~1else~1falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.nameOverride/else/falcosidekick.config.tlsserver.notlspaths": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths+1more/then/falcosidekick.nameOverride/else/falcosidekick.config.tlsserver.notlspaths@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths~1then~1falcosidekick.nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths+1more@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": true
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": true
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride+falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/falcosidekick.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/falcosidekick.fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@2"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/falcosidekick.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.config.tlsserver.notlspaths/then/falcosidekick.nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.config.tlsserver.notlspaths"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+6more/else/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+7more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+5more~1else~1any"
+      }
+    },
+    "when/falcosidekick.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+7more/else/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+8more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+6more~1else~1any"
+      }
+    },
+    "when/falcosidekick.enabled:t/then/falcosidekick.fullnameOverride+falcosidekick.fullnameOverride:t+1more/else/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride:t~1else~1any"
+      }
+    },
+    "when/falcosidekick.enabled:t/then/falcosidekick.fullnameOverride+falcosidekick.fullnameOverride:t+2more/else/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride+1more~1else~1any"
+      }
+    },
+    "when/falcosidekick.enabled:t/then/falcosidekick.fullnameOverride:t/else/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/falcosidekick.fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@7"
+      },
+      "then": true
+    },
+    "when/falcosidekick.fullnameOverride/then/falcosidekick.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@3"
+      }
+    },
+    "when/falcosidekick.fullnameOverride/then/falcosidekick.nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride"
+      }
+    },
+    "when/falcosidekick.fullnameOverride/then/falcosidekick.nameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@2"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": true
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+4more~1else~1any@2"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+6more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+4more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+5more~1else~1any@2"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+5more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+6more~1else~1any"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+8more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+6more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.config.tlsserver+7more~1else~1any"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1fail"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more~1else~1any"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick.nameOverride~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1any"
+      }
+    },
+    "when/falcosidekick.fullnameOverride:t/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.nameOverride:t~1then~1falcosidekick.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "falcosidekick": {
+            "$ref": "#/$defs/constrains~1nameOverride"
+          }
+        },
+        "required": [
+          "falcosidekick"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "when/falcosidekick.nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": true
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1any~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.nameOverride~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@2"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+3more~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+4more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@2"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@2"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+5more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+3more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+4more~1else~1fail"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+6more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+6more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+4more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+5more~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.config.tlsserver+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.webui.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+6more~1else~1fail"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.nameOverride~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride~1else~1fail@3"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1fail@2"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null@4"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick.fullnameOverride+falcosidekick.nameOverride/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.fullnameOverride~1then~1falcosidekick.nameOverride~1else~1fail"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.fullnameOverride@4"
+      }
+    },
+    "when/falcosidekick.nameOverride:t/then/falcosidekick.nameOverride/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1falcosidekick.nameOverride@3"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1any~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+3more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.nameOverride~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+4more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick.fullnameOverride+falcosidekick.nameOverride~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+4more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@2"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@3"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+5more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+1more~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@4"
+      }
+    },
+    "when/falcosidekick.webui.enabled:t/then/falcosidekick+falcosidekick.config.tlsserver+6more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1falcosidekick.webui.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falcosidekick.config.tlsserver.notlspaths+1more~1then~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null+2more~1else~1falcosidekick+falcosidekick.config.tlsserver.notlspaths@2"
+      }
     },
     "when/k8s-metacollector.fullnameOverride!=null+k8s-metacollector.nameOverride!=null+1more/then/fail": {
       "if": {
@@ -717,11 +2167,371 @@
         ]
       },
       "then": false
+    },
+    "when/k8s-metacollector.fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/k8s-metacollector.fullnameOverride:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1else~1fail@2"
+      }
+    },
+    "when/k8s-metacollector.fullnameOverride:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+3more/else/k8s-metacollector.nameOverride+k8s-metacollector.nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.nameOverride:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+2more~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.fullnameOverride:t/then/fail/else/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.nameOverride:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t@2"
+      },
+      "then": false
+    },
+    "when/k8s-metacollector.fullnameOverride:t/then/fail/else/k8s-metacollector.nameOverride:t+k8s-metacollector.serviceMonitor.create:t": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.nameOverride:t~1then~1k8s-metacollector.serviceMonitor.create:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t@2"
+      },
+      "then": false
+    },
+    "when/k8s-metacollector.fullnameOverride:t/then/k8s-metacollector.fullnameOverride+k8s-metacollector.serviceMonitor.create:t+1more/else/k8s-metacollector.nameOverride+k8s-metacollector.nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.nameOverride:t~1then~1k8s-metacollector.nameOverride+k8s-metacollector.serviceMonitor.create:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1k8s-metacollector.fullnameOverride+k8s-metacollector.serviceMonitor.namespace:t~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.fullnameOverride:t/then/k8s-metacollector.serviceMonitor.create:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/k8s-metacollector.nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride@2"
+      },
+      "then": true
+    },
+    "when/k8s-metacollector.nameOverride:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.nameOverride:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+2more~1else~1fail@2"
+      }
+    },
+    "when/k8s-metacollector.nameOverride:t/then/k8s-metacollector.nameOverride+k8s-metacollector.serviceMonitor.create:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1k8s-metacollector.serviceMonitor.namespace:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1k8s-metacollector.nameOverride+k8s-metacollector.serviceMonitor.namespace:t~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.nameOverride:t/then/k8s-metacollector.serviceMonitor.create:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.create:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": true
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": true
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.namespace:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.namespace:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.namespace:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more~1else~1fail@2"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@3"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/k8s-metacollector.fullnameOverride+k8s-metacollector.serviceMonitor.namespace:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.namespace:t~1then~1k8s-metacollector.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/k8s-metacollector.nameOverride+k8s-metacollector.serviceMonitor.namespace:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.namespace:t~1then~1k8s-metacollector.nameOverride~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.create:t/then/k8s-metacollector.serviceMonitor.namespace:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.serviceMonitor.namespace:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.namespace:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
+      },
+      "then": true
+    },
+    "when/k8s-metacollector.serviceMonitor.namespace:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1then~1k8s-metacollector.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.namespace:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null~1then~1k8s-metacollector.nameOverride~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.namespace:t/then/collectors.kubernetes.enabled+collectors.kubernetes.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@2"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.namespace:t/then/k8s-metacollector.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/k8s-metacollector.serviceMonitor.namespace:t/then/k8s-metacollector.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1k8s-metacollector.serviceMonitor.namespace:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/responseActions.enabled+responseActions.enabled=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1responseActions.enabled+responseActions.enabled=null"
+      },
+      "then": true
+    },
+    "when/responseActions.enabled+responseActions.enabled=null/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1responseActions.enabled+responseActions.enabled=null"
+      },
+      "then": true
+    },
+    "when/responseActions.enabled+responseActions.enabled=null/then/falco-talon.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1responseActions.enabled+responseActions.enabled=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falco-talon.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/responseActions.enabled:t/then/any/else/responseActions.enabled+responseActions.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1responseActions.enabled+responseActions.enabled=null~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1responseActions.enabled:t"
+      },
+      "then": true
+    },
+    "when/responseActions.enabled:t/then/any/else/responseActions.enabled+responseActions.enabled=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1responseActions.enabled+responseActions.enabled=null~1then~1any~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1responseActions.enabled:t"
+      },
+      "then": true
+    },
+    "when/responseActions.enabled:t/then/falco-talon.nameOverride/else/responseActions.enabled+responseActions.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1responseActions.enabled+responseActions.enabled=null~1then~1falco-talon.nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1responseActions.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falco-talon.nameOverride~1then~1any~1else~1fail"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1falco-talon.nameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1responseActions.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falco-talon.nameOverride!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1falco-talon.nameOverride:t~1then~1responseActions.enabled+responseActions.enabled:t+responseActions.enabled=null~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falco-talon": {
+            "additionalProperties": {},
+            "description": "It must be used in conjunction with the response_actions.enabled option.",
+            "properties": {
+              "nameOverride": {
+                "description": "override name",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1falcosidekick.enabled:t~1then~1falcosidekick.fullnameOverride+falcosidekick.fullnameOverride:t+1more~1else~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falcosidekick": {
+            "additionalProperties": {},
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "nameOverride": {
+                "description": "Override name",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "anyOf": [
@@ -790,17 +2600,118 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled:t"
-          }
-        ]
+        "$ref": "#/$defs/when~1collectors.kubernetes.enabled:t~1then~1k8s-metacollector.fullnameOverride:t+k8s-metacollector.nameOverride:t+1more~1else~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null"
       },
       "then": {
-        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride!=null+k8s-metacollector.nameOverride!=null+1more~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "k8s-metacollector": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "description": "nameOverride is the new name used to override the release name used for k8s-metacollector components.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1falcosidekick.enabled:t~1then~1falcosidekick.fullnameOverride+falcosidekick.fullnameOverride:t+2more~1else~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "falcosidekick": {
+                "additionalProperties": {},
+                "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+                "properties": {
+                  "config": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tlsserver": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "falcosidekick": {
+                "additionalProperties": {},
+                "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+                "properties": {
+                  "service": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1falco-talon.nameOverride:t~1then~1falco-talon.nameOverride+responseActions.enabled+responseActions.enabled:t+1more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falco-talon": {
+            "additionalProperties": {},
+            "description": "It must be used in conjunction with the response_actions.enabled option.",
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "config of Falco Talon (See https://docs.falco-talon.org/docs/configuration/)",
+                "properties": {
+                  "defaultNotifiers": {
+                    "description": "default notifiers for all rules",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1collectors.kubernetes.enabled:t~1then~1k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+4more~1else~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "k8s-metacollector": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "description": "serviceMonitor holds the configuration for the ServiceMonitor CRD.\nA ServiceMonitor is a custom resource definition (CRD) used to configure how Prometheus should\ndiscover and scrape metrics from the k8s-metacollector service.",
+                "properties": {
+                  "namespace": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -813,28 +2724,6 @@
             "object"
           ]
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+5more"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled"
-              },
-              {
-                "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride!=null+k8s-metacollector.nameOverride!=null+1more~1then~1fail"
       }
     },
     {
@@ -904,47 +2793,17 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "falcosidekick": {
-          "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1falco-talon.nameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1responseActions.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1falco-talon.nameOverride!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled:t+1more"
+        "$ref": "#/$defs/when~1falcosidekick.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+6more~1else~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "k8s-metacollector": {
+          "falcosidekick": {
             "additionalProperties": {},
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
             "properties": {
-              "serviceMonitor": {
-                "description": "serviceMonitor holds the configuration for the ServiceMonitor CRD.\nA ServiceMonitor is a custom resource definition (CRD) used to configure how Prometheus should\ndiscover and scrape metrics from the k8s-metacollector service.",
+              "webui": {
                 "type": "object"
               }
             }
@@ -956,35 +2815,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1responseActions.enabled+responseActions.enabled:t+responseActions.enabled=null"
           },
-          {
-            "$ref": "#/$defs/constrains~1falco-talon.nameOverride"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1responseActions.enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1responseActions.enabled"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1falco-talon.nameOverride!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
           {
             "$ref": "#/$defs/constrains~1falco-talon.nameOverride+falco-talon.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1responseActions.enabled+responseActions.enabled:t+responseActions.enabled=null"
           }
         ]
       },
@@ -1072,6 +2906,162 @@
             }
           }
         ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "services": {
+          "description": "Network services configuration (scenario requirement)\nAdd here your services to be deployed together with Falco.\nExample configuration for the \"k8sauditlog\" plugin\n- name: k8saudit-webhook\ntype: NodePort\nports:\n- port: 9765 # See plugin open_params\nnodePort: 30007\nprotocol: TCP",
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "falcosidekick": {
+          "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+5more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride!=null+k8s-metacollector.nameOverride!=null+1more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1falcosidekick.enabled:t~1then~1falcosidekick.fullnameOverride:t~1else~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falcosidekick": {
+            "additionalProperties": {},
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "description": "Override the name",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1falcosidekick.enabled:t~1then~1falcosidekick+falcosidekick.config.tlsserver+7more~1else~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falcosidekick": {
+            "additionalProperties": {},
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "additionalProperties": {},
+                "properties": {
+                  "service": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1falco-talon.nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1falco-talon.nameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1responseActions.enabled+responseActions.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1falco-talon.nameOverride!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled:t+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "k8s-metacollector": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "description": "serviceMonitor holds the configuration for the ServiceMonitor CRD.\nA ServiceMonitor is a custom resource definition (CRD) used to configure how Prometheus should\ndiscover and scrape metrics from the k8s-metacollector service.",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1k8s-metacollector.fullnameOverride+k8s-metacollector.fullnameOverride:t+5more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null@4"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1k8s-metacollector.fullnameOverride!=null+k8s-metacollector.nameOverride!=null+1more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1collectors.kubernetes.enabled:t~1then~1k8s-metacollector.fullnameOverride:t+k8s-metacollector.serviceMonitor.create:t~1else~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "k8s-metacollector": {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "description": "fullNameOverride same as nameOverride but for the full name.",
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   ],

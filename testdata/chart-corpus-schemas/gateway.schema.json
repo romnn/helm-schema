@@ -17,40 +17,64 @@
       "type": "object"
     },
     "constrains/global+global=null": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
-    },
-    "constrains/global+global=null@2": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
-    },
-    "constrains/global+global=null@3": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
+              "global": {}
             },
             "required": [
               "global"
             ],
             "type": "object"
           }
-        ]
+        },
+        {
+          "properties": {
+            "global": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global+global=null@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global=null"
       }
+    },
+    "constrains/global+global=null@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      }
+    },
+    "constrains/platform:t": {
+      "properties": {
+        "platform": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "constrains/profile:t": {
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -76,6 +100,120 @@
           "const": true
         }
       ]
+    },
+    "when/compatibilityVersion:t/then/fail/else/defaults:t+global+global.platform:t+global=null+profile:t": {
+      "else": {
+        "$ref": "#/$defs/when~1defaults:t~1then~1fail~1else~1global+global.platform:t+global=null+profile:t"
+      },
+      "if": {
+        "properties": {
+          "compatibilityVersion": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "compatibilityVersion"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    "when/defaults:t/then/fail/else/global+global.platform:t+global=null+profile:t": {
+      "else": {
+        "$ref": "#/$defs/when~1global.platform:t~1then~1global+global=null+profile:t~1else~1global"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1defaults:t@2"
+      },
+      "then": false
+    },
+    "when/global+global=null/then/any/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": true
+    },
+    "when/global+global=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": true
+    },
+    "when/global.platform:t/then/global+global=null+profile:t/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.profile:t~1then~1global+global=null+platform:t~1else~1any"
+      },
+      "if": {
+        "properties": {
+          "global": {
+            "$ref": "#/$defs/constrains~1platform:t"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1platform:t~1then~1fail~1else~1global+global=null+profile:t"
+      }
+    },
+    "when/global.profile:t/then/global+global=null+platform:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1platform:t~1then~1fail~1else~1profile:t"
+      },
+      "if": {
+        "properties": {
+          "global": {
+            "$ref": "#/$defs/constrains~1profile:t"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1platform:t~1then~1fail~1else~1global+global=null+profile:t"
+      }
+    },
+    "when/platform:t/then/fail/else/global+global=null+profile:t": {
+      "else": {
+        "$ref": "#/$defs/when~1profile:t~1then~1fail~1else~1global+global=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1platform:t"
+      },
+      "then": false
+    },
+    "when/platform:t/then/fail/else/profile:t": {
+      "else": {
+        "$ref": "#/$defs/when~1profile:t~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1platform:t"
+      },
+      "then": false
+    },
+    "when/profile:t/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1profile:t"
+      },
+      "then": false
+    },
+    "when/profile:t/then/fail/else/global+global=null": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1any~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1profile:t"
+      },
+      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -83,15 +221,38 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/$defs/when~1compatibilityVersion:t~1then~1fail~1else~1defaults:t+global+global.platform:t+global=null+profile:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "_internal_defaults_do_not_set": {
+            "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1defaults:t@2"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1global+global=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global+global=null"
+            "$ref": "#/$defs/constrains~1defaults:t"
           },
           {
-            "$ref": "#/$defs/constrains~1defaults:t"
+            "$ref": "#/$defs/constrains~1global+global=null@3"
           }
         ]
       },
@@ -103,12 +264,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1defaults:t@2"
-      },
-      "then": false
     }
   ],
   "properties": {

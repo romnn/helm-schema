@@ -346,6 +346,16 @@
         "$ref": "#/$defs/constrains~1requiredText+requiredText=''+requiredText=null@2"
       }
     },
+    "constrains/requiredText+requiredText=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1requiredText"
+        },
+        {
+          "$ref": "#/$defs/constrains~1requiredText=null"
+        }
+      ]
+    },
     "constrains/requiredText=''": {
       "properties": {
         "requiredText": {
@@ -378,33 +388,36 @@
       }
     },
     "constrains/version+version=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "version": {}
-              },
-              "required": [
-                "version"
-              ],
-              "type": "object"
-            }
-          },
-          {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "version": {
-                "enum": [
-                  null
-                ]
-              }
+              "version": {}
             },
             "required": [
               "version"
             ],
             "type": "object"
           }
-        ]
+        },
+        {
+          "properties": {
+            "version": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "version"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/version+version=null@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1version+version=null"
       }
     },
     "constrains/version@2": {
@@ -455,6 +468,56 @@
           "const": true
         }
       ]
+    },
+    "when/requiredText+requiredText=null/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1requiredText+requiredText=null"
+      },
+      "then": false
+    },
+    "when/requiredText+requiredText=null/then/fail/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1requiredText+requiredText=null"
+      },
+      "then": false
+    },
+    "when/requiredText+requiredText=null/then/fail/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1requiredText+requiredText=null~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1requiredText+requiredText=null"
+      },
+      "then": false
+    },
+    "when/requiredText+requiredText=null/then/fail/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1requiredText+requiredText=null~1then~1fail~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1requiredText+requiredText=null"
+      },
+      "then": false
+    },
+    "when/requiredText=''/then/fail/else/requiredText+requiredText=null": {
+      "else": {
+        "$ref": "#/$defs/when~1requiredText+requiredText=null~1then~1fail~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1requiredText=''"
+      },
+      "then": false
+    },
+    "when/requiredText=''/then/fail/else/requiredText+requiredText=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1requiredText+requiredText=null~1then~1fail~1else~1any@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1requiredText=''"
+      },
+      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -464,10 +527,30 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1requiredText+requiredText=''+requiredText=null+version@4"
+            "$ref": "#/$defs/when~1requiredText=''~1then~1fail~1else~1requiredText+requiredText=null"
           },
           {
             "$ref": "#/$defs/constrains~1version+version=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1requiredText+requiredText=''+requiredText=null+version@4"
+              },
+              {
+                "$ref": "#/$defs/constrains~1version+version=null@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/when~1requiredText=''~1then~1fail~1else~1requiredText+requiredText=null@2"
           }
         ]
       },
@@ -500,12 +583,6 @@
       "then": {
         "$ref": "#/$defs/constrains~1replicas"
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1requiredText+requiredText=''+requiredText=null+version@3"
-      },
-      "then": false
     },
     {
       "if": {
@@ -616,6 +693,12 @@
           ]
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1requiredText+requiredText=''+requiredText=null+version@3"
+      },
+      "then": false
     },
     {
       "if": {

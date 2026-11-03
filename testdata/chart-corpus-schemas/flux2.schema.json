@@ -46,6 +46,13 @@
           "const": true
         }
       ]
+    },
+    "when/sourceWatcher.create:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1sourceWatcher.create:t"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -92,6 +99,34 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1sourceWatcher.create:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sourceWatcher": {
+            "additionalProperties": {},
+            "properties": {
+              "container": {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalArgs": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {

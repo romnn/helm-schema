@@ -1,51 +1,36 @@
 {
   "$defs": {
+    "constrains/antiAffinity": {
+      "not": {
+        "properties": {
+          "antiAffinity": {}
+        },
+        "required": [
+          "antiAffinity"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/antiAffinity+antiAffinity=null": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "antiAffinity": {}
-            },
-            "required": [
-              "antiAffinity"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1antiAffinity"
         },
         {
-          "properties": {
-            "antiAffinity": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "antiAffinity"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1antiAffinity@2"
         },
         {
-          "properties": {
-            "antiAffinity": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "antiAffinity"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1antiAffinity=null"
         }
       ]
     },
     "constrains/antiAffinity+antiAffinity=null+nameOverride+nameOverride:t+updateStrategy+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@3"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null"
@@ -61,7 +46,7 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@2"
+          "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@3"
         }
       ]
     },
@@ -71,10 +56,10 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+updateStrategy+updateStrategy=null"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
+          "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null+nameOverride+nameOverride:t+updateStrategy+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null+nameOverride+nameOverride:t+updateStrategy+1more@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
         }
       ]
     },
@@ -84,9 +69,43 @@
       }
     },
     "constrains/antiAffinity+antiAffinity=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1antiAffinity"
+        },
+        {
+          "$ref": "#/$defs/constrains~1antiAffinity=null"
+        }
+      ]
+    },
+    "constrains/antiAffinity+antiAffinity=null@3": {
       "not": {
         "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null"
       }
+    },
+    "constrains/antiAffinity=null": {
+      "properties": {
+        "antiAffinity": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "antiAffinity"
+      ],
+      "type": "object"
+    },
+    "constrains/antiAffinity@2": {
+      "properties": {
+        "antiAffinity": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "antiAffinity"
+      ],
+      "type": "object"
     },
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts": {
       "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts@3"
@@ -94,46 +113,46 @@
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+41more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.auth.enabled:t@3"
@@ -143,43 +162,43 @@
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+43more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true@2"
@@ -195,52 +214,52 @@
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+47more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.routesSecret@3"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.enabled:t+cluster.tls.serverSecret+3more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.routesSecret@3"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.tls.enabled:t@3"
@@ -250,43 +269,43 @@
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+47more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "properties": {
@@ -328,10 +347,10 @@
       ]
     },
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@4"
+      "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@3"
     },
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@3"
+      "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@4"
     },
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@3": {
       "anyOf": [
@@ -413,10 +432,16 @@
         }
       ]
     },
-    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more": {
+    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+54more": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1cluster.name@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+41more"
@@ -428,10 +453,7 @@
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+6more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+35more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+30more"
@@ -446,16 +468,10 @@
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+cluster.name+17more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true+11more"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true+7more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+11more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+9more"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true+11more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+14more"
@@ -464,31 +480,34 @@
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+14more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+47more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true+3more"
         },
         {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+9more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+11more"
+        },
+        {
           "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+47more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+47more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+43more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+43more"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+35more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+36more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+35more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+35more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+35more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.name@2"
@@ -504,76 +523,76 @@
         }
       ]
     },
-    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more@2": {
+    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+54more@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more"
+        "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+54more"
       }
     },
-    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+56more": {
+    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+54more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.create:t@2"
         }
       ]
     },
-    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+56more@2": {
+    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more@2": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1cluster.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+56more"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more"
         }
       ]
     },
-    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+56more@3": {
+    "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+56more@2"
+        "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more@2"
       }
     },
     "constrains/cluster+cluster.auth+cluster.auth.enableServiceAccounts+cluster.auth.enabled:t+37more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.auth.enabled:t@3"
@@ -1722,13 +1741,13 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.enabled+22more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
@@ -1744,22 +1763,22 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.enabled+26more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag@6"
@@ -1769,25 +1788,25 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.enabled+30more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy@6"
@@ -1797,28 +1816,28 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.enabled+35more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled@6"
@@ -1908,13 +1927,13 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.enabled+cluster.name+17more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
@@ -2116,34 +2135,34 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.pullPolicy+35more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag@6"
@@ -2153,31 +2172,31 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.pullPolicy+35more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository@6"
@@ -2187,37 +2206,37 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.pullPolicy+36more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name+cluster.name=false+cluster.name=null+cluster.name=true@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.size+cluster.size=false+cluster.size=null+cluster.size=true@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy+3more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.repository+3more@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.enabled+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy@6"
@@ -2388,10 +2407,10 @@
     "constrains/cluster+cluster.configReload+cluster.configReload.pullPolicy@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy@3"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy@3"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.pullPolicy@5"
         },
         {
           "properties": {
@@ -2945,10 +2964,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag@4"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag@5"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag@4"
         },
         {
           "properties": {
@@ -3032,10 +3051,10 @@
       "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled@4"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@3"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@4"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@4"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@3"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@3": {
       "anyOf": [
@@ -3117,13 +3136,13 @@
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.metrics.servicemonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.servicemonitor+1more"
@@ -3133,38 +3152,35 @@
     "constrains/cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+14more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more@5"
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+4more@2"
         },
         {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
+        },
+        {
           "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.metrics.servicemonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@9"
         }
       ]
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+14more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+4more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
@@ -3174,6 +3190,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1cluster+cluster.name@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
         }
       ]
     },
@@ -3220,10 +3239,10 @@
     "constrains/cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+4more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t+cluster.metrics.servicemonitor@4"
+          "$ref": "#/$defs/constrains~1cluster.metrics+cluster.metrics.servicemonitor+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster.metrics+cluster.metrics.servicemonitor+1more@2"
+          "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t+cluster.metrics.servicemonitor@4"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.metrics.servicemonitor.prometheusInstance@7"
@@ -3360,10 +3379,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled@3"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled@3"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled@5"
         },
         {
           "properties": {
@@ -3447,10 +3466,10 @@
       "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy@3"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.pullPolicy+3more": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@3"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@4"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@4"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@3"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@3": {
       "anyOf": [
@@ -3629,10 +3648,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy@4"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy@5"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy@4"
         },
         {
           "properties": {
@@ -3716,10 +3735,10 @@
       "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository@3"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.repository+3more": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@3"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@4"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.repository+3more@2": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@4"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@3"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.repository+3more@3": {
       "anyOf": [
@@ -3984,10 +4003,10 @@
     "constrains/cluster+cluster.metrics+cluster.metrics.servicemonitor+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster.metrics+cluster.metrics.servicemonitor+1more@5"
+          "$ref": "#/$defs/constrains~1cluster.metrics+cluster.metrics.servicemonitor+1more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster.metrics+cluster.metrics.servicemonitor+1more@4"
+          "$ref": "#/$defs/constrains~1cluster.metrics+cluster.metrics.servicemonitor+1more@5"
         },
         {
           "properties": {
@@ -4170,10 +4189,10 @@
       "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag@3"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@3"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@4"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2": {
-      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@4"
+      "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@3"
     },
     "constrains/cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@3": {
       "anyOf": [
@@ -4352,10 +4371,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag@4"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag@4"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag@5"
         },
         {
           "properties": {
@@ -4447,16 +4466,16 @@
           "$ref": "#/$defs/constrains~1cluster.namespace=null"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.namespace:t+1more@4"
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@3"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.namespace=false"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.namespace@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.namespace:t+1more@4"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.namespace@4"
@@ -4487,10 +4506,10 @@
           "$ref": "#/$defs/constrains~1cluster.namespace=null"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.namespace:t+1more@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@3"
+          "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.namespace:t+1more@5"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.namespace=false"
@@ -4524,13 +4543,13 @@
     "constrains/cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@9"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.metrics.servicemonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@9"
         }
       ]
     },
@@ -4889,10 +4908,10 @@
     "constrains/cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+6more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace"
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
@@ -4914,16 +4933,16 @@
           "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
-        },
-        {
           "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.metrics.servicemonitor.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@9"
         }
       ]
     },
@@ -5338,10 +5357,10 @@
           "$ref": "#/$defs/constrains~1cluster.name@7"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.name@2"
@@ -5403,10 +5422,10 @@
     "constrains/cluster+cluster.name@11": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.name@2"
@@ -5843,10 +5862,10 @@
           "$ref": "#/$defs/constrains~1cluster.name@7"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.name@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.name@3"
         },
         {
           "$ref": "#/$defs/constrains~1cluster.name@2"
@@ -6064,10 +6083,10 @@
     "constrains/cluster+cluster.namespace@7": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@6"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@6"
+          "$ref": "#/$defs/constrains~1cluster+cluster.namespace@5"
         },
         {
           "properties": {
@@ -6378,10 +6397,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size@4"
+          "$ref": "#/$defs/constrains~1cluster+cluster.size@5"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.size@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.size@4"
         },
         {
           "properties": {
@@ -6692,10 +6711,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.routesSecret@2"
+          "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.routesSecret"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.routesSecret"
+          "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.routesSecret@2"
         },
         {
           "properties": {
@@ -7200,10 +7219,10 @@
     "constrains/cluster+cluster.version@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.version@5"
+          "$ref": "#/$defs/constrains~1cluster+cluster.version@4"
         },
         {
-          "$ref": "#/$defs/constrains~1cluster+cluster.version@4"
+          "$ref": "#/$defs/constrains~1cluster+cluster.version@5"
         },
         {
           "properties": {
@@ -12093,7 +12112,7 @@
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+          "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@6"
         }
       ]
     },
@@ -12123,23 +12142,25 @@
       }
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@3": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
     },
     "constrains/pullPolicy": {
       "properties": {
@@ -12848,6 +12869,17 @@
       ],
       "type": "object"
     },
+    "constrains/updateStrategy": {
+      "not": {
+        "properties": {
+          "updateStrategy": {}
+        },
+        "required": [
+          "updateStrategy"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/updateStrategy+updateStrategy=null": {
       "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@2"
     },
@@ -12860,46 +12892,54 @@
     "constrains/updateStrategy+updateStrategy=null@4": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "updateStrategy": {}
-            },
-            "required": [
-              "updateStrategy"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1updateStrategy"
         },
         {
-          "properties": {
-            "updateStrategy": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "updateStrategy"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1updateStrategy=null"
         },
         {
-          "properties": {
-            "updateStrategy": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "updateStrategy"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1updateStrategy@2"
         }
       ]
     },
     "constrains/updateStrategy+updateStrategy=null@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1updateStrategy"
+        },
+        {
+          "$ref": "#/$defs/constrains~1updateStrategy=null"
+        }
+      ]
+    },
+    "constrains/updateStrategy+updateStrategy=null@6": {
       "not": {
         "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@3"
       }
+    },
+    "constrains/updateStrategy=null": {
+      "properties": {
+        "updateStrategy": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "updateStrategy"
+      ],
+      "type": "object"
+    },
+    "constrains/updateStrategy@2": {
+      "properties": {
+        "updateStrategy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "updateStrategy"
+      ],
+      "type": "object"
     },
     "helm-marker-free": {
       "anyOf": [
@@ -12990,6 +13030,274 @@
     "values/string;pattern-true-true-true-fal": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
+    },
+    "when/antiAffinity+antiAffinity=null/then/fail/else/antiAffinity": {
+      "else": {
+        "$ref": "#/$defs/when~1antiAffinity~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@2"
+      },
+      "then": false
+    },
+    "when/antiAffinity+antiAffinity=null/then/fail/else/antiAffinity+nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1antiAffinity~1then~1fail~1else~1nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@2"
+      },
+      "then": false
+    },
+    "when/antiAffinity+antiAffinity=null/then/nameOverride+updateStrategy+updateStrategy=null/else/antiAffinity": {
+      "else": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1antiAffinity+nameOverride~1else~1updateStrategy"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1fail~1else~1nameOverride+updateStrategy"
+      }
+    },
+    "when/antiAffinity+antiAffinity=null/then/nameOverride+updateStrategy+updateStrategy=null/else/antiAffinity@2": {
+      "else": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1antiAffinity+antiAffinity=null+nameOverride~1else~1updateStrategy"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1fail~1else~1nameOverride+updateStrategy@2"
+      }
+    },
+    "when/antiAffinity+antiAffinity=null/then/updateStrategy+updateStrategy=null/else/antiAffinity": {
+      "else": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1antiAffinity~1else~1updateStrategy"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1fail~1else~1updateStrategy"
+      }
+    },
+    "when/antiAffinity+antiAffinity=null/then/updateStrategy+updateStrategy=null/else/antiAffinity@2": {
+      "else": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1antiAffinity+antiAffinity=null~1else~1updateStrategy"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1fail~1else~1updateStrategy@2"
+      }
+    },
+    "when/antiAffinity/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity@2"
+      },
+      "then": false
+    },
+    "when/antiAffinity/then/fail/else/nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity@2"
+      },
+      "then": false
+    },
+    "when/antiAffinity/then/nameOverride+updateStrategy/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1updateStrategy~1else~1fail"
+      }
+    },
+    "when/antiAffinity/then/updateStrategy/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1antiAffinity@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1updateStrategy~1then~1fail~1else~1any"
+      }
+    },
+    "when/cluster.auth.enabled:t/then/cluster.auth.users:t+cluster.create:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1cluster.auth.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1cluster.auth.users:t~1then~1cluster.create:t~1else~1fail"
+      }
+    },
+    "when/cluster.auth.users:t/then/cluster.create:t/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "cluster": {
+            "properties": {
+              "auth": {
+                "properties": {
+                  "users": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "users"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "cluster"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1cluster.create:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/cluster.create:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1cluster.create:t@2"
+      },
+      "then": true
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": true
+    },
+    "when/nameOverride/then/updateStrategy/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1updateStrategy~1then~1fail~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/antiAffinity+antiAffinity=null+nameOverride+updateStrategy+updateStrategy=null/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1antiAffinity+antiAffinity=null~1then~1updateStrategy+updateStrategy=null~1else~1antiAffinity@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1antiAffinity+antiAffinity=null~1then~1nameOverride+updateStrategy+updateStrategy=null~1else~1antiAffinity@2"
+      }
+    },
+    "when/nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": true
+    },
+    "when/updateStrategy+updateStrategy=null/then/antiAffinity+antiAffinity=null+nameOverride/else/updateStrategy": {
+      "else": {
+        "$ref": "#/$defs/when~1antiAffinity+antiAffinity=null~1then~1nameOverride+updateStrategy+updateStrategy=null~1else~1antiAffinity"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1antiAffinity+antiAffinity=null~1then~1fail~1else~1antiAffinity+nameOverride"
+      }
+    },
+    "when/updateStrategy+updateStrategy=null/then/antiAffinity+antiAffinity=null/else/updateStrategy": {
+      "else": {
+        "$ref": "#/$defs/when~1antiAffinity+antiAffinity=null~1then~1updateStrategy+updateStrategy=null~1else~1antiAffinity"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1antiAffinity+antiAffinity=null~1then~1fail~1else~1antiAffinity"
+      }
+    },
+    "when/updateStrategy+updateStrategy=null/then/antiAffinity+nameOverride/else/updateStrategy": {
+      "else": {
+        "$ref": "#/$defs/when~1antiAffinity~1then~1nameOverride+updateStrategy~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1antiAffinity~1then~1fail~1else~1nameOverride"
+      }
+    },
+    "when/updateStrategy+updateStrategy=null/then/antiAffinity/else/updateStrategy": {
+      "else": {
+        "$ref": "#/$defs/when~1antiAffinity~1then~1updateStrategy~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1antiAffinity~1then~1fail~1else~1any"
+      }
+    },
+    "when/updateStrategy+updateStrategy=null/then/fail/else/nameOverride+updateStrategy": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1updateStrategy~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": false
+    },
+    "when/updateStrategy+updateStrategy=null/then/fail/else/nameOverride+updateStrategy@2": {
+      "else": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1fail~1else~1nameOverride+updateStrategy"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": false
+    },
+    "when/updateStrategy+updateStrategy=null/then/fail/else/updateStrategy": {
+      "else": {
+        "$ref": "#/$defs/when~1updateStrategy~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": false
+    },
+    "when/updateStrategy+updateStrategy=null/then/fail/else/updateStrategy@2": {
+      "else": {
+        "$ref": "#/$defs/when~1updateStrategy+updateStrategy=null~1then~1fail~1else~1updateStrategy"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@5"
+      },
+      "then": false
+    },
+    "when/updateStrategy/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1updateStrategy@2"
+      },
+      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -13011,19 +13319,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -13120,48 +13428,57 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
+            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "securityContext": {}
-                  },
-                  "required": [
-                    "securityContext"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "securityContext": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
           }
         ]
       },
-      "then": false
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "readinessProbe": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "description": "Configure extra options for liveness and readiness probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "securityContext": {
+                "description": "NATS Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true"
@@ -13179,19 +13496,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -13248,7 +13565,7 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
             "properties": {
@@ -13378,6 +13695,47 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "livenessProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "livenessProbe"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "livenessProbe": {}
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -13619,64 +13977,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "livenessProbe": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "livenessProbe"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {}
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null+nameOverride+nameOverride:t+updateStrategy+1more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null+nameOverride+nameOverride:t+updateStrategy+1more@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.enabled:t+cluster.tls.serverSecret+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true"
@@ -13694,19 +13998,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -13760,19 +14064,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -13941,22 +14245,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+56more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1cluster.create:t@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more"
           },
           {
@@ -14042,7 +14330,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more@2"
@@ -14212,7 +14500,48 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "readinessProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "readinessProbe": {}
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more@2"
@@ -14390,13 +14719,13 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -14632,7 +14961,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.create:t+cluster.name+cluster.name=false+4more@2"
+        "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+clusterScoped:t+rbacEnabled:t@2"
       },
       "then": false
     },
@@ -14957,13 +15286,13 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
             "properties": {
@@ -15017,6 +15346,12 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1antiAffinity+antiAffinity=null+nameOverride+updateStrategy+updateStrategy=null~1else~1any"
+      },
+      "then": false
     },
     {
       "if": {
@@ -15173,7 +15508,7 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -15255,7 +15590,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true"
@@ -15273,19 +15608,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -15366,16 +15701,16 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -15494,6 +15829,25 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.create:t+cluster.name+cluster.name=false+4more@2"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
@@ -15523,47 +15877,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "readinessProbe": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "readinessProbe"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {}
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -15692,6 +16005,47 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "securityContext": {}
+                  },
+                  "required": [
+                    "securityContext"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "securityContext": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "securityContext"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -15867,51 +16221,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.enabled:t+cluster.tls.serverSecret+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true"
@@ -15929,19 +16242,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -16025,7 +16338,7 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -16084,7 +16397,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true"
@@ -16102,19 +16415,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "properties": {
@@ -16186,7 +16499,7 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.tls+cluster.tls.enabled:t+cluster.tls.serverSecret+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.auth.enabled:t+cluster.name+cluster.name=false+cluster.name=true"
@@ -16204,19 +16517,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "properties": {
@@ -16297,19 +16610,19 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.pullPolicy+3more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -16472,51 +16785,17 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+54more"
           },
           {
-            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null@3"
+            "$ref": "#/$defs/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+55more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1cluster.create:t@2"
           }
         ]
       },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "readinessProbe": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "livenessProbe": {
-                "description": "Configure extra options for liveness and readiness probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "securityContext": {
-                "description": "NATS Pod Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
+      "then": false
     },
     {
       "if": {
@@ -16640,7 +16919,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more@2"
@@ -16780,6 +17059,19 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null+nameOverride+nameOverride:t+updateStrategy+1more@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1antiAffinity+antiAffinity=null+nameOverride+nameOverride:t+updateStrategy+1more@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more"
           },
           {
@@ -16792,16 +17084,16 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "properties": {
@@ -16860,7 +17152,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more@2"
@@ -16939,15 +17231,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+clusterScoped:t+rbacEnabled:t@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more@2"
@@ -17043,7 +17329,7 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+4more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more@2"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+6more"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.metrics.enabled:t+cluster.metrics.servicemonitor+cluster.name+3more@2"
@@ -17149,6 +17435,47 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1updateStrategy+updateStrategy=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1cluster+cluster.namespace+cluster.namespace:t+cluster.namespace=false+3more"
           },
           {
@@ -17211,16 +17538,16 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.tag+cluster.metrics.tag=false+2more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster.create:t@2"
@@ -17314,13 +17641,13 @@
             "$ref": "#/$defs/constrains~1cluster+cluster.version+cluster.version=false+cluster.version=null+1more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.repository+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1cluster+cluster.configReload+cluster.configReload.tag+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more"
+            "$ref": "#/$defs/constrains~1cluster+cluster.metrics+cluster.metrics.enabled+cluster.metrics.enabled=false+2more@2"
           },
           {
             "properties": {
@@ -17367,6 +17694,35 @@
                 "properties": {
                   "tag": {
                     "$ref": "#/$defs/constrains~1name~1not~1array"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1cluster.auth.enabled:t~1then~1cluster.auth.users:t+cluster.create:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "cluster": {
+            "additionalProperties": {},
+            "properties": {
+              "auth": {
+                "additionalProperties": {},
+                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                "properties": {
+                  "users": {
+                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
                   }
                 }
               }

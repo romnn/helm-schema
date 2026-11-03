@@ -2,7 +2,35 @@
   "$defs": {
     "constrains/annotations": {
       "properties": {
-        "annotations": {}
+        "annotations": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations+annotations=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1annotations=null"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1annotations@2"
+          }
+        }
+      ]
+    },
+    "constrains/annotations.'cert-manager.io/cluster-issuer'?": {
+      "properties": {
+        "annotations": {
+          "required": [
+            "cert-manager.io/cluster-issuer"
+          ],
+          "type": "object"
+        }
       },
       "required": [
         "annotations"
@@ -19,6 +47,26 @@
       },
       "required": [
         "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations@2": {
+      "properties": {
+        "annotations": {}
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/certManager:t": {
+      "properties": {
+        "certManager": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "certManager"
       ],
       "type": "object"
     },
@@ -104,10 +152,10 @@
     "constrains/db.bundleTestDB+db.bundleTestDB:t+db.bundleTestDB=null+4more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+3more"
+          "$ref": "#/$defs/constrains~1db.bundleTestDB:t+mariadb.passwordUpdateJob.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1db.bundleTestDB:t+mariadb.passwordUpdateJob.enabled:t"
+          "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+3more"
         }
       ]
     },
@@ -122,6 +170,38 @@
       ]
     },
     "constrains/db.bundleTestDB+db.bundleTestDB=null": {
+      "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1any~1else~1fail"
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB=null@2": {
+      "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1any~1else~1fail"
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB=null@3": {
+      "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1any~1else~1fail"
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB=null@4": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1db.bundleTestDB"
@@ -146,29 +226,6 @@
             "db"
           ],
           "type": "object"
-        }
-      ]
-    },
-    "constrains/db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-        }
-      ]
-    },
-    "constrains/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null"
         }
       ]
     },
@@ -234,39 +291,6 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
@@ -276,6 +300,39 @@
           "$ref": "#/$defs/constrains~1ingress.tls:t"
         },
         {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.hostname@14"
         }
       ]
@@ -283,40 +340,40 @@
     "constrains/ingress+ingress.annotations+10more@2": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+5more@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+5more"
         },
         {
           "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+5more@2"
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+5more@3"
         },
         {
           "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+5more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+5more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+10more"
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+7more"
         },
         {
           "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+5more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+8more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+ingress.annotations=null+ingress.certManager:t+7more"
+          "$ref": "#/$defs/constrains~1ingress+ingress.annotations+10more"
         }
       ]
     },
@@ -326,19 +383,28 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
+          "$ref": "#/$defs/constrains~1ingress.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.hostname@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.hostname@4"
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@3"
@@ -347,22 +413,13 @@
           "$ref": "#/$defs/constrains~1ingress.hostname@2"
         },
         {
+          "$ref": "#/$defs/constrains~1ingress.hostname@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
         }
       ]
     },
@@ -372,13 +429,25 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
+          "$ref": "#/$defs/constrains~1ingress.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.hostname@4"
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@3"
@@ -387,22 +456,10 @@
           "$ref": "#/$defs/constrains~1ingress.hostname@2"
         },
         {
+          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@13"
@@ -415,30 +472,6 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress.annotations"
         },
         {
@@ -446,6 +479,30 @@
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
         }
       ]
     },
@@ -455,31 +512,31 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+          "$ref": "#/$defs/constrains~1ingress.annotations"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+          "$ref": "#/$defs/constrains~1ingress.tls:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.hostname@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
+          "$ref": "#/$defs/constrains~1ingress.hostname"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.secrets:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.certManager:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
+          "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@11"
@@ -492,28 +549,28 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
+          "$ref": "#/$defs/constrains~1ingress.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@10"
@@ -526,13 +583,31 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
+          "$ref": "#/$defs/constrains~1ingress.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.hostname@9"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.hostname@4"
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@3"
@@ -541,25 +616,7 @@
           "$ref": "#/$defs/constrains~1ingress.hostname@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+          "$ref": "#/$defs/constrains~1ingress.hostname@4"
         }
       ]
     },
@@ -569,27 +626,6 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.hostname@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress.annotations"
         },
         {
@@ -597,6 +633,27 @@
         },
         {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@2"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@13"
@@ -609,24 +666,6 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.hostname@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress.annotations"
         },
         {
@@ -637,6 +676,24 @@
         },
         {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@2"
         }
       ]
     },
@@ -646,21 +703,6 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.hostname@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress.annotations"
         },
         {
@@ -668,6 +710,21 @@
         },
         {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@11"
@@ -680,18 +737,6 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress.annotations"
         },
         {
@@ -699,6 +744,18 @@
         },
         {
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.hostname@10"
@@ -709,33 +766,6 @@
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.hostname@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.certManager:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -750,6 +780,33 @@
           "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
         },
         {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.certManager:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.existingSecretName:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.hostname@4"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.hostname@14"
         }
       ]
@@ -757,15 +814,7 @@
     "constrains/ingress.annotations": {
       "properties": {
         "ingress": {
-          "properties": {
-            "annotations": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1annotations"
         }
       },
       "required": [
@@ -774,10 +823,10 @@
       "type": "object"
     },
     "constrains/ingress.annotations+ingress.annotations=null": {
-      "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@5"
+      "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@4"
     },
     "constrains/ingress.annotations+ingress.annotations=null@2": {
-      "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@4"
+      "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@5"
     },
     "constrains/ingress.annotations+ingress.annotations=null@3": {
       "anyOf": [
@@ -785,7 +834,7 @@
           "not": {
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/constrains~1annotations"
+                "$ref": "#/$defs/constrains~1annotations@2"
               }
             },
             "required": [
@@ -822,51 +871,38 @@
     },
     "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?@2": {
       "not": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "annotations": {
-                "required": [
-                  "cert-manager.io/cluster-issuer"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "annotations"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
       }
+    },
+    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?@3": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/constrains~1annotations.'cert-manager.io~1cluster-issuer'?"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
     },
     "constrains/ingress.certManager:t": {
       "$ref": "#/$defs/constrains~1ingress.certManager:t@2"
     },
     "constrains/ingress.certManager:t@2": {
       "not": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "certManager": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "certManager"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1ingress.certManager:t@3"
       }
+    },
+    "constrains/ingress.certManager:t@3": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/constrains~1certManager:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
     },
     "constrains/ingress.enabled:t": {
       "properties": {
@@ -883,26 +919,28 @@
       "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@3"
     },
     "constrains/ingress.existingSecretName:t@2": {
-      "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@4"
-    },
-    "constrains/ingress.existingSecretName:t@3": {
-      "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@4"
-    },
-    "constrains/ingress.existingSecretName:t@4": {
       "not": {
-        "properties": {
-          "ingress": {
-            "$ref": "#/$defs/constrains~1existingSecretName:t@2"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@4"
       }
     },
+    "constrains/ingress.existingSecretName:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@4"
+      }
+    },
+    "constrains/ingress.existingSecretName:t@4": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/constrains~1existingSecretName:t@2"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
     "constrains/ingress.hostname": {
-      "$ref": "#/$defs/constrains~1ingress.hostname@8"
+      "$ref": "#/$defs/constrains~1ingress.hostname@5"
     },
     "constrains/ingress.hostname@10": {
       "properties": {
@@ -1004,13 +1042,13 @@
       "type": "object"
     },
     "constrains/ingress.hostname@2": {
-      "$ref": "#/$defs/constrains~1ingress.hostname@5"
-    },
-    "constrains/ingress.hostname@3": {
       "$ref": "#/$defs/constrains~1ingress.hostname@6"
     },
-    "constrains/ingress.hostname@4": {
+    "constrains/ingress.hostname@3": {
       "$ref": "#/$defs/constrains~1ingress.hostname@7"
+    },
+    "constrains/ingress.hostname@4": {
+      "$ref": "#/$defs/constrains~1ingress.hostname@8"
     },
     "constrains/ingress.hostname@5": {
       "not": {
@@ -1041,23 +1079,25 @@
       "$ref": "#/$defs/constrains~1ingress.secrets:t@3"
     },
     "constrains/ingress.secrets:t@2": {
-      "$ref": "#/$defs/constrains~1ingress.secrets:t@4"
+      "not": {
+        "$ref": "#/$defs/constrains~1ingress.secrets:t@4"
+      }
     },
     "constrains/ingress.secrets:t@3": {
-      "$ref": "#/$defs/constrains~1ingress.secrets:t@4"
+      "not": {
+        "$ref": "#/$defs/constrains~1ingress.secrets:t@4"
+      }
     },
     "constrains/ingress.secrets:t@4": {
-      "not": {
-        "properties": {
-          "ingress": {
-            "$ref": "#/$defs/constrains~1secrets:t@2"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/constrains~1secrets:t@2"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
     },
     "constrains/ingress.tls:t": {
       "properties": {
@@ -1078,41 +1118,41 @@
     "constrains/mariadb.fullnameOverride+mariadb.fullnameOverride:t+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
         }
       ]
     },
     "constrains/mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mariadb.nameOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1mariadb.nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
         },
         {
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride@2"
@@ -1128,13 +1168,13 @@
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1mariadb.namespaceOverride"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
@@ -1143,7 +1183,7 @@
           "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride@2"
@@ -1153,13 +1193,16 @@
     "constrains/mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t+mariadb.nameOverride:t+mariadb.namespaceOverride+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride:t+5more"
-        },
-        {
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t+mariadb.nameOverride+mariadb.nameOverride:t+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t+mariadb.nameOverride+mariadb.nameOverride:t+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t+mariadb.nameOverride:t+mariadb.namespaceOverride+4more"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
@@ -1168,23 +1211,17 @@
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+4more"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t+mariadb.nameOverride+mariadb.nameOverride:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t+mariadb.nameOverride+mariadb.nameOverride:t+5more"
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride:t+5more"
         }
       ]
     },
     "constrains/mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride:t+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1mariadb.nameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1mariadb.nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.namespaceOverride"
@@ -1193,10 +1230,13 @@
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
         },
         {
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride@2"
@@ -1211,13 +1251,13 @@
     "constrains/mariadb.fullnameOverride:t+mariadb.nameOverride+mariadb.nameOverride:t+3more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
@@ -1226,7 +1266,7 @@
           "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
         }
       ]
     },
@@ -1236,10 +1276,10 @@
           "$ref": "#/$defs/constrains~1mariadb.nameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.namespaceOverride"
@@ -1254,20 +1294,20 @@
           "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
         }
       ]
     },
     "constrains/mariadb.fullnameOverride:t+mariadb.nameOverride:t+mariadb.namespaceOverride+4more": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1mariadb.namespaceOverride"
@@ -1279,7 +1319,7 @@
           "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+          "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
         }
       ]
     },
@@ -1354,25 +1394,7 @@
       "type": "object"
     },
     "constrains/mariadb.namespaceOverride": {
-      "not": {
-        "properties": {
-          "mariadb": {
-            "properties": {
-              "namespaceOverride": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "namespaceOverride"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "mariadb"
-        ],
-        "type": "object"
-      }
+      "$ref": "#/$defs/constrains~1mariadb.namespaceOverride@2"
     },
     "constrains/mariadb.namespaceOverride:t": {
       "properties": {
@@ -1380,6 +1402,30 @@
           "properties": {
             "namespaceOverride": {
               "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.namespaceOverride@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride@3"
+      }
+    },
+    "constrains/mariadb.namespaceOverride@3": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "namespaceOverride": {
+              "type": "string"
             }
           },
           "required": [
@@ -1417,42 +1463,54 @@
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
       "not": {
-        "properties": {
-          "mariadb": {
-            "properties": {
-              "passwordUpdateJob": {
-                "properties": {
-                  "previousPasswords": {
-                    "properties": {
-                      "existingSecret": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "existingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "previousPasswords"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "passwordUpdateJob"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "mariadb"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
       }
     },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
+      "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2": {
+      "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3": {
+      "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4": {
       "properties": {
         "mariadb": {
           "properties": {
@@ -1562,6 +1620,25 @@
         }
       ]
     },
+    "constrains/tags.phpmyadmin-database+tags.phpmyadmin-database=null": {
+      "$ref": "#/$defs/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1any~1else~1fail"
+    },
+    "constrains/tags.phpmyadmin-database+tags.phpmyadmin-database=null@2": {
+      "$ref": "#/$defs/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1any~1else~1fail"
+    },
+    "constrains/tags.phpmyadmin-database+tags.phpmyadmin-database=null@3": {
+      "$ref": "#/$defs/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1any~1else~1fail"
+    },
+    "constrains/tags.phpmyadmin-database+tags.phpmyadmin-database=null@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1tags.phpmyadmin-database"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tags.phpmyadmin-database=null"
+        }
+      ]
+    },
     "constrains/tags.phpmyadmin-database:t": {
       "properties": {
         "tags": {
@@ -1648,6 +1725,440 @@
         "global": {}
       },
       "type": "object"
+    },
+    "when/annotations+annotations=null/then/annotations/else/annotations.'cert-manager.io/cluster-issuer'?": {
+      "else": {
+        "$ref": "#/$defs/when~1annotations~1then~1annotations.'cert-manager.io~1cluster-issuer'?~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1annotations+annotations=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1annotations~1then~1any~1else~1fail"
+      }
+    },
+    "when/annotations+annotations=null/then/annotations/else/annotations.'cert-manager.io/cluster-issuer'?@2": {
+      "else": {
+        "$ref": "#/$defs/when~1annotations+annotations=null~1then~1annotations~1else~1annotations.'cert-manager.io~1cluster-issuer'?"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1annotations+annotations=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1annotations~1then~1any~1else~1fail"
+      }
+    },
+    "when/annotations.'cert-manager.io/cluster-issuer'?/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1annotations.'cert-manager.io~1cluster-issuer'?"
+      },
+      "then": false
+    },
+    "when/annotations/then/annotations.'cert-manager.io/cluster-issuer'?/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1annotations"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1annotations.'cert-manager.io~1cluster-issuer'?~1then~1fail~1else~1any"
+      }
+    },
+    "when/annotations/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1annotations"
+      },
+      "then": true
+    },
+    "when/certManager:t/then/fail/else/annotations+annotations.'cert-manager.io/cluster-issuer'?+annotations=null+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1enabled:t~1then~1annotations+annotations.'cert-manager.io~1cluster-issuer'?+annotations=null+3more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1certManager:t"
+      },
+      "then": false
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": true
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.fullnameOverride+mariadb.namespaceOverride+tags.phpmyadmin-database+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride~1else~1fail"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.fullnameOverride+mariadb.namespaceOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1mariadb.namespaceOverride~1else~1fail"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.fullnameOverride+tags.phpmyadmin-database+tags.phpmyadmin-database=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1mariadb.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.fullnameOverride+tags.phpmyadmin-database+tags.phpmyadmin-database=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1mariadb.fullnameOverride~1else~1fail@2"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.nameOverride+tags.phpmyadmin-database+tags.phpmyadmin-database=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1mariadb.nameOverride~1else~1fail"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/mariadb.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/tags.phpmyadmin-database+tags.phpmyadmin-database=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/tags.phpmyadmin-database+tags.phpmyadmin-database=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@2"
+      }
+    },
+    "when/db.bundleTestDB+db.bundleTestDB=null/then/tags.phpmyadmin-database+tags.phpmyadmin-database=null/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@3"
+      }
+    },
+    "when/db.bundleTestDB:t/then/mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+5more/else/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+7more~1else~1mariadb.nameOverride+mariadb.nameOverride:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride:t~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride:t+3more~1else~1mariadb.nameOverride+mariadb.nameOverride:t"
+      }
+    },
+    "when/db.bundleTestDB:t/then/mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride:t+5more/else/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+9more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride:t~1then~1mariadb.fullnameOverride+mariadb.nameOverride:t+mariadb.namespaceOverride+4more~1else~1any"
+      }
+    },
+    "when/db.bundleTestDB:t/then/mariadb.fullnameOverride:t+mariadb.passwordUpdateJob.enabled:t+2more/else/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride:t~1then~1mariadb.passwordUpdateJob.enabled:t+2more~1else~1fail"
+      }
+    },
+    "when/enabled:t/then/annotations+annotations.'cert-manager.io/cluster-issuer'?+annotations=null+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1existingSecretName:t~1then~1fail~1else~1annotations+annotations.'cert-manager.io~1cluster-issuer'?+annotations=null+2more"
+      }
+    },
+    "when/existingSecretName:t/then/fail/else/annotations+annotations.'cert-manager.io/cluster-issuer'?+annotations=null+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1secrets:t~1then~1fail~1else~1annotations+annotations.'cert-manager.io~1cluster-issuer'?+annotations=null+tls:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1existingSecretName:t@2"
+      },
+      "then": false
+    },
+    "when/ingress.annotations+ingress.annotations=null/then/ingress.annotations+ingress.hostname/else/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.annotations~1then~1ingress.annotations.'cert-manager.io~1cluster-issuer'?+ingress.hostname~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations~1then~1ingress.hostname~1else~1fail"
+      }
+    },
+    "when/ingress.annotations+ingress.annotations=null/then/ingress.annotations+ingress.hostname/else/ingress.annotations.'cert-manager.io/cluster-issuer'?@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.annotations+ingress.annotations=null~1then~1ingress.annotations+ingress.hostname~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations~1then~1ingress.hostname~1else~1fail"
+      }
+    },
+    "when/ingress.annotations+ingress.annotations=null/then/ingress.annotations/else/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.annotations~1then~1ingress.annotations.'cert-manager.io~1cluster-issuer'?~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations~1then~1any~1else~1fail"
+      }
+    },
+    "when/ingress.annotations+ingress.annotations=null/then/ingress.annotations/else/ingress.annotations.'cert-manager.io/cluster-issuer'?@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.annotations+ingress.annotations=null~1then~1ingress.annotations~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations+ingress.annotations=null@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations~1then~1any~1else~1fail"
+      }
+    },
+    "when/ingress.annotations.'cert-manager.io/cluster-issuer'?/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
+      },
+      "then": false
+    },
+    "when/ingress.annotations.'cert-manager.io/cluster-issuer'?/then/fail/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
+      },
+      "then": false
+    },
+    "when/ingress.annotations/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations"
+      },
+      "then": true
+    },
+    "when/ingress.annotations/then/ingress.annotations.'cert-manager.io/cluster-issuer'?+ingress.hostname/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.hostname~1then~1ingress.annotations.'cert-manager.io~1cluster-issuer'?~1else~1fail"
+      }
+    },
+    "when/ingress.annotations/then/ingress.annotations.'cert-manager.io/cluster-issuer'?/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations.'cert-manager.io~1cluster-issuer'?~1then~1fail~1else~1any"
+      }
+    },
+    "when/ingress.annotations/then/ingress.hostname/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.annotations"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.hostname~1then~1any~1else~1fail"
+      }
+    },
+    "when/ingress.certManager:t/then/fail/else/ingress+ingress.annotations+6more": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.certManager:t@3"
+      },
+      "then": false
+    },
+    "when/ingress.certManager:t/then/fail/else/ingress+ingress.annotations+8more": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+7more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.certManager:t@3"
+      },
+      "then": false
+    },
+    "when/ingress.enabled:t/then/ingress+ingress.annotations+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.existingSecretName:t~1then~1fail~1else~1ingress+ingress.annotations+4more"
+      }
+    },
+    "when/ingress.enabled:t/then/ingress+ingress.annotations+7more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.existingSecretName:t~1then~1fail~1else~1ingress+ingress.annotations+6more"
+      }
+    },
+    "when/ingress.enabled:t/then/ingress.existingSecretName:t+ingress.secrets:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.existingSecretName:t~1then~1fail~1else~1ingress.secrets:t"
+      }
+    },
+    "when/ingress.existingSecretName:t/then/fail/else/ingress+ingress.annotations+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.secrets:t~1then~1fail~1else~1ingress+ingress.annotations+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@4"
+      },
+      "then": false
+    },
+    "when/ingress.existingSecretName:t/then/fail/else/ingress+ingress.annotations+6more": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.secrets:t~1then~1fail~1else~1ingress+ingress.annotations+5more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@4"
+      },
+      "then": false
+    },
+    "when/ingress.existingSecretName:t/then/fail/else/ingress.secrets:t": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.secrets:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.existingSecretName:t@4"
+      },
+      "then": false
+    },
+    "when/ingress.hostname/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.hostname@14"
+      },
+      "then": true
+    },
+    "when/ingress.hostname/then/ingress.annotations.'cert-manager.io/cluster-issuer'?/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.hostname@14"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations.'cert-manager.io~1cluster-issuer'?~1then~1fail~1else~1any@2"
+      }
+    },
+    "when/ingress.secrets:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.secrets:t@4"
+      },
+      "then": true
+    },
+    "when/ingress.secrets:t/then/fail/else/ingress+ingress.annotations+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls:t~1then~1ingress+ingress.annotations+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.secrets:t@4"
+      },
+      "then": false
+    },
+    "when/ingress.secrets:t/then/fail/else/ingress+ingress.annotations+5more": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.tls:t~1then~1ingress+ingress.annotations+4more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.secrets:t@4"
+      },
+      "then": false
+    },
+    "when/ingress.tls:t/then/ingress+ingress.annotations+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations+ingress.annotations=null~1then~1ingress.annotations~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
+      }
+    },
+    "when/ingress.tls:t/then/ingress+ingress.annotations+4more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.tls:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1ingress+ingress.annotations+3more~1else~1fail"
+      }
     },
     "when/mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more/then/fail": {
       "if": {
@@ -1810,6 +2321,744 @@
         ]
       },
       "then": false
+    },
+    "when/mariadb.fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/mariadb.fullnameOverride/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/mariadb.fullnameOverride/then/mariadb.namespaceOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/mariadb.fullnameOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+7more/else/mariadb.nameOverride+mariadb.nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+7more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+6more~1else~1fail"
+      }
+    },
+    "when/mariadb.fullnameOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+9more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+8more~1else~1fail"
+      }
+    },
+    "when/mariadb.fullnameOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1db.bundleTestDB+db.bundleTestDB=null+5more~1else~1fail@2"
+      }
+    },
+    "when/mariadb.fullnameOverride:t/then/mariadb.fullnameOverride+mariadb.nameOverride:t+mariadb.namespaceOverride+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride:t~1then~1mariadb.passwordUpdateJob.enabled:t+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride:t~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride+mariadb.namespaceOverride:t+3more~1else~1fail"
+      }
+    },
+    "when/mariadb.fullnameOverride:t/then/mariadb.fullnameOverride+mariadb.namespaceOverride:t+3more/else/mariadb.nameOverride+mariadb.nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride:t~1then~1mariadb.nameOverride+mariadb.namespaceOverride:t+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1mariadb.fullnameOverride+mariadb.passwordUpdateJob.enabled:t+2more~1else~1fail"
+      }
+    },
+    "when/mariadb.fullnameOverride:t/then/mariadb.passwordUpdateJob.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail@2"
+      }
+    },
+    "when/mariadb.nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.nameOverride@2"
+      },
+      "then": true
+    },
+    "when/mariadb.nameOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+8more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+7more~1else~1any"
+      }
+    },
+    "when/mariadb.nameOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+6more~1else~1fail"
+      }
+    },
+    "when/mariadb.nameOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1db.bundleTestDB+db.bundleTestDB=null+5more~1else~1fail"
+      }
+    },
+    "when/mariadb.nameOverride:t/then/mariadb.fullnameOverride+mariadb.namespaceOverride+mariadb.namespaceOverride:t+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride+3more~1else~1any"
+      }
+    },
+    "when/mariadb.nameOverride:t/then/mariadb.nameOverride+mariadb.namespaceOverride:t+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1mariadb.passwordUpdateJob.enabled:t+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.namespaceOverride:t~1then~1mariadb.nameOverride+mariadb.passwordUpdateJob.enabled:t+2more~1else~1fail"
+      }
+    },
+    "when/mariadb.nameOverride:t/then/mariadb.passwordUpdateJob.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail@3"
+      }
+    },
+    "when/mariadb.namespaceOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride@3"
+      },
+      "then": true
+    },
+    "when/mariadb.namespaceOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+6more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+5more~1else~1fail@2"
+      }
+    },
+    "when/mariadb.namespaceOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+7more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+5more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+6more~1else~1fail"
+      }
+    },
+    "when/mariadb.namespaceOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+6more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+5more~1else~1fail"
+      }
+    },
+    "when/mariadb.namespaceOverride:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1db.bundleTestDB+db.bundleTestDB=null+5more~1else~1fail@3"
+      }
+    },
+    "when/mariadb.namespaceOverride:t/then/mariadb.fullnameOverride+mariadb.namespaceOverride+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1mariadb.fullnameOverride+2more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride+2more~1else~1fail"
+      }
+    },
+    "when/mariadb.namespaceOverride:t/then/mariadb.fullnameOverride+mariadb.passwordUpdateJob.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1mariadb.fullnameOverride+2more~1else~1fail"
+      }
+    },
+    "when/mariadb.namespaceOverride:t/then/mariadb.nameOverride+mariadb.passwordUpdateJob.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1mariadb.nameOverride+2more~1else~1fail"
+      }
+    },
+    "when/mariadb.namespaceOverride:t/then/mariadb.passwordUpdateJob.enabled:t+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.enabled:t~1then~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/db.bundleTestDB+db.bundleTestDB=null+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1db.bundleTestDB+db.bundleTestDB=null+4more"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/db.bundleTestDB+db.bundleTestDB=null+5more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1db.bundleTestDB+db.bundleTestDB=null+4more@2"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/db.bundleTestDB+db.bundleTestDB=null+5more/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1db.bundleTestDB+db.bundleTestDB=null+4more@3"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+4more"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+5more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+4more@2"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+6more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+5more"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+5more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+4more"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/mariadb.fullnameOverride+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1mariadb.fullnameOverride+1more"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/mariadb.fullnameOverride+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1mariadb.fullnameOverride+1more@2"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/mariadb.fullnameOverride+mariadb.namespaceOverride+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1mariadb.fullnameOverride+mariadb.namespaceOverride+1more"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/mariadb.nameOverride+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1mariadb.nameOverride+mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.enabled:t/then/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/db.bundleTestDB+db.bundleTestDB=null+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/db.bundleTestDB+db.bundleTestDB=null+4more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/db.bundleTestDB+db.bundleTestDB=null+4more@3": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+3more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+4more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+3more~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+5more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+4more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+3more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/mariadb.fullnameOverride+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1mariadb.fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/mariadb.fullnameOverride+1more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1mariadb.fullnameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/mariadb.fullnameOverride+mariadb.namespaceOverride+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/mariadb.nameOverride+mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
+      "else": {
+        "$ref": "#/$defs/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1mariadb.nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
+      "else": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      },
+      "then": false
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": true
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride~1else~1tags.phpmyadmin-database+tags.phpmyadmin-database=null"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+3more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride~1else~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@2"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+4more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+1more~1else~1tags.phpmyadmin-database+tags.phpmyadmin-database=null"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database:t~1then~1db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride~1else~1tags.phpmyadmin-database+tags.phpmyadmin-database=null"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database:t~1then~1db.bundleTestDB+db.bundleTestDB=null~1else~1tags.phpmyadmin-database+tags.phpmyadmin-database=null"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database:t~1then~1db.bundleTestDB+db.bundleTestDB=null~1else~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@2"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tags.phpmyadmin-database:t~1then~1db.bundleTestDB+db.bundleTestDB=null~1else~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@3"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/mariadb.fullnameOverride+mariadb.namespaceOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1mariadb.namespaceOverride~1else~1fail"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/mariadb.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/mariadb.fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/mariadb.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/ingress+ingress.annotations+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.annotations+ingress.annotations=null~1then~1ingress.annotations+ingress.hostname~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
+      }
+    },
+    "when/secrets:t/then/fail/else/annotations+annotations.'cert-manager.io/cluster-issuer'?+annotations=null+tls:t": {
+      "else": {
+        "$ref": "#/$defs/when~1tls:t~1then~1annotations+annotations.'cert-manager.io~1cluster-issuer'?+annotations=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1secrets:t@2"
+      },
+      "then": false
+    },
+    "when/tags.phpmyadmin-database+tags.phpmyadmin-database=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@4"
+      },
+      "then": true
+    },
+    "when/tags.phpmyadmin-database+tags.phpmyadmin-database=null/then/mariadb.fullnameOverride+mariadb.namespaceOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1mariadb.namespaceOverride~1else~1fail"
+      }
+    },
+    "when/tags.phpmyadmin-database+tags.phpmyadmin-database=null/then/mariadb.fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/tags.phpmyadmin-database+tags.phpmyadmin-database=null/then/mariadb.fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/tags.phpmyadmin-database+tags.phpmyadmin-database=null/then/mariadb.nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.nameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/tags.phpmyadmin-database:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride+1more/else/tags.phpmyadmin-database+tags.phpmyadmin-database=null": {
+      "else": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride+tags.phpmyadmin-database+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.fullnameOverride+mariadb.namespaceOverride~1else~1fail"
+      }
+    },
+    "when/tags.phpmyadmin-database:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride/else/tags.phpmyadmin-database+tags.phpmyadmin-database=null": {
+      "else": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.fullnameOverride+tags.phpmyadmin-database+tags.phpmyadmin-database=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.fullnameOverride~1else~1fail"
+      }
+    },
+    "when/tags.phpmyadmin-database:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.fullnameOverride/else/tags.phpmyadmin-database+tags.phpmyadmin-database=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.fullnameOverride+tags.phpmyadmin-database+tags.phpmyadmin-database=null~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.fullnameOverride~1else~1fail@2"
+      }
+    },
+    "when/tags.phpmyadmin-database:t/then/db.bundleTestDB+db.bundleTestDB=null+mariadb.nameOverride/else/tags.phpmyadmin-database+tags.phpmyadmin-database=null": {
+      "else": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.nameOverride+tags.phpmyadmin-database+tags.phpmyadmin-database=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1mariadb.nameOverride~1else~1fail"
+      }
+    },
+    "when/tags.phpmyadmin-database:t/then/db.bundleTestDB+db.bundleTestDB=null/else/tags.phpmyadmin-database+tags.phpmyadmin-database=null": {
+      "else": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+      }
+    },
+    "when/tags.phpmyadmin-database:t/then/db.bundleTestDB+db.bundleTestDB=null/else/tags.phpmyadmin-database+tags.phpmyadmin-database=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@3"
+      }
+    },
+    "when/tags.phpmyadmin-database:t/then/db.bundleTestDB+db.bundleTestDB=null/else/tags.phpmyadmin-database+tags.phpmyadmin-database=null@3": {
+      "else": {
+        "$ref": "#/$defs/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@2"
+      }
+    },
+    "when/tls:t/then/annotations+annotations.'cert-manager.io/cluster-issuer'?+annotations=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1annotations+annotations=null~1then~1annotations~1else~1annotations.'cert-manager.io~1cluster-issuer'?@2"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1817,41 +3066,41 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1ingress+ingress.annotations+10more@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-          }
-        ]
+        "$ref": "#/$defs/when~1db.bundleTestDB:t~1then~1mariadb.fullnameOverride:t+mariadb.passwordUpdateJob.enabled:t+2more~1else~1db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more"
       },
       "then": {
-        "$ref": "#/$defs/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "description": "String to fully override mariadb.fullname",
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1db.bundleTestDB:t"
-          }
-        ]
+        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB:t+db.bundleTestDB=null+tags.phpmyadmin-database+2more"
       },
       "then": {
-        "$ref": "#/$defs/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "passwordUpdateJob": {
+                "type": "object"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -1922,25 +3171,52 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1tags.phpmyadmin-database:t"
+          },
+          {
             "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more@2"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1tags.phpmyadmin-database"
-              },
-              {
-                "$ref": "#/$defs/constrains~1tags.phpmyadmin-database=null"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+            "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
           }
         ]
       },
       "then": {
         "$ref": "#/$defs/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1ingress.certManager:t~1then~1fail~1else~1ingress+ingress.annotations+8more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.fullname template (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1db.bundleTestDB:t~1then~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride:t+5more~1else~1db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "nameOverride": {
+                "description": "String to partially override mariadb.fullname",
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -1961,6 +3237,50 @@
                     "type": "object"
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1db.bundleTestDB:t~1then~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+5more~1else~1db.bundleTestDB+db.bundleTestDB=null+tags.phpmyadmin-database+2more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "namespaceOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1ingress.existingSecretName:t+ingress.secrets:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Ingress configuration",
+            "properties": {
+              "secrets": {
+                "description": "If you're providing your own certificates and want to manage the secret via helm,\nplease use this to add the certificates as secrets key and certificate should start with\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nExample\nsecrets:\n- name: phpmyadmin.local-tls\nkey: \"\"\ncertificate: \"\"",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -2075,25 +3395,6 @@
       }
     },
     {
-      "if": {
-        "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB:t+db.bundleTestDB=null+tags.phpmyadmin-database+2more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mariadb": {
-            "additionalProperties": {},
-            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
-            "properties": {
-              "passwordUpdateJob": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "mariadb": {
@@ -2102,6 +3403,65 @@
             "null",
             "object"
           ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB=null@4"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1db.bundleTestDB:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress+ingress.annotations+10more@2"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1ingress.certManager:t~1then~1fail~1else~1ingress+ingress.annotations+6more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Ingress configuration",
+            "properties": {
+              "hostname": {
+                "description": "When the ingress is enabled, a host pointing to this will be created",
+                "type": "string"
+              }
+            }
+          }
         }
       }
     }
@@ -2200,16 +3560,45 @@
                 "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
+                "$ref": "#/$defs/constrains~1annotations+annotations=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1annotations=null"
+                    "not": {
+                      "properties": {
+                        "hostname": {}
+                      },
+                      "required": [
+                        "hostname"
+                      ],
+                      "type": "object"
+                    }
                   },
                   {
-                    "not": {
-                      "$ref": "#/$defs/constrains~1annotations"
-                    }
+                    "properties": {
+                      "hostname": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "hostname"
+                    ],
+                    "type": "object"
                   }
                 ]
+              },
+              {
+                "$ref": "#/$defs/when~1certManager:t~1then~1fail~1else~1annotations+annotations.'cert-manager.io~1cluster-issuer'?+annotations=null+4more"
               }
             ]
           },

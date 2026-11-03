@@ -55,6 +55,12 @@
           "$ref": "#/$defs/constrains~1tls.enabled:t"
         },
         {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls.existingSecret:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
@@ -67,12 +73,6 @@
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls.existingSecret:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
@@ -80,16 +80,16 @@
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+namespaceOverride+namespaceOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+tls.enabled:t+tls.existingSecret:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+tls.enabled:t+1more"
         },
         {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+namespaceOverride+namespaceOverride:t+2more"
+        },
+        {
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+namespaceOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+tls.enabled:t+tls.existingSecret:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+namespaceOverride+3more"
@@ -108,16 +108,16 @@
           "$ref": "#/$defs/constrains~1tls.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1tls.existingSecret:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -130,10 +130,7 @@
           "$ref": "#/$defs/constrains~1tls.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride"
@@ -142,7 +139,10 @@
           "$ref": "#/$defs/constrains~1tls.existingSecret:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -179,6 +179,12 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1tls.existingSecret:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
@@ -186,12 +192,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tls.existingSecret:t"
         }
       ]
     },
@@ -204,13 +204,13 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1tls.existingSecret:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
@@ -223,7 +223,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride"
@@ -232,7 +232,7 @@
           "$ref": "#/$defs/constrains~1tls.existingSecret:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         }
       ]
     },
@@ -306,16 +306,19 @@
     },
     "constrains/namespaceOverride@2": {
       "not": {
-        "properties": {
-          "namespaceOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1namespaceOverride@3"
       }
+    },
+    "constrains/namespaceOverride@3": {
+      "properties": {
+        "namespaceOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
     },
     "constrains/tls.enabled:t": {
       "properties": {
@@ -337,28 +340,40 @@
       "type": "object"
     },
     "constrains/tls.existingSecret:t": {
-      "$ref": "#/$defs/constrains~1tls.existingSecret:t@2"
+      "$ref": "#/$defs/constrains~1tls.existingSecret:t@5"
     },
     "constrains/tls.existingSecret:t@2": {
+      "$ref": "#/$defs/when~1tls.existingSecret:t~1then~1fail~1else~1any"
+    },
+    "constrains/tls.existingSecret:t@3": {
+      "$ref": "#/$defs/when~1tls.existingSecret:t~1then~1fail~1else~1any"
+    },
+    "constrains/tls.existingSecret:t@4": {
+      "$ref": "#/$defs/when~1tls.existingSecret:t~1then~1fail~1else~1any"
+    },
+    "constrains/tls.existingSecret:t@5": {
       "not": {
-        "properties": {
-          "tls": {
-            "properties": {
-              "existingSecret": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "existingSecret"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tls"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@6"
       }
+    },
+    "constrains/tls.existingSecret:t@6": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "existingSecret": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "existingSecret"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -384,6 +399,247 @@
           "const": true
         }
       ]
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/namespaceOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1tls.enabled:t+tls.existingSecret:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+namespaceOverride+namespaceOverride:t+tls.enabled:t+1more~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+namespaceOverride:t+tls.enabled:t+tls.existingSecret:t/else/nameOverride+nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+namespaceOverride:t+tls.enabled:t+tls.existingSecret:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1fullnameOverride+tls.enabled:t+tls.existingSecret:t~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/tls.enabled:t+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.enabled:t~1then~1tls.existingSecret:t~1else~1fail"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/fullnameOverride+namespaceOverride+namespaceOverride:t+tls.enabled:t+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1fullnameOverride+namespaceOverride+tls.enabled:t+tls.existingSecret:t~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+namespaceOverride:t+tls.enabled:t+tls.existingSecret:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1tls.enabled:t+tls.existingSecret:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1nameOverride+tls.enabled:t+tls.existingSecret:t~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/tls.enabled:t+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.enabled:t~1then~1tls.existingSecret:t~1else~1fail@3"
+      }
+    },
+    "when/namespaceOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride@3"
+      },
+      "then": true
+    },
+    "when/namespaceOverride:t/then/fullnameOverride+namespaceOverride+tls.enabled:t+tls.existingSecret:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1tls.enabled:t~1then~1fullnameOverride+tls.existingSecret:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.enabled:t~1then~1fullnameOverride+namespaceOverride+tls.existingSecret:t~1else~1fail"
+      }
+    },
+    "when/namespaceOverride:t/then/fullnameOverride+tls.enabled:t+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.enabled:t~1then~1fullnameOverride+tls.existingSecret:t~1else~1fail@2"
+      }
+    },
+    "when/namespaceOverride:t/then/nameOverride+tls.enabled:t+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.enabled:t~1then~1nameOverride+tls.existingSecret:t~1else~1fail"
+      }
+    },
+    "when/namespaceOverride:t/then/tls.enabled:t+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.enabled:t~1then~1tls.existingSecret:t~1else~1fail@2"
+      }
+    },
+    "when/tls.enabled:t/then/fullnameOverride+namespaceOverride+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.existingSecret:t~1then~1fail~1else~1fullnameOverride+namespaceOverride"
+      }
+    },
+    "when/tls.enabled:t/then/fullnameOverride+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.existingSecret:t~1then~1fail~1else~1fullnameOverride"
+      }
+    },
+    "when/tls.enabled:t/then/fullnameOverride+tls.existingSecret:t/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.existingSecret:t~1then~1fail~1else~1fullnameOverride@2"
+      }
+    },
+    "when/tls.enabled:t/then/nameOverride+tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1tls.existingSecret:t~1then~1fail~1else~1nameOverride"
+      }
+    },
+    "when/tls.enabled:t/then/tls.existingSecret:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@2"
+      }
+    },
+    "when/tls.enabled:t/then/tls.existingSecret:t/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@3"
+      }
+    },
+    "when/tls.enabled:t/then/tls.existingSecret:t/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@4"
+      }
+    },
+    "when/tls.existingSecret:t/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@6"
+      },
+      "then": false
+    },
+    "when/tls.existingSecret:t/then/fail/else/fullnameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@6"
+      },
+      "then": false
+    },
+    "when/tls.existingSecret:t/then/fail/else/fullnameOverride+namespaceOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1namespaceOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@6"
+      },
+      "then": false
+    },
+    "when/tls.existingSecret:t/then/fail/else/fullnameOverride@2": {
+      "else": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@6"
+      },
+      "then": false
+    },
+    "when/tls.existingSecret:t/then/fail/else/nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.existingSecret:t@6"
+      },
+      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -391,9 +647,31 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more@2"
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+namespaceOverride:t+tls.enabled:t+tls.existingSecret:t~1else~1nameOverride+nameOverride:t"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "String to fully override common.names.namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1tls.enabled:t+tls.existingSecret:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override nginx.fullname template",
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -425,6 +703,26 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more@2"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+2more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override nginx.fullname template (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "properties": {

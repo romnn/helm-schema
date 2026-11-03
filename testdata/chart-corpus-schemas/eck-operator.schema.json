@@ -32,13 +32,13 @@
     "constrains/global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1webhook.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1global.manifestGen:t@2"
@@ -77,6 +77,45 @@
       },
       "required": [
         "global"
+      ],
+      "type": "object"
+    },
+    "constrains/installCRDs+installCRDs=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "installCRDs": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "installCRDs"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "installCRDs": {}
+            },
+            "required": [
+              "installCRDs"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/installCRDs:t": {
+      "properties": {
+        "installCRDs": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "installCRDs"
       ],
       "type": "object"
     },
@@ -188,6 +227,56 @@
         "type": "object"
       },
       "then": false
+    },
+    "when/eck-operator-crds.nameOverride:t/then/installCRDs+installCRDs:t+installCRDs=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1installCRDs:t~1then~1any~1else~1installCRDs+installCRDs=null"
+      }
+    },
+    "when/global.manifestGen:t/then/fail/else/nameOverride:t+webhook.enabled:t": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1webhook.enabled:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.manifestGen:t@2"
+      },
+      "then": false
+    },
+    "when/installCRDs+installCRDs=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1installCRDs+installCRDs=null"
+      },
+      "then": true
+    },
+    "when/installCRDs:t/then/any/else/installCRDs+installCRDs=null": {
+      "else": {
+        "$ref": "#/$defs/when~1installCRDs+installCRDs=null~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1installCRDs:t"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/webhook.enabled:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/webhook.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.enabled:t@3"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -226,33 +315,25 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "installCRDs": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "installCRDs"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride"
-          }
-        ]
+        "$ref": "#/$defs/when~1eck-operator-crds.nameOverride:t~1then~1installCRDs+installCRDs:t+installCRDs=null~1else~1fail"
       },
       "then": {
-        "$ref": "#/$defs/when~1eck-operator-crds!=null~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "eck-operator-crds": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t"
+        "$ref": "#/$defs/constrains~1global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -265,18 +346,32 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fail~1else~1nameOverride:t+webhook.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "nameOverride is the short name for the deployment. Leave empty to let Helm generate a name using chart values.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook.enabled:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride:t@3"
-          },
           {
             "$ref": "#/$defs/constrains~1nameOverride"
           },
           {
             "$ref": "#/$defs/constrains~1global.manifestGen:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride:t@3"
           }
         ]
       },
@@ -322,21 +417,10 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "description": "Globals meant for internal use only",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t"
+          },
           {
             "anyOf": [
               {
@@ -364,13 +448,28 @@
                 }
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t@2"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1installCRDs:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1eck-operator-crds!=null~1then~1fail"
+      }
     },
     {
       "if": {
@@ -382,37 +481,26 @@
             "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "installCRDs": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "installCRDs"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "installCRDs": {}
-                  },
-                  "required": [
-                    "installCRDs"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/$defs/constrains~1installCRDs+installCRDs=null"
           }
         ]
       },
       "then": {
         "$ref": "#/$defs/when~1eck-operator-crds!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1webhook.enabled:t@3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "description": "Globals meant for internal use only",
+            "type": "object"
+          }
+        }
       }
     }
   ],
