@@ -130,6 +130,7 @@ struct AtomQuery {
     outcome: bool,
 }
 
+// Operand order matters when a bounded search exhausts before reaching a contradiction.
 #[derive(Debug, PartialEq, Eq, Hash)]
 struct CompatibilityQuery {
     left: u64,
@@ -141,11 +142,12 @@ struct CompatibilityQuery {
 const MAX_GUARD_QUERIES: usize = 4_096;
 const MAX_GUARD_MEMO_ENTRIES: usize = 32_768;
 
-// Node IDs never repeat within this context; Boolean results retain no execution handles.
+// Node IDs never repeat within this context; proof results retain no execution handles.
+// Every miss gets a fresh fixed allowance, so cached exhaustion and eviction preserve answers.
 #[derive(Default)]
 struct GuardQueries {
-    atoms: RefCell<AHashMap<AtomQuery, bool>>,
-    compatibilities: RefCell<AHashMap<CompatibilityQuery, bool>>,
+    atoms: RefCell<AHashMap<AtomQuery, Option<bool>>>,
+    compatibilities: RefCell<AHashMap<CompatibilityQuery, Option<bool>>>,
     conjunctions_dirty: Cell<bool>,
 }
 
@@ -413,15 +415,15 @@ impl RuntimeGuard {
             outcome,
         };
         if let Some(result) = node.queries.atoms.borrow().get(&key) {
-            return Some(*result);
+            return *result;
         }
-        let result = self.possible_atom_uncached(decision, taken, outcome)?;
+        let result = self.possible_atom_uncached(decision, taken, outcome);
         let mut cache = node.queries.atoms.borrow_mut();
         if cache.len() >= MAX_GUARD_QUERIES {
             cache.clear();
         }
         cache.insert(key, result);
-        Some(result)
+        result
     }
 
     fn possible_atom_uncached(&self, decision: u64, taken: bool, outcome: bool) -> Option<bool> {
@@ -486,15 +488,15 @@ impl RuntimeGuard {
             right_outcome: other_outcome,
         };
         if let Some(result) = queries.compatibilities.borrow().get(&key) {
-            return Some(*result);
+            return *result;
         }
-        let result = self.compatible_uncached(outcome, other, other_outcome)?;
+        let result = self.compatible_uncached(outcome, other, other_outcome);
         let mut cache = queries.compatibilities.borrow_mut();
         if cache.len() >= MAX_GUARD_QUERIES {
             cache.clear();
         }
         cache.insert(key, result);
-        Some(result)
+        result
     }
 
     fn compatible_uncached(

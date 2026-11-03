@@ -1652,7 +1652,7 @@ fn deferred_guards_preserve_their_primitive_assignment() {
 }
 
 #[test]
-fn deferred_query_exhaustion_is_uncached_and_deep_guards_drop_iteratively() {
+fn deferred_query_exhaustion_is_memoized_and_deep_guards_drop_iteratively() {
     use super::{Arena, Coverage, DecisionEdge, RuntimeGuard};
     use helm_schema_core::Predicate;
     let arena = Arena::default();
@@ -1675,13 +1675,102 @@ fn deferred_query_exhaustion_is_uncached_and_deep_guards_drop_iteratively() {
     let before = arena.guards.borrow().queries.compatibilities.borrow().len();
     for _ in 0..2 {
         sim_assert_eq!(have: guard.compatible(true, &RuntimeGuard::True, true), want: None);
-        sim_assert_eq!(have: arena.guards.borrow().queries.compatibilities.borrow().len(), want: before);
+        sim_assert_eq!(have: arena.guards.borrow().queries.compatibilities.borrow().len(), want: before + 1);
         assert!(!guard.is_impossible());
     }
     arena.guards.borrow_mut().working.clear();
     drop(guard);
     arena.guards.borrow_mut().collect_unused();
     sim_assert_eq!(have: arena.guards.borrow().nodes.len(), want: 0);
+}
+
+#[test]
+fn exhausted_guard_queries_match_fresh_results_in_shuffled_order() {
+    use super::{Arena, AtomQuery, CompatibilityQuery, Coverage, DecisionEdge, RuntimeGuard};
+    use helm_schema_core::Predicate;
+    use std::rc::Rc;
+
+    let arena = Arena::default();
+    let predicate = Predicate::truthy_path("query_order");
+    let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+    let atom = arena.runtime_path(&[DecisionEdge {
+        test: Rc::clone(&test),
+        taken: true,
+    }]);
+    let mut deep = atom.clone();
+    for _ in 0..5_000 {
+        deep = arena.guards.borrow_mut().deferred_choice(
+            deep,
+            RuntimeGuard::True,
+            RuntimeGuard::False,
+            &arena.next_decision,
+        );
+    }
+    let queries = Rc::clone(&arena.guards.borrow().queries);
+    let guards = [atom, deep];
+    // Both exhausted searches and short contradictions share the same memo tables.
+    for order in [[0, 1], [1, 0]] {
+        queries.atoms.borrow_mut().clear();
+        queries.compatibilities.borrow_mut().clear();
+        for index in order {
+            let guard = &guards[index];
+            for taken in [false, true] {
+                for outcome in [false, true] {
+                    let fresh = guard.possible_atom_uncached(test.id, taken, outcome);
+                    for _ in 0..2 {
+                        sim_assert_eq!(have: guard.possible_atom(test.id, taken, outcome), want: fresh);
+                    }
+                    let key = AtomQuery {
+                        guard: guard.id(),
+                        decision: test.id,
+                        taken,
+                        outcome,
+                    };
+                    assert!(queries.atoms.borrow().contains_key(&key));
+                    for other in &guards {
+                        let fresh = guard.compatible_uncached(taken, other, outcome);
+                        for _ in 0..2 {
+                            sim_assert_eq!(have: guard.compatible(taken, other, outcome), want: fresh);
+                        }
+                        let key = CompatibilityQuery {
+                            left: guard.id(),
+                            right: other.id(),
+                            left_outcome: taken,
+                            right_outcome: outcome,
+                        };
+                        assert!(queries.compatibilities.borrow().contains_key(&key));
+                    }
+                }
+            }
+        }
+    }
+    let [_, deep] = &guards;
+    sim_assert_eq!(have: deep.possible_atom_uncached(test.id, true, true), want: None);
+    sim_assert_eq!(have: deep.compatible_uncached(true, deep, true), want: None);
+    // Goal order determines whether the contradiction is reached before exhaustion.
+    let check = |left: &RuntimeGuard, right: &RuntimeGuard| {
+        let fresh = left.compatible_uncached(true, right, true);
+        for _ in 0..2 {
+            sim_assert_eq!(have: left.compatible(true, right, true), want: fresh);
+        }
+    };
+    for reverse in [false, true] {
+        queries.compatibilities.borrow_mut().clear();
+        if reverse {
+            check(&RuntimeGuard::False, deep);
+            check(deep, &RuntimeGuard::False);
+        } else {
+            check(deep, &RuntimeGuard::False);
+            check(&RuntimeGuard::False, deep);
+        }
+    }
+    sim_assert_eq!(have: deep.compatible(true, &RuntimeGuard::False, true), want: Some(false));
+    sim_assert_eq!(have: RuntimeGuard::False.compatible(true, deep, true), want: None);
+    // Dropping a cache entry must reproduce the same conservative answer.
+    queries.atoms.borrow_mut().clear();
+    queries.compatibilities.borrow_mut().clear();
+    sim_assert_eq!(have: deep.possible_atom(test.id, true, true), want: None);
+    sim_assert_eq!(have: deep.compatible(true, deep, true), want: None);
 }
 
 #[test]
