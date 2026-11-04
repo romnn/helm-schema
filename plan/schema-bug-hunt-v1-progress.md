@@ -9925,4 +9925,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Routing: /Volumes/T7/dev/round8/briefs/census3-routing.md. Each lane gets its section as the next slice at hand-back. PROJ1 (one Relationship query as the single input projection) is a conditional draft that starts only if its falsifier reproduces after WFREE+TPLT.
   - Consequence: WFREE and TPLT are the critical path for the largest classes.
 
-Next: FRCLASS closes the 58 preview-5 FR; ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; CENSUS3 ranks the preview-5 FA gap; then E2, the deletion slice, the full preview and the landing chain.
+- 22:50 (Nov 04) — **The first-principles challenge (2026-11-04, unanchored Claude Opus) says ADJUST: WFREE first is right, but the claim that WFREE and TPLT close the largest classes rests on exposure, not measured closure.** Report: /Volumes/T7/dev/round8/designs/challenge/first-principles-2026-11-04.md.
+  - Measured ceilings. Under E2a H (unsound, before S1), only 905 of 38,343 lineage cells close, and CENSUS2 found 76 of 78 lineage paths recover their input under H while the FA stays open. So a second downstream loss blocks about 97% of lineage.
+  - Measured yields:
+    - WFREE: 5,866 closed, 78 reopened, +5,057 LOC.
+    - TPLT: +41.
+    - PLACE1: 151 closed.
+    - COLL1: 774 closed (partial).
+    - ABORT1: 19–40× main CPU on loki.
+  - Whole-chart collapse: the 50 charts whose line schema is under 5% of main's size hold 35.9k FA. Witness x509: 5 KB on the line, 328 KB on main.
+  - WFREE's 399 gate is mis-specified: the documents are saved FA, and its 95 "failures" are probably closures.
+  - The line lacked ADRs 0070/0071, the goal text and the rearchitecture skill.
+  - Actions (orchestrator):
+    - f3534536 brings main's AGENTS.md, ADRs 0070/0071, the index and the skills to the line, keeping the line's own 0069 and declared-defaults amendments. Pushed.
+    - WFREE steered to verify and correct its gate.
+    - ABORT1 steered to bounded guard budgets that widen on exhaustion (ADR 0070 §7) and to the CPU bar.
+    - TPLT steered to measure with corpus_replay and name its second loss.
+    - FRCLASS absorbs FRFIX2.
+    - CENSUS3 3 runs E2b: H and X1 on f3534536 replayed against preview 5, a second-loss census on the H build, and traces of x509, argo-cd, airflow, postgresql-ha and clickhouse.
+  - The landing estimate waits on E2b. The review sees at least 5 landings and not this week.
+- 22:50 (Nov 04) — **FRFIX2 handed back on d23159c7, not landable.** It closes 21 of 32 targeted FR, with 0 new FR on the 157-chart replay, but has 19 new FA (8 identity-after-tpl, 2 API availability, 6 YAML composition, 3 global/provider). 9 per-chart CPU bars fail; integration has 230 failures; LOC −14. Hand-off: round8-r3b-decl1/frfix2/transfer/frfix2-handoff.md. Its patch is the starting point for FRCLASS, which owns the combined FR fix and its 19 new FA. The FRFIX2 session (cwd on T7) is retired.
+- 22:50 (Nov 04) — **HARNESS 2 is on the line as 279d5c17, pushed.** The replay is reconciled with live preview 5: 98,050 − (801 − 3 − 1) + 51 = 97,304, and verdicts match on all 97,058 shared documents. The disagreement came from reversed direction and counting units. It also fixes portability, with red/green tests. Lane screen: /Volumes/T9/dev/round8-r3b-harness/transfer/lane-usage.md. The binary and snapshots live in round8-r3b-harness/target; don't delete them.
+
+Next: E2b measures H/X1 ceilings and the second loss; WFREE corrects its gate and lands; FRCLASS (plus FRFIX2) reaches FR=0 without new FA; ABORT1 within the CPU bar; then re-estimate the landing.
