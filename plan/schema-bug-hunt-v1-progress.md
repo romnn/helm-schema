@@ -9887,4 +9887,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - Load then settled at 27–57 with 0% idle, and the preview went from about 15 to about 45 charts per hour.
     - WFREE's copy (pid 16348) had exited by 19:34. The lane got EPERM when it tried to stop it, and the classifier refused my kill; how it stopped is not recorded.
 
+- 20:35 (Nov 04) — **HARNESS landed on the line as 8bb3cb17 (test tooling only, product and fixture bytes unchanged, production LOC delta 0); pushed to github r3b/construction.**
+  - The lane's gates passed: fmt 0; lint 0; lint:fc 0 (30 PASS / 24 inherited WARN); 258 unit failures, all inherited and identical by id; 11/11 focused and 23/23 cache tests; 12/12 battery equivalence runs.
+  - New: corpus_replay, which re-validates archived preview evidence against a dump in 4m41s for 157 charts from a T9 snapshot (direct from T7 it takes over 10 min). The battery also reuses chart inputs and drops cache durability flushes.
+  - Finding: Helm cache request keys bind the absolute cache root, so the earlier per-lane cache clones were cold anyway. This confirms the empty-cache rule.
+  - Open: on preview-4 evidence against the d23159c7 fixtures, the replay reports FA closed=0 and reopened=801, while live preview 5 shows −746/+51. The line was applied in /Volumes/T9/dev/round8-r3b, the whole tree compared equal to the harness clone (apart from __pycache__), and the commit was pushed.
+  - HARNESS 2 is reconciling that difference and turning corpus_replay into a lane screen against preview 5.
+  - Preview-4 evidence moved to the T9 archive; the T7 path is now a symlink.
+
 Next: FRCLASS closes the 58 preview-5 FR; ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; CENSUS3 ranks the preview-5 FA gap; then E2, the deletion slice, the full preview and the landing chain.
