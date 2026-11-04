@@ -9872,4 +9872,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - caps v2 (briefs/caps-v2.md): producer --jobs 4, cargo and nextest 6, two heavy processes per lane;
     - load-gated paired timing removed from lane gates;
     - six lanes, PLACE1 the first on T9.
-Next: ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; then E2 (S1 plus identity), the deletion slice, the full preview and the landing chain.
+- 20:20 (Nov 04) — **Preview 5 of the line (d23159c7, 157 charts) is complete: false acceptances are down by 746 documents since preview 4, and false rejections rose from 32 to 58.** Evidence is in /Volumes/T9/dev/round8-r3b-preview5-evidence (queue.log, chart-<c>-*.json). The queue ran from 15:54 to 20:16.
+  - Totals: 98,188 new FA documents, 58 FR, 754 unlisted hard failures, 122 stale, 47 new undecided.
+  - Against preview 4 (a4afcaa6, which predates G+TEXT, EMIT, Stage 0, S1, LINEPERF and UNITREC3), on the 154 shared charts:
+    - FA 98,050 → 97,304.
+    - Biggest drops: aws-load-balancer-controller −119, karpenter −108, datadog −101.
+    - Rises: rabbitmq +31, harbor +13, prometheus +7.
+    - FR 32 → 58: elasticsearch +16, longhorn +7, datadog +4, signoz +2, crossplane −3.
+  - The biggest FA charts are loki 10,656, argo-cd 3,026, airflow 2,467, okteto 2,060, cilium 1,956 and kyverno 1,674.
+  - FRCLASS (new T9 lane, round8-r3b-frclass, brief briefs/frclass.md) fixes all 58 FR at their root, attributes each new class to its commit, and covers the FA rises.
+  - CENSUS3 was steered to rank the remaining FA gap on preview 5.
+  - Ops (orchestrator):
+    - At 18:34 load reached 125 with 39% system time, from memory pressure (9 GiB compressor, swap nearly full) and two lane cache clones of 530k entries that had run 3 h at 49/261 shards. I issued caps v3 (4 cargo jobs, one cargo command per lane) and changed speed-v1 rule 2 to a fresh empty Helm cache per lane.
+    - Load then settled at 27–57 with 0% idle, and the preview went from about 15 to about 45 charts per hour.
+    - The user ran the kill of WFREE's copy (pid 16348), which the classifier had refused to me.
+
+Next: FRCLASS closes the 58 preview-5 FR; ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; CENSUS3 ranks the preview-5 FA gap; then E2, the deletion slice, the full preview and the landing chain.
