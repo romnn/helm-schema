@@ -9895,4 +9895,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - HARNESS 2 is reconciling that difference and turning corpus_replay into a lane screen against preview 5.
   - Preview-4 evidence moved to the T9 archive; the T7 path is now a symlink.
 
+- 20:45 (Nov 04) — **CENSUS3 is final on preview 5.** All 98,188 rows are accounted for: 96,626 distinct documents and 13,937 chart/path targets. Report: /Volumes/T9/dev/round8-r3b-census3/transfer/census3.md and census3.json.
+  - Class A (recorded but not exported) fell from 18,630 to 314 documents since d69c2e10; S1 closed that class. Others: B 1,256; C 22,950; D 72,134. D grew by reclassification, not by new FA.
+  - Ranked by documents (classes overlap):
+
+    | Class | Documents | Paths | Lane |
+    |---|---:|---:|---|
+    | unlocalized_source_lineage | 39,136 | 6,804 | none yet |
+    | ineligible_or_unresolved_tpl | 16,864 | — | none yet |
+    | loops | 13,862 | — | WFREE |
+    | merge_escape | 13,200 | — | WFREE |
+    | required_or_fail | 10,222 (loki 8,385) | — | ABORT1 |
+    | foreign_method_escape | 9,928 | — | WFREE |
+    | field_receiver_failure | 9,619 | — | none yet |
+    | unknown_function_effect | 8,399 | — | WFREE |
+    | eligible_tpl | 6,604 | — | TPLT |
+    | unobserved_helm_failure_demand | 4,330 | — | none yet |
+    | nil_receiver_failure | 1,167 | — | none yet |
+
+  - Daskhub has no FA evidence: it exited 100 on a stale intake baseline.
+  - CENSUS3 2 (follow-up) diagnoses the four unowned classes (lineage, unresolved tpl, field and nil receivers) plus unobserved demand. It traces samples to file:line, runs Helm matrices, and drafts mechanisms and builder briefs. New heavy lanes start from those briefs as slots free up; the CPU is saturated with 9 lanes.
+
 Next: FRCLASS closes the 58 preview-5 FR; ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; CENSUS3 ranks the preview-5 FA gap; then E2, the deletion slice, the full preview and the landing chain.
