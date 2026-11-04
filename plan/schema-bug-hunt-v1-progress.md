@@ -9864,4 +9864,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - User decision (Nov 4), quoted: "Total corpus ≤ main only and less than main except if its already fast (< 2 seconds) - so the current line works for me and we should focus now on getting it correct before we optimize an incomplete and possibly wrong design". This supersedes the per-chart main anchor of Nov 3. Perf lanes stop.
   - The line moved to /Volumes/T9/dev/round8-r3b (new 2 TB SSD; Spotlight off) and is pushed to github r3b/construction after each landing (user decision Nov 3; CI left on).
   - New lanes: FRFIX2 (the five FRFIX false-rejection repairs on S1's recorder) and COLL1 (collection domain rebuilt on S1's record). ABORT1, TPLT and WFREE continue and rebase onto d23159c7.
+- 15:30 (Nov 4) — **User asks to land R3b ASAP, ideally this week. After seeing the gap, the user keeps the bar: big false-acceptance classes close before landing.**
+  - The gap: preview 4 found about 97,400 documents (about 14,700 distinct chart/value paths) where the line accepts what main rejects and Helm rejects. Since then, S1 closed 778.
+  - The running lanes' optimistic ceilings total about 35k.
+  - Preview 5 of d23159c7 runs now on T9 (/Volumes/T9/dev/round8-r3b-preview5-evidence; dump --jobs 4, queue 4×4 Helm workers) and gives the exact remaining gap by class.
+  - Resources (user: "maximum throughput and utilize all available resources at all times"):
+    - caps v2 (briefs/caps-v2.md): producer --jobs 4, cargo and nextest 6, two heavy processes per lane;
+    - load-gated paired timing removed from lane gates;
+    - six lanes, PLACE1 the first on T9.
 Next: ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; then E2 (S1 plus identity), the deletion slice, the full preview and the landing chain.
