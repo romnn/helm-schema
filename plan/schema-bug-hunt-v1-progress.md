@@ -9885,6 +9885,6 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Ops (orchestrator):
     - At 18:34 load reached 125 with 39% system time, from memory pressure (9 GiB compressor, swap nearly full) and two lane cache clones of 530k entries that had run 3 h at 49/261 shards. I issued caps v3 (4 cargo jobs, one cargo command per lane) and changed speed-v1 rule 2 to a fresh empty Helm cache per lane.
     - Load then settled at 27–57 with 0% idle, and the preview went from about 15 to about 45 charts per hour.
-    - The user ran the kill of WFREE's copy (pid 16348), which the classifier had refused to me.
+    - WFREE's copy (pid 16348) had exited by 19:34. The lane got EPERM when it tried to stop it, and the classifier refused my kill; how it stopped is not recorded.
 
 Next: FRCLASS closes the 58 preview-5 FR; ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; CENSUS3 ranks the preview-5 FA gap; then E2, the deletion slice, the full preview and the landing chain.
