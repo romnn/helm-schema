@@ -9856,4 +9856,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - User decision (Nov 3): semantic slices are bounded by main's CPU per chart. The line itself exceeds main on falco (8.5×), pg-ha (1.9×), cilium (1.6×) and redis (1.24×); a LINEPERF lane owns that gap.
   - User prompt, "run those tpls": the exact-tpl lane TPLT starts (T arm, structural action-freedom over serialized maps, the bitnami cascade).
   - Running: ABORT1, TPLT, WFREE (bounded effects without the release session), LINEPERF, and the UNITREC2 decomposition. The first three were steered to rebase onto 4176d923.
-Next: ABORT1, TPLT and WFREE hand back rebased onto 4176d923; LINEPERF closes the per-chart gap to main; then E2 (S1 plus identity) and the deletion slice.
+- 14:25 (Nov 4) — **R3b: LINEPERF and UNITREC3 land (line 4d5b9e61, d23159c7, on T9 and pushed). User decision: the CPU bar is total corpus ≤ main, and no chart slower than main unless it takes under 2 s; correctness before optimization.**
+  - LINEPERF (4d5b9e61, byte-identical, +597 LOC): falco 11.2 → 1.95 s, clickhouse 29 → 1.4 s, KPS 0.83× the line; 157-chart CLI identity; units and integration 0 new.
+  - LINEPERF2: no material gain from micro-optimizations; its +2-LOC patch is not landed.
+  - UNITREC2 decomposition: no production subset is gate-clean (KPS 2.61×; omissions prevent only 79/139 bad admissions). Not ported as a tree.
+  - UNITREC3 (d23159c7, +14 LOC): semver partial-version comparisons follow pinned Helm 4.2.3 receipts; guarded legacy range flags qualified; one stale golden fixed. 0 fixtures changed; 0 new FA/FR.
+  - User decision (Nov 4), quoted: "Total corpus ≤ main only and less than main except if its already fast (< 2 seconds) - so the current line works for me and we should focus now on getting it correct before we optimize an incomplete and possibly wrong design". This supersedes the per-chart main anchor of Nov 3. Perf lanes stop.
+  - The line moved to /Volumes/T9/dev/round8-r3b (new 2 TB SSD; Spotlight off) and is pushed to github r3b/construction after each landing (user decision Nov 3; CI left on).
+  - New lanes: FRFIX2 (the five FRFIX false-rejection repairs on S1's recorder) and COLL1 (collection domain rebuilt on S1's record). ABORT1, TPLT and WFREE continue and rebase onto d23159c7.
+Next: ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; then E2 (S1 plus identity), the deletion slice, the full preview and the landing chain.
