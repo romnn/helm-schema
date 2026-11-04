@@ -223,6 +223,7 @@ impl LintSchemas {
     /// # Errors
     ///
     /// Returns an error when a schema cannot be parsed, compiled or verified against its manifest.
+    #[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
     pub fn compile_bytes(
         baseline: &[u8],
         candidate: &Value,
@@ -573,6 +574,7 @@ pub type Recorder<'a> = &'a mut dyn FnMut(ScreenedWitness) -> eyre::Result<()>;
 /// # Errors
 ///
 /// Returns an error when the chart's inputs cannot be loaded or composed.
+#[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
 pub fn screen_recording(
     request: &ScreenRequest<'_>,
     mut witnesses: Option<(&str, Recorder<'_>)>,
@@ -615,9 +617,11 @@ pub fn screen_recording(
                     counts.composed += 1;
                     counts.screened += 1;
                     let lint_control = row.lint_control && kind == AcceptanceDocument::LintRaw;
-                    let (baseline_accepts, candidate_accepts) =
-                        request.schemas.profiles.document_verdicts(&values.root);
-                    let transition = request.schemas.profiles.screen_document(&values.root);
+                    let super::discovery::DocumentJudgment {
+                        baseline_accepts,
+                        candidate_accepts,
+                        transition,
+                    } = request.schemas.profiles.judge_document(&values.root);
                     let flip = transition || (lint_control && !candidate_accepts);
                     if !flip && witnesses.is_none() {
                         continue;
@@ -914,6 +918,7 @@ impl ScreenedProbes {
 /// # Errors
 ///
 /// Returns a recording failure immediately, before judging another probe.
+#[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
 pub fn screen_template_probes(
     chart_dir: &std::path::Path,
     profiles: &ProfileSchemas,
@@ -928,11 +933,14 @@ pub fn screen_template_probes(
     let mut flips = Vec::new();
     let mut failures = Vec::new();
     let mut screened = Vec::new();
+    // The staged chart stays immutable throughout this screen; each composition gets fresh tables.
+    let mut inputs = None;
     for (probe_name, probe) in probes {
         if matches!(probe, ProbeInstance::Coalesced(_)) {
             coverage.composed_probes += 1;
         }
-        let (overlay, probe) = match probe.helm_values_file(chart_dir, defaults) {
+        let (overlay, probe) = match probe.helm_values_file_cached(chart_dir, defaults, &mut inputs)
+        {
             Ok(ProbeValuesFile::Reachable(overlay)) => (overlay, probe),
             Ok(ProbeValuesFile::ReachableAs { values, document }) => {
                 (values, ProbeInstance::Coalesced(document))
@@ -1227,15 +1235,19 @@ pub fn rejudge(
                 "replayed witness {case} composes to another document"
             );
             document.defaults = default_documents(inputs)?.remove(&document.kind).flatten();
-            let verdicts = lint.profiles.document_verdicts(&document.values);
-            let transition = lint.profiles.screen_document(&document.values);
+            let super::discovery::DocumentJudgment {
+                baseline_accepts,
+                candidate_accepts,
+                transition,
+            } = lint.profiles.judge_document(&document.values);
+            let verdicts = (baseline_accepts, candidate_accepts);
             witness.candidate_violations = lint
                 .profiles
                 .candidate_violations(&document.values, transition);
             (
                 verdicts,
                 transition,
-                transition || (document.lint_control && !verdicts.1),
+                transition || (document.lint_control && !candidate_accepts),
             )
         }
         (Some(_), Some(_)) | (None, None) => {

@@ -165,6 +165,7 @@ impl<J> Drop for Release<'_, J> {
 
 /// Waits until the least queued job may start and takes it, or returns
 /// `None` once nothing is queued or running.
+#[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
 fn next_job<J>(
     state: &Mutex<State<J>>,
     changed: &Condvar,

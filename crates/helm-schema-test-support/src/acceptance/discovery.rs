@@ -10,7 +10,7 @@ use helm_schema::provider::ProviderOptions;
 use jsonschema::Validator;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use test_util::helm_values::ValuesError;
+use test_util::helm_values::{AcceptanceDocument, AcceptanceInputs, ValuesError};
 use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
 
@@ -174,6 +174,18 @@ impl ProbeInstance {
         chart_dir: &Path,
         defaults: &Value,
     ) -> eyre::Result<ProbeValuesFile> {
+        self.helm_values_file_cached(chart_dir, defaults, &mut None)
+    }
+
+    /// Reuses parsed inputs owned by this immutable `chart_dir` screen.
+    /// Failed loads remain uncached so each probe keeps its original error classification.
+    #[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
+    pub(super) fn helm_values_file_cached(
+        &self,
+        chart_dir: &Path,
+        defaults: &Value,
+        inputs: &mut Option<AcceptanceInputs>,
+    ) -> eyre::Result<ProbeValuesFile> {
         let composed = match self {
             Self::Defaults => return Ok(ProbeValuesFile::Reachable(Value::Object(Map::new()))),
             Self::SparseOverride(value) => return Ok(ProbeValuesFile::Reachable(value.clone())),
@@ -181,7 +193,18 @@ impl ProbeInstance {
         };
         let overlay = sparse_override_for_composed(defaults, composed)
             .unwrap_or_else(|| Value::Object(Map::new()));
-        match test_util::helm_values::coalesce_chart_values(chart_dir, overlay.clone()) {
+        let reached = match inputs {
+            Some(inputs) => inputs.compose(overlay.clone(), AcceptanceDocument::Template),
+            None => match AcceptanceInputs::load(chart_dir) {
+                Ok(loaded) => {
+                    let reached = loaded.compose(overlay.clone(), AcceptanceDocument::Template);
+                    *inputs = Some(loaded);
+                    reached
+                }
+                Err(err) => Err(err),
+            },
+        };
+        match reached.map(|values| values.root) {
             Ok(reached) if reached == *composed => Ok(ProbeValuesFile::Reachable(overlay)),
             Ok(reached) if adds_only_kept_nulls(&reached, composed) => {
                 Ok(ProbeValuesFile::ReachableAs {
@@ -267,6 +290,17 @@ pub struct SemanticControl {
     pub rationale: &'static str,
 }
 
+/// Boolean verdicts and the battery's complete transition decision for one document.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DocumentJudgment {
+    /// Whether the baseline accepts the document.
+    pub baseline_accepts: bool,
+    /// Whether the candidate accepts the document.
+    pub candidate_accepts: bool,
+    /// A changed acceptance or a rejection for a newly violated assertion.
+    pub transition: bool,
+}
+
 /// A baseline and a candidate schema compiled for screening, with the chart's defaults.
 pub struct ProfileSchemas {
     full: Validator,
@@ -331,16 +365,26 @@ impl ProfileSchemas {
     /// Screens an already composed document without applying template defaults.
     #[must_use]
     pub fn screen_document(&self, instance: &Value) -> bool {
-        let before = self.full.is_valid(instance);
-        let after = self.lean.is_valid(instance);
-        if before != after {
-            return true;
+        self.judge_document(instance).transition
+    }
+
+    /// Judges a document once per schema and retains the verdicts used for screening.
+    #[must_use]
+    #[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
+    pub fn judge_document(&self, instance: &Value) -> DocumentJudgment {
+        let baseline_accepts = self.full.is_valid(instance);
+        let candidate_accepts = self.lean.is_valid(instance);
+        let transition = baseline_accepts != candidate_accepts
+            || (!candidate_accepts
+                && rejects_for_a_new_reason(
+                    &violations(&self.full, instance),
+                    &violations(&self.lean, instance),
+                ));
+        DocumentJudgment {
+            baseline_accepts,
+            candidate_accepts,
+            transition,
         }
-        !after
-            && rejects_for_a_new_reason(
-                &violations(&self.full, instance),
-                &violations(&self.lean, instance),
-            )
     }
 
     /// The candidate's violations of `instance`, sorted, when it is a

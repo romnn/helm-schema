@@ -14,6 +14,7 @@ pub mod acceptance;
 pub mod admission;
 pub mod cell_matrix;
 pub mod consume;
+pub mod corpus_replay;
 pub mod generate;
 pub mod helm;
 pub mod machine;

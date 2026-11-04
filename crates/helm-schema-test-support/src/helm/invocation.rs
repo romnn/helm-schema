@@ -940,6 +940,7 @@ impl HelmRunner {
     }
 
     /// Writes `bytes` to its content address and returns that path and hash.
+    #[tracing::instrument(skip_all, fields(bytes = bytes.len()))]
     fn publish_input(&self, bytes: &[u8]) -> eyre::Result<(PathBuf, String)> {
         let sha256 = hex(&Sha256::digest(bytes));
         let inputs = self.root.join("inputs");
@@ -950,7 +951,6 @@ impl HelmRunner {
         }
         let mut staged = tempfile::NamedTempFile::new_in(&inputs)?;
         staged.write_all(bytes)?;
-        staged.as_file().sync_all()?;
         // Windows refuses to rename over a file another thread published meanwhile; at a content address
         // identical bytes are the same publication.
         if let Err(err) = staged.persist(&path)
@@ -1283,6 +1283,7 @@ impl EntryManifest {
 
 /// Publishes a complete entry at `entry` unless one is already there. The
 /// manifest is written last; an entry without a matching one is a miss.
+#[tracing::instrument(skip_all)]
 fn publish_entry(
     entry: &Path,
     request: &[u8],
@@ -1309,16 +1310,12 @@ fn publish_entry(
     ] {
         let mut file = fs::File::create(staged.path().join(name))?;
         file.write_all(bytes)?;
-        file.sync_all()?;
     }
-    // Portable File::open cannot open Windows directories for syncing.
-    // Files are synced on every host, and readers reject incomplete entries after a crash.
-    if cfg!(unix) {
-        fs::File::open(staged.path())?.sync_all()?;
-    }
+    // Cache durability is optional: readers verify every byte and treat crash damage as a miss.
+    // Atomic publication protects concurrent readers without forcing each file to disk.
     // A rename never replaces a complete entry: the target is a non-empty directory.
-    if fs::rename(staged.path(), entry).is_ok() && cfg!(unix) {
-        fs::File::open(parent)?.sync_all()?;
+    if let Err(err) = fs::rename(staged.path(), entry) {
+        tracing::debug!(?err, ?entry, "cache entry was not published");
     }
     Ok(())
 }
