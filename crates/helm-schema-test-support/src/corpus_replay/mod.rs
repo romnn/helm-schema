@@ -80,8 +80,10 @@ pub struct Options {
     pub baseline: Baseline,
     /// Preview evidence root containing `cases/chart-*`.
     pub evidence: PathBuf,
-    /// Placement census containing its `documents` class map.
-    pub census: PathBuf,
+    /// Optional placement census; absent censuses label every occurrence unclassified.
+    pub census: Option<PathBuf>,
+    /// Retain every document verdict, including unchanged occurrences, for shared-input audits.
+    pub include_unchanged: bool,
     /// Maximum concurrent charts.
     pub jobs: usize,
 }
@@ -148,7 +150,7 @@ struct Verdicts {
 }
 
 /// One document occurrence, with evidence retained for changed verdicts.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Record {
     /// File path, optionally followed by a JSON pointer.
     pub source: String,
@@ -171,6 +173,9 @@ pub struct MissingReference {
     pub index: String,
     /// Recorded evidence path that could not be located.
     pub reference: String,
+    /// Live case name when the index records one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub case: Option<String>,
 }
 
 /// One chart's replay result.
@@ -192,6 +197,9 @@ pub struct ChartReport {
     pub unresolved_index_references: Vec<MissingReference>,
     /// Changed occurrences, including every new false-rejection candidate's evidence path.
     pub changes: Vec<Record>,
+    /// Complete saved-source ledger when requested, in source order.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub observations: Option<Vec<Record>>,
 }
 
 /// Complete, sorted replay output.
@@ -199,8 +207,10 @@ pub struct ChartReport {
 pub struct Report {
     /// Candidate manifest digest binding this run to the producer.
     pub candidate_manifest_sha256: String,
-    /// Exact census input digest.
-    pub census_sha256: String,
+    /// Exact census input digest, or `None` when no placement census was supplied.
+    pub census_sha256: Option<String>,
+    /// Source occurrences include controls and embedded documents, independently of live rosters.
+    pub count_unit: &'static str,
     /// Resolved Git commit or baseline manifest digest.
     pub baseline: String,
     /// Chart results in lexical order, including charts with no saved evidence.
@@ -271,13 +281,20 @@ pub fn run(options: &Options) -> Result<Report, ReplayError> {
         }
         Baseline::Git(_) => None,
     };
-    let census_bytes = read(&options.census)?;
-    let census: evidence::Census =
-        serde_json::from_slice(&census_bytes).map_err(|source| ReplayError::Json {
-            path: options.census.clone(),
-            source,
-        })?;
-    let classes = census.index(&options.evidence)?;
+    let mut census_sha256 = None;
+    let classes = match &options.census {
+        Some(path) => {
+            let bytes = read(path)?;
+            let census: evidence::Census =
+                serde_json::from_slice(&bytes).map_err(|source| ReplayError::Json {
+                    path: path.clone(),
+                    source,
+                })?;
+            census_sha256 = Some(sha256_hex(&bytes));
+            census.index(&options.evidence)?
+        }
+        None => BTreeMap::new(),
+    };
     let entries: Vec<_> = candidate
         .artifacts
         .iter()
@@ -293,7 +310,8 @@ pub fn run(options: &Options) -> Result<Report, ReplayError> {
     let charts = replay_charts(options, &entries, baseline.as_ref(), &classes)?;
     let mut report = Report {
         candidate_manifest_sha256,
-        census_sha256: sha256_hex(&census_bytes),
+        census_sha256,
+        count_unit: "saved_source_occurrences",
         baseline: baseline_identity,
         charts,
         counts: Counts::default(),
@@ -453,6 +471,7 @@ fn replay_chart(
         candidate: &parse(&after, Path::new(&entry.file))?,
         evidence: &options.evidence,
         classes,
+        include_unchanged: options.include_unchanged,
     })?;
     report.baseline_sha256 = sha256_hex(&before);
     report.candidate_sha256 = sha256_hex(&after);
@@ -471,6 +490,8 @@ pub struct SavedInputs<'a> {
     pub evidence: &'a Path,
     /// Source paths to census target/document memberships.
     pub classes: &'a BTreeMap<String, Vec<String>>,
+    /// Include all saved-source verdicts in the report, rather than only changed ones.
+    pub include_unchanged: bool,
 }
 
 /// Replays one chart's saved documents, compiling each schema once.
@@ -487,6 +508,7 @@ pub fn replay_saved(inputs: &SavedInputs<'_>) -> Result<ChartReport, ReplayError
         candidate,
         evidence,
         classes,
+        include_unchanged,
     } = inputs;
     let before_validator = compile(baseline, "baseline")?;
     let identical = baseline == candidate;
@@ -505,6 +527,7 @@ pub fn replay_saved(inputs: &SavedInputs<'_>) -> Result<ChartReport, ReplayError
         distinct_documents: 0,
         unresolved_index_references: Vec::new(),
         changes: Vec::new(),
+        observations: include_unchanged.then(Vec::new),
     };
     let mut cache = BTreeMap::new();
     let mut seen = std::collections::BTreeSet::new();
@@ -555,6 +578,9 @@ pub fn replay_saved(inputs: &SavedInputs<'_>) -> Result<ChartReport, ReplayError
                 .or_default()
                 .record(&row);
         }
+        if let Some(observations) = &mut report.observations {
+            observations.push(row.clone());
+        }
         if before != after {
             report.changes.push(row);
         }
@@ -581,7 +607,7 @@ impl Report {
     #[must_use]
     pub fn markdown(&self) -> String {
         let mut rows = vec![String::from(indoc::indoc! {"
-            | Chart / class | Documents | FA closed | FA reopened | New FR candidates | Unchanged | Other changes |
+            | Chart / class | Saved occurrences | FA closed | FA reopened | New FR candidates | Unchanged | Other changes |
             |---|---:|---:|---:|---:|---:|---:|
         "}.trim_end())];
         let mut row = |name: &str, counts: &Counts| {
@@ -612,6 +638,7 @@ impl Report {
             .sum();
         rows.push(String::new());
         rows.push(format!("Unresolved index references: {missing}. These are excluded from document and verdict counts; see the JSON report."));
+        rows.push("Counts are saved source occurrences, including controls and embedded documents, independently of live rosters. Candidate-dependent probes absent from the saved evidence are not evaluated.".into());
         rows.join("\n") + "\n"
     }
 }

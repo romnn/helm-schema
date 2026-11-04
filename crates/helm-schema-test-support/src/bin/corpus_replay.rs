@@ -5,7 +5,8 @@ use std::path::PathBuf;
 use helm_schema_test_support::corpus_replay::{self, Baseline, Options, ReplayError};
 
 const USAGE: &str = "corpus_replay --candidate <dump> (--baseline-dump <dump> | --baseline-ref <ref>) \
-    --evidence <preview-root> --census <placement-census.json> --out <directory> [--jobs <n>]";
+    --evidence <preview-root> --out <directory> [--census <placement-census.json>] \
+    [--jobs <n>] [--include-unchanged]";
 
 fn main() -> Result<(), ReplayError> {
     let mut candidate = None;
@@ -14,11 +15,16 @@ fn main() -> Result<(), ReplayError> {
     let mut census = None;
     let mut out = None;
     let mut jobs = 4;
+    let mut include_unchanged = false;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         if arg == "--help" {
             println!("{USAGE}");
             return Ok(());
+        }
+        if arg == "--include-unchanged" {
+            include_unchanged = true;
+            continue;
         }
         let value = args
             .next()
@@ -45,7 +51,8 @@ fn main() -> Result<(), ReplayError> {
         candidate: candidate.ok_or_else(missing)?,
         baseline: baseline.ok_or_else(missing)?,
         evidence: evidence.ok_or_else(missing)?,
-        census: census.ok_or_else(missing)?,
+        census,
+        include_unchanged,
         jobs,
     };
     let out = out.ok_or_else(missing)?;

@@ -129,3 +129,27 @@ are normalized. Compare these bytes as well as coverage. Payload fields such as
 `document`, `values` and `overlay` are preserved, including keys named
 `evidence`. Each run uses an isolated scratch root, and retains its trace, raw
 log, environment, invocation costs and binary hash.
+
+The placement census is optional. Without `--census`, `census_sha256` is null and
+all occurrences are unclassified. This supports a frozen preview baseline even
+when a placement census was prepared for a different preview.
+
+Use `--include-unchanged` for a complete per-chart `observations` ledger, including
+input digests and both acceptance bits for unchanged documents. The default keeps
+only changed documents in `changes`. Unresolved index references retain their live
+case names when available. All files are written under `--out`; baseline-dump
+replay uses the build checkout's read-only chart recipes and works from another
+working directory.
+
+Counts use saved source occurrences. A live case can have both a coalesced file
+and an embedded raw/lint document, and roster-listed cases remain in replay.
+Live preview totals count unlisted named cases instead. Candidate schemas also
+influence probe generation: a saved preview cannot evaluate probes that a later
+candidate would introduce. Use a live battery for those inputs and oracle outcomes.
+
+Staging also follows saved render/control/index references into retained legacy
+`target/evidence` directories. Referenced files are copied to their chart's
+portable suffix, with absolute source paths and byte hashes in the manifest.
+Replay never falls back to an unstaged absolute path, and path rebasing stops at
+the snapshot root. Missing index evidence remains explicit; a missing required
+control is an input error. Keep the staged snapshot immutable while replay runs.

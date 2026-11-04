@@ -94,7 +94,22 @@ fn optional_json(path: &Path) -> Result<Value, ReplayError> {
 
 fn saved_path(root: &Path, directory: &Path, path: &Path) -> Result<PathBuf, ReplayError> {
     if path.is_relative() {
-        return Ok(directory.join(path));
+        let resolved = directory.join(path);
+        if resolved.exists() {
+            let canonical = |path: &Path| {
+                path.canonicalize().map_err(|source| ReplayError::Io {
+                    path: path.into(),
+                    source,
+                })
+            };
+            if !canonical(&resolved)?.starts_with(canonical(root)?) {
+                return Err(ReplayError::Input(format!(
+                    "saved evidence escapes snapshot: {}",
+                    resolved.display()
+                )));
+            }
+        }
+        return Ok(resolved);
     }
     let parts: Vec<_> = path.components().collect();
     if let Some(index) = parts.iter().position(|part| part.as_os_str() == "cases") {
@@ -102,7 +117,10 @@ fn saved_path(root: &Path, directory: &Path, path: &Path) -> Result<PathBuf, Rep
     }
     // Preserved verdicts can still name their old checkout's target/evidence root.
     // The owning probe and adjudication directory names retain the portable suffix.
-    for ancestor in directory.ancestors() {
+    for ancestor in directory
+        .ancestors()
+        .take_while(|ancestor| ancestor.starts_with(root))
+    {
         let Some(name) = ancestor.file_name() else {
             continue;
         };
@@ -126,9 +144,6 @@ fn saved_path(root: &Path, directory: &Path, path: &Path) -> Result<PathBuf, Rep
                 }
             }
         }
-    }
-    if path.exists() {
-        return Ok(path.into());
     }
     Err(ReplayError::Input(format!(
         "cannot locate saved evidence {} from {}",
@@ -296,6 +311,7 @@ fn rejection_index(
                         missing.insert(MissingReference {
                             index: index_path.display().to_string(),
                             reference: reference.to_owned(),
+                            case: row.get("case").and_then(Value::as_str).map(str::to_owned),
                         });
                         continue;
                     };

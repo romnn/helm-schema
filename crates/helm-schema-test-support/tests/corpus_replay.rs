@@ -60,6 +60,7 @@ fn replay_counts_changes_controls_and_unknowns_without_coalescing() -> eyre::Res
         candidate: &after,
         evidence: root.path(),
         classes: &classes,
+        include_unchanged: false,
     };
     let report = corpus_replay::replay_saved(&inputs)?;
     sim_assert_eq!(have: report.counts, want: Counts { documents: 5, fa_closed: 1, fa_reopened: 1, new_fr_candidates: 1, unchanged: 1, other_changes: 1 });
@@ -94,6 +95,7 @@ fn saved_document_and_control_paths_are_rebased_and_deduplicated() -> eyre::Resu
         candidate: &after,
         evidence: root.path(),
         classes: &BTreeMap::new(),
+        include_unchanged: false,
     })?;
     sim_assert_eq!(have: report.counts, want: Counts { documents: 3, fa_closed: 2, fa_reopened: 0, new_fr_candidates: 0, unchanged: 1, other_changes: 0 });
     sim_assert_eq!(have: report.distinct_documents, want: 2);
@@ -109,7 +111,8 @@ fn saved_document_and_control_paths_are_rebased_and_deduplicated() -> eyre::Resu
             baseline: &before,
             candidate: &after,
             evidence: root.path(),
-            classes: &BTreeMap::new()
+            classes: &BTreeMap::new(),
+            include_unchanged: false
         })
         .is_err()
     );
@@ -147,6 +150,7 @@ fn relative_and_legacy_control_references_are_owned_by_the_verdict_directory() -
         candidate: &json!({"properties": {"valid": {"const": true}}}),
         evidence: root.path(),
         classes: &BTreeMap::new(),
+        include_unchanged: false,
     })?;
     sim_assert_eq!(have: report.counts, want: Counts { documents: 2, fa_closed: 1, fa_reopened: 0, new_fr_candidates: 0, unchanged: 1, other_changes: 0 });
     Ok(())
@@ -161,7 +165,7 @@ fn dangling_index_links_are_reported_without_inventing_documents() -> eyre::Resu
     let index = root.path().join("chart-demo-new-false-acceptances.json");
     write(
         &index,
-        &json!([{"evidence": "cases/chart-demo/run/missing", "rejection": "HelmAborts"}]),
+        &json!([{"case": "demo: unseen", "evidence": "cases/chart-demo/run/missing", "rejection": "HelmAborts"}]),
     )?;
     let before = json!(true);
     let after = json!(false);
@@ -172,9 +176,10 @@ fn dangling_index_links_are_reported_without_inventing_documents() -> eyre::Resu
         candidate: &after,
         evidence: root.path(),
         classes: &classes,
+        include_unchanged: false,
     })?;
     sim_assert_eq!(have: report.counts, want: Counts { documents: 1, fa_closed: 0, fa_reopened: 0, new_fr_candidates: 1, unchanged: 0, other_changes: 0 });
-    sim_assert_eq!(have: report.unresolved_index_references, want: vec![MissingReference { index: index.display().to_string(), reference: "cases/chart-demo/run/missing".into() }]);
+    sim_assert_eq!(have: report.unresolved_index_references, want: vec![MissingReference { index: index.display().to_string(), reference: "cases/chart-demo/run/missing".into(), case: Some("demo: unseen".into()) }]);
     // Census membership is stronger evidence: omitting a declared census document fails closed.
     classes.insert(
         root.path()
@@ -189,7 +194,8 @@ fn dangling_index_links_are_reported_without_inventing_documents() -> eyre::Resu
             baseline: &before,
             candidate: &after,
             evidence: root.path(),
-            classes: &classes
+            classes: &classes,
+            include_unchanged: false
         })
         .is_err()
     );
@@ -217,8 +223,66 @@ fn preserved_render_inputs_are_not_probe_documents() -> eyre::Result<()> {
         candidate: &json!(true),
         evidence: root.path(),
         classes: &BTreeMap::new(),
+        include_unchanged: false,
     })?;
     sim_assert_eq!(have: report.counts, want: Counts { documents: 1, fa_closed: 0, fa_reopened: 0, new_fr_candidates: 0, unchanged: 1, other_changes: 0 });
     sim_assert_eq!(have: report.distinct_documents, want: 1);
+    Ok(())
+}
+
+#[test]
+fn audit_ledger_retains_unchanged_verdicts_without_changing_counts() -> eyre::Result<()> {
+    let root = test_util::scratch::ScratchDir::new("replay-audit-ledger")?;
+    let probe = root.path().join("cases/chart-demo/run/probe-one");
+    write(&probe.join("coalesced.json"), &json!({"saved": true}))?;
+    write(
+        &probe.join("schema-verdicts.json"),
+        &json!({"helm_exit": 1}),
+    )?;
+    for include_unchanged in [false, true] {
+        let report = corpus_replay::replay_saved(&SavedInputs {
+            chart: "demo",
+            baseline: &json!(true),
+            candidate: &json!(true),
+            evidence: root.path(),
+            classes: &BTreeMap::new(),
+            include_unchanged,
+        })?;
+        sim_assert_eq!(have: report.counts, want: Counts { documents: 1, unchanged: 1, ..Counts::default() });
+        assert!(report.changes.is_empty());
+        let expected = include_unchanged.then(|| json!([{
+            "source": probe.join("coalesced.json").display().to_string(),
+            "document_sha256": "82a210beacaa01c555bf2a7ee6f4390ebb4f3879a8e8625b19f954db24d678d6",
+            "before": true,
+            "after": true,
+            "oracle": "Rejects",
+            "classes": ["unclassified"]
+        }]));
+        sim_assert_eq!(have: report.observations.map(serde_json::to_value).transpose()?, want: expected);
+    }
+    Ok(())
+}
+
+#[test]
+fn relocated_snapshots_reject_unstaged_external_references() -> eyre::Result<()> {
+    let root = test_util::scratch::ScratchDir::new("isolated-replay-snapshot")?;
+    let outside = test_util::scratch::ScratchDir::new("unstaged-replay-control")?;
+    let control = outside.path().join("render");
+    write(&control.join("coalesced.json"), &json!({"external": true}))?;
+    let probe = root.path().join("cases/chart-demo/run/probe-one");
+    write(&probe.join("coalesced.json"), &json!({}))?;
+    write(
+        &probe.join("schema-verdicts.json"),
+        &json!({"controls": [{"render_evidence": control, "render_success": true, "schema_free_lint": "Pass"}]}),
+    )?;
+    let result = corpus_replay::replay_saved(&SavedInputs {
+        chart: "demo",
+        baseline: &json!(true),
+        candidate: &json!(true),
+        evidence: root.path(),
+        classes: &BTreeMap::new(),
+        include_unchanged: true,
+    });
+    assert!(matches!(result, Err(corpus_replay::ReplayError::Input(_))));
     Ok(())
 }
