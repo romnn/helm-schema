@@ -9916,4 +9916,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Daskhub has no FA evidence: it exited 100 on a stale intake baseline.
   - CENSUS3 2 (follow-up) diagnoses the four unowned classes (lineage, unresolved tpl, field and nil receivers) plus unobserved demand. It traces samples to file:line, runs Helm matrices, and drafts mechanisms and builder briefs. New heavy lanes start from those briefs as slots free up; the CPU is saturated with 9 lanes.
 
+- 22:00 (Nov 04) — **CENSUS3 2 diagnosed the unowned FA classes. No new semantic lane is justified: they lose provenance upstream in mechanisms that WFREE and TPLT own.** Report: /Volumes/T9/dev/round8-r3b-census3/transfer/census3-design.md and .json.
+  - Basis: 100 sampled targets over 11 charts, 197 Helm 4.2.3 matrix cells, d23159c7 file:line evidence. Whole-class estimates have low confidence.
+  - Lineage (40 samples): 26 mixed tpl/effect, 10 non-tpl effect, 4 parent-container projections with no unique eraser.
+  - Unresolved tpl (30 samples): 13 serialized-container proof gaps, 11 erased direct sources, 6 overlapping.
+  - Unobserved demand (30 samples): 13 range, 7 Boolean, 5 map, 5 string arguments. The demand is recorded, but its input projection is lost upstream.
+  - Helm shows base/urlJoin/regexFind/cat/has leave their arguments unchanged, yet they are traced as unknown effects. They go to the WFREE catalog; has goes to ABORT1.
+  - Routing: /Volumes/T7/dev/round8/briefs/census3-routing.md. Each lane gets its section as the next slice at hand-back. PROJ1 (one Relationship query as the single input projection) is a conditional draft that starts only if its falsifier reproduces after WFREE+TPLT.
+  - Consequence: WFREE and TPLT are the critical path for the largest classes.
+
 Next: FRCLASS closes the 58 preview-5 FR; ABORT1, TPLT and WFREE land on d23159c7; FRFIX2 and COLL1; CENSUS3 ranks the preview-5 FA gap; then E2, the deletion slice, the full preview and the landing chain.
