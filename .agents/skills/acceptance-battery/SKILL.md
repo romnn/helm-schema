@@ -72,6 +72,7 @@ No gate task runs the ignored battery. `task test:integration` and
 | Refactor or performance work that must not change acceptance | schema-only (no `ADJUDICATE_WITH_HELM`) | the commit your work started from, whose fixtures are the pre-change output | the one clean dump of the final build (required) | no. Pass means zero screened flips. |
 | Any change that moves fixture bytes and may change acceptance (correctness work, landings) | live (`ADJUDICATE_WITH_HELM=1`) | `ROSTER_BASELINE`, required: other baselines are refused | the one clean dump of the final build (required) | **yes**. Roster rows are flips against the roster baseline, so the count gate (`PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE = 0`) cannot hold. |
 | A schema-only run found flips | switch to live | `ROSTER_BASELINE` | same dump | yes |
+| Corpus parity preview of a rewrite against main (ADR 0071) | live, one process per chart, aggregated by mechanism | `ROSTER_BASELINE` | the rewrite's one clean dump | yes; the run is a measurement, so it reports every new false acceptance or rejection instead of passing. Procedure: `rearchitecture` skill §3 |
 
 Why the roster baseline is pinned: a roster row is a cell `ROSTER_BASELINE`
 rejected and the candidate accepts. Against any other baseline, and especially

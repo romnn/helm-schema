@@ -43,7 +43,7 @@ strategies live in their surviving decisions.
 | [0009](0009-typed-apiversion-branches.md) | apiVersion alternatives are typed branches, not candidate lists | Accepted | 2026-05-18 |
 | [0010](0010-unified-templated-yaml-frontend.md) | One templated-YAML frontend CST replaces the line model | Accepted | 2026-07-03 |
 | [0011](0011-rendered-layout-frontend-refactor.md) | YAML ownership from a rendered-layout skeleton, not source lines | Accepted | 2026-09-27 |
-| [0012](0012-one-abstract-interpreter-owns-helm-semantics.md) | One abstract interpreter owns Helm semantics | Accepted | 2026-06-09 |
+| [0012](0012-one-abstract-interpreter-owns-helm-semantics.md) | One abstract interpreter owns Helm semantics | Amended by 0070 | 2026-06-09 |
 | [0013](0013-evidence-error-polarity-uncertainty-widens.md) | Each evidence kind has a fixed error polarity; uncertainty widens | Accepted | 2026-06-11 |
 | [0014](0014-six-phase-pipeline-with-one-typed-artifact-per-phase.md) | Six analysis/output phases plus source preparation, one owner per fact | Accepted | 2026-08-04 |
 | [0015](0015-contract-ir-is-the-semantic-seam.md) | `ContractIr` is the semantic seam between analysis and emission | Accepted | 2026-06-13 |
@@ -101,3 +101,5 @@ strategies live in their surviving decisions.
 | [0067](0067-continuous-benchmarks.md) | Continuous end-to-end benchmarks, published with benchtrail beside the docs | Accepted | 2026-10-20 |
 | [0068](0068-benchmarks-compare-like-with-like-across-runner-cpus.md) | Benchmarks compare like with like across runner CPUs, and count instructions | Accepted | 2026-10-20 |
 | [0069](0069-value-algebra-is-the-interpreter-semantic-model.md) | The value algebra is the interpreter's single semantic model | Accepted | 2026-10-23 |
+| [0070](0070-one-symbolic-interpreter-is-the-only-source-of-constraints.md) | One symbolic interpreter, built as an executor, is the only source of constraints | Accepted | 2026-10-29 |
+| [0071](0071-rearchitectures-prove-corpus-parity-before-deleting.md) | A rearchitecture proves corpus-wide parity with main before it deletes the old path | Accepted | 2026-10-29 |

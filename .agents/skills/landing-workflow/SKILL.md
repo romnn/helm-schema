@@ -179,6 +179,12 @@ The chain does not replace the CLAUDE.md gates for declaring a round final
   real-CLI differential.
 - Report closures strictly: verified closures separately from policy closures; never
   claim a family closed from a flip-only battery.
+- **Fix by mechanism, never by recognizer** (ADR 0070). A missing constraint means the
+  interpreter does not yet carry a fact end to end: provenance through a transform, or a
+  placement. Complete that mechanism; never match a template shape, a helper or a chart.
+- **Rewrites prove corpus parity before deleting** (ADR 0071; `rearchitecture` skill).
+  Admission-suite counts are not progress claims or landing estimates; corpus preview
+  numbers are.
 - Never push. Stage only the files you edited — a runner-managed clone contains dump
   leftovers.
 

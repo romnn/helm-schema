@@ -1,6 +1,7 @@
 # 0012. One abstract interpreter owns Helm semantics
 
-Status: Accepted
+Status: Accepted; amended by [0070](0070-one-symbolic-interpreter-is-the-only-source-of-constraints.md) (the idiom catalog
+exists only as transfer functions of one executor, never as shape tables)
 Date: 2026-06-09 (abstract-values interpreter plan, `bd238a46`)
 
 ## Context

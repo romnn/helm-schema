@@ -2,9 +2,25 @@
 
 ## Goal
 
+helm-schema is **one symbolic interpreter that executes Helm templates** ([ADR 0070](docs/adr/0070-one-symbolic-interpreter-is-the-only-source-of-constraints.md)).
+For every value it tracks four things:
+- what the value can be;
+- which input it came from, read at which moment;
+- every transform applied to it (`default`, `merge`, `toYaml`, `tpl`, `include`, …);
+- where it lands in the rendered output, under which guard.
+Every schema constraint is a consequence of those facts and of what the destination demands (the Kubernetes/CRD schema
+at that placement, or a Go/Helm operation that aborts).
+
+Never add a recognizer for a template shape, helper name or chart, a generator-side re-derivation, a store beside the
+value, or a post-hoc filter. Earlier rounds did, and paid for it every round after. A missing constraint means an
+incomplete mechanism: complete the mechanism, so the whole class closes. A rewrite proves corpus-wide parity with main
+before it deletes the old path ([ADR 0071](docs/adr/0071-rearchitectures-prove-corpus-parity-before-deleting.md)).
+
 Recover chart meaning through typed, structural static analysis first. Preserve exact alternatives
-and ambiguity; prefer an explicit unknown over a wrong guess. Use bounded, explicit heuristics
-only after precise structural signals run out, and never let them override structural facts.
+and ambiguity; prefer an explicit unknown over a wrong guess. Bounded, explicit heuristics are allowed only
+as opt-in policy outside the interpreter's semantics (for example tiered apiVersion inference, ADR 0034), after
+precise structural signals run out. They never override structural facts and never stand in for a missing
+interpreter mechanism.
 Prefer simplicity by deletion: one semantic model per fact, fewer representations and fallback layers.
 Generate fast, deterministic, ordered output; key caches by every semantic input. Upstream is
 authoritative: caches are fetch-on-miss optimizations, never correctness or capability oracles.
@@ -44,6 +60,15 @@ ingest it or intersect it with generated output. Explicit override schemas are c
   concrete `reason = "…"` per the [lint policy](.agents/skills/verification-gates/SKILL.md#lint-policy-pointers).
 - Destructure every semantic-carrier field and match owned enums without wildcards in merges, path maps, cache keys and dispatch; collapse hand-synced twins.
 - Preserve semantic features during refactors; removing one requires an explicit product decision.
+- Rewrites and producer deletions follow the `rearchitecture` skill:
+  - inventory what the old path produces;
+  - build the replacement beside it;
+  - measure parity with the corpus parity preview, never with an admission suite alone;
+  - delete only what the preview proves covered.
+  False rejections against main are fixed, never rostered.
+- Expected test schemas come from Helm's behaviour, main's fixtures or the destination schema, never from snapshotting
+  current output. A red test must be semantic: validate discriminating documents against the expected and actual
+  schemas before calling a difference a regression.
 - Profile product and verification tooling through `tracing::instrument` spans and the existing Perfetto layer; do not add custom phase timers.
 - Run tests in debug mode with `cargo nextest run --workspace`; never use `--release` for tests.
 
@@ -63,6 +88,9 @@ gate command's own exit code, never a trailing pipe's. Follow the
 7. When schema semantics change: `cargo install --path ./crates/helm-schema-cli/`, then
    `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml check:local`.
 8. For refactors, report the production LOC delta with `task tokei:core`.
+9. For rewrites, and before deleting any constraint producer, run the corpus parity preview against main. That is the
+   live battery against `ROSTER_BASELINE` over every chart, plus the unit and integration suites with the dump's
+   fixtures adopted ([rearchitecture](.agents/skills/rearchitecture/SKILL.md), ADR 0071).
 
 ### Fixtures and acceptance
 
@@ -75,6 +103,8 @@ gate command's own exit code, never a trailing pipe's. Follow the
 
 Start with the [ADR index](docs/adr/README.md); read the relevant decisions before changing a subsystem.
 
+- The interpreter and how to change it: [0070](docs/adr/0070-one-symbolic-interpreter-is-the-only-source-of-constraints.md),
+  [0069](docs/adr/0069-value-algebra-is-the-interpreter-semantic-model.md), [0071](docs/adr/0071-rearchitectures-prove-corpus-parity-before-deleting.md).
 - Analysis and ambiguity: [0001](docs/adr/0001-structural-static-analysis-first.md), [0013](docs/adr/0013-evidence-error-polarity-uncertainty-widens.md).
 - Simplicity and phases: [0003](docs/adr/0003-simplicity-by-deletion.md), [0014](docs/adr/0014-six-phase-pipeline-with-one-typed-artifact-per-phase.md), [0015](docs/adr/0015-contract-ir-is-the-semantic-seam.md).
 - Inference inputs and parsing: [0004](docs/adr/0004-values-schema-json-is-output-not-evidence.md), [0006](docs/adr/0006-parsers-over-string-heuristics.md).
@@ -90,3 +120,5 @@ Load the relevant skill for procedures:
 - [corpus-fixtures](.agents/skills/corpus-fixtures/SKILL.md): producer, manifests, regeneration and adoption.
 - [acceptance-battery](.agents/skills/acceptance-battery/SKILL.md): baseline/candidate setup, flip adjudication, rosters, vacuous runs.
 - [landing-workflow](.agents/skills/landing-workflow/SKILL.md): campaigns, ledgers, hand-offs, landing chain and receipts.
+- [rearchitecture](.agents/skills/rearchitecture/SKILL.md): rewriting a pipeline part without losing what the old path
+  got right (inventory, parity preview, deletion gate, test reconciliation).
