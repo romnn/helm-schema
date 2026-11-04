@@ -65,6 +65,7 @@ struct GuardedRootValuesDocuments {
 }
 
 impl RootValuesDocuments {
+    #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn condition_context<'a>(
         &'a self,
         guards: &[helm_schema_core::ConditionalGuard],

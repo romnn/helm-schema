@@ -38,6 +38,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
         })
         .collect();
     let contracts = symbolic_context.generate_contract_irs_for_sources(&sources);
+    let mut scoped_paths = std::collections::BTreeMap::new();
     for (file, mut manifest_contract) in files.iter().zip(contracts) {
         let source = file.source;
         // NOTES executes in the same schedule, but its prose is not a YAML manifest.
@@ -52,10 +53,15 @@ pub(crate) fn collect_manifest_contract_for_chart(
             )
         };
         manifest_contract.map_value_paths_shared(|path| {
-            helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
-                &path.encode(),
-                &chart.values_prefix,
-            ))
+            scoped_paths
+                .entry(path)
+                .or_insert_with_key(|path| {
+                    helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
+                        &path.encode(),
+                        &chart.values_prefix,
+                    ))
+                })
+                .clone()
         });
         manifest_contract.project_dependency_global_contracts(&chart.values_prefix);
         // Rendering this template unconditionally reaches these helper

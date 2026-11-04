@@ -2,8 +2,10 @@ use std::collections::BTreeSet;
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{
-    CollectionDomain, CollectionQuantifier, ConditionalGuard, Guard, ValuePattern, ValuesPath,
+    CollectionDomain, CollectionQuantifier, ConditionalGuard, Guard, GuardValue, ValuePattern,
+    ValuesPath,
 };
+use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 
@@ -66,6 +68,153 @@ fn condition_cache_separates_selected_values_documents() -> eyre::Result<()> {
         base_fragments != guarded_fragments,
         "distinct values documents must produce distinct cached fragments"
     );
+    Ok(())
+}
+
+fn reference_guard_encodes_fully(
+    guard: &ConditionalGuard,
+    ancestor: &[String],
+    values: &serde_yaml::Value,
+    absence: AbsenceDefaults<'_>,
+) -> bool {
+    match guard {
+        ConditionalGuard::Decision(graph) => graph.decisions().iter().all(|node| {
+            node.test.is_exact_requirement_atom()
+                && reference_guard_encodes_fully(&node.test, ancestor, values, absence)
+        }),
+        ConditionalGuard::Not(inner) => {
+            reference_guard_encodes_fully(inner, ancestor, values, absence)
+        }
+        ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
+            !guards.is_empty()
+                && guards
+                    .iter()
+                    .all(|guard| reference_guard_encodes_fully(guard, ancestor, values, absence))
+        }
+        other => !build_condition_clauses(
+            std::slice::from_ref(other),
+            ancestor,
+            values,
+            absence,
+            ConditionPolarity::Widen,
+        )
+        .is_empty(),
+    }
+}
+
+fn availability_guards() -> eyre::Result<Vec<ConditionalGuard>> {
+    let mut guards = Vec::new();
+    for path in [
+        "",
+        "subject",
+        "subject.*",
+        r"subject.\*",
+        "dependency.subject",
+    ] {
+        let path = ValuesPath::parse(path);
+        guards.extend([
+            ConditionalGuard::Absent { path: path.clone() },
+            ConditionalGuard::Truthy { path: path.clone() },
+            ConditionalGuard::Eq {
+                path: path.clone(),
+                value: GuardValue::Null,
+            },
+            ConditionalGuard::IntLt {
+                path: path.clone(),
+                bound: 1,
+            },
+            ConditionalGuard::MatchesValue {
+                path: path.clone(),
+                pattern: ValuePattern::Array {
+                    prefix: vec![ValuePattern::Any],
+                    items: Some(Box::new(ValuePattern::TemplateFree)),
+                },
+            },
+        ]);
+        for pattern in ["^a$", "["] {
+            guards.push(ConditionalGuard::MatchesPattern {
+                path: path.clone(),
+                pattern: pattern.into(),
+            });
+            for domain in [CollectionDomain::ObjectKeys, CollectionDomain::ObjectValues] {
+                for quantifier in [CollectionQuantifier::All, CollectionQuantifier::Any] {
+                    guards.push(ConditionalGuard::CollectionPattern {
+                        path: path.clone(),
+                        domain,
+                        quantifier,
+                        pattern: pattern.into(),
+                    });
+                }
+            }
+        }
+    }
+    let atom = helm_schema_core::RequirementAtom::Value(Guard::Truthy {
+        path: ValuesPath::parse("subject"),
+    });
+    let atoms = [atom.clone()];
+    let mut work = 16_384;
+    let mut bdd = helm_schema_core::RequirementBdd::new(&atoms, &mut work)
+        .ok_or_eyre("availability atom inventory exhausted")?;
+    let root = bdd.atom(&atom).ok_or_eyre("availability atom exhausted")?;
+    guards.push(
+        bdd.finish(root)
+            .ok_or_eyre("availability export exhausted")?,
+    );
+    let first = guards
+        .first()
+        .cloned()
+        .ok_or_eyre("availability guard missing")?;
+    guards.extend([
+        ConditionalGuard::AllOf(Vec::new().into()),
+        ConditionalGuard::AnyOf(Vec::new().into()),
+        ConditionalGuard::Not(std::sync::Arc::new(first.clone())),
+        ConditionalGuard::AllOf(vec![first.clone(), first.clone()].into()),
+        ConditionalGuard::AnyOf(vec![first].into()),
+    ]);
+    Ok(guards)
+}
+
+#[test]
+fn encodability_cache_matches_independent_checks_across_full_contexts() -> eyre::Result<()> {
+    let documents = [
+        serde_yaml::Value::Null,
+        serde_yaml::from_str(indoc! {"
+            subject: {a: alpha, '*': text}
+            dependency: {subject: beta}
+        "})?,
+        serde_yaml::from_str(indoc! {"
+            subject: {a: 7}
+            dependency: {subject: [false]}
+        "})?,
+    ];
+    let roots = [BTreeSet::new(), BTreeSet::from([vec!["dependency".into()]])];
+    let ancestors = [Vec::new(), vec!["subject".into()], vec!["other".into()]];
+    let guards = availability_guards()?;
+    let mut cache = ConditionFragmentCache::default();
+    for _ in 0..2 {
+        for values in &documents {
+            for runtime_defaults in &documents {
+                for dependency_refill in &documents {
+                    for dependency_roots in &roots {
+                        let absence = AbsenceDefaults {
+                            runtime_defaults,
+                            dependency_refill,
+                            dependency_roots,
+                        };
+                        for ancestor in &ancestors {
+                            for guard in &guards {
+                                sim_assert_eq!(
+                                    have: cache.encodes_fully(guard, ancestor, values, absence),
+                                    want: reference_guard_encodes_fully(guard, ancestor, values, absence)
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    assert!(cache.definitions.is_empty());
     Ok(())
 }
 

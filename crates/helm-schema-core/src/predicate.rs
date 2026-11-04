@@ -278,6 +278,28 @@ impl Predicate {
         }
     }
 
+    /// Copies an atomic guard into a distinct node with identical cached metadata.
+    pub(crate) fn fresh_guard_copy(&self) -> Option<Self> {
+        let PredicateStorage::Shared(node) = &self.0 else {
+            return None;
+        };
+        let PredicateNode {
+            kind,
+            structural_hash,
+            syntax_size,
+            contains_approximation,
+        } = node.as_ref();
+        let PredicateNodeKind::Guard(guard) = kind else {
+            return None;
+        };
+        Some(Self(PredicateStorage::Shared(Arc::new(PredicateNode {
+            kind: PredicateNodeKind::Guard(guard.clone()),
+            structural_hash: *structural_hash,
+            syntax_size: *syntax_size,
+            contains_approximation: *contains_approximation,
+        }))))
+    }
+
     fn structural_hash(&self) -> u64 {
         match &self.0 {
             PredicateStorage::True => 0,
@@ -782,6 +804,7 @@ impl Predicate {
     /// use a bounded decision diagram internally and fall back to the input
     /// formula if neither normal form stays bounded.
     #[must_use]
+    #[tracing::instrument(skip_all, level = "debug")]
     pub fn normalize_boolean(self) -> Self {
         crate::predicate_bdd::normalize(self)
     }
@@ -1123,20 +1146,44 @@ impl Predicate {
                 role,
                 sound_subset.map(|predicate| Box::new(predicate.map_paths(map, cache))),
             ),
-            PredicateKind::Guard(guard) => Self::Guard(guard.clone().map_value_paths(map)),
-            PredicateKind::Not(inner) => Self::Not(Box::new(inner.map_paths(map, cache))),
-            PredicateKind::And(predicates) => Self::And(
-                predicates
+            PredicateKind::Guard(guard) => {
+                let mapped = guard.clone().map_value_paths(map);
+                if mapped == *guard {
+                    self.clone()
+                } else {
+                    Self::Guard(mapped)
+                }
+            }
+            PredicateKind::Not(inner) => {
+                let mapped = inner.map_paths(map, cache);
+                if mapped == *inner {
+                    self.clone()
+                } else {
+                    Self::Not(Box::new(mapped))
+                }
+            }
+            PredicateKind::And(predicates) => {
+                let mapped = predicates
                     .iter()
                     .map(|predicate| predicate.map_paths(map, cache))
-                    .collect(),
-            ),
-            PredicateKind::Or(predicates) => Self::Or(
-                predicates
+                    .collect::<Vec<_>>();
+                if mapped.as_slice() == predicates {
+                    self.clone()
+                } else {
+                    Self::And(mapped)
+                }
+            }
+            PredicateKind::Or(predicates) => {
+                let mapped = predicates
                     .iter()
                     .map(|predicate| predicate.map_paths(map, cache))
-                    .collect(),
-            ),
+                    .collect::<Vec<_>>();
+                if mapped.as_slice() == predicates {
+                    self.clone()
+                } else {
+                    Self::Or(mapped)
+                }
+            }
         };
         let mapped = if mapped == *self {
             self.clone()

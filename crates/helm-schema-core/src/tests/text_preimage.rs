@@ -1,4 +1,5 @@
 use color_eyre::eyre::{self, OptionExt as _};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::TextPreimage;
@@ -101,7 +102,12 @@ fn pattern_preimages_preserve_dot_line_break_semantics() -> eyre::Result<()> {
     for (text, want) in [
         ("axb", true),
         ("a b", true),
-        ("a\nb", false),
+        (
+            indoc! {"
+            a
+            b"},
+            false,
+        ),
         ("a\rb", false),
     ] {
         sim_assert_eq!(have: pattern.find(text).is_some(), want: want, "{text:?}");

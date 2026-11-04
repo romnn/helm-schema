@@ -1,4 +1,5 @@
-use std::collections::BTreeSet;
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -10,8 +11,24 @@ use crate::{ConditionalGuard, Conjunction, Guard, Predicate, PredicateKind};
 ///
 /// Construction removes impossible conjunctions and normalizes exact
 /// complementary resolution, absorption, and deduplication.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct GuardDnf(Arc<BTreeSet<BTreeSet<Predicate>>>);
+
+impl PartialOrd for GuardDnf {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for GuardDnf {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if Arc::ptr_eq(&self.0, &other.0) {
+            Ordering::Equal
+        } else {
+            self.0.cmp(&other.0)
+        }
+    }
+}
 
 impl Default for GuardDnf {
     fn default() -> Self {
@@ -76,15 +93,12 @@ impl GuardDnf {
     }
 
     /// Builds and minimizes a DNF from predicate conjunction alternatives.
+    #[tracing::instrument(skip_all, level = "debug")]
     #[must_use]
     pub fn from_disjunction(
         conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = Predicate>>,
     ) -> Self {
-        let keys = conjunctions
-            .into_iter()
-            .filter_map(normalize_conjunction)
-            .collect::<Vec<_>>();
-        let keys = minimize_disjunction_by(keys, predicates_are_complementary);
+        let keys = normalize_disjunction(conjunctions);
         Self(Arc::new(
             keys.into_iter()
                 .map(|key| key.into_iter().collect())
@@ -266,21 +280,65 @@ impl<'de> Deserialize<'de> for GuardDnf {
     }
 }
 
+// The minimizer preserves sorted, unique literals and rows, including their original nodes.
+pub(crate) fn normalize_disjunction(
+    conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = Predicate>>,
+) -> Vec<Vec<Predicate>> {
+    let keys = conjunctions
+        .into_iter()
+        .filter_map(normalize_conjunction)
+        .collect::<Vec<_>>();
+    minimize_disjunction_by(keys, predicates_are_complementary)
+}
+
+#[tracing::instrument(skip_all, level = "debug")]
 fn normalize_conjunction(
     predicates: impl IntoIterator<Item = Predicate>,
 ) -> Option<Vec<Predicate>> {
+    let predicates = Conjunction::new(predicates).into_vec();
+    let indexed = predicates.len() >= 32;
     let mut normalized = BTreeSet::new();
-    for predicate in Conjunction::new(predicates).into_vec() {
+    let mut negated = BTreeMap::new();
+    let mut paths: BTreeMap<_, Vec<Predicate>> = BTreeMap::new();
+    for predicate in predicates {
         match predicate.kind() {
             PredicateKind::False => return None,
             PredicateKind::Or(predicates) if disjunction_is_tautology(predicates) => continue,
             _ => {}
         }
-        if normalized
-            .iter()
-            .any(|other| predicates_are_contradictory(&predicate, other))
-        {
+        // Contradictions require structural complements or guards with a shared values path.
+        // Keep the original comparison direction, including nested raw negations.
+        let contradictory = if indexed {
+            negated
+                .get(&predicate)
+                .is_some_and(|other| predicates_are_contradictory(&predicate, other))
+                || matches!(predicate.kind(), PredicateKind::Not(inner)
+                    if normalized.get(inner).is_some_and(|other|
+                        predicates_are_contradictory(&predicate, other)))
+                || matches!(predicate.kind(), PredicateKind::Guard(guard)
+                    if guard.value_paths().iter().any(|path|
+                        paths.get(path).is_some_and(|others| others.iter().any(|other|
+                            predicates_are_contradictory(&predicate, other)))))
+        } else {
+            normalized
+                .iter()
+                .any(|other| predicates_are_contradictory(&predicate, other))
+        };
+        if contradictory {
             return None;
+        }
+        if indexed {
+            match predicate.kind() {
+                PredicateKind::Not(inner) => {
+                    negated.insert(inner.clone(), predicate.clone());
+                }
+                PredicateKind::Guard(guard) => {
+                    for path in guard.value_paths() {
+                        paths.entry(path).or_default().push(predicate.clone());
+                    }
+                }
+                _ => {}
+            }
         }
         normalized.insert(predicate);
     }
@@ -297,14 +355,32 @@ fn normalize_conjunction(
     for predicate in absorbed_disjunctions {
         normalized.remove(&predicate);
     }
+    drop_implied_approximations(&mut normalized);
+    Some(normalized.into_iter().collect())
+}
+
+fn drop_implied_approximations(predicates: &mut BTreeSet<Predicate>) {
+    if !predicates.iter().any(|predicate| {
+        matches!(
+            predicate.kind(),
+            PredicateKind::Approximate {
+                marker: _,
+                paths: _,
+                role: _,
+                sound_subset: Some(_),
+            }
+        )
+    }) {
+        return;
+    }
     let exact = Predicate::all(
-        normalized
+        predicates
             .iter()
             .filter(|predicate| !predicate.contains_approximation())
             .cloned()
             .collect(),
     );
-    normalized.retain(|predicate| {
+    predicates.retain(|predicate| {
         let PredicateKind::Approximate {
             sound_subset: Some(sound_subset),
             ..
@@ -314,7 +390,6 @@ fn normalize_conjunction(
         };
         !crate::predicate_bdd::exact_implies(&exact, sound_subset)
     });
-    Some(normalized.into_iter().collect())
 }
 
 fn disjunction_is_tautology(predicates: &[Predicate]) -> bool {

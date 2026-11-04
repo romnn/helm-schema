@@ -244,13 +244,13 @@ struct RegionPair {
     no: u64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct FlatKey {
-    region: u64,
+    regions: Vec<Option<u64>>,
     inputs: u64,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct FlatPaths {
     paths: BTreeSet<ValuesPath>,
     work: usize,
@@ -287,9 +287,9 @@ impl CoverageProjection {
         Self::default()
     }
 
-    /// Equal conditions share one flattening of the derived provenance graph.
+    /// Frozen region identities and input registrations key complete flattenings.
     /// Completed views are evictable; pending folds keep their operands alive.
-    #[tracing::instrument(skip_all, fields(cached_views = self.views.len(), retained = self.retained.get(), roots = roots.len(), flat_hit = tracing::field::Empty))]
+    #[tracing::instrument(skip_all, fields(cached_views = self.views.len(), retained = self.retained.get(), weak_entries = self.input_sets.len() + self.input_objects.len() + self.unions.len(), roots = roots.len(), flat_hit = tracing::field::Empty))]
     pub(super) fn project(
         &mut self,
         condition: &Predicate,
@@ -297,8 +297,70 @@ impl CoverageProjection {
         roots: &[&HeapVersion],
         reads: &mut super::read_set::ReadSet,
     ) {
+        let paths = self.project_paths(inputs, roots);
+        for path in paths {
+            reads.insert(super::RuntimeRead {
+                path,
+                condition: condition.clone(),
+                coverage: super::ReadCoverage::UnknownRegion,
+            });
+        }
+    }
+
+    fn known_flat_key(
+        &self,
+        inputs: &super::input_paths::InputPaths,
+        roots: &[&HeapVersion],
+    ) -> Option<FlatKey> {
+        let regions = roots
+            .iter()
+            .map(|root| {
+                let CoverageAnswer::Known(view) = self.views.get(&root.id.ordinal)? else {
+                    return None;
+                };
+                Some(
+                    view.root
+                        .as_ref()
+                        .and_then(|node| node.regions.as_ref())
+                        .map(|region| region.id),
+                )
+            })
+            .collect::<Option<Vec<_>>>()?;
+        Some(FlatKey {
+            regions,
+            inputs: inputs.id(),
+        })
+    }
+
+    fn project_paths(
+        &mut self,
+        inputs: &super::input_paths::InputPaths,
+        roots: &[&HeapVersion],
+    ) -> BTreeSet<ValuesPath> {
+        let cached = self
+            .known_flat_key(inputs, roots)
+            .and_then(|key| self.flat.get(&key).cloned());
+        if let Some(FlatPaths {
+            paths,
+            work,
+            weight: _,
+        }) = cached
+        {
+            // Known view hits preserve query order and all cache warming effects.
+            for root in roots {
+                self.query(root, MAX_COVERAGE_WORK);
+            }
+            tracing::Span::current().record("flat_hit", true);
+            let mut budget = QueryBudget::new(MAX_COVERAGE_WORK);
+            return if budget.charge(work) {
+                paths
+            } else {
+                BTreeSet::from([ValuesPath::default()])
+            };
+        }
         let mut seen = AHashSet::new();
         let mut paths = BTreeSet::new();
+        let mut regions = Vec::with_capacity(roots.len());
         let mut budget = QueryBudget::new(MAX_COVERAGE_WORK);
         let mut capped = false;
         'roots: for root in roots {
@@ -307,28 +369,9 @@ impl CoverageProjection {
                 continue;
             };
             let root_region = view.root.as_ref().and_then(|node| node.regions.as_ref());
-            let key = (roots.len() == 1)
-                .then(|| {
-                    root_region.map(|region| FlatKey {
-                        region: region.id,
-                        inputs: inputs.id(),
-                    })
-                })
-                .flatten();
-            if let Some(flat) = key.and_then(|key| self.flat.get(&key)) {
-                if tracing::enabled!(tracing::Level::DEBUG) {
-                    tracing::Span::current().record("flat_hit", true);
-                }
-                if budget.charge(flat.work) {
-                    paths.extend(flat.paths.iter().cloned());
-                } else {
-                    capped = true;
-                }
-                break;
-            }
-            let before = budget.remaining;
-            let mut regions: Vec<_> = root_region.cloned().into_iter().collect();
-            while let Some(region) = regions.pop() {
+            regions.push(root_region.map(|region| region.id));
+            let mut pending: Vec<_> = root_region.cloned().into_iter().collect();
+            while let Some(region) = pending.pop() {
                 if !seen.insert(region.id) {
                     continue;
                 }
@@ -352,28 +395,31 @@ impl CoverageProjection {
                         paths.extend(inputs.get(object).cloned());
                     }
                     RegionKind::Union { yes, no } => {
-                        regions.extend([Rc::clone(yes), Rc::clone(no)]);
+                        pending.extend([Rc::clone(yes), Rc::clone(no)]);
                     }
                 }
-            }
-            if let Some(key) = key {
-                self.remember_paths(key, &paths, before - budget.remaining);
             }
         }
         if capped {
             paths.insert(ValuesPath::default());
+        } else {
+            self.remember_paths(
+                FlatKey {
+                    regions,
+                    inputs: inputs.id(),
+                },
+                &paths,
+                MAX_COVERAGE_WORK - budget.remaining,
+            );
         }
-        for path in paths {
-            reads.insert(super::RuntimeRead {
-                path,
-                condition: condition.clone(),
-                coverage: super::ReadCoverage::UnknownRegion,
-            });
-        }
+        paths
     }
 
     fn remember_paths(&mut self, key: FlatKey, paths: &BTreeSet<ValuesPath>, work: usize) {
-        let weight = paths.iter().fold(1_usize, |weight, path| {
+        if self.flat.contains_key(&key) {
+            return;
+        }
+        let weight = paths.iter().fold(1 + key.regions.len(), |weight, path| {
             path.segments()
                 .fold(weight.saturating_add(1), |weight, segment| {
                     weight.saturating_add(
@@ -454,6 +500,7 @@ impl CoverageProjection {
     }
 
     fn reserve_cache(&mut self, weight: usize) -> Option<()> {
+        let mut pruned = false;
         loop {
             let entries = self.views.len()
                 + self.input_sets.len()
@@ -468,6 +515,12 @@ impl CoverageProjection {
             {
                 return Some(());
             }
+            let weak_entries = self.input_sets.len() + self.input_objects.len() + self.unions.len();
+            if !pruned && weak_entries > self.retained.get().saturating_mul(2).max(4096) {
+                self.prune_dead_regions();
+                pruned = true;
+                continue;
+            }
             if self.views.pop_first().is_some()
                 || self.unions.pop_first().is_some()
                 || self.input_sets.pop_first().is_some()
@@ -477,6 +530,15 @@ impl CoverageProjection {
             }
             return None;
         }
+    }
+
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::coverage_cache", fields(input_sets = self.input_sets.len(), input_objects = self.input_objects.len(), unions = self.unions.len(), retained = self.retained.get(), views = self.views.len()))]
+    fn prune_dead_regions(&mut self) {
+        self.input_sets
+            .retain(|_, region| region.strong_count() != 0);
+        self.input_objects
+            .retain(|_, region| region.strong_count() != 0);
+        self.unions.retain(|_, region| region.strong_count() != 0);
     }
 
     fn allocate(&mut self, budget: &mut QueryBudget, weight: usize) -> Option<CacheAllocation> {
@@ -1098,6 +1160,11 @@ impl CoverageProjection {
         }
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::heap_coverage::transfer"
+    )]
     fn joined_view(
         &mut self,
         version: &HeapVersion,
@@ -1161,8 +1228,11 @@ impl CoverageProjection {
         }
     }
 
-    #[tracing::instrument(skip_all, level = "debug")]
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::coverage_cache", fields(cached = self.views.contains_key(&root.id.ordinal), work = budget.remaining))]
     fn view(&mut self, root: &HeapVersion, budget: &mut QueryBudget) -> Option<CoverageView> {
+        if let Some(CoverageAnswer::Known(view)) = self.views.get(&root.id.ordinal) {
+            return budget.charge(1).then(|| view.clone());
+        }
         let mut pending = vec![Task::Visit(root)];
         let mut results = Vec::new();
         while let Some(task) = pending.pop() {

@@ -2024,6 +2024,9 @@ mod input_validation_reuse {
 #[path = "runtime_reads.rs"]
 mod read_safety;
 
+#[path = "runtime_read_projection.rs"]
+mod read_projection_laws;
+
 mod scheduled_file_occurrence_laws {
     use std::collections::BTreeSet;
     use std::rc::Rc;

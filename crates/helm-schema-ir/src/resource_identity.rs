@@ -27,6 +27,7 @@ struct HeaderNodes {
     items: Vec<usize>,
 }
 
+#[tracing::instrument(skip_all, level = "debug")]
 pub(crate) fn placed_resources(
     document: &PlacedDocument<'_>,
     execution: &DocumentExecution,

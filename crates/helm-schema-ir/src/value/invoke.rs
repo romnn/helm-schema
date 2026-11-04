@@ -508,13 +508,20 @@ impl Executor<'_> {
             .iter()
             .map(|operand| operand.value.clone())
             .collect();
-        let influences = super::operations::inputs(&arguments, &state);
+        // Complete input queries before dispatch to preserve snapshot and cache effects.
+        let input_views = arguments
+            .iter()
+            .map(|value| state.heap.freeze(value).inputs())
+            .collect::<Vec<_>>();
         let first = arguments.first().cloned().unwrap_or_else(Value::unknown);
         match function {
             "hasKey" => {
                 let Some(GuardValue::String(key)) = arguments.get(1).and_then(Value::constant)
                 else {
-                    return normal(state, Value::influenced(influences.clone()));
+                    return normal(
+                        state,
+                        Value::influenced(input_views.into_iter().flatten().collect()),
+                    );
                 };
                 let presence = state.field_presence(&first, key);
                 normal(state, presence)

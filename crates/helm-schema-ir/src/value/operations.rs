@@ -1273,6 +1273,7 @@ fn transfer_indent(input: TransferInput<'_>, state: &State) -> Value {
     )
 }
 
+#[tracing::instrument(skip_all, level = "debug", fields(arguments = arguments.len()))]
 pub(super) fn inputs(arguments: &[Value], state: &State) -> BTreeSet<helm_schema_core::ValuesPath> {
     arguments
         .iter()

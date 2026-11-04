@@ -217,7 +217,45 @@ impl Value {
             } => None,
         }
     }
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::direct_input_inventory"
+    )]
     pub(super) fn inputs(&self) -> BTreeSet<ValuesPath> {
+        // These leaves have no value children in the direct provenance walk.
+        if let ValueNode::Leaf(Leaf { datum, origin }) = self.node.as_ref()
+            && matches!(
+                datum,
+                Datum::Text(_)
+                    | Datum::Scalar {
+                        go_type: _,
+                        content: _
+                    }
+                    | Datum::Map { view: _, target: _ }
+                    | Datum::Strings(_)
+                    | Datum::Slot {
+                        backing: _,
+                        index: _
+                    }
+                    | Datum::Unknown(_)
+                    | Datum::Sequence(super::InterfaceSequence {
+                        storage: None,
+                        start: _,
+                        length: _,
+                        capacity: _,
+                    })
+            )
+        {
+            let super::Origin {
+                derivation: _,
+                identity,
+                influences,
+            } = origin;
+            let mut inputs = influences.clone();
+            inputs.extend(identity.iter().cloned());
+            return inputs;
+        }
         let mut inputs = BTreeSet::new();
         let mut pending = vec![self];
         let mut seen = AHashSet::new();
@@ -289,6 +327,7 @@ impl State {
         self.record_value_read_under(value, coverage, &condition);
     }
 
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::read_work")]
     fn record_value_read_under(
         &mut self,
         value: &Value,
@@ -508,6 +547,7 @@ impl State {
         false
     }
 
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::read_work")]
     fn record_default_fallback_reads(
         &mut self,
         invocation: &super::Invocation,
@@ -542,6 +582,7 @@ impl State {
             .may_be_true(self.path_predicate())
     }
 
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::read_work")]
     pub(super) fn path_predicate(&self) -> Predicate {
         if self.heap.arena.runtime_path(&self.active).is_impossible() {
             return Predicate::False;
@@ -1522,6 +1563,11 @@ impl FrozenValue {
         let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
         selector_source_identity(&self.value, &mut remaining)
     }
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::input_inventory"
+    )]
     pub(crate) fn inputs(&self) -> BTreeSet<ValuesPath> {
         self.collect_inputs(false)
     }

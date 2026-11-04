@@ -5,6 +5,49 @@ use helm_schema_core::{Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
+fn shared_member_host_reads_keep_the_first_capture_and_all_read_rows() {
+    use crate::value::{
+        DocumentExecution, Exit, FileOutput, Flow, Normal, ReadCoverage, RuntimeRead,
+    };
+
+    let mut state = State::new(Value::nil());
+    for allows_nil in [false, true] {
+        for condition in [Predicate::True, Predicate::truthy_path("enabled")] {
+            state.reads.insert(RuntimeRead {
+                coverage: ReadCoverage::MemberHost { allows_nil },
+                path: ValuesPath::parse("object"),
+                condition,
+            });
+        }
+    }
+    let execution = DocumentExecution::new(
+        (0..16)
+            .map(|_| Exit {
+                state: state.clone(),
+                flow: Flow::Normal(Normal {
+                    value: Value::nil(),
+                }),
+            })
+            .collect(),
+        FileOutput::Text,
+    );
+    let mut expected = crate::observed_facts::ObservedFacts::default();
+    let mut rows = 0;
+    for read in execution
+        .exits
+        .iter()
+        .flat_map(|exit| exit.state.reads.iter())
+    {
+        if let ReadCoverage::MemberHost { allows_nil } = read.coverage {
+            super::capture_member_host(read, allows_nil, &mut expected);
+            rows += 1;
+        }
+    }
+    sim_assert_eq!(have: rows, want: 64);
+    sim_assert_eq!(have: execution.observed_facts(), want: &expected);
+}
+
+#[test]
 fn frozen_capture_releases_execution_accounting_and_keeps_rendered_parts() -> eyre::Result<()> {
     let mut state = State::new(Value::nil());
     let owner = std::rc::Rc::downgrade(&state.heap.arena);

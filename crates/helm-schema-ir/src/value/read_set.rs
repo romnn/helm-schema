@@ -78,6 +78,7 @@ impl ReadSet {
         self.resolved.take();
     }
 
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::read_work")]
     pub(super) fn insert(&mut self, entry: RuntimeRead) -> bool {
         self.resolved.take();
         let before = self.len();

@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
@@ -307,7 +307,7 @@ fn check_memoized_conjunction(predicate: Predicate) {
 
 fn check_literal_conjunctions() {
     let path = ValuesPath::parse("subject");
-    let guards = vec![
+    let guards = [
         Guard::Truthy { path: path.clone() },
         Guard::Not { path: path.clone() },
         Guard::Eq {
@@ -842,5 +842,347 @@ fn requirement_fold_closes_complementary_opaque_cones_beyond_the_dnf_cap() -> ey
     let root = bdd.or(yes, no).ok_or_eyre("aggregation exhausted")?;
     let projected = bdd.finish(root).ok_or_eyre("projection exhausted")?;
     sim_assert_eq!(have: projected.predicate().normalize_boolean(), want: Predicate::truthy_path("enabled"));
+    Ok(())
+}
+
+#[test]
+fn atom_hash_indices_match_ordered_lookup_for_polarities_payloads_and_scopes() {
+    let literal = ValuesPath::from_segments(["sets", "*"]);
+    let member = ValuesPath::parse("sets.*");
+    let guards = [
+        Guard::Truthy {
+            path: literal.clone(),
+        },
+        Guard::Not {
+            path: literal.clone(),
+        },
+        Guard::Truthy { path: member },
+        Guard::Eq {
+            path: literal.clone(),
+            value: GuardValue::Int(1),
+        },
+        Guard::NotEq {
+            path: literal.clone(),
+            value: GuardValue::Int(1),
+        },
+        Guard::Eq {
+            path: literal.clone(),
+            value: GuardValue::Bool(true),
+        },
+        Guard::TypeIs {
+            path: literal.clone(),
+            schema_type: "string".to_owned(),
+        },
+        Guard::NotTypeIs {
+            path: literal.clone(),
+            schema_type: "string".to_owned(),
+        },
+        Guard::TypeIs {
+            path: literal.clone(),
+            schema_type: "number".to_owned(),
+        },
+        Guard::MatchesPattern {
+            path: literal.clone(),
+            pattern: "^a".to_owned(),
+            templated: false,
+        },
+        Guard::MatchesPattern {
+            path: literal,
+            pattern: "^a".to_owned(),
+            templated: true,
+        },
+    ];
+    let choices = [
+        crate::RequirementChoice {
+            scope: "first".to_owned(),
+            decision: 7,
+        },
+        crate::RequirementChoice {
+            scope: "second".to_owned(),
+            decision: 7,
+        },
+        crate::RequirementChoice {
+            scope: "first".to_owned(),
+            decision: 8,
+        },
+    ];
+    let atoms = guards
+        .iter()
+        .map(super::GuardAtom::new)
+        .chain(choices.iter().map(super::GuardAtom::Choice))
+        .collect::<Vec<_>>();
+    let ordered = atoms.iter().copied().collect::<BTreeSet<_>>();
+    let original = ordered
+        .iter()
+        .copied()
+        .enumerate()
+        .map(|(index, atom)| (atom, index))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let hashed = ordered
+        .iter()
+        .copied()
+        .enumerate()
+        .map(|(index, atom)| (atom.index_key(), index))
+        .collect::<ahash::AHashMap<_, _>>();
+    sim_assert_eq!(have: hashed.len(), want: original.len());
+    for atom in atoms {
+        sim_assert_eq!(have: hashed.get(&atom.index_key()).copied(), want: original.get(&atom).copied());
+    }
+}
+
+#[derive(Default)]
+struct ReferencePathExport {
+    current: Vec<Predicate>,
+    paths: Vec<Vec<Predicate>>,
+    literal_count: usize,
+}
+
+impl ReferencePathExport {
+    // Preserve the original traversal and charging independently of the prototype cache.
+    fn collect(
+        &mut self,
+        bdd: &PredicateBdd<'_>,
+        node: usize,
+        target: usize,
+        remaining: &mut usize,
+    ) -> Option<()> {
+        let cost = if node == target {
+            self.current.len() + 1
+        } else {
+            1
+        };
+        let Some(next) = remaining.checked_sub(cost) else {
+            *remaining = 0;
+            return None;
+        };
+        *remaining = next;
+        if node == target {
+            if self.paths.len() >= super::MAX_NORMAL_FORM_PATHS
+                || self.literal_count + self.current.len() > super::MAX_NORMAL_FORM_LITERALS
+            {
+                return None;
+            }
+            self.literal_count += self.current.len();
+            self.paths.push(self.current.clone());
+            return Some(());
+        }
+        if node == FALSE || node == TRUE {
+            return Some(());
+        }
+        let node = bdd.node(node)?;
+        let atom = bdd.atoms.get(node.variable).copied()?;
+        let cost = match atom {
+            super::GuardAtom::Other(guard) => crate::predicate::guard_syntax_size(guard),
+            super::GuardAtom::Truthy(_, _)
+            | super::GuardAtom::Eq(_, _, _)
+            | super::GuardAtom::TypeIs(_, _, _)
+            | super::GuardAtom::Choice(_) => 1,
+        };
+        let Some(next) = remaining.checked_sub(cost) else {
+            *remaining = 0;
+            return None;
+        };
+        *remaining = next;
+        let atom = Predicate::from(atom.to_guard()?);
+        self.current.push(atom.negated());
+        self.collect(bdd, node.when_false, target, remaining)?;
+        self.current.pop();
+        self.current.push(atom);
+        self.collect(bdd, node.when_true, target, remaining)?;
+        self.current.pop();
+        Some(())
+    }
+}
+
+fn predicate_aliases(paths: &[Vec<Predicate>], aliases: &mut BTreeMap<usize, usize>) -> Vec<usize> {
+    fn visit(predicate: &Predicate, aliases: &mut BTreeMap<usize, usize>, result: &mut Vec<usize>) {
+        let next = aliases.len();
+        result.push(*aliases.entry(predicate.node_id()).or_insert(next));
+        for child in predicate.children() {
+            visit(child, aliases, result);
+        }
+    }
+    let mut result = Vec::new();
+    for predicate in paths.iter().flatten() {
+        visit(predicate, aliases, &mut result);
+    }
+    result
+}
+
+fn reference_predicate_from_disjunction(paths: &[Vec<Predicate>]) -> Predicate {
+    let condition = crate::GuardDnf::from_disjunction(paths.iter().cloned());
+    if condition.is_never() {
+        return Predicate::False;
+    }
+    if condition.is_unconditional() {
+        return Predicate::True;
+    }
+    let alternatives = condition
+        .disjuncts()
+        .iter()
+        .map(|conjunction| Predicate::all(conjunction.iter().cloned().collect()))
+        .collect::<Vec<_>>();
+    match alternatives.as_slice() {
+        [] => Predicate::False,
+        [predicate] => predicate.clone(),
+        _ => Predicate::Or(alternatives),
+    }
+}
+
+fn compare_disjunction_conversion(paths: &[Vec<Predicate>]) -> Predicate {
+    let mut aliases = BTreeMap::new();
+    predicate_aliases(paths, &mut aliases);
+    let mut reference_aliases = aliases.clone();
+    let mut actual_aliases = aliases;
+    let expected = reference_predicate_from_disjunction(paths);
+    let actual = super::predicate_from_disjunction(paths.iter().cloned());
+    sim_assert_eq!(have: &actual, want: &expected);
+    sim_assert_eq!(
+        have: predicate_aliases(&[vec![actual.clone()]], &mut actual_aliases),
+        want: predicate_aliases(&[vec![expected]], &mut reference_aliases)
+    );
+    actual
+}
+
+fn oversized_disjunction(depth: usize) -> Predicate {
+    if depth == 0 {
+        guard(2)
+    } else {
+        Predicate::Or(vec![
+            oversized_disjunction(depth - 1),
+            oversized_disjunction(depth - 1),
+        ])
+    }
+}
+
+#[test]
+fn direct_disjunction_conversion_preserves_normalization_and_node_aliases() {
+    let first = guard(0);
+    let second = guard(1);
+    let independent_first = guard(0);
+    let raw_not = Predicate::Not(Box::new(first.clone()));
+    let alternatives = [
+        vec![first.clone(), second.clone()],
+        vec![independent_first, second.negated()],
+        vec![raw_not.clone()],
+        vec![Predicate::Not(Box::new(raw_not))],
+        vec![first.clone(), first.clone()],
+        vec![Predicate::False],
+        vec![Predicate::True],
+        vec![first.clone(), Predicate::Or(vec![first.clone(), second])],
+    ];
+    for mask in 0_u16..(1 << alternatives.len()) {
+        let paths = alternatives
+            .iter()
+            .enumerate()
+            .filter_map(|(index, path)| (mask & (1 << index) != 0).then_some(path.clone()))
+            .collect::<Vec<_>>();
+        compare_disjunction_conversion(&paths);
+        compare_disjunction_conversion(&paths.into_iter().rev().collect::<Vec<_>>());
+    }
+
+    // Resolution can expose a provable approximation only to a subsequent normalization pass.
+    let approximation = Predicate::Approximate(
+        "opaque".into(),
+        BTreeSet::new(),
+        ApproximationRole::Control,
+        Some(Box::new(first.clone())),
+    );
+    let oversized = oversized_disjunction(14);
+    let result = compare_disjunction_conversion(&[
+        vec![first.clone(), approximation.clone(), oversized.clone()],
+        vec![first, approximation, oversized.negated()],
+    ]);
+    assert!(result.contains_approximation());
+}
+
+fn compare_path_exports(bdd: &PredicateBdd<'_>, root: usize, allowances: &[usize]) {
+    let mut retained = Vec::new();
+    let mut reference_aliases = BTreeMap::new();
+    let mut actual_aliases = BTreeMap::new();
+    for allowance in allowances {
+        for target in [TRUE, FALSE] {
+            let mut reference = ReferencePathExport::default();
+            let mut expected_remaining = *allowance;
+            let expected = reference
+                .collect(bdd, root, target, &mut expected_remaining)
+                .map(|()| reference.paths);
+            let mut actual_remaining = *allowance;
+            let actual = bdd.paths_to_with_work(root, target, &mut actual_remaining);
+            sim_assert_eq!(have: &actual, want: &expected);
+            sim_assert_eq!(have: actual_remaining, want: expected_remaining);
+            if let (Some(actual), Some(expected)) = (&actual, &expected) {
+                // Compare alias relationships across exports, not allocator addresses.
+                sim_assert_eq!(
+                    have: predicate_aliases(actual, &mut actual_aliases),
+                    want: predicate_aliases(expected, &mut reference_aliases)
+                );
+            }
+            retained.extend(actual.into_iter().chain(expected).flatten());
+        }
+    }
+}
+
+#[test]
+fn path_literal_prototypes_preserve_budgets_and_node_aliases() -> eyre::Result<()> {
+    let compound = Predicate::Guard(Guard::AnyOf {
+        alternatives: vec![vec![Guard::Truthy {
+            path: ValuesPath::parse("compound"),
+        }]],
+    });
+    let shared = Predicate::Or(vec![guard(2), guard(3)]);
+    let predicate = Predicate::Or(vec![
+        Predicate::And(vec![guard(0), shared.clone()]),
+        Predicate::And(vec![guard(1), shared, compound]),
+    ]);
+    let mut bdd = PredicateBdd::for_predicate(&predicate).ok_or_eyre("inventory exhausted")?;
+    let root = bdd.build(&predicate).ok_or_eyre("construction exhausted")?;
+    let allowances = (0..256).chain([16_384, 1, 16_384]).collect::<Vec<_>>();
+    compare_path_exports(&bdd, root, &allowances);
+    compare_path_exports(&bdd, TRUE, &allowances);
+    compare_path_exports(&bdd, FALSE, &allowances);
+    Ok(())
+}
+
+#[test]
+fn path_literal_prototypes_preserve_positive_export_caps() -> eyre::Result<()> {
+    for (prefix, parity) in [(0, 10), (100, 8)] {
+        let inventory = Predicate::And((0..prefix + parity).map(guard).collect());
+        let mut bdd = PredicateBdd::for_predicate(&inventory).ok_or_eyre("inventory exhausted")?;
+        let mut positive = TRUE;
+        let mut negative = FALSE;
+        for variable in (prefix..prefix + parity).rev() {
+            let next_positive = bdd
+                .make_node(variable, negative, positive)
+                .ok_or_eyre("parity exhausted")?;
+            negative = bdd
+                .make_node(variable, positive, negative)
+                .ok_or_eyre("complement exhausted")?;
+            positive = next_positive;
+        }
+        for variable in (0..prefix).rev() {
+            positive = bdd
+                .make_node(variable, FALSE, positive)
+                .ok_or_eyre("prefix exhausted")?;
+        }
+        compare_path_exports(&bdd, positive, &[0, 32, 16_384, 1_000_000]);
+        sim_assert_eq!(have: bdd.paths_to_with_work(positive, TRUE, &mut 1_000_000), want: None);
+    }
+    Ok(())
+}
+
+#[test]
+fn path_literal_prototypes_charge_unexportable_choices() -> eyre::Result<()> {
+    let choice = crate::RequirementChoice {
+        scope: "chart".into(),
+        decision: 13,
+    };
+    let inventory = [crate::RequirementAtom::Choice(choice.clone())];
+    let mut work = 16_384;
+    let mut bdd =
+        crate::RequirementBdd::new(&inventory, &mut work).ok_or_eyre("inventory exhausted")?;
+    let root = bdd.choice(&choice).ok_or_eyre("choice exhausted")?;
+    let crate::RequirementNode(root) = root;
+    compare_path_exports(&bdd.bdd, root, &[0, 1, 2, 32]);
     Ok(())
 }

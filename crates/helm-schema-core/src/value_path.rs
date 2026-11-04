@@ -1,5 +1,8 @@
 use std::cmp::Ordering;
+use std::collections::hash_map::DefaultHasher;
+use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::sync::{Arc, LazyLock};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -7,11 +10,57 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 ///
 /// Segments are the semantic representation. Encoding is explicit because
 /// dots and backslashes in literal keys must not become selector boundaries.
-#[derive(Clone, Debug, Default, Eq)]
+#[derive(Clone)]
 pub struct ValuesPath {
+    data: Arc<PathData>,
+}
+
+#[derive(Clone)]
+struct PathData {
     segments: Vec<Segment>,
     encoded: Box<str>,
+    hash: u64,
 }
+
+impl PathData {
+    fn new(segments: Vec<Segment>) -> Self {
+        let encoded = encode_segments(&segments).into_boxed_str();
+        let hash = path_hash(&segments);
+        Self {
+            segments,
+            encoded,
+            hash,
+        }
+    }
+
+    fn append(&mut self, segment: Segment) {
+        self.segments.push(segment);
+        self.encoded = encode_segments(&self.segments).into_boxed_str();
+        self.hash = path_hash(&self.segments);
+    }
+}
+
+impl Default for ValuesPath {
+    fn default() -> Self {
+        static EMPTY: LazyLock<Arc<PathData>> =
+            LazyLock::new(|| Arc::new(PathData::new(Vec::new())));
+        Self {
+            data: Arc::clone(&EMPTY),
+        }
+    }
+}
+
+impl fmt::Debug for ValuesPath {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("ValuesPath")
+            .field("segments", &self.data.segments)
+            .field("encoded", &self.data.encoded)
+            .finish()
+    }
+}
+
+impl Eq for ValuesPath {}
 
 /// One structural component of a [`ValuesPath`].
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -129,8 +178,9 @@ impl ValuesPath {
             }
         }
         push_parsed_segment(&mut segments, &mut segment, &mut escaped_star);
-        let encoded = encode_segments(&segments).into_boxed_str();
-        Self { segments, encoded }
+        Self {
+            data: Arc::new(PathData::new(segments)),
+        }
     }
 
     /// Constructs a path from literal structural segments.
@@ -145,29 +195,28 @@ impl ValuesPath {
             .map(Into::into)
             .filter(|segment| !matches!(segment, Segment::Literal(value) if value.is_empty()))
             .collect::<Vec<_>>();
-        let encoded = encode_segments(&segments).into_boxed_str();
-        Self { segments, encoded }
+        Self {
+            data: Arc::new(PathData::new(segments)),
+        }
     }
 
     /// Iterates structural segments from root to leaf.
     pub fn segments(&self) -> impl DoubleEndedIterator<Item = &Segment> + ExactSizeIterator {
-        self.segments.iter()
+        self.data.segments.iter()
     }
 
     /// Encodes the path in the stable escaped-dot wire spelling.
     #[must_use]
     pub fn encode(&self) -> String {
-        self.encoded.to_string()
+        self.data.encoded.to_string()
     }
 
     /// Returns the strict structural parent, if this path is non-root.
     #[must_use]
     pub fn parent(&self) -> Option<Self> {
-        let (_, parent) = self.segments.split_last()?;
-        let encoded = encode_segments(parent).into_boxed_str();
+        let (_, parent) = self.data.segments.split_last()?;
         Some(Self {
-            segments: parent.to_vec(),
-            encoded,
+            data: Arc::new(PathData::new(parent.to_vec())),
         })
     }
 
@@ -175,28 +224,28 @@ impl ValuesPath {
     pub fn push(&mut self, segment: impl Into<String>) {
         let segment = segment.into();
         if !segment.is_empty() {
-            self.segments.push(Segment::Literal(segment));
-            self.encoded = encode_segments(&self.segments).into_boxed_str();
+            let data = Arc::make_mut(&mut self.data);
+            data.append(Segment::Literal(segment));
         }
     }
 
     /// Appends the structural marker for every ranged member.
     pub fn push_each_member(&mut self) {
-        self.segments.push(Segment::EachMember);
-        self.encoded = encode_segments(&self.segments).into_boxed_str();
+        let data = Arc::make_mut(&mut self.data);
+        data.append(Segment::EachMember);
     }
 
     /// Reports whether this path is a strict descendant of `ancestor`.
     #[must_use]
     pub fn is_descendant_of(&self, ancestor: &Self) -> bool {
-        self.segments.len() > ancestor.segments.len()
-            && self.segments.starts_with(&ancestor.segments)
+        self.data.segments.len() > ancestor.data.segments.len()
+            && self.data.segments.starts_with(&ancestor.data.segments)
     }
 
     /// Returns the collection path for a trailing member segment.
     #[must_use]
     pub fn item_parent(&self) -> Option<Self> {
-        (self.segments.last() == Some(&Segment::EachMember))
+        (self.data.segments.last() == Some(&Segment::EachMember))
             .then(|| self.parent())
             .flatten()
     }
@@ -238,9 +287,15 @@ fn encode_segments(segments: &[Segment]) -> String {
     encoded
 }
 
+fn path_hash(segments: &[Segment]) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    segments.hash(&mut hasher);
+    hasher.finish()
+}
+
 impl PartialEq for ValuesPath {
     fn eq(&self, other: &Self) -> bool {
-        self.segments == other.segments
+        Arc::ptr_eq(&self.data, &other.data) || self.data.segments == other.data.segments
     }
 }
 
@@ -252,7 +307,11 @@ impl PartialOrd for ValuesPath {
 
 impl Ord for ValuesPath {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.encoded.cmp(&other.encoded)
+        if Arc::ptr_eq(&self.data, &other.data) {
+            Ordering::Equal
+        } else {
+            self.data.encoded.cmp(&other.data.encoded)
+        }
     }
 }
 
@@ -323,7 +382,7 @@ impl Iterator for EncodedSegmentBytes<'_> {
 
 impl Hash for ValuesPath {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.segments.hash(state);
+        self.data.hash.hash(state);
     }
 }
 
@@ -332,7 +391,7 @@ impl Serialize for ValuesPath {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.encode())
+        serializer.serialize_str(&self.data.encoded)
     }
 }
 
@@ -381,7 +440,7 @@ where
 /// Splits the contract `.Values` path currency into structural segments.
 #[must_use]
 pub fn split_value_path(path: &str) -> Vec<String> {
-    ValuesPath::parse(path)
+    Arc::unwrap_or_clone(ValuesPath::parse(path).data)
         .segments
         .into_iter()
         .map(|segment| match segment {

@@ -241,6 +241,7 @@ fn guards_supported_with_self_path(
         })
 }
 
+#[tracing::instrument(skip_all, level = "debug")]
 fn terminal_guard_ancestor(guards: &[ConditionalGuard], values: &YamlValue) -> Vec<String> {
     let ancestor = shared_guard_ancestor_segments(guards);
     let path = ValuesPath::from_segments(
@@ -305,6 +306,8 @@ pub(crate) fn append_terminal_clauses(
         predicate_memo,
         gate,
     );
+    // Availability probes must not reserve names in the emitted condition definitions.
+    let mut encodings = crate::condition_encoding::ConditionFragmentCache::default();
     for guards in clauses {
         let (_, values_yaml_doc, absence) =
             documents.condition_context(guards, dependency_roots, predicate_memo);
@@ -324,10 +327,9 @@ pub(crate) fn append_terminal_clauses(
         } else {
             shared_ancestor
         };
-        if !guards
-            .iter()
-            .all(|guard| guard_encodes_fully(guard, &ancestor_segments, values_yaml_doc, absence))
-        {
+        if !guards.iter().all(|guard| {
+            encodings.encodes_fully(guard, &ancestor_segments, values_yaml_doc, absence)
+        }) {
             continue;
         }
         append_terminal_clause(
@@ -355,7 +357,7 @@ pub(crate) fn append_terminal_clauses(
             missing_ancestor_guards.push(absent);
             if missing_ancestor_guards
                 .iter()
-                .all(|guard| guard_encodes_fully(guard, &root, values_yaml_doc, absence))
+                .all(|guard| encodings.encodes_fully(guard, &root, values_yaml_doc, absence))
             {
                 append_terminal_clause(
                     root_schema,
@@ -375,6 +377,7 @@ pub(crate) fn append_terminal_clauses(
 /// guards all hold against that refill terminates every document missing the
 /// root — the half a clause anchored inside the root cannot reach. One clause
 /// per root states it.
+#[tracing::instrument(skip_all, level = "debug")]
 fn append_deleted_dependency_root_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
@@ -420,6 +423,7 @@ fn append_deleted_dependency_root_clauses(
     }
 }
 
+#[tracing::instrument(skip_all, level = "debug")]
 fn append_values_default_source_absence_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
@@ -467,6 +471,7 @@ fn append_values_default_source_absence_clauses(
     }
 }
 
+#[tracing::instrument(skip_all, level = "debug")]
 fn append_guarded_values_default_source_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
@@ -1076,6 +1081,7 @@ fn build_target_fragment(path_segments: &[String], leaf_schema: SchemaNode) -> S
 
 /// Appends `if <guards> then false` at `ancestor_segments` unless the gate
 /// withdraws it.
+#[tracing::instrument(skip_all, level = "debug")]
 fn append_terminal_clause(
     root_schema: &mut SchemaDocument,
     gate: &mut UncoalescedRootGate<'_>,

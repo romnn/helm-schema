@@ -1556,6 +1556,11 @@ impl super::State {
         }
     }
 }
+#[tracing::instrument(
+    skip_all,
+    level = "debug",
+    target = "helm_schema_ir::value::document_sealing"
+)]
 fn capture_map_argument(
     read: &super::RuntimeRead,
     allows_nil: bool,
@@ -1642,6 +1647,11 @@ fn capture_map_argument(
     true
 }
 
+#[tracing::instrument(
+    skip_all,
+    level = "debug",
+    target = "helm_schema_ir::value::document_sealing"
+)]
 fn capture_member_host(
     read: &super::RuntimeRead,
     allows_nil: bool,
@@ -1670,6 +1680,11 @@ fn capture_member_host(
     });
 }
 
+#[tracing::instrument(
+    skip_all,
+    level = "debug",
+    target = "helm_schema_ir::value::document_sealing"
+)]
 fn always_installed_root_fallbacks(exits: &[Exit]) -> BTreeSet<helm_schema_core::ValuesPath> {
     let root_fallback_sources = exits
         .iter()
@@ -1713,6 +1728,11 @@ fn always_installed_root_fallbacks(exits: &[Exit]) -> BTreeSet<helm_schema_core:
 }
 
 impl DocumentExecution {
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::document_sealing"
+    )]
     pub(super) fn new(mut exits: Vec<Exit>, output: super::FileOutput) -> Self {
         let site_index = super::site_index::SiteIndex::new(&exits);
         let placement = super::yaml::FilePlacement::seal(&exits, output);
@@ -1760,9 +1780,15 @@ impl DocumentExecution {
         }
         execution
     }
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::document_sealing"
+    )]
     fn capture_read_facts(&mut self) -> Vec<Predicate> {
         let mut observed_type_failures = Vec::new();
         let mut map_arguments: BTreeMap<_, Vec<_>> = BTreeMap::new();
+        let mut captured_member_hosts = AHashSet::new();
         let always_installed_sources = always_installed_root_fallbacks(&self.exits);
         for read in self.exits.iter().flat_map(|exit| exit.state.reads.iter()) {
             if read.coverage == super::ReadCoverage::OpaqueValuesRoot {
@@ -1811,7 +1837,10 @@ impl DocumentExecution {
                 | super::ReadCoverage::OpaqueValuesRoot
                 | super::ReadCoverage::SerializedInfluence => continue,
             };
-            capture_member_host(read, allows_nil, &mut self.observed_facts);
+            // Repeated immutable reads insert the same capture; keep its first representative.
+            if captured_member_hosts.insert(std::ptr::from_ref(read)) {
+                capture_member_host(read, allows_nil, &mut self.observed_facts);
+            }
         }
         for ((path, allows_nil), conditions) in map_arguments {
             let read = super::RuntimeRead {
@@ -1840,7 +1869,15 @@ impl DocumentExecution {
             .filter(|read| read.coverage == super::ReadCoverage::UnknownRegion)
             .map(|read| &read.path)
     }
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::projection_reads"
+    )]
     pub(crate) fn reads(&self) -> Vec<crate::fragment_eval::ValueRead> {
+        // Persistent sets keep each immutable read and its predicate DAG alive for this call.
+        // Identity preserves the sharing that participates in bounded normalization.
+        let mut conditions = AHashMap::new();
         self.exits
             .iter()
             .flat_map(|exit| exit.state.reads.iter())
@@ -1857,18 +1894,26 @@ impl DocumentExecution {
                         return None;
                     }
                 };
+                let condition = if read.coverage == super::ReadCoverage::DefaultFallback {
+                    // Each fallback conversion retains its freshly allocated Default atom.
+                    helm_schema_core::GuardDnf::from_conjunction([
+                        read.condition.clone(),
+                        Predicate::from(helm_schema_core::Guard::Default {
+                            path: read.path.clone(),
+                        }),
+                    ])
+                } else {
+                    conditions
+                        .entry(std::ptr::from_ref(read))
+                        .or_insert_with(|| {
+                            helm_schema_core::GuardDnf::from_conjunction([read.condition.clone()])
+                        })
+                        .clone()
+                };
                 Some(crate::fragment_eval::ValueRead {
                     values_path: read.path.clone(),
                     kind,
-                    condition: helm_schema_core::GuardDnf::from_conjunction(
-                        std::iter::once(read.condition.clone()).chain(
-                            (read.coverage == super::ReadCoverage::DefaultFallback).then(|| {
-                                Predicate::from(helm_schema_core::Guard::Default {
-                                    path: read.path.clone(),
-                                })
-                            }),
-                        ),
-                    ),
+                    condition,
                     resource: None,
                     provenance: Vec::new(),
                     dependency: true,
@@ -1877,6 +1922,11 @@ impl DocumentExecution {
             .collect()
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::projection_reads"
+    )]
     pub(crate) fn projection_reads(&self) -> Vec<crate::fragment_eval::ValueRead> {
         let mut reads = self.reads();
         for site in self.sites().filter(|site| site.rendered) {

@@ -92,6 +92,7 @@ impl ConditionFragmentCache {
         );
     }
 
+    #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn clauses(
         &mut self,
         guards: &[ConditionalGuard],
@@ -104,6 +105,31 @@ impl ConditionFragmentCache {
             .iter()
             .filter_map(|guard| self.fragment(guard, ancestor, values, absence, polarity))
             .collect()
+    }
+
+    pub(crate) fn encodes_fully(
+        &mut self,
+        guard: &ConditionalGuard,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+    ) -> bool {
+        match guard {
+            ConditionalGuard::Decision(graph) => graph.decisions().iter().all(|node| {
+                node.test.is_exact_requirement_atom()
+                    && self.encodes_fully(&node.test, ancestor, values, absence)
+            }),
+            ConditionalGuard::Not(inner) => self.encodes_fully(inner, ancestor, values, absence),
+            ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
+                !guards.is_empty()
+                    && guards
+                        .iter()
+                        .all(|guard| self.encodes_fully(guard, ancestor, values, absence))
+            }
+            other => self
+                .fragment(other, ancestor, values, absence, ConditionPolarity::Widen)
+                .is_some(),
+        }
     }
 
     fn fragment(
@@ -646,36 +672,19 @@ fn build_single_condition_fragment(
 /// safe for `if/then` arms (a narrower `if` applies the arm less often) but
 /// unsound for terminal `then: false` clauses, where a dropped conjunct
 /// widens the rejected set. Mirrors `build_single_condition_fragment`.
+#[tracing::instrument(skip_all, level = "debug")]
 pub(crate) fn guard_encodes_fully(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
     absence: AbsenceDefaults<'_>,
 ) -> bool {
-    match guard {
-        ConditionalGuard::Decision(graph) => graph.decisions().iter().all(|node| {
-            node.test.is_exact_requirement_atom()
-                && guard_encodes_fully(&node.test, ancestor_segments, values_yaml_doc, absence)
-        }),
-        ConditionalGuard::Not(inner) => {
-            guard_encodes_fully(inner, ancestor_segments, values_yaml_doc, absence)
-        }
-        ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
-            !guards.is_empty()
-                && guards.iter().all(|guard| {
-                    guard_encodes_fully(guard, ancestor_segments, values_yaml_doc, absence)
-                })
-        }
-        other => build_single_condition_fragment(
-            other,
-            ancestor_segments,
-            values_yaml_doc,
-            absence,
-            ConditionPolarity::Widen,
-            &mut ConditionFragmentCache::default(),
-        )
-        .is_some(),
-    }
+    ConditionFragmentCache::default().encodes_fully(
+        guard,
+        ancestor_segments,
+        values_yaml_doc,
+        absence,
+    )
 }
 
 /// The document says a dependency values root is gone: absent, null, or a
@@ -1176,6 +1185,7 @@ pub(crate) fn input_path_present_condition(
     )
 }
 
+#[tracing::instrument(skip_all, level = "debug")]
 pub(crate) fn evaluate_guard_set_on_values(
     guards: &[ConditionalGuard],
     values_yaml_doc: &YamlValue,

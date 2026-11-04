@@ -1,8 +1,10 @@
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
-use super::GuardDnf;
-use crate::{ConditionalGuard, Guard, Predicate, ValuesPath};
+use std::collections::BTreeSet;
+
+use super::{GuardDnf, disjunction_is_tautology, predicates_are_contradictory};
+use crate::{ConditionalGuard, Conjunction, Guard, Predicate, PredicateKind, ValuesPath};
 
 fn path(value: &str) -> ValuesPath {
     ValuesPath::parse(value)
@@ -10,6 +12,29 @@ fn path(value: &str) -> ValuesPath {
 
 fn truthy(path: &str) -> Predicate {
     Predicate::truthy_path(path)
+}
+
+#[test]
+fn shared_dnf_comparisons_keep_the_full_structural_order() {
+    let values = [
+        GuardDnf::never(),
+        GuardDnf::unconditional(),
+        GuardDnf::from_conjunction([truthy("a")]),
+        GuardDnf::from_conjunction([truthy("b"), truthy("a")]),
+        GuardDnf::from_conjunction([Predicate::Approximate(
+            "opaque".to_owned(),
+            BTreeSet::from([path("a")]),
+            crate::ApproximationRole::Control,
+            None,
+        )]),
+    ];
+    let clones = values.clone();
+    let copies = values.map(|value| GuardDnf::from_disjunction(value.disjuncts().iter().cloned()));
+    for left in clones.iter().chain(&copies) {
+        for right in clones.iter().chain(&copies) {
+            sim_assert_eq!(have: left.cmp(right), want: left.disjuncts().cmp(right.disjuncts()));
+        }
+    }
 }
 
 #[test]
@@ -73,41 +98,67 @@ fn single_conjunction_union_keeps_large_antichain() {
     sim_assert_eq!(have: condition.disjuncts().len(), want: 1_000);
 }
 
-fn reference_minimize_disjunction(mut keys: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
-    fn complementary(left: u8, right: u8) -> bool {
-        matches!((left, right), (0, 1) | (1, 0) | (2, 3) | (3, 2))
+fn reference_key_is_subset<T: PartialEq>(subset: &[T], superset: &[T]) -> bool {
+    subset.len() < superset.len() && subset.iter().all(|item| superset.contains(item))
+}
+
+fn reference_resolve_keys<T: Clone + PartialEq>(
+    left: &[T],
+    right: &[T],
+    are_complementary: impl Fn(&T, &T) -> bool,
+) -> Option<Vec<T>> {
+    if left.len() != right.len() {
+        return None;
     }
 
-    fn resolve(left: &[u8], right: &[u8]) -> Option<Vec<u8>> {
-        if left.len() != right.len() {
-            return None;
+    let mut left_extra = None;
+    let mut right_extra = None;
+    for item in left {
+        if !right.contains(item) {
+            if left_extra.is_some() {
+                return None;
+            }
+            left_extra = Some(item);
         }
-        let left_only = left
-            .iter()
-            .filter(|item| !right.contains(item))
-            .collect::<Vec<_>>();
-        let right_only = right
-            .iter()
-            .filter(|item| !left.contains(item))
-            .collect::<Vec<_>>();
-        let ([left_extra], [right_extra]) = (left_only.as_slice(), right_only.as_slice()) else {
-            return None;
-        };
-        complementary(**left_extra, **right_extra).then(|| {
-            left.iter()
-                .filter(|item| *item != *left_extra)
-                .copied()
-                .collect()
-        })
+    }
+    for item in right {
+        if !left.contains(item) {
+            if right_extra.is_some() {
+                return None;
+            }
+            right_extra = Some(item);
+        }
     }
 
+    let (Some(left_extra), Some(right_extra)) = (left_extra, right_extra) else {
+        return None;
+    };
+    if !are_complementary(left_extra, right_extra) {
+        return None;
+    }
+    Some(
+        left.iter()
+            .filter(|item| *item != left_extra)
+            .cloned()
+            .collect(),
+    )
+}
+
+fn reference_minimize_by<T: Clone + Ord>(
+    mut keys: Vec<Vec<T>>,
+    are_complementary: impl Copy + Fn(&T, &T) -> bool,
+) -> Vec<Vec<T>> {
+    debug_assert!(keys.iter().all(|key| {
+        key.windows(2)
+            .all(|pair| matches!(pair, [left, right] if left < right))
+    }));
     keys.sort();
     keys.dedup();
     loop {
         let mut resolved = None;
         'search: for (index, left) in keys.iter().enumerate() {
             for (other_index, right) in keys.iter().enumerate().skip(index + 1) {
-                if let Some(common) = resolve(left, right) {
+                if let Some(common) = reference_resolve_keys(left, right, are_complementary) {
                     resolved = Some((index, other_index, common));
                     break 'search;
                 }
@@ -119,17 +170,29 @@ fn reference_minimize_disjunction(mut keys: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
         keys.remove(other_index);
         keys.remove(index);
         if !keys.contains(&common) {
-            keys.push(common);
+            let insert_at = keys.partition_point(|key| key < &common);
+            keys.insert(insert_at, common);
         }
-        keys.sort();
     }
-    let sets = keys.clone();
-    keys.retain(|candidate| {
-        !sets.iter().any(|other| {
-            other.len() < candidate.len() && other.iter().all(|item| candidate.contains(item))
+
+    let retained = keys
+        .iter()
+        .enumerate()
+        .map(|(candidate_index, candidate)| {
+            !keys.iter().enumerate().any(|(other_index, other)| {
+                candidate_index != other_index && reference_key_is_subset(other, candidate)
+            })
         })
-    });
+        .collect::<Vec<_>>();
+    let mut retained = retained.into_iter();
+    keys.retain(|_| retained.next().unwrap_or_default());
     keys
+}
+
+fn reference_minimize_disjunction(keys: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    reference_minimize_by(keys, |left, right| {
+        matches!((*left, *right), (0, 1) | (1, 0) | (2, 3) | (3, 2))
+    })
 }
 
 #[test]
@@ -353,4 +416,311 @@ fn conditional_guard_disjunction_uses_the_same_normalization() {
             path: path("shared"),
         }]]
     );
+}
+
+fn reference_normalize_conjunction(
+    predicates: impl IntoIterator<Item = Predicate>,
+) -> Option<Vec<Predicate>> {
+    let mut normalized = BTreeSet::new();
+    for predicate in Conjunction::new(predicates).into_vec() {
+        match predicate.kind() {
+            PredicateKind::False => return None,
+            PredicateKind::Or(predicates) if disjunction_is_tautology(predicates) => continue,
+            _ => {}
+        }
+        if normalized
+            .iter()
+            .any(|other| predicates_are_contradictory(&predicate, other))
+        {
+            return None;
+        }
+        normalized.insert(predicate);
+    }
+    let absorbed_disjunctions = normalized
+        .iter()
+        .filter(|predicate| match predicate.kind() {
+            PredicateKind::Or(alternatives) => alternatives
+                .iter()
+                .any(|alternative| normalized.contains(alternative)),
+            _ => false,
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    for predicate in absorbed_disjunctions {
+        normalized.remove(&predicate);
+    }
+    let exact = Predicate::all(
+        normalized
+            .iter()
+            .filter(|predicate| !predicate.contains_approximation())
+            .cloned()
+            .collect(),
+    );
+    normalized.retain(|predicate| {
+        let PredicateKind::Approximate {
+            sound_subset: Some(sound_subset),
+            ..
+        } = predicate.kind()
+        else {
+            return true;
+        };
+        !crate::predicate_bdd::exact_implies(&exact, sound_subset)
+    });
+    Some(normalized.into_iter().collect())
+}
+
+#[test]
+fn indexed_contradictions_match_full_scan_with_typed_predicates() {
+    let mut candidates = vec![Predicate::True, Predicate::False];
+    for name in ["input", "other", "input.child"] {
+        let input = path(name);
+        let mut guards = vec![
+            Guard::Truthy {
+                path: input.clone(),
+            },
+            Guard::Default {
+                path: input.clone(),
+            },
+            Guard::MatchesPattern {
+                path: input.clone(),
+                pattern: "^a".to_owned(),
+                templated: false,
+            },
+            Guard::MatchesPattern {
+                path: input.clone(),
+                pattern: "^b".to_owned(),
+                templated: true,
+            },
+        ];
+        for schema_type in ["object", "string", "integer", "number", "boolean", "null"] {
+            guards.push(Guard::TypeIs {
+                path: input.clone(),
+                schema_type: schema_type.to_owned(),
+            });
+        }
+        for value in [
+            crate::GuardValue::Int(1),
+            crate::GuardValue::Int(2),
+            crate::GuardValue::Bool(true),
+            crate::GuardValue::String("1".to_owned()),
+            crate::GuardValue::Float("1.5".to_owned()),
+            crate::GuardValue::Null,
+        ] {
+            guards.push(Guard::Eq {
+                path: input.clone(),
+                value: value.clone(),
+            });
+            guards.push(Guard::NotEq {
+                path: input.clone(),
+                value,
+            });
+        }
+        candidates.extend(guards.into_iter().map(Predicate::from));
+    }
+    candidates.extend([
+        Predicate::from(Guard::Or { paths: Vec::new() }),
+        Predicate::from(Guard::Or {
+            paths: vec![path("input"), path("other")],
+        }),
+        Predicate::from(Guard::AnyOf {
+            alternatives: vec![
+                vec![Guard::Truthy {
+                    path: path("input"),
+                }],
+                vec![Guard::Default {
+                    path: path("other"),
+                }],
+            ],
+        }),
+        Predicate::Approximate(
+            "opaque".to_owned(),
+            BTreeSet::from([path("input")]),
+            crate::ApproximationRole::Control,
+            Some(Box::new(truthy("input"))),
+        ),
+        Predicate::Approximate(
+            "opaque".to_owned(),
+            BTreeSet::from([path("other")]),
+            crate::ApproximationRole::Control,
+            Some(Box::new(truthy("input"))),
+        ),
+        Predicate::Approximate(
+            "opaque".to_owned(),
+            BTreeSet::from([path("input")]),
+            crate::ApproximationRole::OutputSelection,
+            None,
+        ),
+    ]);
+    let negated = candidates
+        .iter()
+        .cloned()
+        .map(Predicate::Not)
+        .collect::<Vec<_>>();
+    candidates.extend(negated.iter().cloned());
+    candidates.extend(negated.into_iter().map(Predicate::Not));
+    let filler = (0..32)
+        .map(|index| truthy(&format!("unrelated.{index}")))
+        .collect::<Vec<_>>();
+    for left in &candidates {
+        for right in &candidates {
+            let input = filler
+                .iter()
+                .cloned()
+                .chain([left.clone(), right.clone()])
+                .collect::<Vec<_>>();
+            sim_assert_eq!(have: super::normalize_conjunction(input.clone()), want: reference_normalize_conjunction(input));
+        }
+    }
+}
+
+#[test]
+fn indexed_contradictions_preserve_raw_nested_negation_direction() {
+    let a = truthy("a");
+    let not_a = Predicate::Not(a);
+    let not_not_a = Predicate::Not(not_a.clone());
+    for pair in [[not_a.clone(), not_not_a.clone()], [not_not_a, not_a]] {
+        let input = (0..32)
+            .map(|index| truthy(&format!("filler.{index}")))
+            .chain(pair)
+            .collect::<Vec<_>>();
+        let expected = reference_normalize_conjunction(input.clone());
+        assert!(expected.is_some());
+        sim_assert_eq!(have: super::normalize_conjunction(input), want: expected);
+    }
+}
+
+#[test]
+fn ranked_minimization_preserves_asymmetric_callback_order() {
+    let choices = [
+        vec![],
+        vec![0],
+        vec![1],
+        vec![0, 2],
+        vec![0, 3],
+        vec![1, 2],
+        vec![1, 3],
+        vec![0, 2],
+    ];
+    for mask in 0_u16..(1 << choices.len()) {
+        let input = choices
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| mask & (1 << index) != 0)
+            .map(|(_, row)| row.clone())
+            .collect::<Vec<_>>();
+        let expected_calls = std::cell::RefCell::new(Vec::new());
+        let expected = reference_minimize_by(input.clone(), |left, right| {
+            expected_calls.borrow_mut().push((*left, *right));
+            matches!((*left, *right), (0, 1) | (2, 3))
+        });
+        let actual_calls = std::cell::RefCell::new(Vec::new());
+        let actual = crate::guard_algebra::minimize_disjunction_by(input, |left, right| {
+            actual_calls.borrow_mut().push((*left, *right));
+            matches!((*left, *right), (0, 1) | (2, 3))
+        });
+        sim_assert_eq!(have: actual, want: expected);
+        sim_assert_eq!(have: actual_calls.into_inner(), want: expected_calls.into_inner());
+    }
+    let input = vec![vec![0, 2], vec![0, 3], vec![1, 2]];
+    let actual = crate::guard_algebra::minimize_disjunction_by(input, |left, right| {
+        matches!((*left, *right), (0, 1) | (1, 0) | (2, 3) | (3, 2))
+    });
+    sim_assert_eq!(have: actual, want: vec![vec![0], vec![1, 2]]);
+}
+
+#[test]
+fn ranked_minimization_preserves_original_left_predicate_nodes() {
+    let shared_leaf = truthy("shared");
+    let shared = Predicate::Or(vec![shared_leaf.clone(), shared_leaf]);
+    let unshared = Predicate::Or(vec![truthy("shared"), truthy("shared")]);
+    sim_assert_eq!(have: &shared, want: &unshared);
+    assert_ne!(shared.node_id(), unshared.node_id());
+    let atom = truthy("a");
+    let mut input = vec![
+        vec![unshared, Predicate::Not(atom.clone())],
+        vec![shared, atom],
+    ];
+    for row in &mut input {
+        row.sort();
+    }
+    let expected = reference_minimize_by(input.clone(), super::predicates_are_complementary);
+    let actual =
+        crate::guard_algebra::minimize_disjunction_by(input, super::predicates_are_complementary);
+    let node_ids = |rows: &[Vec<Predicate>]| {
+        rows.iter()
+            .map(|row| row.iter().map(Predicate::node_id).collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+    };
+    sim_assert_eq!(have: node_ids(&actual), want: node_ids(&expected));
+    sim_assert_eq!(have: actual, want: expected);
+}
+
+#[test]
+fn ranked_minimization_handles_long_prefixes_and_absorption() {
+    let common = (100_u16..180).collect::<Vec<_>>();
+    let mut input = vec![
+        common.clone(),
+        common.iter().copied().chain([0, 1]).collect(),
+        common.iter().copied().chain([0, 2]).collect(),
+        common.iter().copied().chain([1, 2]).collect(),
+        vec![0, 1],
+        vec![],
+    ];
+    for row in &mut input {
+        row.sort_unstable();
+        row.dedup();
+    }
+    let complementary = |left: &u16, right: &u16| matches!((*left, *right), (0, 1) | (1, 0 | 2));
+    for count in 0..=input.len() {
+        let rows = input.iter().take(count).cloned().collect::<Vec<_>>();
+        sim_assert_eq!(have: crate::guard_algebra::minimize_disjunction_by(rows.clone(), complementary), want: reference_minimize_by(rows, complementary));
+    }
+}
+
+#[test]
+fn ranked_resolution_keeps_mask_boundaries_and_full_scan_callback_order() {
+    use std::cell::RefCell;
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct Comparison {
+        left: u16,
+        right: u16,
+    }
+
+    let common = (0_u16..130).collect::<Vec<_>>();
+    let mut input = vec![
+        common.iter().copied().chain([200]).collect::<Vec<_>>(),
+        common.iter().copied().chain([201]).collect(),
+        vec![0, 127],
+        vec![0, 128],
+        vec![1, 127],
+        vec![1, 129],
+        vec![0, 127],
+        vec![126, 127],
+    ];
+    for rows in [input.clone(), {
+        input.reverse();
+        input
+    }] {
+        let expected_calls = RefCell::new(Vec::new());
+        let actual_calls = RefCell::new(Vec::new());
+        let complementary =
+            |left: &u16, right: &u16| matches!((*left, *right), (200, 201) | (127, 128));
+        let expected = reference_minimize_by(rows.clone(), |left, right| {
+            expected_calls.borrow_mut().push(Comparison {
+                left: *left,
+                right: *right,
+            });
+            complementary(left, right)
+        });
+        let actual = crate::guard_algebra::minimize_disjunction_by(rows, |left, right| {
+            actual_calls.borrow_mut().push(Comparison {
+                left: *left,
+                right: *right,
+            });
+            complementary(left, right)
+        });
+        sim_assert_eq!(have: actual, want: expected);
+        sim_assert_eq!(have: actual_calls.into_inner(), want: expected_calls.into_inner());
+    }
 }

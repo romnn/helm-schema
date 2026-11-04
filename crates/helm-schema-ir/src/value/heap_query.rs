@@ -256,7 +256,7 @@ impl HeapVersion {
         self.query_object(object, &mut QueryBudget::new(work))
     }
 
-    #[tracing::instrument(skip_all, level = "debug", fields(version = self.id.ordinal, object = object.ordinal, work = budget.remaining, cache_hit = tracing::field::Empty, visited = tracing::field::Empty))]
+    #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::heap_object_query", fields(version = self.id.ordinal, object = object.ordinal, work = budget.remaining, cache_hit = tracing::field::Empty, visited = tracing::field::Empty))]
     pub(super) fn query_object(
         &self,
         object: &ObjectId,

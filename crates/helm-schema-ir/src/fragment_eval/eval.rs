@@ -194,6 +194,11 @@ impl<'a> Projection<'a, '_> {
         self.document.literal_key(index).map(str::to_owned)
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::fragment_eval::projection_work"
+    )]
     fn mapping(
         &self,
         index: usize,
@@ -565,6 +570,11 @@ impl<'a> Projection<'a, '_> {
         }
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::fragment_eval::projection_work"
+    )]
     fn scalar(
         &self,
         span: Span,
@@ -689,6 +699,11 @@ impl<'a> Projection<'a, '_> {
         ]))])
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::fragment_eval::projection_work"
+    )]
     fn stamp(
         &self,
         mut row: ContractUse,

@@ -2,6 +2,7 @@
 
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
+use std::hash::{Hash as _, Hasher as _};
 
 use helm_schema_core::{Segment, ValuesPath};
 use test_util::prelude::sim_assert_eq;
@@ -37,6 +38,58 @@ fn path_construction_and_navigation_are_structural() {
     rebuilt.push("");
     rebuilt.push_each_member();
     sim_assert_eq!(have: rebuilt, want: parsed);
+}
+
+#[test]
+fn cloned_paths_mutate_independently_and_keep_the_empty_root() {
+    let mut original = ValuesPath::from_segments(["service", "prometheus.io", "*"]);
+    let retained = original.clone();
+    let mut literal = original.clone();
+    let mut ranged = original.clone();
+    original.push("original");
+    literal.push("child");
+    ranged.push_each_member();
+    sim_assert_eq!(
+        have: [retained.encode(), original.encode(), literal.encode(), ranged.encode()],
+        want: [
+            r"service.prometheus\.io.\*".to_owned(),
+            r"service.prometheus\.io.\*.original".to_owned(),
+            r"service.prometheus\.io.\*.child".to_owned(),
+            r"service.prometheus\.io.\*.*".to_owned(),
+        ]
+    );
+    sim_assert_eq!(have: ranged.parent(), want: Some(retained));
+    let mut root = ValuesPath::default();
+    let untouched = root.clone();
+    root.push_each_member();
+    sim_assert_eq!(have: root, want: ValuesPath::parse("*"));
+    sim_assert_eq!(have: untouched, want: ValuesPath::parse(""));
+    sim_assert_eq!(have: ValuesPath::default(), want: ValuesPath::parse(""));
+    sim_assert_eq!(have: format!("{:?}", ValuesPath::default()), want: "ValuesPath { segments: [], encoded: \"\" }");
+}
+
+#[test]
+fn equal_paths_hash_alike_after_construction_and_forked_mutation() {
+    let hash = |path: &ValuesPath| {
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        path.hash(&mut hasher);
+        hasher.finish()
+    };
+    let mut paths = vec![ValuesPath::default(), ValuesPath::parse("")];
+    let original = ValuesPath::from_segments(["a.b", "*", "東京"]);
+    let mut fork = original.clone();
+    fork.push("child");
+    paths.extend([original, fork]);
+    for path in paths {
+        let reparsed = ValuesPath::parse(&path.encode());
+        sim_assert_eq!(have: hash(&path), want: hash(&reparsed));
+        sim_assert_eq!(have: &path, want: &reparsed);
+        let mut extended = path.clone();
+        extended.push_each_member();
+        let rebuilt = ValuesPath::from_segments(extended.segments().cloned());
+        sim_assert_eq!(have: hash(&extended), want: hash(&rebuilt));
+        sim_assert_eq!(have: extended, want: rebuilt);
+    }
 }
 
 #[test]

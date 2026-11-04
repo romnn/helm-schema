@@ -263,6 +263,7 @@ impl ObservedFacts {
             .collect();
     }
 
+    #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn absorb(&mut self, other: &Self) {
         let Self {
             type_hints,

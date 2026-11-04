@@ -419,6 +419,11 @@ impl<'a> PlacedDocument<'a> {
             })
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::placement_queries"
+    )]
     pub(crate) fn selection_guard(&self, span: Span) -> Predicate {
         selection_guard(&self.document.selections, span)
     }
@@ -427,6 +432,11 @@ impl<'a> PlacedDocument<'a> {
         Predicate::all(vec![self.selection_guard(span), self.prefix_guard(span)])
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::placement_queries"
+    )]
     fn prefix_guard(&self, span: Span) -> Predicate {
         let mut consumed = 0;
         let mut guard = Predicate::True;
@@ -3906,6 +3916,11 @@ pub(crate) struct PlacedSerialization<'a> {
 }
 
 impl<'a> PlacedDocument<'a> {
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::value::placement_queries"
+    )]
     pub(crate) fn serialization(&self, span: Span) -> Option<PlacedSerialization<'a>> {
         let site = self.document.serializations.iter().find(|site| {
             self.ownership

@@ -120,7 +120,14 @@ fn completed_flattening_separates_input_generations_and_recomputes_after_evictio
     sim_assert_eq!(have: second.iter().map(|read| read.path.clone()).collect::<BTreeSet<_>>(), want: BTreeSet::from([ValuesPath::parse("source")]));
     sim_assert_eq!(have: projection.flat.len(), want: 2);
     for region in 10_000..14_096 {
-        projection.remember_paths(super::FlatKey { region, inputs: 0 }, &BTreeSet::new(), 1);
+        projection.remember_paths(
+            super::FlatKey {
+                regions: vec![Some(region)],
+                inputs: 0,
+            },
+            &BTreeSet::new(),
+            1,
+        );
     }
     let mut again = crate::value::read_set::ReadSet::default();
     projection.project(&Predicate::True, &root.input_paths, &[root], &mut again);
@@ -177,5 +184,252 @@ fn widened_coverage_keeps_both_inputs_and_later_known_write_provenance() -> eyre
     sim_assert_eq!(have: reads.iter().map(|read| read.path.clone()).collect::<BTreeSet<_>>(), want: BTreeSet::from([
         ValuesPath::parse("retargeted"), ValuesPath::parse("left"), ValuesPath::parse("right"), ValuesPath::parse("later"),
     ]));
+    Ok(())
+}
+
+#[test]
+fn expired_region_metadata_is_reclaimed_before_completed_views() -> eyre::Result<()> {
+    let mut state = State::new(Value::nil());
+    let map = state.heap.map(Remainder::Closed);
+    let target = state.map_target(&map).ok_or_eyre("map missing")?;
+    state
+        .heap
+        .register_input(target, ValuesPath::parse("source"));
+    state.heap.unknown_write(Rc::default());
+    let root = Rc::clone(&state.heap.version);
+    let mut projection = CoverageProjection::new();
+    let mut expected = crate::value::read_set::ReadSet::default();
+    projection.project(&Predicate::True, &root.input_paths, &[&root], &mut expected);
+    let retained = projection.retained.get();
+    let views = projection.views.keys().copied().collect::<BTreeSet<_>>();
+    assert!(!views.is_empty());
+    let mut budget = super::QueryBudget::new(1000);
+    let inputs = Rc::new(BTreeSet::from([ValuesPath::parse("live")]));
+    let live = projection
+        .known(&inputs, &mut budget)
+        .flatten()
+        .ok_or_eyre("live region missing")?;
+    let object = crate::value::ObjectId { ordinal: u64::MAX };
+    let object_region = projection
+        .input_object(&object, &mut budget)
+        .flatten()
+        .ok_or_eyre("object region missing")?;
+    let joined = projection
+        .union(
+            Some(Rc::clone(&live)),
+            Some(Rc::clone(&object_region)),
+            &mut budget,
+        )
+        .flatten()
+        .ok_or_eyre("union region missing")?;
+    let dead = std::rc::Weak::new();
+    let live_objects = projection
+        .input_objects
+        .iter()
+        .filter(|(_, region)| region.strong_count() != 0)
+        .map(|(object, _)| object.clone())
+        .collect::<BTreeSet<_>>();
+    for ordinal in 0..super::MAX_COVERAGE_CACHE {
+        projection.input_objects.insert(
+            crate::value::ObjectId {
+                ordinal: (1 << 40) + u64::try_from(ordinal)?,
+            },
+            dead.clone(),
+        );
+    }
+    let before_work = budget.remaining;
+    let before_retained = projection.retained.get();
+    let before_region = projection.next_region;
+    assert!(projection.reserve_cache(1).is_some());
+    sim_assert_eq!(have: projection.views.keys().copied().collect::<BTreeSet<_>>(), want: views);
+    sim_assert_eq!(have: projection.input_objects.keys().cloned().collect::<BTreeSet<_>>(), want: live_objects);
+    assert!(projection.input_sets.values().any(|region| {
+        region
+            .upgrade()
+            .is_some_and(|region| Rc::ptr_eq(&region, &live))
+    }));
+    assert!(projection.unions.values().any(|region| {
+        region
+            .upgrade()
+            .is_some_and(|region| Rc::ptr_eq(&region, &joined))
+    }));
+    sim_assert_eq!(have: projection.retained.get(), want: before_retained);
+    sim_assert_eq!(have: projection.next_region, want: before_region);
+    sim_assert_eq!(have: budget.remaining, want: before_work);
+    assert!(before_retained >= retained);
+    let mut actual = crate::value::read_set::ReadSet::default();
+    projection.project(&Predicate::True, &root.input_paths, &[&root], &mut actual);
+    sim_assert_eq!(have: actual, want: expected);
+    Ok(())
+}
+
+struct ReferenceProjection {
+    reads: crate::value::read_set::ReadSet,
+    work: usize,
+}
+
+fn reference_projection(
+    projection: &mut CoverageProjection,
+    condition: &Predicate,
+    inputs: &crate::value::input_paths::InputPaths,
+    roots: &[&crate::value::HeapVersion],
+) -> ReferenceProjection {
+    let mut seen = ahash::AHashSet::new();
+    let mut paths = BTreeSet::new();
+    let mut budget = super::QueryBudget::new(super::MAX_COVERAGE_WORK);
+    let mut capped = false;
+    'roots: for root in roots {
+        let CoverageAnswer::Known(view) = projection.query(root, super::MAX_COVERAGE_WORK) else {
+            capped = true;
+            continue;
+        };
+        let root_region = view.root.as_ref().and_then(|node| node.regions.as_ref());
+        let mut regions: Vec<_> = root_region.cloned().into_iter().collect();
+        while let Some(region) = regions.pop() {
+            if !seen.insert(region.id) {
+                continue;
+            }
+            if !budget.charge(1) {
+                capped = true;
+                break 'roots;
+            }
+            match &region.kind {
+                super::RegionKind::Paths(known) => {
+                    if !budget.charge(known.len()) {
+                        capped = true;
+                        break 'roots;
+                    }
+                    paths.extend(known.iter().cloned());
+                }
+                super::RegionKind::InputObject(object) => {
+                    if !budget.charge(inputs.lookup_work()) {
+                        capped = true;
+                        break 'roots;
+                    }
+                    paths.extend(inputs.get(object).cloned());
+                }
+                super::RegionKind::Union { yes, no } => {
+                    regions.extend([Rc::clone(yes), Rc::clone(no)]);
+                }
+            }
+        }
+    }
+    if capped {
+        paths.insert(ValuesPath::default());
+    }
+
+    ReferenceProjection {
+        reads: paths
+            .into_iter()
+            .map(|path| crate::value::RuntimeRead {
+                path,
+                condition: condition.clone(),
+                coverage: crate::value::ReadCoverage::UnknownRegion,
+            })
+            .collect(),
+        work: super::MAX_COVERAGE_WORK - budget.remaining,
+    }
+}
+
+#[test]
+fn grouped_flattening_replays_original_paths_and_work() -> eyre::Result<()> {
+    let mut state = State::new(Value::nil());
+    let map = state.heap.map(Remainder::Unknown {
+        inputs: Rc::new(BTreeSet::from([ValuesPath::parse("known")])),
+    });
+    let object = state.map_target(&map).ok_or_eyre("map missing")?;
+    state
+        .heap
+        .register_input(object.clone(), ValuesPath::parse("source"));
+    let first = Rc::clone(&state.heap.version);
+    let left = state.heap.map(Remainder::Open);
+    let left_object = state.map_target(&left).ok_or_eyre("left map missing")?;
+    state
+        .heap
+        .register_input(left_object, ValuesPath::parse("left"));
+    let second = Rc::clone(&state.heap.version);
+    let right = state.heap.map(Remainder::Unknown {
+        inputs: Rc::new(BTreeSet::from([ValuesPath::parse("right-input")])),
+    });
+    let right_object = state.map_target(&right).ok_or_eyre("right map missing")?;
+    state
+        .heap
+        .register_input(right_object, ValuesPath::parse("right"));
+    let third = Rc::clone(&state.heap.version);
+    state
+        .heap
+        .register_input(object, ValuesPath::parse("retargeted"));
+    let fourth = Rc::clone(&state.heap.version);
+    let mut actual_projection = CoverageProjection::new();
+    let mut reference = CoverageProjection::new();
+    let groups = [
+        vec![first.as_ref(), second.as_ref(), third.as_ref()],
+        vec![third.as_ref(), second.as_ref(), first.as_ref()],
+        vec![second.as_ref(), second.as_ref(), third.as_ref()],
+        vec![],
+    ];
+    for _ in 0..3 {
+        for inputs in [&first.input_paths, &fourth.input_paths] {
+            for roots in &groups {
+                for condition in [Predicate::True, Predicate::truthy_path("enabled")] {
+                    let expected = reference_projection(&mut reference, &condition, inputs, roots);
+                    let mut actual = crate::value::read_set::ReadSet::default();
+                    actual_projection.project(&condition, inputs, roots, &mut actual);
+                    sim_assert_eq!(have: actual, want: expected.reads);
+                    let key = actual_projection
+                        .known_flat_key(inputs, roots)
+                        .ok_or_eyre("known views missing")?;
+                    let flat = actual_projection
+                        .flat
+                        .get(&key)
+                        .ok_or_eyre("complete flattening missing")?;
+                    sim_assert_eq!(have: flat.work, want: expected.work);
+                }
+            }
+        }
+    }
+    // Rebuilt views have fresh region identities even for the same heap snapshots.
+    let roots = &groups[0];
+    let before = actual_projection
+        .known_flat_key(&first.input_paths, roots)
+        .ok_or_eyre("known views missing")?;
+    actual_projection.views.clear();
+    reference.views.clear();
+    let expected =
+        reference_projection(&mut reference, &Predicate::True, &first.input_paths, roots);
+    let mut actual = crate::value::read_set::ReadSet::default();
+    actual_projection.project(&Predicate::True, &first.input_paths, roots, &mut actual);
+    sim_assert_eq!(have: actual, want: expected.reads);
+    let after = actual_projection
+        .known_flat_key(&first.input_paths, roots)
+        .ok_or_eyre("rebuilt views missing")?;
+    assert_ne!(before, after);
+    // A cached complete flattening cannot replace an exhausted view query.
+    let mut complete = crate::value::read_set::ReadSet::default();
+    actual_projection.project(
+        &Predicate::True,
+        &first.input_paths,
+        &[&first],
+        &mut complete,
+    );
+    assert!(complete.iter().count() > 0);
+    let key = actual_projection
+        .known_flat_key(&first.input_paths, &[&first])
+        .ok_or_eyre("known root missing")?;
+    assert!(actual_projection.flat.contains_key(&key));
+    actual_projection.views.insert(
+        first.id.ordinal,
+        CoverageAnswer::Exhausted {
+            work_limit: super::MAX_COVERAGE_WORK,
+        },
+    );
+    let mut exhausted = crate::value::read_set::ReadSet::default();
+    actual_projection.project(
+        &Predicate::True,
+        &first.input_paths,
+        &[&first],
+        &mut exhausted,
+    );
+    sim_assert_eq!(have: exhausted.iter().map(|read| read.path.clone()).collect::<Vec<_>>(), want: vec![ValuesPath::default()]);
     Ok(())
 }

@@ -306,8 +306,7 @@ fn normalize_literal_conjunction(predicate: &Predicate) -> Option<Predicate> {
             Some(if positive { literal } else { literal.negated() })
         })
         .collect::<Option<Vec<_>>>()?;
-    let condition = GuardDnf::from_conjunction(literals);
-    let normalized = predicate_from_dnf(&condition);
+    let normalized = predicate_from_disjunction([literals]);
     Some(
         [predicate.clone(), normalized]
             .into_iter()
@@ -331,7 +330,8 @@ struct BddNode {
 
 struct PredicateBdd<'a> {
     atoms: Vec<GuardAtom<'a>>,
-    atom_indices: BTreeMap<GuardAtom<'a>, usize>,
+    atom_indices: AHashMap<AtomIndexKey<'a>, usize>,
+    literal_prototypes: RefCell<AHashMap<usize, Predicate>>,
     nodes: Vec<BddNode>,
     unique_nodes: AHashMap<BddNode, usize>,
     apply_cache: AHashMap<(BooleanOp, usize, usize), usize>,
@@ -403,7 +403,7 @@ fn normalize_simplified_with_work(
     }
     let mut candidates = vec![predicate];
     if let Some(paths) = true_paths {
-        candidates.push(predicate_from_dnf(&GuardDnf::from_disjunction(paths)));
+        candidates.push(predicate_from_disjunction(paths));
     }
     if let Some(paths) = false_paths {
         candidates.push(predicate_from_false_paths(paths));
@@ -546,6 +546,7 @@ fn memo_sizes(memo: &PredicateMemo) -> (usize, usize) {
 }
 
 impl<'a> PredicateBdd<'a> {
+    #[tracing::instrument(skip_all, level = "debug")]
     fn for_predicate(predicate: &'a Predicate) -> Option<Self> {
         predicate.node_work(MAX_BDD_WORK)?;
         let mut atoms = BTreeSet::new();
@@ -556,11 +557,12 @@ impl<'a> PredicateBdd<'a> {
             .iter()
             .copied()
             .enumerate()
-            .map(|(index, atom)| (atom, index))
+            .map(|(index, atom)| (atom.index_key(), index))
             .collect();
         Some(Self {
             atoms,
             atom_indices,
+            literal_prototypes: RefCell::default(),
             nodes: Vec::new(),
             unique_nodes: AHashMap::new(),
             apply_cache: AHashMap::new(),
@@ -592,7 +594,7 @@ impl<'a> PredicateBdd<'a> {
             PredicateKind::False => Some(FALSE),
             PredicateKind::Guard(guard) => {
                 let atom = GuardAtom::new(guard);
-                let variable = *self.atom_indices.get(&atom)?;
+                let variable = *self.atom_indices.get(&atom.index_key())?;
                 let node = self.make_node(variable, FALSE, TRUE)?;
                 if atom.is_positive() {
                     Some(node)
@@ -721,6 +723,7 @@ impl<'a> PredicateBdd<'a> {
         self.paths_to_with_work(root, target, &mut { MAX_BDD_WORK })
     }
 
+    #[tracing::instrument(skip_all, level = "debug", fields(root, target, nodes = self.nodes.len(), complete = tracing::field::Empty, paths = tracing::field::Empty, literals = tracing::field::Empty))]
     fn paths_to_with_work(
         &self,
         root: usize,
@@ -730,15 +733,21 @@ impl<'a> PredicateBdd<'a> {
         let mut paths = Vec::new();
         let mut current = Vec::new();
         let mut literal_count = 0;
-        self.collect_paths(
-            root,
-            target,
-            &mut current,
-            &mut paths,
-            &mut literal_count,
-            remaining,
-        )?;
-        Some(paths)
+        let complete = self
+            .collect_paths(
+                root,
+                target,
+                &mut current,
+                &mut paths,
+                &mut literal_count,
+                remaining,
+            )
+            .is_some();
+        let span = tracing::Span::current();
+        span.record("complete", complete);
+        span.record("paths", paths.len());
+        span.record("literals", literal_count);
+        complete.then_some(paths)
     }
 
     fn first_true_path(&self, mut node: usize) -> Option<Vec<Predicate>> {
@@ -759,6 +768,23 @@ impl<'a> PredicateBdd<'a> {
             }
         }
         Some(path)
+    }
+
+    fn path_literal(&self, variable: usize, remaining: &mut usize) -> Option<Predicate> {
+        let atom = self.atoms.get(variable).copied()?;
+        atom.charge_predicate(remaining)?;
+        if let Some(prototype) = self.literal_prototypes.borrow().get(&variable)
+            && let Some(literal) = prototype.fresh_guard_copy()
+        {
+            return Some(literal);
+        }
+        let literal = Predicate::from(atom.to_guard()?);
+        if matches!(literal.kind(), PredicateKind::Guard(_)) {
+            self.literal_prototypes
+                .borrow_mut()
+                .insert(variable, literal.clone());
+        }
+        Some(literal)
     }
 
     fn collect_paths(
@@ -790,10 +816,7 @@ impl<'a> PredicateBdd<'a> {
             return Some(());
         }
         let node = self.node(node)?;
-        let atom = self
-            .atoms
-            .get(node.variable)?
-            .predicate_with_work(remaining)?;
+        let atom = self.path_literal(node.variable, remaining)?;
         current.push(atom.negated());
         self.collect_paths(
             node.when_false,
@@ -853,8 +876,31 @@ enum GuardAtom<'a> {
     Choice(&'a crate::RequirementChoice),
 }
 
+#[derive(PartialEq, Eq, Hash)]
+enum AtomIndexKey<'a> {
+    Truthy(&'a crate::ValuesPath),
+    Eq(&'a crate::ValuesPath, &'a crate::GuardValue),
+    TypeIs(&'a crate::ValuesPath, &'a str),
+    Other(&'a Guard),
+    Choice { scope: &'a str, decision: u64 },
+}
+
 impl<'a> GuardAtom<'a> {
-    fn predicate_with_work(self, remaining: &mut usize) -> Option<Predicate> {
+    fn index_key(self) -> AtomIndexKey<'a> {
+        // Polarity selects an edge of the same inventoried variable.
+        match self {
+            Self::Truthy(path, _positive) => AtomIndexKey::Truthy(path),
+            Self::Eq(path, value, _positive) => AtomIndexKey::Eq(path, value),
+            Self::TypeIs(path, schema_type, _positive) => AtomIndexKey::TypeIs(path, schema_type),
+            Self::Other(guard) => AtomIndexKey::Other(guard),
+            Self::Choice(crate::RequirementChoice { scope, decision }) => AtomIndexKey::Choice {
+                scope,
+                decision: *decision,
+            },
+        }
+    }
+
+    fn charge_predicate(self, remaining: &mut usize) -> Option<()> {
         let cost = match self {
             Self::Other(guard) => crate::predicate::guard_syntax_size(guard),
             _ => 1,
@@ -864,6 +910,11 @@ impl<'a> GuardAtom<'a> {
             return None;
         };
         *remaining = next;
+        Some(())
+    }
+
+    fn predicate_with_work(self, remaining: &mut usize) -> Option<Predicate> {
+        self.charge_predicate(remaining)?;
         Some(Predicate::from(self.to_guard()?))
     }
 
@@ -994,17 +1045,12 @@ fn guard_rank(guard: &Guard) -> u8 {
     }
 }
 
-fn predicate_from_dnf(condition: &GuardDnf) -> Predicate {
-    if condition.is_never() {
-        return Predicate::False;
-    }
-    if condition.is_unconditional() {
-        return Predicate::True;
-    }
-    let alternatives = condition
-        .disjuncts()
-        .iter()
-        .map(|conjunction| Predicate::all(conjunction.iter().cloned().collect()))
+fn predicate_from_disjunction(
+    paths: impl IntoIterator<Item = impl IntoIterator<Item = Predicate>>,
+) -> Predicate {
+    let alternatives = crate::guard_dnf::normalize_disjunction(paths)
+        .into_iter()
+        .map(Predicate::all)
         .collect::<Vec<_>>();
     match alternatives.as_slice() {
         [] => Predicate::False,
@@ -1148,13 +1194,14 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
             .iter()
             .copied()
             .enumerate()
-            .map(|(index, atom)| (atom, index))
+            .map(|(index, atom)| (atom.index_key(), index))
             .collect();
         let initial_work = allowance;
         Some(Self {
             bdd: PredicateBdd {
                 atoms,
                 atom_indices,
+                literal_prototypes: RefCell::default(),
                 nodes: Vec::new(),
                 unique_nodes: AHashMap::new(),
                 apply_cache: AHashMap::new(),
@@ -1187,7 +1234,7 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
             crate::RequirementAtom::Value(guard) => GuardAtom::new(guard),
             crate::RequirementAtom::Choice(choice) => GuardAtom::Choice(choice),
         };
-        let variable = *self.bdd.atom_indices.get(&atom)?;
+        let variable = *self.bdd.atom_indices.get(&atom.index_key())?;
         let node = self.bdd.make_node(variable, FALSE, TRUE)?;
         let node = if atom.is_positive() {
             node
@@ -1200,7 +1247,10 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
     /// Imports one unresolved runtime decision by identity.
     pub fn choice(&mut self, choice: &crate::RequirementChoice) -> Option<crate::RequirementNode> {
         self.bdd.remaining_work = self.bdd.remaining_work.checked_sub(1)?;
-        let variable = *self.bdd.atom_indices.get(&GuardAtom::Choice(choice))?;
+        let variable = *self
+            .bdd
+            .atom_indices
+            .get(&GuardAtom::Choice(choice).index_key())?;
         self.bdd
             .make_node(variable, FALSE, TRUE)
             .map(crate::RequirementNode)

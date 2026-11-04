@@ -93,6 +93,7 @@ impl ContractIr {
     }
 
     /// Move all claims from another contract graph into this graph.
+    #[tracing::instrument(skip_all, level = "debug")]
     pub fn append(&mut self, mut other: Self) {
         self.uses.append(&mut other.uses);
         self.dependency_uses.append(&mut other.dependency_uses);
@@ -251,6 +252,7 @@ impl ContractIr {
     }
 
     /// Rewrites paths with a deterministic mapping, visiting shared predicate nodes once.
+    #[tracing::instrument(skip_all, level = "debug")]
     pub fn map_value_paths_shared<F>(&mut self, mut map: F)
     where
         F: FnMut(helm_schema_core::ValuesPath) -> helm_schema_core::ValuesPath,

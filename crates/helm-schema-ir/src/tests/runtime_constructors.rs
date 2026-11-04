@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -606,4 +607,30 @@ fn guarded_members_preserve_the_concrete_json_depth_boundary() -> eyre::Result<(
         }
     }
     Ok(())
+}
+
+#[test]
+fn direct_input_collection_keeps_shared_sequence_and_choice_provenance() {
+    let first = ValuesPath::from_segments(["literal.key", "*"]);
+    let second = ValuesPath::parse("second");
+    let third = ValuesPath::parse("third");
+    let shared = Value::input(first.clone())
+        .with_influences(BTreeSet::from([first.clone(), second.clone()]));
+    sim_assert_eq!(have: shared.inputs(), want: BTreeSet::from([first.clone(), second.clone()]));
+    let sequence = Value::sequence(vec![
+        shared.clone(),
+        shared.clone(),
+        Value::input(third.clone()),
+    ]);
+    sim_assert_eq!(have: sequence.inputs(), want: BTreeSet::from([first.clone(), second.clone(), third.clone()]));
+    let empty = Value::nil_sequence().with_influences(BTreeSet::from([second.clone()]));
+    sim_assert_eq!(have: empty.inputs(), want: BTreeSet::from([second.clone()]));
+    let state = State::new(Value::nil());
+    let guard = Predicate::truthy_path("enabled");
+    let decision = state
+        .heap
+        .arena
+        .decision(guard.clone(), guard.negated(), Coverage::Exact);
+    let selected = Value::select(decision, shared, sequence);
+    sim_assert_eq!(have: selected.inputs(), want: BTreeSet::from([first, second, third]));
 }
