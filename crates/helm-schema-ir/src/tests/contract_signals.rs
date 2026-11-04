@@ -2411,3 +2411,67 @@ fn conditional_guard_conversion_preserves_self_dispatch_and_member_bound() -> ey
     }
     Ok(())
 }
+
+fn mixed_range_capture_signals(destructured: bool, json_decoded: bool) -> ContractSchemaSignals {
+    use crate::observed_facts::{CaptureKind, FailCapture, ObservedFacts};
+
+    // Retained capture clients must keep header-local flags out of base facts.
+    let mut facts = ObservedFacts::default();
+    for (conjunction, destructured, json_decoded) in [
+        (helm_schema_core::Conjunction::default(), false, false),
+        (
+            helm_schema_core::Conjunction::new([helm_schema_core::Predicate::from(
+                Guard::Truthy {
+                    path: conditional_path("enabled"),
+                },
+            )]),
+            destructured,
+            json_decoded,
+        ),
+    ] {
+        facts.captures.insert(FailCapture {
+            conjunction,
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: CaptureKind::RangeInput {
+                path: conditional_path("items"),
+                destructured,
+                json_decoded,
+            },
+        });
+    }
+    let mut contract = ContractIr::from_contract_uses(Vec::new());
+    contract.absorb_observed_facts(&facts);
+    contract.finalize().into_schema_signals()
+}
+
+/// A guarded two-variable header cannot remove an unconditional integer lane.
+#[test]
+fn guarded_destructured_range_keeps_unconditional_integer_range() -> eyre::Result<()> {
+    let signals = mixed_range_capture_signals(true, false);
+    let evidence = signals
+        .evidence_for(&conditional_path("items"))
+        .ok_or_eyre("range input evidence")?;
+    sim_assert_eq!(have: evidence.facts.is_ranged_source, want: true);
+    sim_assert_eq!(have: evidence.facts.has_destructured_range_use, want: false);
+    sim_assert_eq!(
+        have: evidence.conditional_overlays.iter().map(|overlay| overlay.evidence.range_domain).collect::<Vec<_>>(),
+        want: vec![Some(helm_schema_core::RangeDomain::CollectionOnly)]
+    );
+    Ok(())
+}
+
+/// A dormant decoded header cannot globally prohibit raw integer iteration.
+#[test]
+fn guarded_decoded_range_keeps_unconditional_integer_range() -> eyre::Result<()> {
+    let signals = mixed_range_capture_signals(false, true);
+    let evidence = signals
+        .evidence_for(&conditional_path("items"))
+        .ok_or_eyre("decoded range input evidence")?;
+    sim_assert_eq!(have: evidence.facts.is_ranged_source, want: true);
+    sim_assert_eq!(have: evidence.facts.has_json_decoded_range_use, want: false);
+    sim_assert_eq!(
+        have: evidence.conditional_overlays.iter().map(|overlay| overlay.evidence.range_domain).collect::<Vec<_>>(),
+        want: vec![Some(helm_schema_core::RangeDomain::CollectionOnly)]
+    );
+    Ok(())
+}

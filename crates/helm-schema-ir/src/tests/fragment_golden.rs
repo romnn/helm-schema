@@ -864,7 +864,7 @@ fn dynamic_action_line_key_uses_its_rendered_indent() {
             key "data":
               when always:
                 mapping:
-                  key dynamic [text{"chosen"}]:
+                  key "chosen":
                     when always:
                       mapping:
                         key "inside":

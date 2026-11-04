@@ -1154,8 +1154,8 @@ pub(super) fn record_range_input_capture(
     let facts = ContractValuePathFacts {
         is_ranged_source: unconditional,
         is_direct_ranged_source: unconditional,
-        has_destructured_range_use: destructured,
-        has_json_decoded_range_use: json_decoded,
+        has_destructured_range_use: unconditional && destructured,
+        has_json_decoded_range_use: unconditional && json_decoded,
         is_nullable: true,
         ..ContractValuePathFacts::default()
     };

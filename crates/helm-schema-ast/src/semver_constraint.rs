@@ -29,10 +29,11 @@ struct NumericVersion<'a> {
 }
 
 impl NumericVersion<'_> {
-    fn compare_core(&self, other: &Self) -> std::cmp::Ordering {
+    fn compare_core(&self, other: &Self, components: usize) -> std::cmp::Ordering {
         self.core
             .iter()
             .zip(other.core)
+            .take(components)
             .map(|(left, right)| decimal_order(left, right))
             .find(|order| !order.is_eq())
             .unwrap_or(std::cmp::Ordering::Equal)
@@ -134,13 +135,26 @@ impl<'a> NumericConstraint<'a> {
             Self::Tilde { bound } => {
                 let [major, minor, patch] = version.core;
                 let [bound_major, bound_minor, bound_patch] = bound.core;
+                // Helm's fully written zero tilde accepts every stable version.
+                let zero_bound = bound
+                    .core
+                    .iter()
+                    .all(|part| decimal_order(part, "0").is_eq());
                 version.prerelease.is_none()
-                    && decimal_order(major, bound_major).is_eq()
-                    && decimal_order(minor, bound_minor).is_eq()
-                    && !decimal_order(patch, bound_patch).is_lt()
+                    && (zero_bound
+                        || decimal_order(major, bound_major).is_eq()
+                            && decimal_order(minor, bound_minor).is_eq()
+                            && !decimal_order(patch, bound_patch).is_lt())
             }
             Self::Compare { op, bound } => {
-                let order = version.compare_core(bound);
+                // A missing suffix denotes a whole version series for > and <=.
+                let components = match op {
+                    ComparisonOp::Gt | ComparisonOp::Le => bound.written,
+                    ComparisonOp::Eq | ComparisonOp::Ne | ComparisonOp::Lt | ComparisonOp::Ge => {
+                        bound.core.len()
+                    }
+                };
+                let order = version.compare_core(bound, components);
                 if let Some(pre) = bound.prerelease {
                     if *op == ComparisonOp::Ge {
                         return !order.is_lt();
@@ -176,14 +190,17 @@ impl<'a> NumericConstraint<'a> {
 /// lets the control-flow evaluator decide forms such as `^1.6-0` without
 /// pretending that the same constraint has been encoded for arbitrary user
 /// strings. Unsupported constraint syntax returns `None`.
+/// Numeric version components beyond [`u64::MAX`] also return `None`.
 #[must_use]
 pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Option<bool> {
     if let Some(constraint) = NumericConstraint::parse(constraint) {
-        return Some(
-            all_consuming(numeric_version)
-                .parse(version)
-                .is_ok_and(|(_, version)| constraint.matches(&version)),
-        );
+        let Ok((_, version)) = all_consuming(numeric_version).parse(version) else {
+            return Some(false);
+        };
+        if version.core.iter().any(|part| part.parse::<u64>().is_err()) {
+            return None;
+        }
+        return Some(constraint.matches(&version));
     }
     if let Ok((_, (op, bound))) =
         all_consuming(delimited(space0, concrete_comparator, space0)).parse(constraint)

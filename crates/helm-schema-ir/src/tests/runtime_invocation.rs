@@ -261,3 +261,76 @@ fn unresolved_go_string_bytes_keep_type_without_inventing_content() {
         sim_assert_eq!(have: execute(source).abort_predicate(), want: Predicate::False);
     }
 }
+
+/// Symbolic versions keep S1's string consumption without guessing a version range.
+#[test]
+fn symbolic_semver_uses_the_canonical_string_consumption() {
+    use crate::value::ConsumptionDomain;
+    use helm_schema_core::FailValueRequirement;
+    use std::collections::BTreeSet;
+
+    for constraint in [">1.2", "<=1.2", "~0.0.0"] {
+        let source = format!(
+            "{{{{ if .Values.enabled }}}}{{{{ $_ := semverCompare {constraint:?} .Values.version }}}}{{{{ end }}}}"
+        );
+        let execution = execute(&source);
+        let domains = execution
+            .observed_facts()
+            .consumptions
+            .iter()
+            .filter(|consumption| consumption.path == ValuesPath::parse("version"))
+            .map(|consumption| consumption.domain.clone())
+            .collect::<BTreeSet<_>>();
+        sim_assert_eq!(
+            have: domains,
+            want: BTreeSet::from([ConsumptionDomain::Known {
+                preimage: FailValueRequirement::SchemaTypeEvenNull("string".to_owned()),
+                requires_presence: true,
+            }]),
+            "constraint={constraint}"
+        );
+    }
+}
+
+/// Concrete calls use the repaired numeric owner before selecting a control arm.
+#[test]
+fn pinned_semver_comparisons_control_concrete_branches() {
+    for (constraint, version, want) in [
+        (">1.2", "1.2.1", "no"),
+        ("<=1.2", "1.2.1", "yes"),
+        ("~0.0.0", "1.0.0", "yes"),
+    ] {
+        let source = format!(
+            "{{{{ if semverCompare {constraint:?} {version:?} }}}}yes{{{{ else }}}}no{{{{ end }}}}"
+        );
+        let execution = execute(&source);
+        sim_assert_eq!(
+            have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(),
+            want: vec![Some(want.to_owned())],
+            "constraint={constraint} version={version}"
+        );
+    }
+}
+
+/// Skipping a second header keeps raw integer iteration valid.
+#[test]
+fn mixed_range_headers_keep_dormant_integer_inputs_valid() {
+    let headers = [
+        "{{ range $key, $value := .Values.items }}{{ end }}",
+        "{{ range (.Values.items | toJson | fromJson) }}{{ end }}",
+        "{{ range (.Values.items | toJson | mustFromJson) }}{{ end }}",
+    ];
+    for header in headers {
+        for items in [-1, 0, 3] {
+            let source = format!(
+                "{{{{ $_ := set .Values \"items\" {items} }}}}{{{{ $_ := set .Values \"enabled\" false }}}}{{{{ range .Values.items }}}}{{{{ end }}}}{{{{ if .Values.enabled }}}}{header}{{{{ end }}}}"
+            );
+            let execution = execute(&source);
+            sim_assert_eq!(
+                have: execution.abort_predicate(),
+                want: Predicate::False,
+                "header={header} items={items}"
+            );
+        }
+    }
+}

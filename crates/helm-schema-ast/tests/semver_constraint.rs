@@ -101,12 +101,17 @@ fn candidate_versions() -> Vec<String> {
 
 #[test]
 fn encoded_comparators_match_reference_semantics() {
-    let cases: [(&str, Op, (u64, u64, u64)); 9] = [
+    // Short exclusive floors and inclusive ceilings use the next series as an independent oracle.
+    let cases: [(&str, Op, (u64, u64, u64)); 13] = [
         ("<3.0.0", Op::Lt, (3, 0, 0)),
         (">=3.0.0", Op::Ge, (3, 0, 0)),
         (">=1.8", Op::Ge, (1, 8, 0)),
         ("<=2.1.3", Op::Le, (2, 1, 3)),
-        (">1.2", Op::Gt, (1, 2, 0)),
+        (">1.2", Op::Ge, (1, 3, 0)),
+        (">1", Op::Ge, (2, 0, 0)),
+        ("<=1.2", Op::Lt, (1, 3, 0)),
+        ("<=1", Op::Lt, (2, 0, 0)),
+        (">1.2.0", Op::Gt, (1, 2, 0)),
         (">= 1.23", Op::Ge, (1, 23, 0)),
         ("<v3.7.0", Op::Lt, (3, 7, 0)),
         (">=0.0.0", Op::Ge, (0, 0, 0)),
