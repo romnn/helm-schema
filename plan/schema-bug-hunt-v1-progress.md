@@ -10222,4 +10222,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - M3: tpl over a chart-default literal. A TPLT2 follow-up.
   - Opus batch summary: 10 consultations, all saved under round8/designs/reviews and challenge, all routed.
 
+- 20:49 (Nov 05) — **Opus batch 3 launched (work account, read-only, while its quota lasts).**
+  - 20261105T194750-3f6d0123: an integration map for the WFREE-stack lanes. Covers the file and function overlap, single-owner seams (record_failure, the canonical guard, TextPart::Unknown, ContinuationKey), the landing order onto r3b/construction, and the rebase points for ABORT2 and FRCLASS.
+  - 20261105T194758-dd60d379: line test-suite health. Classifies the ~255 inherited unit failures and the 166–303 integration failures as obsolete main expectation, regression, lane-owned feature or tooling, and gives a path to green gates.
+  - 20261105T194806-e507e44c: COLL1 assessment (100 h on T7): continue, redirect to WFREE and T9, or retire and harvest into RECV2/WFREE2.
+  - 20261105T194813-3edf5730: FRCLASS mid-flight review: soundness (no FR traded for FA, no recognizers), remaining FR and their dependencies, rebase point.
+
 Next: builders on the WFREE stack (WFREE2 CPU and regressions; GUARDX rework plus slice A; TPLT2 per-site tpl; LOCAL1 B/C; RECV2 M2; ABORT2 M1 plus loki cost); HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; FRCLASS; CATALOG1 2; then stack everything with stack.py and preview.
