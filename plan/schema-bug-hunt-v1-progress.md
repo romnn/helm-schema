@@ -10178,4 +10178,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
 
 - 20:55 (Nov 05) — **User decision, confirming the 20:35 one:** "keeping them separate so its easy to compare main and r3b as git branches and we donnt make things more complicated by maintaining both at the same time in the code! so just work toward surpassing main with a better approach!" No dual path, no restoring main's producers on the line. R3b (r3b/construction) replaces main once it surpasses it.
 
+- 20:40 (Nov 05) — **Opus designs: the gates rule, and loki's cost.**
+  - **Gates ("unknown narrows, never deletes"):** designs/reviews/gates-opus-design-2026-11-05.md.
+    - PLACE1's 456 FR came from dropping inexact guards: 341 istio `_internal_defaults_do_not_set.*` and x509 `fullnameOverride: 0`.
+    - Rule: replace a guard only by one that implies it. One arm: ∀U.G; two arms: anyOf; an aborting arm contributes ⊥. It reuses the existing FrozenRequirementGuard::Choice / RequirementChoice and project_unresolved machinery.
+    - Slices: A, the requirement lane (about +150 LOC, deletes the freeze None exits); B, destination rows on the canonical guard; C, lexical character-class containment plus the anyOf join.
+    - D1 (orchestrator): `.Release.Namespace` is a DNS-1123 host class, as caller policy and on by default, consistent with FRCLASS.
+  - **Loki's cost** (designs/reviews/loki-cost-opus-2026-11-05.md): calculatedConfig runs about 54 times per render; pristine and opaque continuations never join; each fork re-proves the whole path; the terminal freeze widens 1,338 of 1,480 times with one 6.5 KB equality atom eating about 3k of 4,096 units. Sent to ABORT2.
+- 20:40 (Nov 05) — **Orchestrator actions:**
+  - LOCAL1 (new, T9, at ef701ad1 + WFREE + guardx-on-wfree d61cbc76; brief briefs/local1.md) builds slices B then C.
+  - GUARDX takes slice A inside its rework.
+  - Opus batch 2 is running: template-consumption design, provider-destination design, line-base CPU.
+
 Next: the (a)–(c) design → builder slices; HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; WFREE2; TPLT2; GUARDX rework; ABORT2 (24 h time-box); FRCLASS.
