@@ -10242,4 +10242,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Steered RECV2 (port only what M2 needs, re-prove each piece on its base; GUARDX keeps the predicate_bdd bounded path).
   - Steered WFREE2 (run COLL1's two loop-law tests against loop_summary.rs).
 
+- 21:00 (Nov 05) — **Test-health review (Opus) and two new lanes for the unowned groups.**
+  - Review saved as designs/reviews/test-health-opus-2026-11-05.md.
+  - Units: 258 fail, the same in every lane: 178 missing mechanism, 38 heap identity, 33 wrong expectation, 9 guard dependency. About 44 already pass in the UNITREC/COLL1 tree.
+  - Integration: 166 on the line: ~104 real regressions (chart_reaudit ×63 "should be rejected"), 20 unowned features, 17 possibly encoding-only, 20 unknown, 5 tooling. One false rejection: duplicate_helper_name, owned by FRCLASS.
+  - Hidden: 272 tests are #[ignore]d as "R3b regression vs main" packages A/B/C. These are known losses that must close before R3b can replace main.
+  - Unowned groups and where they went:
+    - range member identity (38) → RECV2, via COLL1's range domain;
+    - decode/serialize provenance (29) and merge-caused heap loss (~10, kinds.rs:458) → queued for a DECODE1 lane on the WFREE base once memory allows;
+    - apiVersion detector (13), explain provenance (12), values descriptions (2) and CRLF (1) → new lane SURFACE1 (20261105T195917-281e0b89);
+    - view ports (43), open wrong expectations (9 + 24 UNITREC) and 17 encoding-only full-schema tests → new lane TESTPORT1 (20261105T195919-3e23c7f3, tests only, Helm adjudication, discriminating-document equivalence).
+  - COLL1 steered to also export unitrec-tests.patch (test rewrites with Helm receipts) and the list of ~44 tests its tree turns green.
+  - The heartbeat at 20:54 measured memory free at 34% (alert threshold 35%).
+
 Next: builders on the WFREE stack (WFREE2 CPU and regressions; GUARDX rework plus slice A; TPLT2 per-site tpl; LOCAL1 B/C; RECV2 M2; ABORT2 M1 plus loki cost); HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; FRCLASS; CATALOG1 2; then stack everything with stack.py and preview.
