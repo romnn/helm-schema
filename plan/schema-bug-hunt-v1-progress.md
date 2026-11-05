@@ -10228,4 +10228,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - 20261105T194806-e507e44c: COLL1 assessment (100 h on T7): continue, redirect to WFREE and T9, or retire and harvest into RECV2/WFREE2.
   - 20261105T194813-3edf5730: FRCLASS mid-flight review: soundness (no FR traded for FA, no recognizers), remaining FR and their dependencies, rebase point.
 
+- 20:58 (Nov 05) — **COLL1 assessment: wind it down and harvest it into RECV2 (orchestrator decision; the lane is redirected, not stopped).**
+  - Opus finding (designs/reviews/coll1-assessment-opus-2026-11-05.md):
+    - COLL1 is on d23159c7, +7.1k/−0.6k plus ~1.8k new lines.
+    - Last full measure: 3,354 closures, 8 reopened, 223 FR on controls (milvus, nginx-ingress and chartmuseum were fixed later).
+    - It spent ~15 h tuning elasticsearch output-count layout.
+    - Its collection mechanism equals RECV2's M2b–d, and its loop work duplicates WFREE's loop_summary (ceiling +0/+67).
+  - Steered COLL1:
+    - stop the layout work and remove its diagnostics;
+    - export coll1-harvest.patch and a coll1-harvest.md listing the 9 unique pieces;
+    - copy its Helm evidence to RECV2's transfer/from-coll1/;
+    - end the turn.
+  - Steered RECV2 (port only what M2 needs, re-prove each piece on its base; GUARDX keeps the predicate_bdd bounded path).
+  - Steered WFREE2 (run COLL1's two loop-law tests against loop_summary.rs).
+
 Next: builders on the WFREE stack (WFREE2 CPU and regressions; GUARDX rework plus slice A; TPLT2 per-site tpl; LOCAL1 B/C; RECV2 M2; ABORT2 M1 plus loki cost); HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; FRCLASS; CATALOG1 2; then stack everything with stack.py and preview.
