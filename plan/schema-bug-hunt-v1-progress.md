@@ -10380,4 +10380,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Priority, highest first: WFREE2 (step 1), GUARDX (step 3), LOCAL1 (B; C split into its own builder), TPLT2, RECV2; then TESTPORT1; PROV1 last (census).
   - DECODE1 already runs on Claude. CATALOG1 and ABORT2 are parked until their landing steps; their follow-ups will be Claude takeovers.
 
+- 23:40 (Nov 05) — **User approved moving the Codex lanes to Claude Opus (work account) as they stop. LOCAL1-C split off and launched on Claude.**
+  - LOCAL1-C 20261105T223819-7d45b400: clone round8-r3b-local1c, WFREE+GUARDX base, brief briefs/local1c.md.
+    - It owns S8 and S9, the 15 slice-C FR laws, CRLF, and FRCLASS's namespace implementation (D1).
+    - LOCAL1 (Codex) is steered to finish slice B only.
+  - Takeover map: round8/takeover-map.tsv. Priority: WFREE2, GUARDX, LOCAL1, TPLT2, RECV2, TESTPORT1, PROV1.
+  - Each takeover: a Claude Opus xhigh builder, work account, auto mode, the same clone, briefs/migrate-to-claude.md + the lane brief + the old transcript.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
