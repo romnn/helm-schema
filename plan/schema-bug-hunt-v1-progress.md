@@ -10015,4 +10015,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - The roughly 11k FA documents that main's declared-default constraints reject are real Helm/Kubernetes failures, so their structural reason must be recovered by the interpreter: template consumption, destination, abort.
   - DEMAND1 now also samples the declared-default-exclusive documents (scalar 1,540, container 2,149, inherited 3,779) and routes each by its actual failure.
 
+- 07:00 (Nov 05) — **PROV1 handed back an incomplete foundation patch with zero corpus closures.**
+  - Mechanism: per-proof relationship allowance (relationship.rs:457) and local occurrence and capture projection (fragment_eval/eval.rs:89/124/548). LOC +53. It fixes 4 reduced layouts; the hostUsers witness goes red → green.
+  - Gates: lint 0; unit failures equal the base's 258; dump byte-identical to the base; replays 0/0/0. CPU: total 247 ≤ 259, but 21 per-chart bars fail (likely inherited).
+  - 104 of 120 sampled first stops are unlocalized. 77,849 of the 105k provider tuples have anonymous definitions.
+  - Reading (orchestrator): RECV1 and PROV1 each close 0 alone. E2b showed losses stack (x509 has five), so single-fix measurement is the wrong instrument.
+  - Actions:
+    - PROV1 2 localizes the ordered loss STACK with diagnostic gate bypasses and samples the anonymous definitions.
+    - HARNESS 3 builds tools/harness/stack.py (prefix and marginal closures of an ordered patch stack via one dump and corpus_replay each), runs RECV1 + PROV1 (GUARDX to follow), and measures a line-base per-chart CPU reference so lanes report deltas, not inherited failures.
+- 07:00 (Nov 05) — **Ops:**
+  - The shared sccache server serialized every lane's compiles (12 queued behind 1, 15-minute stalls, about 10% hit rate). It is stopped, and speed-v1 rule 1 is now "compile cache OFF". Auto-started servers cached on T7 per the user's sccache config; the user killed them along with stale lane PIDs 41633 and 77268.
+  - T7 is saturated: the T7→T9 archive job was stopped before moving anything (user: "dont stress test it"), and T7 lanes run one battery at a time.
+  - Correction to the 04:24 entry: FRCLASS was not blocked for 5 h. Codex asks through request_user_input_async, which returns at once. The run's 10 questions went unanswered for 8 min to 7 h 15 m because agentmux doesn't surface them (agentmux#35, evidence comment posted). watch-codex.py now flags OPEN QUESTION from call_-id agent messages.
+
 Next: DEMAND1 and PROV1 measure and build; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
