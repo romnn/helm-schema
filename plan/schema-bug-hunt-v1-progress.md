@@ -10114,4 +10114,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - CATALOG1 is narrowed to a quick correctness wrap-up, since V1 is worth 0 FA.
     - Critical path: WFREE2 (CPU) + TPLT2 (tpl) + GUARDX (+228).
 
+- 20:00 (Nov 05) — **CATALOG1 handed back a correctness and simplicity patch on WFREE, with zero net FA yield.** Patch: round8-r3b-catalog1/transfer/catalog1/catalog1.patch, sha 12883f44….
+  - Exact effect facts for 241 Helm/Sprig names plus 12 native methods: 198 pure, 32 external/unstable with no argument write, 7 mutating argument 0, 4 program/callback.
+  - The unknown-effect fallback is deleted for 71 names plus html/js/call; genuine unknowns stay Unknown. LOC +90.
+  - Replays against WFREE: 38 closed / **38 reopened** / 0 new FR. CPU −0.52%.
+  - Gates: lint 0; unit failures equal WFREE's 255; the fallback mutant is killed.
+  - Parked as a stack candidate on WFREE. The 38 reopenings must be adjudicated before it can land.
+
 Next: TPLT2 (port and close the tpl gap); WFREE2 CPU; GUARDX CPU and on-WFREE patch; ABORT2; FRCLASS; PROV1 4; CATALOG1 wrap-up; then stack WFREE+TPLT+GUARDX and measure toward landing.
