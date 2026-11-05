@@ -10212,4 +10212,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - S1 and S2 are folded into LOCAL1's slice C; S3 is queued.
   - PLACE1's 456 FR plus the 61 adjudicated-valid documents become must-accept laws first.
 
-Next: the (a)–(c) design → builder slices; HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; WFREE2; TPLT2; GUARDX rework; ABORT2 (24 h time-box); FRCLASS.
+- 21:15 (Nov 05) — **Opus template-consumption design: most of the 46.6k gap is failures the line already executes but loses.** Report: designs/reviews/consumption-opus-design-2026-11-05.md.
+  - Aborts are exported only as one all-or-nothing per-file formula.
+  - Receivers and strict operands are recorded only when the operand still carries raw-input identity.
+  - Main's netbox counterexamples guarded on the wrong (subchart) input, so they were unsound.
+  - Mechanisms:
+    - M1: every abort exit becomes a KnownFailure through DEMAND1's record_failure (27.3k). Sent to ABORT2; needs GUARDX slice A per-group degradation.
+    - M2: receiver, collection and index failures from the certain_pattern_preimage of their derivation, with nil_behavior wired in (25.2k). New lane RECV2 (T9, same base as LOCAL1; brief briefs/recv2.md).
+    - M3: tpl over a chart-default literal. A TPLT2 follow-up.
+  - Opus batch summary: 10 consultations, all saved under round8/designs/reviews and challenge, all routed.
+
+Next: builders on the WFREE stack (WFREE2 CPU and regressions; GUARDX rework plus slice A; TPLT2 per-site tpl; LOCAL1 B/C; RECV2 M2; ABORT2 M1 plus loki cost); HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; FRCLASS; CATALOG1 2; then stack everything with stack.py and preview.
