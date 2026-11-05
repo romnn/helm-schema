@@ -10028,4 +10028,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - T7 is saturated: the T7→T9 archive job was stopped before moving anything (user: "dont stress test it"), and T7 lanes run one battery at a time.
   - Correction to the 04:24 entry: FRCLASS was not blocked for 5 h. Codex asks through request_user_input_async, which returns at once. The run's 10 questions went unanswered for 8 min to 7 h 15 m because agentmux doesn't surface them (agentmux#35, evidence comment posted). watch-codex.py now flags OPEN QUESTION from call_-id agent messages.
 
+- 08:20 (Nov 05) — **DEMAND1 handed back REWORK: zero closures alone, and it reopens Stacks Blockchain API's workloadType comparison.** The 216 supplemental documents include 8 Helm-confirmed aborts.
+  - Mechanism: one S1 failure hook, State::record_failure (value/consumption.rs:478). Signature, arity, literal and comparison failures route through it, and the synthetic nil/ComparisonFailure path is deleted. LOC +21.
+  - Gates:
+    - lint 0; unit failures equal the base's 258; dump verify 0 (5 charts moved);
+    - replays 0/0/0;
+    - 5 batteries at 101 on the inherited roster;
+    - CPU: total 216 ≤ 259, 15 chart bars fail.
+  - Measurement: template-consumption exposure splits presence/abort 27.3k (ABORT1/GUARDX), receiver/collection 25.2k (RECV1/COLL1), strict operand 1.4k, required presence 0.5k. All 20 declared-default-exclusive samples have structural failures (17 template, 3 destination), which supports the ADR 0043 decision.
+  - Root of the reopen (lane's source reading): output.rs freezes exit histories under one shared 262,144-work allowance, and executed_requirements.rs folds under an all-or-nothing 65,536-work budget. New sound observations therefore evict older proved clauses. Sent to GUARDX, which also stacks DEMAND1 like RECV1.
+  - Pattern (orchestrator): RECV1, PROV1 and DEMAND1 each measure 0 closures alone, and the shared cause is GUARDX's freeze/export budget. GUARDX is the critical path; the other three patches are parked as stack candidates for HARNESS's stack runner.
+
 Next: DEMAND1 and PROV1 measure and build; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
