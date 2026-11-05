@@ -10121,4 +10121,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Gates: lint 0; unit failures equal WFREE's 255; the fallback mutant is killed.
   - Parked as a stack candidate on WFREE. The 38 reopenings must be adjudicated before it can land.
 
+- 20:10 (Nov 05) — **PROV1 4: local field widening at heap.rs:759 is built (siblings keep identity, the 128-leaf limit is unchanged), with zero corpus closures.**
+  - Cilium alone: root allOf 34 / 720 KB. The WFREE stack gives 38 / 849 KB, the same with or without the patch.
+  - LOC +278. Unit failures equal the base's 258. Paired CPU 213 vs the line's 219.7. Not landing-ready.
+  - Parked as a stack candidate (prov1-local-widening.patch f563da8c…, query-allowance patch f8e6d521…, WFREE adapter tar).
+- 20:10 (Nov 05) — **Orchestrator: the user offered spare work-account Claude quota until about 01:00.** Five Opus 5.5 consultations started, all read-only analysis:
+  1. WFREE CPU and LOC design review (feeds WFREE2);
+  2. a tpl-gap design (feeds TPLT2);
+  3. a GUARDX-on-WFREE pre-landing review;
+  4. adjudication of WFREE's 80 and CATALOG1's 38 reopenings;
+  5. first-principles challenge 5: the remaining about 79k beyond all invalidation; whether main's placement→destination capability is missing by construction; an honest re-plan.
+
 Next: TPLT2 (port and close the tpl gap); WFREE2 CPU; GUARDX CPU and on-WFREE patch; ABORT2; FRCLASS; PROV1 4; CATALOG1 wrap-up; then stack WFREE+TPLT+GUARDX and measure toward landing.
