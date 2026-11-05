@@ -10176,4 +10176,6 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     Sent to WFREE2 and CATALOG1 2; designs/reviews/reopenings-opus-2026-11-05.md.
   - **Tpl design.** TPLT is skipped entirely for multi-chart trees (foreign_unit_state_unavailable), which excludes argo-cd, airflow and loki, and its render-wide T dies on any one failure. New design: a per-site T arm, a Contents=Copies provenance for concat/merge/deepCopy, the loop-member ancestor climb, and deleting about 870 LOC of inertness machinery. Laws L1–L8. Sent to TPLT2; designs/reviews/tpl-gap-opus-design-2026-11-05.md.
 
+- 20:55 (Nov 05) — **User decision, confirming the 20:35 one:** "keeping them separate so its easy to compare main and r3b as git branches and we donnt make things more complicated by maintaining both at the same time in the code! so just work toward surpassing main with a better approach!" No dual path, no restoring main's producers on the line. R3b (r3b/construction) replaces main once it surpasses it.
+
 Next: the (a)–(c) design → builder slices; HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; WFREE2; TPLT2; GUARDX rework; ABORT2 (24 h time-box); FRCLASS.
