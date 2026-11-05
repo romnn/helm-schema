@@ -10199,4 +10199,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Fixes F1 (project per document), F2 and F3 are noted for a line-CPU slice after the WFREE stack. The F3 overlap was sent to WFREE2.
   - No new lane yet: the machine is saturated and these files overlap LOCAL1, GUARDX and WFREE2.
 
+- 21:05 (Nov 05) — **Opus provider-destination design.** Report: designs/reviews/provider-opus-design-2026-11-05.md.
+  - Main closed the provider class through three UNSOUND steps:
+    - a syntactic skeleton that assumes hole text never changes the parse;
+    - influence treated as identity at holes;
+    - no lexical guard.
+  - Main's provider synthesis is byte-identical to the line's, so the 105k gap is upstream of the generator.
+  - Design: keep the line's executed skeleton and replace the document-wide accumulating prefix chain with a fence-scoped guard. Slices:
+    - S1: hole facts on TextPart::Unknown (closed, fenced, alphabet);
+    - S2: scoped guard; walk-budget exhaustion cuts only the suffix;
+    - S3: ∀ placement for range members.
+  - S1 and S2 are folded into LOCAL1's slice C; S3 is queued.
+  - PLACE1's 456 FR plus the 61 adjudicated-valid documents become must-accept laws first.
+
 Next: the (a)–(c) design → builder slices; HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; WFREE2; TPLT2; GUARDX rework; ABORT2 (24 h time-box); FRCLASS.
