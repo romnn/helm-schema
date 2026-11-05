@@ -10154,4 +10154,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - PROV1 5 runs the template-consumption stop-point census.
   - The dual-path re-plan goes to the user (a product decision).
 
-Next: TPLT2 (port and close the tpl gap); WFREE2 CPU; GUARDX CPU and on-WFREE patch; ABORT2; FRCLASS; PROV1 4; CATALOG1 wrap-up; then stack WFREE+TPLT+GUARDX and measure toward landing.
+- 20:35 (Nov 05) — **User decision: keep the current bar.** The dual-path re-plan was offered (restore main's producers, land the interpreter behind a flag, migrate class by class per ADR 0071) and declined. R3b keeps building on the line until it alone beats main.
+  - Recorded fact: the line no longer contains main's expr_call_eval, fragment_expr_eval, symbolic_local_state, value_path_context or fragment_eval/{holes,project,lower}.
+  - Next build work: the (a)–(c) "unknown widens, never deletes" design (Opus, in progress), WFREE2 CPU, TPLT2, GUARDX rework, ABORT2, FRCLASS.
+- 20:35 (Nov 05) — **Opus review of guardx-on-wfree: REWORK.** Review: round8/designs/reviews/guardx-opus-review-2026-11-05.md.
+  - Soundness: no requirement admitted under a weaker guard; both mechanisms survive the WFREE port.
+  - The 7 OpenEBS reopenings come from graph.rs:322-326 deleting dependency `global.*` consumptions; the nginx-ingress reopening from losing the union of choice cones.
+  - Other findings:
+    - remaining whole-list deletions (consumption.rs:611-613);
+    - a scope-free FrozenChoice memo key;
+    - investigation spans and literals;
+    - nginx-ingress schema growth 0.89 → 3.06 MB;
+    - paired CPU 232.5 vs 220.1, with nginx-ingress-controller newly crossing main.
+  - Steered into GUARDX's current turn. The patch actually measured is d61cbc76, not add53d93.
+
+Next: the (a)–(c) design → builder slices; HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; WFREE2; TPLT2; GUARDX rework; ABORT2 (24 h time-box); FRCLASS.
