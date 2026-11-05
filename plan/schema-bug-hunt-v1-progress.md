@@ -10350,4 +10350,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Meaning: the six "delete when unproven" gates hold roughly half of the preview-5 FA mass. LOCAL1 B/C, GUARDX slice A and ABORT2 (loki) are the critical lanes. The remaining ~32k is earlier identity loss, native widening, unsupported preimages and missing facts (RECV2, DECODE1, TPLT2).
   - HARNESS is idle; it owns the measurement tools and will run stacks on request.
 
+- 23:25 (Nov 05) — **FRCLASS hands back its local subset: 0/58 FR closed alone, 0 reopenings, all 58 routed. The lane is retired (no rebase; its classes belong to other lanes).**
+  - Patch: frclass-local.patch, sha 6d6f73ff, against ef701ad1, 23 files, +385 LOC. Contents:
+    - lexical cache ownership;
+    - removal of the duplicate annotation fallback;
+    - dependency ancestor/default backfill;
+    - fixed-haystack contains with typed printf;
+    - an initialized-host DNS-1123 namespace policy;
+    - a content-keyed condition cache.
+  - Held: with/else (oncall FA), non-concatenating join, conjunction polarity, block defaults (ES 26 FA).
+  - Measured:
+    - preview 5 and the preview-4 guard: 0 reopenings, 0 new FR, 0 closed;
+    - 19/19 FRFIX2 FA controls still rejected;
+    - 58/58 focused tests; 9 baseline-red laws green;
+    - one clean 206-artifact dump.
+    - lint, lint:fc, units and integration were NOT run.
+  - FR routing (frclass-routing.md): LOCAL1 slice B 38, LOCAL1 slice C 15, WFREE identity 3, TPLT2 2; 5 FA causes unowned. LOCAL1 steered with it.
+  - frclass-local.patch is a stack candidate after LOCAL1-B. Its namespace policy merges with LOCAL1's D1.
+- 23:14 heartbeat: memory free recovered to 63%; PROV1's PIDs had already exited, and it was told to continue.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
