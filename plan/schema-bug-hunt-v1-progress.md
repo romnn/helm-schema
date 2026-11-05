@@ -10039,4 +10039,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Root of the reopen (lane's source reading): output.rs freezes exit histories under one shared 262,144-work allowance, and executed_requirements.rs folds under an all-or-nothing 65,536-work budget. New sound observations therefore evict older proved clauses. Sent to GUARDX, which also stacks DEMAND1 like RECV1.
   - Pattern (orchestrator): RECV1, PROV1 and DEMAND1 each measure 0 closures alone, and the shared cause is GUARDX's freeze/export budget. GUARDX is the critical path; the other three patches are parked as stack candidates for HARNESS's stack runner.
 
+- 10:00 (Nov 05) — **Three hand-backs.**
+  - **GUARDX: REWORK for CPU.** Mechanism: freeze shares structural proof work and widens per demand; export joins canonical conditions before admission and keeps completed clauses. Caps unchanged. LOC +315.
+    - Base had 158,180 concrete freeze drops; the candidate has zero zero-allowance starts.
+    - Replays close the same 4 KPS documents on both cohorts, 0 reopened, 0 new FR.
+    - Stacked: DEMAND1's 216 supplemental losses are restored (its 8 Helm workloadType FA removed), 0 extra saved closures; RECV1 +0.
+    - Root allOf is unchanged on the five collapsed charts.
+    - CPU: total 223.5 ≤ main 335.5. Of the 9 chart-bar failures, 7 are inherited per the line CPU reference; its own are clickhouse and influxdb.
+    - Correction to E2b: its five exhaustion witnesses exhausted only under H. On the real base the collapse comes first from havoc.
+  - **TPLT: not landable on CPU.** 41 closures, 0 reopenings, 0 new FR; bitnami 0. Line delta +13.77% CPU, 15 policy violations, LOC +1,009. It reports a second identity loss under T=true (map-loop/merge).
+  - **PROV1 2 (diagnostic):** none of the 32 gate-bypass subsets reaches a majority, and on the real base 0 of 104 samples reach provider export. With H plus every gate bypassed, 94 tuples complete: 27 have a known relationship, 8 succeed. 63 samples have opaque `.Values` roots, so identity is lost at or right after the read. A further stop sits at contract_rows.rs:800 (PLACE1).
+- 10:00 (Nov 05) — **HARNESS 3 landed tooling on the line as ef701ad1** (stack.py and cpu_reference.py; pushed). Results so far:
+  - Stack RECV1 + PROV1: 0/0/0.
+  - Line CPU reference: 157 charts against main, 9 inherited flags (nats, rook-ceph, falco, bitnami-postgresql, postgresql-ha, mariadb, cilium, plus 2 near the bar); openebs is censored on main by the 4 GiB cap.
+- 10:00 (Nov 05) — **Next measurements (orchestrator):**
+  - HARNESS 4 stacks WFREE (interim d231) → GUARDX → TPLT → DEMAND1 → RECV1 → PROV1, plus the WFREE+GUARDX and WFREE+TPLT marginals, with root allOf for the collapsed charts. This decides whether the effects + guards stack restores the collapse.
+  - PROV1 3 runs a construct census of the opaque `.Values` roots.
+  - GUARDX 2 removes its 2 new CPU regressions.
+
 Next: DEMAND1 and PROV1 measure and build; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
