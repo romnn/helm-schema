@@ -9980,4 +9980,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Patch: round8-r3b-recv1/transfer/recv1.patch (sha256 3dd59b02…f8df) plus the new-files tar. It gets restacked and re-measured on WFREE + GUARDX before landing.
   - Review debt: cross-vendor pre-landing review.
 
-Next: GUARDX measures and fixes guard-freeze starvation and export admission; CENSUS3 4 builds the parity inventory; WFREE lands after its gate correction; FRCLASS reaches FR=0 without new FA; ABORT1 within the CPU bar; re-estimate the landing from the parity inventory.
+- 03:00 (Nov 05) — **The parity inventory (CENSUS3 4) shows the line emits about 3% of main's constraints: 192,450 constraint tuples exist only on main, 4,546 only on the line and 1,555 on both.** Report: /Volumes/T9/dev/round8-r3b-census3/transfer/parity-inventory.md and .json.
+  - Main-only constraints reject 95,678–96,613 of the 96,626 open FA documents, so the FA gap equals the constraint-parity gap.
+  - 95.77% of main-only tuples (184,318) have no drop-site counter. Attributed tuples: placement 5,992 (FA exposure 4.5k), freeze_none 1,041 (0.8k), demand never recorded 959 (0.7k), export admission 88. Minimization has zero exposure.
+  - Main-only keywords: type 86k, anyOf 49k, falseSchema 15.8k, additionalProperties 14.3k, required 12.7k, format 6k.
+  - 14 main-only tuples have valid counterexamples and go to FRCLASS review.
+  - Hypothesis (orchestrator): a large share is main's declared-default shape assertion (ADR 0043 assert), which S1 narrowed on the line (ba71bb70) to exact-path, Opaque-consumption-only typing. That would make much of the gap a POLICY difference rather than missing mechanism.
+  - CENSUS3 5 classifies the main-only tuples by old producer (declared-default scalar, shape or descendants vs provider destination vs template consumption). It measures class-alone FA closures and FR cost by replaying saved documents, and splits the gap into policy and mechanism.
+  - If policy dominates, ADR 0043's scope is a user-level decision.
+- 03:00 (Nov 05) — **RECV1 is parked; GUARDX received RECV1's patch for a stacked measurement.**
+
+Next: CENSUS3 5 splits the parity gap into policy and mechanism (ADR 0043 declared-default share); if policy dominates, put the ADR 0043 scope to the user; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
