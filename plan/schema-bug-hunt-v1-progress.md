@@ -10057,4 +10057,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - PROV1 3 runs a construct census of the opaque `.Values` roots.
   - GUARDX 2 removes its 2 new CPU regressions.
 
-Next: DEMAND1 and PROV1 measure and build; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
+- 14:03 (Nov 05) — **WFREE handed back final on d23159c7: NOT LANDABLE.** Hand-off: round8-r3b-guardl/wfree-d231/transfer/wfree-handoff.md; patch sha fef09115…71d8.
+  - Replays: preview 5 has 5,982 FA closures and 0 reopenings; the preview-4 guard has 5,969 closures and **80 reopenings**. The historical 95 are all Kubernetes-invalid closures.
+  - CPU: 407.95 s against the line's 240.62 s (**+69.54%**), 37 charts over main, total above main (about 335 s).
+  - LOC +5,047.
+  - Gates: units 0 new; integration 303 failures, not compared with the base; 141/141 batteries retained (2 pass, 139 fail); downstream 32/32.
+  - Orchestrator: WFREE moves to T9 as WFREE2 (round8-r3b-wfree2 at ef701ad1 with wfree.patch applied; brief briefs/wfree2.md). It makes the effect representation structurally cheaper (target ≤ line +10%), fixes the 80 reopenings at their root, and simplifies. The T7 WFREE session is retired.
+- 14:03 (Nov 05) — **HARNESS 4 stopped on a conflict: guardx.patch fails to apply after wfree.patch** in executed_requirements.rs, consumption.rs, guard.rs, output.rs, a test and an inventory TSV.
+  - GUARDX ports onto WFREE (guardx-on-wfree.patch) beside its CPU fix.
+  - HARNESS 5 meanwhile measures WFREE, WFREE+TPLT, and WFREE+TPLT+DEMAND1+RECV1+PROV1.
+
+Next: HARNESS 5 stack results; GUARDX CPU fix plus the port onto WFREE; WFREE2 CPU and reopenings; PROV1 3 opaque-root census; FRCLASS; then measure WFREE+GUARDX(+TPLT) for the collapsed charts.
