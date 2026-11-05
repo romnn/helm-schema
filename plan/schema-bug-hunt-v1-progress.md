@@ -9990,4 +9990,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - If policy dominates, ADR 0043's scope is a user-level decision.
 - 03:00 (Nov 05) — **RECV1 is parked; GUARDX received RECV1's patch for a stacked measurement.**
 
-Next: CENSUS3 5 splits the parity gap into policy and mechanism (ADR 0043 declared-default share); if policy dominates, put the ADR 0043 scope to the user; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
+- 04:24 (Nov 05) — **CENSUS3 5 splits the parity gap: it is mostly missing MECHANISM, not policy.** Report: /Volumes/T9/dev/round8-r3b-census3/transfer/parity-producers.md and .json. The producer labels are probable; the closures are measured by replaying all 97,411 saved documents.
+  - Each class added alone to the line (classes overlap):
+
+    | Class | Tuples | FA closed | Exclusive | Valid documents rejected |
+    |---|---:|---:|---:|---|
+    | Template consumption | 32,671 | 46,648 | 39,624 | 9 of 61 (4 new: openebs) |
+    | Provider destination | 105,008 | 26,977 | 22,211 | 8 (4 new: the same openebs) |
+    | Other/unknown | 46,029 | 22,155 | — | — |
+    | Declared default, 3 classes | 8,742 | 10,957 | — | 0 adjudicated-valid, 1 Helm-valid-only |
+
+    - Only 393 of the provider-destination tuples have an observed provider lookup.
+    - The declared-default classes, restricted to directly consumed paths, close 3,631.
+  - A blanket native default-shape assertion would close 83,298 but rejects 39 of 61 adjudicated-valid documents, 16 of them absolutely Kubernetes-valid. Rejected as an option.
+  - Orchestrator: two new T9 lanes. DEMAND1 (round8-r3b-demand1, briefs/demand1.md) takes the template-consumption class: measure by main producer seam, map to owning lanes, build the largest unowned sub-class. PROV1 (round8-r3b-prov1, briefs/prov1.md) takes the provider-destination class: trace to the stop point before provider lookup, coordinate with PLACE1 and GUARDX, build the largest unowned stop point.
+  - Policy question for the user: restoring main's guarded declared-default constraints (the original scope of ADR 0043) would close about 11k FA with no adjudicated-valid rejection.
+- 04:24 (Nov 05) — **Ops:**
+  - FRCLASS had been blocked about 5 h on a question (namespace-name contract). Orchestrator decision: assume valid Kubernetes namespace names.
+  - watch-codex.py now flags ASKING runs.
+  - Issue romnn/agentmux#35 filed at the user's request.
+  - Caps v4: up to 3 chart batteries at once per lane, after the machine sat about 80% idle on serial batteries.
+
+Next: user decision on the ADR 0043 scope; DEMAND1 and PROV1 measure and build; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
