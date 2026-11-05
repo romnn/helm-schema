@@ -10387,4 +10387,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Takeover map: round8/takeover-map.tsv. Priority: WFREE2, GUARDX, LOCAL1, TPLT2, RECV2, TESTPORT1, PROV1.
   - Each takeover: a Claude Opus xhigh builder, work account, auto mode, the same clone, briefs/migrate-to-claude.md + the lane brief + the old transcript.
 
+- 23:57 (Nov 05) — **User: "you can use a lot more opus work account if it helps". Three more Opus runs on the work account (it reset at 23:00Z).**
+  - ABORT3 20261105T225522-52d32e83 (builder; clone round8-r3b-abort3 on WFREE+GUARDX; briefs/abort3.md):
+    - port ABORT2's M1/S5 onto the base, dropping hunks other lanes own, using DEMAND1's exact record_failure hook;
+    - then loki's required/fail family (ceiling 10,980) and KPS CPU (106.9 s against main's 20.6 s on the old tree).
+    - This replaces ABORT2's planned step-3 rebase.
+  - EXPLAIN1 20261105T225527-97d30984 (builder; clone round8-r3b-explain1; briefs/explain1.md): explain provenance and values descriptions recorded as interpreter facts at the origin, never re-derived (SURFACE1's blocked groups).
+  - 20261105T225536-c7b04d38 (read-only): classify the 272 #[ignore] "R3b regression vs main" tests by owning lane, with witnesses and unowned groups.
+  - Claude builders now: DECODE1, LOCAL1-C, ABORT3, EXPLAIN1. Codex lanes still finishing in-flight turns; takeovers follow takeover-map.tsv as they stop.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
