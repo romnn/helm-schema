@@ -10329,4 +10329,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - slot 6b.
   - DECODE1 builder 20261105T211336-1994ac13: Claude Opus xhigh, work account, auto mode, clone round8-r3b-decode1 on the WFREE+GUARDX base. Brief: briefs/decode1.md.
 
+- 22:40 (Nov 05) — **CATALOG1 2 hands back S10 provisional, not landable: it waits on WFREE2's frozen prefix.**
+  - Catalog: 198 pure functions, 32 unstable, 7 argument writers, 4 program/callback.
+  - Pinned: catalog rows, nil behavior, charged-work export admission.
+  - Units: the same 255 inherited, no new failures. 11/11 core laws. +47 LOC.
+  - The last WFREE-only diagnostic still showed 29 reopenings.
+  - Patch: transfer/catalog1/catalog1.patch (sha 0c16b3f3).
+  - Parked; when WFREE2 hands back, follow up to rebase onto it and prove 0 reopenings (landing step 2).
+- Heartbeats 22:14 and 22:34: memory free 33% (below 35%); no new heavy work started.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
