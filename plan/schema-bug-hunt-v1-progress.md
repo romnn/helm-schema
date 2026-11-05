@@ -10072,4 +10072,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Orchestrator: exported `git diff` (sha fe001143…) plus 11 new source files from the T7 tree into round8-r3b-abort2 at ef701ad1; 100 paths applied. ABORT2 brief: briefs/abort2.md (loki required/fail within the CPU bar, local widening per ADR 0070 §7, structural cost fix). ABORT1 retired.
   - Only COLL1 still works on T7 (TPLT's T7 session is done). T7 has 33 GiB free.
 
-Next: HARNESS 5 stack results; GUARDX CPU fix plus the port onto WFREE; WFREE2 CPU and reopenings; PROV1 3 opaque-root census; FRCLASS; then measure WFREE+GUARDX(+TPLT) for the collapsed charts.
+- 15:05 (Nov 05) — **PROV1 3: global invalidation is the dominant first loss of input identity.** In the 84 sampled tuples, H restores canonical `.Values` reads for 68 (base: 3). Report: round8-r3b-prov1/transfer/prov1-opaque.md and .json.
+  - Ranked writer associations: loops 74, tpl 61, include 46, merge family 33+17+14, set/unset/append, and `unknown_function_effect` for dir, mustFirst, regexFind, clean, atoi, dateModify, base, title, unixEpoch, buildCustomCert and more.
+  - One unowned first loss is confirmed: heap.rs:759 widens the whole cilium host map when joining `commonCA` exceeds the 128-leaf field limit (8 tuples, 104 overlapping FA).
+  - Loki's `dict "ctx" $` → `toYaml | nindent` keeps identity under H, so serialization isn't the eraser.
+  - Orchestrator:
+    - CATALOG1 (new, T9, at line + WFREE patch; brief briefs/catalog1.md) derives exact effect facts for every Helm 4.2.3/Sprig function from the Go source (pure, argument-mutating, or nondeterministic) and deletes the unknown-function fallback for covered names.
+    - PROV1 4 builds local widening at heap.rs:759.
+    - HARNESS uses guardx-on-wfree.patch (add53d93…) for the WFREE+GUARDX measurement.
+
+Next: HARNESS stack (WFREE, +GUARDX, +TPLT, +rest); WFREE2 CPU; CATALOG1 effect catalog; PROV1 4 local field widening; ABORT2; FRCLASS; GUARDX CPU.
