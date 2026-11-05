@@ -10067,4 +10067,9 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - GUARDX ports onto WFREE (guardx-on-wfree.patch) beside its CPU fix.
   - HARNESS 5 meanwhile measures WFREE, WFREE+TPLT, and WFREE+TPLT+DEMAND1+RECV1+PROV1.
 
+- 14:26 (Nov 05) — **ABORT1's turn 9 failed on a content flag after about 91 h. Its work in progress continues as ABORT2 on T9.**
+  - Its last state: 461 laws pass; CPU still fails (loki at the 16 CPU-s diagnostic limit, cert-manager 5.49 vs main's 0.81, KPS 26.87 vs 19.38); loki's saved aborting defaults are still accepted (authored config runs out of budget).
+  - Orchestrator: exported `git diff` (sha fe001143…) plus 11 new source files from the T7 tree into round8-r3b-abort2 at ef701ad1; 100 paths applied. ABORT2 brief: briefs/abort2.md (loki required/fail within the CPU bar, local widening per ADR 0070 §7, structural cost fix). ABORT1 retired.
+  - Only COLL1 still works on T7 (TPLT's T7 session is done). T7 has 33 GiB free.
+
 Next: HARNESS 5 stack results; GUARDX CPU fix plus the port onto WFREE; WFREE2 CPU and reopenings; PROV1 3 opaque-root census; FRCLASS; then measure WFREE+GUARDX(+TPLT) for the collapsed charts.
