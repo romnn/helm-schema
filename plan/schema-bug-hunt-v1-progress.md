@@ -10271,4 +10271,42 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Unowned: 2 oncall .Release FA (shared release session) and 3 OpenEBS imagePullPolicy FA (global/provider).
   - Process lesson: lanes must run the preview-4 guard, not only the preview-5 screen, before declaring FR closures. FRCLASS's own status files tracked only the 19 FA.
 
-Next: builders on the WFREE stack (WFREE2 CPU and regressions; GUARDX rework plus slice A; TPLT2 per-site tpl; LOCAL1 B/C; RECV2 M2; ABORT2 M1 plus loki cost); HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; FRCLASS; CATALOG1 2; then stack everything with stack.py and preview.
+- 21:12 (Nov 05) — **Integration map (Opus) adopted as seams-v1 and the landing order (orchestrator decision); every lane steered.**
+  - Map: designs/reviews/integration-map-opus-2026-11-05.md. Seams: round8/briefs/seams-v1.md.
+  - The same mechanism was being built in several lanes:
+    - the tpl fork ×4 (W2 ActionFree, TP Inert, AB action_free_tpl, FR program_inertness);
+    - the continuation bit ×3;
+    - the Partial certificate ×2;
+    - the export-join repair ×2;
+    - the lexical lattice ×2;
+    - the query allowance ×2;
+    - check_export_budget ×3.
+  - LOCAL1's choice scope never cancels: arena scope against "0" on import.
+  - GUARDX was reworking on the LINE tree; its WFREE port had been idle since 14:38.
+  - Seam owners:
+    - GUARDX: S1 choice identity (runtime id, one RequirementScope::key), S2 finish as the only projection, S4 freeze;
+    - LOCAL1: S1b Choice predicate, S3 export admission, S8 TextPart::Unknown facts, S9 relationship allowance (PROV1's query allowance retired into it);
+    - RECV2: lands the record_failure hook byte-identical to DEMAND1's;
+    - ABORT2: S5 semantics and S12 path predicate;
+    - TPLT2: S6 continuation bit and S7 the one tpl site;
+    - CATALOG1: S10 catalog and export budget;
+    - WFREE2: S11 heap carriers, skip index and BorrowedObjects.
+  - Landing order (stack.py; each step proves 0 marginal reopenings in preview 5 AND the preview-4 guard, 0 new FR, paired CPU, root allOf and bytes):
+    1. WFREE2;
+    2. CATALOG1;
+    3. GUARDX;
+    4. LOCAL1-B, with 4b deleting after parity;
+    5. TPLT2;
+    6. RECV2 (may swap with 5);
+    7. LOCAL1-C;
+    8. ABORT2;
+    9. FRCLASS leftovers by owner;
+    10. PROV1 local widening only if credited.
+  - Rebases:
+    - ABORT2 rebases once, onto step 3, and stops editing heap*, executed_requirements, function_semantics and the tpl fork now;
+    - FRCLASS never rebases its 107-file tree (local patch plus replays);
+    - GUARDX moves to the WFREE base now;
+    - PROV1 rebases onto step 1 via its adapter.
+- Opus batch 3 complete: 4 consultations, all routed.
+
+Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
