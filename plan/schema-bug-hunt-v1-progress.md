@@ -10190,4 +10190,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - GUARDX takes slice A inside its rework.
   - Opus batch 2 is running: template-consumption design, provider-destination design, line-base CPU.
 
+- 20:55 (Nov 05) — **Opus diagnosis of the line-base CPU.** Report: designs/reviews/line-cpu-opus-2026-11-05.md.
+  - The published CPU reference was measured at load 10.8–24.9 (0 of 940 starts under load 6). Under load 6, LINEPERF2 measured rook-ceph 1.31, postgresql-ha 1.65, mariadb 1.81 and bitnami-postgresql 1.91 s, all under the 2 s exemption. The likely real blockers are nats (5.34 vs 3.34), falco (2.14 vs 1.24) and cilium (2.12 vs 2.04).
+  - Shared costs:
+    - helper bodies are re-executed inline at every include (certified_plan always None), and each re-folds the path guard;
+    - sealing re-derives coverage per exit (read_set.rs:143-201) and runs always_installed_root_fallbacks over paths × exits × reads;
+    - normal forms are built in both polarities, and quoted_tokens re-normalizes its prefix per token (quadratic).
+  - Fixes F1 (project per document), F2 and F3 are noted for a line-CPU slice after the WFREE stack. The F3 overlap was sent to WFREE2.
+  - No new lane yet: the machine is saturated and these files overlap LOCAL1, GUARDX and WFREE2.
+
 Next: the (a)–(c) design → builder slices; HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; WFREE2; TPLT2; GUARDX rework; ABORT2 (24 h time-box); FRCLASS.
