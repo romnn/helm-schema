@@ -9970,4 +9970,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - CENSUS3 4 builds a corpus constraint-parity inventory against main (rearchitecture inventory) with drop-site attribution and FA exposure.
   - PROJ1 stays conditional: the x509 query-budget probe added 0 closures.
 
+- 02:40 (Nov 05) — **RECV1 handed back with a correct receiver mechanism but zero measured FA closures. It is parked, not landed.**
+  - Mechanism: a 247-cell Helm 4.2.3 matrix. Selector recording goes through the existing S1 recorder (value/eval.rs:267), and receiver provenance survives materialized and widened map contents (query.rs:894). It deletes the content-sensitive Selector gate, the nil-only early return and the GoType::Unknown success arm. LOC +36.
+  - Gates: fmt 0; lint 0; lint:fc 0 (30 PASS / 24 WARN); units with the same 258 failures by id; test:integration 201 (1,035 / 168, no base comparison).
+  - Replays: preview-5 and preview-4 guard replays show 0 closed / 0 reopened / 0 new FR.
+  - Batteries: openebs has 8 and KPS 11 hard findings, matching the inherited FR.
+  - CPU: total 225.9 ≤ main 259.0, but 18 per-chart bars fail. The base is likely failing them too; not yet compared.
+  - Reading (orchestrator): this matches E2b. The demands are now recorded but lost downstream: guard-freeze starvation and export admission (GUARDX), plus storage identity at query.rs:1193 unknown_child_in_storage (WFREE's effect proof).
+  - Patch: round8-r3b-recv1/transfer/recv1.patch (sha256 3dd59b02…f8df) plus the new-files tar. It gets restacked and re-measured on WFREE + GUARDX before landing.
+  - Review debt: cross-vendor pre-landing review.
+
 Next: GUARDX measures and fixes guard-freeze starvation and export admission; CENSUS3 4 builds the parity inventory; WFREE lands after its gate correction; FRCLASS reaches FR=0 without new FA; ABORT1 within the CPU bar; re-estimate the landing from the parity inventory.
