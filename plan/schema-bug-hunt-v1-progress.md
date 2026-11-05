@@ -10011,4 +10011,8 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Issue romnn/agentmux#35 filed at the user's request.
   - Caps v4: up to 3 chart batteries at once per lane, after the machine sat about 80% idle on serial batteries.
 
-Next: user decision on the ADR 0043 scope; DEMAND1 and PROV1 measure and build; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
+- 04:30 (Nov 05) — **ADR 0043 scope: the user delegated the choice ("we want the CORRECT and PROPER way - no heuristics or approximations where a structural solution exists").** Orchestrator decision: keep S1's narrowed ADR 0043. A declared default types a value only under its own positively Opaque consumption, and main's broad declared-default assertion is not restored.
+  - The roughly 11k FA documents that main's declared-default constraints reject are real Helm/Kubernetes failures, so their structural reason must be recovered by the interpreter: template consumption, destination, abort.
+  - DEMAND1 now also samples the declared-default-exclusive documents (scalar 1,540, container 2,149, inherited 3,779) and routes each by its actual failure.
+
+Next: DEMAND1 and PROV1 measure and build; GUARDX; WFREE gate correction and landing; FRCLASS FR=0; ABORT1 within the CPU bar.
