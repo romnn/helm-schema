@@ -10095,4 +10095,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Reading (orchestrator): H (all global invalidation removed) took x509 from 5 KB to 262 KB and closed 19.2k; sound WFREE closes 6k and leaves x509 untouched. The gap between WFREE and H is the remaining invalidation WFREE keeps as Top: unknown function effects, unknown helpers, tpl. PROV1 3 found the same writers.
   - Next: CATALOG1 (exact effect facts for every Helm/Sprig function) is the direct test of that gap; WFREE + CATALOG1 (+GUARDX) gets stacked when it hands back. The TPLT conflicts on WFREE need a port (TPLT's measured yield is 41).
 
-Next: HARNESS stack (WFREE, +GUARDX, +TPLT, +rest); WFREE2 CPU; CATALOG1 effect catalog; PROV1 4 local field widening; ABORT2; FRCLASS; GUARDX CPU.
+- 19:50 (Nov 05) — **HARNESS 6 ranked the gap between WFREE and H by invalidation class: tpl dominates.** Report: round8-r3b-harness/transfer/invalidation-diagnostics/results.md. Unsound ceilings on top of WFREE, preview-5 closed/reopened:
+
+  | Variant | Closed / reopened |
+  |---|---|
+  | WFREE (reference) | 5,982 / 0 |
+  | V1 unknown functions | 5,971 (−11) |
+  | V2 helpers | +0 |
+  | V3 tpl | 14,550 (+8,568) |
+  | V4 loops | +0 |
+  | V5 collections | +67 |
+  | V6a union | 16,642 |
+  | V6b full H | 17,598 (17,284 distinct) |
+
+  - Under V3, argo-cd grows 303 KB → 2.78 MB and clickhouse 2 → 31 root allOf; only V6b restores x509 (16 allOf).
+  - Orchestrator:
+    - TPLT2 (new, T9, at line + WFREE patch; brief briefs/tplt2.md) ports TPLT's exact action-free T arm onto WFREE and closes the gap to V3 structurally (guard on input action-freedom, no assumption about user strings). TPLT on T7 is retired.
+    - CATALOG1 is narrowed to a quick correctness wrap-up, since V1 is worth 0 FA.
+    - Critical path: WFREE2 (CPU) + TPLT2 (tpl) + GUARDX (+228).
+
+Next: TPLT2 (port and close the tpl gap); WFREE2 CPU; GUARDX CPU and on-WFREE patch; ABORT2; FRCLASS; PROV1 4; CATALOG1 wrap-up; then stack WFREE+TPLT+GUARDX and measure toward landing.
