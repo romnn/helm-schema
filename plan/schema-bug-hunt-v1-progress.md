@@ -10168,4 +10168,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - paired CPU 232.5 vs 220.1, with nginx-ingress-controller newly crossing main.
   - Steered into GUARDX's current turn. The patch actually measured is d61cbc76, not add53d93.
 
+- 20:45 (Nov 05) — **Opus reviews (work account) delivered three results; all are routed to builders.**
+  - **WFREE cost.** Heap and reach work is cheap. The +69.5% is guard and predicate volume: simplify_structure_uncached runs 3.7× on milvus, and normalize_contract_uses goes 0.1 → 21.9 s. Fixes: lazy freshness masks, interned may-written decisions, hash-consed Predicate, a persistent freshness memo, and restoring the skip index. Sent to WFREE2; designs/reviews/wfree-opus-review-2026-11-05.md.
+  - **Reopenings.** All 118 are real regressions:
+    - WFREE 80: datadog's discovery-chain guards drop parent map requirements, and okteto's gatewayAPI family disappears;
+    - CATALOG1 38: the jupyterhub user-scheduler and trivy deployment reach families vanish after `include … | sha256sum`.
+    Sent to WFREE2 and CATALOG1 2; designs/reviews/reopenings-opus-2026-11-05.md.
+  - **Tpl design.** TPLT is skipped entirely for multi-chart trees (foreign_unit_state_unavailable), which excludes argo-cd, airflow and loki, and its render-wide T dies on any one failure. New design: a per-site T arm, a Contents=Copies provenance for concat/merge/deepCopy, the loop-member ancestor climb, and deleting about 870 LOC of inertness machinery. Laws L1–L8. Sent to TPLT2; designs/reviews/tpl-gap-opus-design-2026-11-05.md.
+
 Next: the (a)–(c) design → builder slices; HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; WFREE2; TPLT2; GUARDX rework; ABORT2 (24 h time-box); FRCLASS.
