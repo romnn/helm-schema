@@ -10081,4 +10081,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - PROV1 4 builds local widening at heap.rs:759.
     - HARNESS uses guardx-on-wfree.patch (add53d93…) for the WFREE+GUARDX measurement.
 
+- 15:45 (Nov 05) — **Decisive stack (HARNESS 5): WFREE + GUARDX does NOT restore the collapsed charts.** Report: round8-r3b-harness/transfer/decisive-stack-results.md and .json.
+
+  | Prefix | P5 closed / reopened | P4 guard closed / reopened |
+  |---|---|---|
+  | WFREE | 5,982 / 0 | 5,969 / 80 |
+  | WFREE + GUARDX (on-wfree add53d93…) | 6,202 / 0 | 6,189 / 5 |
+
+  - GUARDX's marginal on WFREE: P5 +228 closed / 8 reopened; P4 +303 / 8.
+  - Root allOf and bytes are identical for WFREE and the combination: airflow 9 / 55,673; argo-cd 35 / 303,753; postgresql-ha 4; clickhouse 2; x509 0 / 5,770. Loki 46, 575k → 569k.
+  - CPU: WFREE 382.9 s (+195.9 against the line reference); combined 393.2 s.
+  - The full stack stops at TPLT's 4 conflicts.
+  - Reading (orchestrator): H (all global invalidation removed) took x509 from 5 KB to 262 KB and closed 19.2k; sound WFREE closes 6k and leaves x509 untouched. The gap between WFREE and H is the remaining invalidation WFREE keeps as Top: unknown function effects, unknown helpers, tpl. PROV1 3 found the same writers.
+  - Next: CATALOG1 (exact effect facts for every Helm/Sprig function) is the direct test of that gap; WFREE + CATALOG1 (+GUARDX) gets stacked when it hands back. The TPLT conflicts on WFREE need a port (TPLT's measured yield is 41).
+
 Next: HARNESS stack (WFREE, +GUARDX, +TPLT, +rest); WFREE2 CPU; CATALOG1 effect catalog; PROV1 4 local field widening; ABORT2; FRCLASS; GUARDX CPU.
