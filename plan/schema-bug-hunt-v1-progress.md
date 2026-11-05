@@ -10255,4 +10255,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - COLL1 steered to also export unitrec-tests.patch (test rewrites with Helm receipts) and the list of ~44 tests its tree turns green.
   - The heartbeat at 20:54 measured memory free at 34% (alert threshold 35%).
 
+- 21:05 (Nov 05) — **FRCLASS review (Opus): its FR closure was bought with FA; steered to export only its local fixes (orchestrator decision).**
+  - Review: designs/reviews/frclass-review-opus-2026-11-05.md.
+  - Size: +11.2k/−1.4k production lines.
+  - Dump 23: 55/58 FR closed and the preview-5 screen 0 new FR, but the preview-4 guard reopened 200 cells (196 documents) that Helm rejects (datadog 88, jira 36, elasticsearch 26, …). All 19 FRFIX2 FA are still open after ~11 h of budget tuning.
+  - Cause: a global ProgramInertness guarantee with work budgets (4k BDD nodes, 64 KB, 262k units). When a budget is exceeded, constraints are dropped (conditional_constraints.rs:315-320). It also duplicates WFREE's reach and TPLT's action-free arm.
+  - Steered FRCLASS:
+    - stop;
+    - export frclass-local.patch against ef701ad1 with ~9 local fixes and red→green tests (KPS 11 else-in-with, layout join, lexical cache, guard conjunct drop, crds.annotations, OpenEBS backfill, block text, fixed-haystack contains, namespace as caller policy);
+    - check condition_encoding.rs:69 for a pointer-keyed cache;
+    - measure against preview 5 AND the preview-4 guard (0 reopenings required);
+    - write frclass-routing.md.
+  - The rest goes onto the LOCAL1 base in a follow-up.
+  - Steered LOCAL1 with the slice-C FR witnesses (longhorn/datadog/openebs imageRegistry and commonLabels) and the slice-B ones (elasticsearch 16, signoz 2), plus the namespace-policy merge.
+  - Unowned: 2 oncall .Release FA (shared release session) and 3 OpenEBS imagePullPolicy FA (global/provider).
+  - Process lesson: lanes must run the preview-4 guard, not only the preview-5 screen, before declaring FR closures. FRCLASS's own status files tracked only the 19 FA.
+
 Next: builders on the WFREE stack (WFREE2 CPU and regressions; GUARDX rework plus slice A; TPLT2 per-site tpl; LOCAL1 B/C; RECV2 M2; ABORT2 M1 plus loki cost); HARNESS 7 all-bypass ceiling; PROV1 5 consumption census; FRCLASS; CATALOG1 2; then stack everything with stack.py and preview.
