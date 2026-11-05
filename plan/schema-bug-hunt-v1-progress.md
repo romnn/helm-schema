@@ -10309,4 +10309,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - PROV1 rebases onto step 1 via its adapter.
 - Opus batch 3 complete: 4 consultations, all routed.
 
+- 22:15 (Nov 05) — **COLL1 and ABORT2 hand back; DECODE1 designed and launched as the first Claude Opus builder (user decision: new builders run on Claude Opus because the personal Codex window is 89% used until Nov 9).**
+  - COLL1 (114 h, completed):
+    - coll1-harvest.patch, sha 3c1c8484 against d23159c7, 9 pieces with laws and Helm controls; porting material, not a buildable candidate;
+    - unitrec-tests.patch, sha dac0faff, 24 test corrections plus an index of 44 differences that its tree turns green;
+    - 171 evidence files copied (by the orchestrator) to RECV2's transfer/from-coll1, and the tests patch to TESTPORT1.
+  - ABORT2 (7.5 h): pre-rebase hand-back, NOT READY.
+    - S5 is centralized (Exit::aborted/Flow::aborted, YAML invalidity in seal), with 27/27 Helm controls.
+    - It dropped its catalog rows, action_free_tpl and MAX_EXPORT_ENCODING_BYTES.
+    - +2,826 LOC.
+    - Loki is unproven; KPS on the old diagnostic tree is 106.9 s against main's 20.6 s.
+    - Delta: abort2-m1.patch (9f1b3ef9). Full WIP: abort2.patch (0e752f51).
+    - Parked until landing step 3.
+  - DECODE1 design (Opus; designs/reviews/decode1-opus-design-2026-11-05.md):
+    - A1–A4: decode round trips over the frozen heap, captured-text decode, a text truth/equality table, positional index lifting;
+    - B1–B4: refinement without erasure (kinds.rs:585-628 Reach::Top), one per-key mergo rule, a lazy layered remainder (needs S11 approval), deepCopy as a layered copy;
+    - 14 Helm probes, 7 laws with mutants, ~40 unit tests named;
+    - upper bound 2,266 preview-5 FA occurrences on merge-layer paths (argo-cd 438, airflow 402, loki 277, …);
+    - slot 6b.
+  - DECODE1 builder 20261105T211336-1994ac13: Claude Opus xhigh, work account, auto mode, clone round8-r3b-decode1 on the WFREE+GUARDX base. Brief: briefs/decode1.md.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
