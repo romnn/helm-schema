@@ -10132,4 +10132,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   4. adjudication of WFREE's 80 and CATALOG1's 38 reopenings;
   5. first-principles challenge 5: the remaining about 79k beyond all invalidation; whether main's placement→destination capability is missing by construction; an honest re-plan.
 
+- 20:20 (Nov 05) — **First-principles challenge 5 (Opus, unanchored) says RE-PLAN.** Report: /Volumes/T7/dev/round8/designs/challenge/first-principles-2026-11-05.md.
+  - Mechanism: a fact must survive six or more gates (YAML prefix, exact coverage, query allowance, guard freeze, export admission, approximate-row exclusion), and each turns "unproven" into "delete". That is why single repairs measure about zero, and why 17.6k is only the ceiling of the first gate.
+  - Main placed each value against the template's YAML skeleton (AbstractFragment: Opaque is local to its hole), so an unknown cost main one slot; on the line it erases later placements. Main also attached influences as identity, which is unsound and likely behind some of its valid counterexamples.
+  - Sound path: ADR 0070 §7 literally, "unknown quantifies or guards, never deletes":
+    - (a) lexical containment as a hoisted character-class guard on inputs;
+    - (b) quantify unknown conditions out (C_T ∩ C_F);
+    - (c) abort branches accept any constraint (ADR 0051).
+  - It also found the line already deleted main's IR (abstract_value, expr_eval, fragment_eval holes/project/lower) before parity, which conflicts with ADR 0071.
+  - Recommended re-plan: land the interpreter beside main behind a flag as a second ContractIr producer (ADR 0015), switch class by class on per-class parity, and delete main's producer per class.
+  - Also recommends:
+    - an all-bypass ceiling;
+    - one lane for (a)–(c);
+    - a template-consumption stop census;
+    - gate every lane on the WFREE stack;
+    - stop CATALOG1 and PROV1 as fixing lanes; re-scope PLACE1; time-box ABORT2 at 24 h.
+- 20:20 (Nov 05) — **PLACE1 is on HOLD.** Replay 148 closed / 5 reopened, but the live probes found 456 new template FR over 17 charts, 9 new FA (redis/synapse) and 5 datadog reopenings. Hand-off: round8-r3b-place1/transfer/place1-handoff.md. Its placement attempt becomes input to the (a)–(c) design.
+- 20:20 (Nov 05) — **Orchestrator actions:**
+  - HARNESS 7 runs the corpus-wide all-bypass ceiling.
+  - Opus designs (a)–(c) as builder slices.
+  - PROV1 5 runs the template-consumption stop-point census.
+  - The dual-path re-plan goes to the user (a product decision).
+
 Next: TPLT2 (port and close the tpl gap); WFREE2 CPU; GUARDX CPU and on-WFREE patch; ABORT2; FRCLASS; PROV1 4; CATALOG1 wrap-up; then stack WFREE+TPLT+GUARDX and measure toward landing.
