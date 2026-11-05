@@ -10338,4 +10338,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Parked; when WFREE2 hands back, follow up to rebase onto it and prove 0 reopenings (landing step 2).
 - Heartbeats 22:14 and 22:34: memory free 33% (below 35%); no new heavy work started.
 
+- 23:00 (Nov 05) — **HARNESS 7: the all-gate bypass ceiling is +48,923 net preview-5 closures over V6b (unsound, no product patch).**
+  - Report: round8-r3b-harness/transfer/all-gates-ceiling/results.md.
+  - Totals:
+    - preview 5: 66,521 closed, 0 reopened, 520 FR candidates;
+    - preview-4 guard: 65,353 closed, 63 reopened, 509 FR candidates;
+    - V6b→ceiling: 49,673 closed / 750 reopened on preview 5.
+  - Biggest charts: loki 10,980 (ABORT2's required/fail family), argo-cd 3,026, airflow 2,470, okteto 2,152, cilium 1,935, gitea 1,500, netbox 1,421, …
+  - The depth-128 guard fired 0 times.
+  - Root sizes balloon (loki 3.6 MB/272 allOf, argo-cd 5.2 MB, cilium 5.7 MB), so sound gates must keep sizes bounded.
+  - Meaning: the six "delete when unproven" gates hold roughly half of the preview-5 FA mass. LOCAL1 B/C, GUARDX slice A and ABORT2 (loki) are the critical lanes. The remaining ~32k is earlier identity loss, native widening, unsupported preimages and missing facts (RECV2, DECODE1, TPLT2).
+  - HARNESS is idle; it owns the measurement tools and will run stacks on request.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
