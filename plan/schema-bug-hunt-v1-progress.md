@@ -10369,4 +10369,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - frclass-local.patch is a stack candidate after LOCAL1-B. Its namespace policy merges with LOCAL1's D1.
 - 23:14 heartbeat: memory free recovered to 63%; PROV1's PIDs had already exited, and it was told to continue.
 
+- 23:36 (Nov 05) — **The personal Codex window is exhausted (100%, reopens 2026-11-12 01:52Z). SURFACE1 hands back fully blocked. Codex lanes move to Claude Opus as their turns stop (an extension of the user's 21:xx decision that new builders run on Claude Opus).**
+  - SURFACE1 (2.5 h): all 4 groups are blocked on other lanes' mechanisms. No product change was kept; 0 tests green; 0 new failures.
+    - apiVersion: guard/placement admission loses typed host alternatives (LOCAL1/GUARDX).
+    - explain: destination evidence is missing.
+    - descriptions: interpreter paths are missing.
+    - CRLF: normalization turned the test green but added 8 FA that Helm and main reject, so it was withdrawn; owned by LOCAL1 lexical.
+    - Gates: fmt 0, lint 0, lint:fc 0, units 100 (258 inherited), dump 0, integration 201 (166 inherited), tokei +0.
+  - Codex lanes still running in-flight turns: GUARDX, PROV1, WFREE2, TPLT2, LOCAL1, RECV2, TESTPORT1. As each settles, a Claude Opus builder (work account, xhigh, auto mode) takes over the same clone with briefs/migrate-to-claude.md, the lane brief, and the old transcript.
+  - Priority, highest first: WFREE2 (step 1), GUARDX (step 3), LOCAL1 (B; C split into its own builder), TPLT2, RECV2; then TESTPORT1; PROV1 last (census).
+  - DECODE1 already runs on Claude. CATALOG1 and ABORT2 are parked until their landing steps; their follow-ups will be Claude takeovers.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
