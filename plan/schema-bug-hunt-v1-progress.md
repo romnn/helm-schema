@@ -9947,4 +9947,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
 - 22:50 (Nov 04) — **FRFIX2 handed back on d23159c7, not landable.** It closes 21 of 32 targeted FR, with 0 new FR on the 157-chart replay, but has 19 new FA (8 identity-after-tpl, 2 API availability, 6 YAML composition, 3 global/provider). 9 per-chart CPU bars fail; integration has 230 failures; LOC −14. Hand-off: round8-r3b-decl1/frfix2/transfer/frfix2-handoff.md. Its patch is the starting point for FRCLASS, which owns the combined FR fix and its 19 new FA. The FRFIX2 session (cwd on T7) is retired.
 - 22:50 (Nov 04) — **HARNESS 2 is on the line as 279d5c17, pushed.** The replay is reconciled with live preview 5: 98,050 − (801 − 3 − 1) + 51 = 97,304, and verdicts match on all 97,058 shared documents. The disagreement came from reversed direction and counting units. It also fixes portability, with red/green tests. Lane screen: /Volumes/T9/dev/round8-r3b-harness/transfer/lane-usage.md. The binary and snapshots live in round8-r3b-harness/target; don't delete them.
 
-Next: E2b measures H/X1 ceilings and the second loss; WFREE corrects its gate and lands; FRCLASS (plus FRFIX2) reaches FR=0 without new FA; ABORT1 within the CPU bar; then re-estimate the landing.
+- 01:35 (Nov 05) — **E2b measured the havoc ceiling: H (all global invalidation removed, unsound) closes 19,208 distinct FA documents, X1 closes 7,951, and both reopen 0 with 0 new FR candidates.** Report: /Volumes/T9/dev/round8-r3b-census3/transfer/e2b.md and .json.
+  - H closes only 908 of 39,136 lineage documents (2.32%) and 3,477 of 16,864 unresolved-tpl documents (20.62%). This confirms challenge 4: exposure was not yield.
+  - Whole-chart collapse, root allOf main → line → H:
+
+    | Chart | main | line | H |
+    |---|---:|---:|---:|
+    | airflow | 1678 | 10 | 35 |
+    | argo-cd | 542 | 14 | 66 |
+    | postgresql-ha | 322 | 4 | 45 |
+    | clickhouse | 205 | 2 | 20 |
+    | x509 | 90 | 0 | 13 |
+
+  - In all five charts, recorded concrete demands are dropped once the chart-wide guard-freeze allowance reaches 0 (consumption.rs:153, freeze_requirement returns None).
+  - x509 stacks five losses:
+    1. placement prefix suppression (yaml.rs:440–476);
+    2. observation coverage (output.rs:505/1543);
+    3. query allowance (relationship.rs:449/502);
+    4. guard-export admission, which discards provider uses whose guards contain Range(extraLabels) or its negation (final_signals.rs:234–241, contract_rows.rs:266–274/342);
+    5. no budget-only yield.
+  - Orchestrator: GUARDX is a new T9 lane (round8-r3b-guardx, brief briefs/guardx.md). It owns (a) freeze starvation, which must widen locally with no bigger budget, and (b) GEXP1 export admission, measured first.
+  - CENSUS3 4 builds a corpus constraint-parity inventory against main (rearchitecture inventory) with drop-site attribution and FA exposure.
+  - PROJ1 stays conditional: the x509 query-budget probe added 0 closures.
+
+Next: GUARDX measures and fixes guard-freeze starvation and export admission; CENSUS3 4 builds the parity inventory; WFREE lands after its gate correction; FRCLASS reaches FR=0 without new FA; ABORT1 within the CPU bar; re-estimate the landing from the parity inventory.
