@@ -10396,4 +10396,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - 20261105T225536-c7b04d38 (read-only): classify the 272 #[ignore] "R3b regression vs main" tests by owning lane, with witnesses and unowned groups.
   - Claude builders now: DECODE1, LOCAL1-C, ABORT3, EXPLAIN1. Codex lanes still finishing in-flight turns; takeovers follow takeover-map.tsv as they stop.
 
+- 00:10 (Nov 06) — **The 272 #[ignore]d "R3b regression vs main" tests classified (Opus) and routed.**
+  - Review: designs/reviews/ignored-tests-opus-2026-11-06.md; per-test table: ignored-tests-table-2026-11-06.md.
+  - Packages:
+    - A (61): consumed/comparison provenance;
+    - B (82): iterable domains and loop outcomes;
+    - C (129): parsers, collection and validation transfers.
+  - Owners: RECV2 60, ABORT3 38, GUARDX 31, WFREE2 29, DECODE1 29, LOCAL1 12, CATALOG1+RECV2 7, TESTPORT1 6 (+1), LOCAL1-C 3, TPLT2 2, EXPLAIN1 1, unowned 54.
+  - Steered (Codex): RECV2, GUARDX, WFREE2, LOCAL1, TPLT2 (also U3: tpl over a chart-authored default, M3), TESTPORT1 (7 retired-view ports, plus adjudicating fail_validators.rs:917, a likely-wrong expectation that would add an FR).
+  - Claude builders (DECODE1, ABORT3, LOCAL1-C, EXPLAIN1) get their witness lists at their hand-back follow-ups.
+  - Orchestrator decision, U5 (the local join cap): a cap only widens to an explicit unknown and never discards arms. LOCAL1 resolves symbolic_local_state.rs:172/:182 under this rule with 4b.
+  - New lane PARSE1 (briefs/parse1.md) for U1 parser lexical domains (26), U6 coercion/ordering atoms (16), U2 native semver (4) and U4 constant folding (3). Queued until memory allows (33% free at the 23:56 heartbeat).
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
