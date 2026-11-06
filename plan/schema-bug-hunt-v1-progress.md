@@ -10408,4 +10408,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Orchestrator decision, U5 (the local join cap): a cap only widens to an explicit unknown and never discards arms. LOCAL1 resolves symbolic_local_state.rs:172/:182 under this rule with 4b.
   - New lane PARSE1 (briefs/parse1.md) for U1 parser lexical domains (26), U6 coercion/ordering atoms (16), U2 native semver (4) and U4 constant folding (3). Queued until memory allows (33% free at the 23:56 heartbeat).
 
+- 01:40 (Nov 06) — **User: new Claude work moves from the work account (agentmux) to native Claude Opus subagents on the personal account. Running lanes finish where they are.**
+  - PARSE1 launched as a native Opus subagent (clone round8-r3b-parse1, WFREE+GUARDX base, briefs/parse1.md); registered in round8/native-lanes.tsv.
+  - Codex takeovers (as the Codex lanes stop) now become native Opus subagents in the same clone, following briefs/migrate-to-claude.md and takeover-map.tsv.
+  - Native subagent ids die with this session; hand-offs go through transfer/ files and resume briefs.
+  - T7 cleanup: idle cargo targets under round8-r3b-guardl/wfree-{d231,s1,lineperf}, round8-r3b-tplt and round8-r3b-effects1/abort1-* are being deleted at low priority (standing approval). Free space went from 51 to 109 GiB and is still rising.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
