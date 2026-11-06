@@ -10414,4 +10414,6 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Native subagent ids die with this session; hand-offs go through transfer/ files and resume briefs.
   - T7 cleanup: idle cargo targets under round8-r3b-guardl/wfree-{d231,s1,lineperf}, round8-r3b-tplt and round8-r3b-effects1/abort1-* are being deleted at low priority (standing approval). Free space went from 51 to 109 GiB and is still rising.
 
+- 03:40 (Nov 06) — **T7 cleanup done: free space 50 → 188 GiB.** Removed six idle cargo target folders (guardl/wfree-{d231,s1,lineperf}, r3b-tplt, effects1/abort1-{d23159c7,s1}). Clones and evidence were kept.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
