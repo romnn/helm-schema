@@ -10440,4 +10440,9 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - The fix count drops by 2 after W1 and W2 (those tests go back to red, correctly).
   - Process note: builder adjudications must include each test's distinguishing document (null members). The review caught it because it ran Helm on that document.
 
+- 06:16 (Nov 06) — **User reaffirmed: every new lane runs as a native Opus subagent, never Codex. Memory free recovered to 41%; RELEASE1 launched (native).**
+  - RELEASE1 (clone round8-r3b-release1, WFREE+GUARDX base) takes the 5 unowned FA from FRCLASS's routing:
+    - oncall ×2: shared .Release / Capabilities API availability;
+    - openebs ×3: global.imagePullPolicy through the dependency-global projection. Changes to GUARDX's graph.rs region are proposed in seam-requests.md, not edited.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
