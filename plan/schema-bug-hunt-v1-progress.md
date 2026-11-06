@@ -10519,4 +10519,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - LOCAL1-C, CPU 1.125×.
   - CPU is now the binding constraint for landing.
 
+- 21:00 (Nov 06) — **Incident: 7 concurrent native Opus lanes on an 18 GiB / 11-core host filled the boot disk (probably swap) around 18:15. The user freed space; the machine rebooted. Resumed at 3 heavy lanes.**
+  - Cause (orchestrator error): I launched 7 cargo-heavy lanes at once, against the standing cap of about 3 builders.
+  - memcap caps each command, not the host total. Native agents self-monitor, so the /tmp/memcap registry count of 0 hid them from my heartbeat check.
+  - Recovery:
+    - restarted memcap-watchdog;
+    - resumed WFREE2, LOCAL1-B and GUARDX (critical path) with: one heavy command at a time, cargo -j 4, nextest --test-threads 4, corpus --jobs 3, TMPDIR on T9;
+    - queued RECV2, TPLT2, CATALOG2 and CPUGEN in round8/native-queue.tsv, to resume one per hand-back.
+  - State before the crash:
+    - LOCAL1-B fixed the oncall activation reopening (resource_observations discarded the whole activation on any member-path atom);
+    - RECV2's screen showed 825 closed / 1,172 reopened (receiver object type loss), and it had fixed the with/else dot rebinding;
+    - CPUGEN had a content-keyed validator cache in progress.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
