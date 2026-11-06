@@ -1,22 +1,44 @@
 use super::*;
+use helm_schema_core::ValuesPath;
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
-/// Step 2: negative-integer literal still recognised, type hint is integer.
+/// A negative integer fallback does not impose its type on the primary input.
 #[test]
 fn step2_default_negative_integer_literal() {
     let src = indoc! {r"
         replicas: {{ default -3 .Values.replicas }}
     "};
-    let hints = type_hints_for(parse_ir(src));
-    let schemas = hints.get("replicas").expect("replicas hint present");
+    let contract = parse_ir(src);
+    let signals = schema_signals_for(contract.clone());
     assert!(
-        schemas.contains("integer"),
-        "expected integer hint for negative literal, got {schemas:?}"
+        signals
+            .evidence_for(&ValuesPath::parse("replicas"))
+            .is_some(),
+        "the primary input must remain referenced"
     );
+    sim_assert_eq!(
+        have: type_hints_for(contract.clone()),
+        want: BTreeMap::<String, BTreeSet<String>>::new()
+    );
+    let schema = schema_for(contract);
+    for value in [
+        Value::Null,
+        serde_json::json!("custom"),
+        serde_json::json!(true),
+        serde_json::json!(7),
+    ] {
+        let instance = serde_json::json!({ "replicas": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// Rooted `$.Values.X` and a bound `$root.Values.X` alias are recognised
 /// inside ranges and `with` blocks where `.` is rebound.
+/// Their literal fallbacks do not constrain the primary inputs' types.
 #[test]
 fn step2_default_rooted_values_paths_recognised() {
     let src = indoc! {r#"
@@ -26,15 +48,34 @@ fn step2_default_rooted_values_paths_recognised() {
         alias: {{ default "main" $root.Values.alertmanager.aliasOverride }}
         {{- end }}
     "#};
-    let hints = type_hints_for(parse_ir(src));
-    assert!(
-        hints.contains_key("alertmanager.nameOverride"),
-        "expected hint for $.Values.alertmanager.nameOverride, got {hints:?}"
+    let contract = parse_ir(src);
+    let signals = schema_signals_for(contract.clone());
+    for path in ["alertmanager.nameOverride", "alertmanager.aliasOverride"] {
+        assert!(
+            signals.evidence_for(&ValuesPath::parse(path)).is_some(),
+            "the rooted input path must remain referenced: {path}"
+        );
+    }
+    sim_assert_eq!(
+        have: type_hints_for(contract.clone()),
+        want: BTreeMap::<String, BTreeSet<String>>::new()
     );
-    assert!(
-        hints.contains_key("alertmanager.aliasOverride"),
-        "expected hint for $root.Values.alertmanager.aliasOverride, got {hints:?}"
-    );
+    let schema = schema_for(contract);
+    for value in [
+        Value::Null,
+        serde_json::json!("custom"),
+        serde_json::json!(true),
+        serde_json::json!(7),
+    ] {
+        let instance = serde_json::json!({
+            "servers": [{}],
+            "alertmanager": { "nameOverride": value, "aliasOverride": value }
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// Step 2 false-positive guard: a `default` pattern inside a YAML comment
@@ -156,9 +197,8 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
     );
 }
 
-/// in a helper template (`_helpers.tpl`), not in a manifest body. The
-/// temporal chart's `temporal.serviceAccountName` is the canonical case.
-/// The CLI must scan helper sources too, not just manifest templates.
+/// A helper's default selection retains the primary input without typing it.
+/// Temporal's service-account helper exercises the same call-site binding.
 #[test]
 fn step2_default_in_helper_template_is_extracted() {
     // Mirror the structure of the temporal chart helper: the default lives
@@ -170,14 +210,34 @@ fn step2_default_in_helper_template_is_extracted() {
         {{- end -}}
         {{- end -}}
     "#};
-    let hints = type_hints_for(parse_ir_with_helpers(
+    let contract = parse_ir_with_helpers(
         indoc! {r#"
             name: {{ include "test.serviceAccountName" . }}
         "#},
         helper_src,
-    ));
-    assert!(
-        hints.contains_key("serviceAccount.name"),
-        "expected hint for serviceAccount.name in helper, got {hints:?}"
     );
+    let signals = schema_signals_for(contract.clone());
+    assert!(
+        signals
+            .evidence_for(&ValuesPath::parse("serviceAccount.name"))
+            .is_some(),
+        "the helper's primary input must remain referenced"
+    );
+    sim_assert_eq!(
+        have: type_hints_for(contract.clone()),
+        want: BTreeMap::<String, BTreeSet<String>>::new()
+    );
+    let schema = schema_for(contract);
+    for value in [
+        Value::Null,
+        serde_json::json!("custom"),
+        serde_json::json!(true),
+        serde_json::json!(7),
+    ] {
+        let instance = serde_json::json!({ "serviceAccount": { "create": true, "name": value } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "instance={instance}; schema={schema}"
+        );
+    }
 }

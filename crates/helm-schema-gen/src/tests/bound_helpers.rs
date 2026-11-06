@@ -156,17 +156,25 @@ fn helper_direct_boolean_render_keeps_provider_shape() {
     let automount = schema
         .pointer("/properties/serviceAccount/properties/automount")
         .expect("serviceAccount.automount present");
-    assert!(
-        permits_null(automount),
-        "serviceAccount.automount should keep the provider's nullable boolean shape, got {automount}"
-    );
-    assert!(
-        automount
-            .get("anyOf")
-            .and_then(Value::as_array)
-            .is_some_and(|variants| !variants.is_empty()),
-        "serviceAccount.automount should remain a union shaped by the provider, got {automount}"
-    );
+    for (value, want) in [
+        (Value::Null, true),
+        (serde_json::json!(true), true),
+        (serde_json::json!(false), true),
+        (serde_json::json!(7), false),
+        (serde_json::json!("true"), true),
+        (serde_json::json!("bad"), false),
+        (serde_json::json!({}), false),
+        (serde_json::json!(["x"]), false),
+    ] {
+        let instance = serde_json::json!({
+            "serviceAccount": { "name": "workload", "automount": value }
+        });
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "nullable provider boolean preimage: instance={instance}; property={automount}; schema={schema}"
+        );
+    }
 }
 
 #[test]
@@ -413,12 +421,19 @@ fn helper_string_output_conflicts_collapse_to_plain_string() {
         .pointer("/properties/fullnameOverride")
         .expect("fullnameOverride present");
     assert!(
-        permits_null(fullname),
-        "truthy-gated helper output should still accept null, got {fullname}"
+        schema_accepts_instance(&schema, &serde_json::json!({ "fullnameOverride": null })),
+        "truthy-gated helper output should still accept null, got {schema}"
     );
     assert!(
         permits_type(fullname, "string"),
         "helper-derived scalar outputs should still include a string branch, got {fullname}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "fullnameOverride": "custom" })
+        ),
+        "helper-derived scalar outputs should still accept strings, got {schema}"
     );
 }
 

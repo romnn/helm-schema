@@ -3676,3 +3676,12 @@ fn printf_exact_rendering_only_accepts_supported_string_formats() {
         sim_assert_eq!(have: texts(source), want: vec![expected.map(str::to_owned)], "{source}");
     }
 }
+
+impl DocumentExecution {
+    /// The full sealed output includes literal-only layouts omitted from constraint projection.
+    pub(crate) fn inspection_documents(
+        &self,
+    ) -> impl Iterator<Item = crate::value::yaml::PlacedDocument<'_>> {
+        self.placement.inspection_documents()
+    }
+}

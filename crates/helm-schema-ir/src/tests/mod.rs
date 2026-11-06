@@ -24,6 +24,7 @@ mod contract_signals;
 mod evaluated_value_ownership;
 mod expr_eval;
 mod expr_eval_helper_hooks;
+mod extractor_view_ports;
 mod fragment_dict_config_guards;
 mod fragment_eval_header;
 mod fragment_expr_eval;
@@ -68,15 +69,12 @@ fn simple_template_ir() {
         .generate_contract_ir(src)
         .finalize();
 
-    assert!(
-        ir.uses()
-            .iter()
-            .any(|u| u.source_expr == conditional_path("enabled")
-                && u.single_guard_conjunction()
-                    == vec![Guard::Truthy {
-                        path: helm_schema_core::ValuesPath::parse("enabled")
-                    }])
-    );
+    let db = crate::analysis_db::IrAnalysisDb::new(&idx);
+    support::with_execution(src, None, &db, |execution| {
+        assert!(execution.reads().iter().any(|read| {
+            read.values_path == conditional_path("enabled") && read.condition.is_unconditional()
+        }));
+    });
     assert!(
         ir.uses()
             .iter()
@@ -638,6 +636,18 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() {
             },
         ]]
     );
+    let db = crate::analysis_db::IrAnalysisDb::new(&DefineIndex::new());
+    support::with_execution(src, None, &db, |execution| {
+        support::assert_string_consumption(execution, "primary", Predicate::truthy_path("primary"));
+        support::assert_string_consumption(
+            execution,
+            "fallback",
+            Predicate::all(vec![
+                Predicate::truthy_path("fallback"),
+                Predicate::truthy_path("primary").negated(),
+            ]),
+        );
+    });
 }
 
 #[test]
@@ -857,6 +867,17 @@ fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() -
         }),
         "expected pathless nameOverride dependency to keep its selected default branch under the document execution guard: {name_override_uses:#?}"
     );
+    let db = crate::analysis_db::IrAnalysisDb::new(&idx);
+    support::with_execution(src, None, &db, |execution| {
+        support::assert_string_consumption(
+            execution,
+            "nameOverride",
+            Predicate::all(vec![
+                Predicate::truthy_path("nameOverride"),
+                Predicate::truthy_path("networkPolicy.enabled"),
+            ]),
+        );
+    });
     let app_name_path = YamlPath(vec![
         "metadata".to_string(),
         "labels".to_string(),
@@ -910,6 +931,14 @@ fn transitive_scalar_helper_default_projects_default_guard() {
         "expected transitive helper default to survive into rendered contract use, got {:?}",
         ir.uses()
     );
+    let db = crate::analysis_db::IrAnalysisDb::new(&idx);
+    support::with_execution(src, None, &db, |execution| {
+        support::assert_string_consumption(
+            execution,
+            "nameOverride",
+            Predicate::truthy_path("nameOverride"),
+        );
+    });
 }
 
 #[test]

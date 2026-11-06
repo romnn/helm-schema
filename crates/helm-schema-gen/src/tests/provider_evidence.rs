@@ -280,11 +280,7 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() {
 }
 
 #[test]
-#[expect(
-    clippy::too_many_lines,
-    reason = "the complete schema equality fixture keeps the omitted-member host and leaf contracts correlated"
-)]
-fn always_omitted_provider_member_yields_declared_typing_to_its_leaf() {
+fn always_omitted_provider_member_yields_declared_typing_to_its_leaf() -> eyre::Result<()> {
     #[derive(Debug)]
     struct SecurityContextProvider;
 
@@ -335,133 +331,50 @@ fn always_omitted_provider_member_yields_declared_typing_to_its_leaf() {
             .with_values_documents(&prepared_values_documents(Some(values_yaml))),
     );
 
-    let expected = serde_json::json!({
-        "$defs": {
-            "t": {
-                "anyOf": [
-                    { "const": true },
-                    { "not": { "const": 0 }, "type": "number" },
-                    { "minLength": 1, "type": "string" },
-                    { "minItems": 1, "type": "array" },
-                    { "minProperties": 1, "type": "object" },
-                ],
-            },
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "allOf": [
-            {
-                "if": {
-                    "properties": {
-                        "securityContext": {
-                            "properties": {
-                                "enabled": { "$ref": "#/$defs/t" },
-                            },
-                            "required": ["enabled"],
-                            "type": "object",
-                        },
-                    },
-                    "required": ["securityContext"],
-                    "type": "object",
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "securityContext": { "type": "object" },
-                    },
-                },
-            },
-            {
-                "if": {
-                    "allOf": [
-                        {
-                            "properties": {
-                                "securityContext": {
-                                    "properties": {
-                                        "enabled": { "$ref": "#/$defs/t" },
-                                    },
-                                    "required": ["enabled"],
-                                    "type": "object",
-                                },
-                            },
-                            "required": ["securityContext"],
-                            "type": "object",
-                        },
-                        {
-                            "anyOf": [
-                                {
-                                    "not": {
-                                        "properties": { "securityContext": {} },
-                                        "required": ["securityContext"],
-                                        "type": "object",
-                                    },
-                                },
-                                {
-                                    "properties": {
-                                        "securityContext": { "enum": [null] },
-                                    },
-                                    "required": ["securityContext"],
-                                    "type": "object",
-                                },
-                            ],
-                        },
-                    ],
-                },
-                "then": false,
-            },
-            {
-                "if": {
-                    "anyOf": [
-                        {
-                            "not": {
-                                "properties": { "securityContext": {} },
-                                "required": ["securityContext"],
-                                "type": "object",
-                            },
-                        },
-                        {
-                            "properties": {
-                                "securityContext": { "enum": [null] },
-                            },
-                            "required": ["securityContext"],
-                            "type": "object",
-                        },
-                    ],
-                },
-                "then": false,
-            },
-        ],
-        "properties": {
-            "global": {},
-            "securityContext": {
-                "additionalProperties": {},
-                "allOf": [{
-                    "if": {
-                        "properties": {
-                            "enabled": { "$ref": "#/$defs/t" },
-                        },
-                        "required": ["enabled"],
-                        "type": "object",
-                    },
-                    "then": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "enabled": {},
-                            "runAsNonRoot": { "type": "boolean" },
-                        },
-                        "type": "object",
-                    },
-                }],
-                "properties": {
-                    "enabled": {},
-                },
-                "type": "object",
-            },
-        },
-        "type": "object",
-    });
+    // Marker-bearing serialization has no certified destination-member inverse.
+    let expected: Value = serde_json::from_str(include_str!(
+        "fixtures/always_omitted_provider_member_yields_declared_typing_to_its_leaf.schema.json"
+    ))?;
+
+    for (context, accepted) in [
+        (
+            serde_json::json!({"enabled": true, "runAsNonRoot": true}),
+            true,
+        ),
+        (
+            serde_json::json!({"enabled": true, "runAsNonRoot": "true"}),
+            false,
+        ),
+        (
+            serde_json::json!({"enabled": true, "run<no value>AsNonRoot": true}),
+            true,
+        ),
+        (
+            serde_json::json!({"enabled": true, "unsupported": true}),
+            false,
+        ),
+        (
+            serde_json::json!({"enabled": false, "unsupported": true}),
+            true,
+        ),
+        // Known acceptance: Helm 4.2.3 strips the marker and renders `unsupported: true`, which
+        // the closed destination rejects. Marker-bearing serialization has no certified member
+        // inverse yet, so the key widens open rather than guessing (ADR 0013).
+        // Receipt: always_omitted_*-residual/original-invalid-marker.
+        (
+            serde_json::json!({"enabled": true, "unsupported<no value>": true}),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &serde_json::json!({"securityContext": context})),
+            want: accepted,
+            "the rendered member name and provider type must both survive marker removal: {context}"
+        );
+    }
 
     sim_assert_eq!(have: schema, want: expected);
+    Ok(())
 }
 
 #[test]
@@ -1392,7 +1305,7 @@ fn guarded_named_port_sink_does_not_widen_unconditional_numeric_sink() -> eyre::
                         name: test
                         port:
                           {{- if typeIs "string" .Values.port }}
-                          name: {{ .Values.port }}
+                          name: {{ .Values.port | quote }}
                           {{- else }}
                           number: {{ .Values.port }}
                           {{- end }}
@@ -1955,8 +1868,8 @@ fn helper_splice_root_mode_guard_keeps_metadata_member_type() {
         {{- end -}}
         {{- define "repro.annotations" -}}
         {{- if and (ne .mode "dev") .Values.annotations }}
-        annotations:
-          {{- toYaml .Values.annotations | nindent 2 }}
+          annotations:
+          {{- toYaml .Values.annotations | nindent 4 }}
         {{- end -}}
         {{- end -}}
     "#};
@@ -2024,8 +1937,8 @@ fn helper_splice_absent_root_field_comparison_keeps_metadata_member_type() {
     let helpers = indoc! {r#"
         {{- define "repro.annotations" -}}
         {{- if and (ne .mode "dev") .Values.annotations }}
-        annotations:
-          {{- toYaml .Values.annotations | nindent 2 }}
+          annotations:
+          {{- toYaml .Values.annotations | nindent 4 }}
         {{- end -}}
         {{- end -}}
     "#};
@@ -2066,12 +1979,12 @@ fn helper_splice_first_truthy_metadata_candidates_keep_member_types() {
     let helpers = indoc! {r#"
         {{- define "repro.annotations" -}}
         {{- if or .Values.current.annotations .Values.legacyAnnotations }}
-        annotations:
+          annotations:
           {{- $kind := typeOf (or .Values.current.annotations .Values.legacyAnnotations) }}
           {{- if eq $kind "string" }}
-            {{- tpl (.Values.current.annotations | default .Values.legacyAnnotations) . | nindent 2 }}
+            {{- tpl (.Values.current.annotations | default .Values.legacyAnnotations) . | nindent 4 }}
           {{- else }}
-            {{- toYaml (.Values.current.annotations | default .Values.legacyAnnotations) | nindent 2 }}
+            {{- toYaml (.Values.current.annotations | default .Values.legacyAnnotations) | nindent 4 }}
           {{- end }}
         {{- end -}}
         {{- end -}}
@@ -2145,7 +2058,7 @@ fn nested_helper_splice_keeps_embedded_metadata_member_type() {
               kind: PersistentVolumeClaim
               metadata:
                 name: data
-                {{- include "repro.annotations" . | nindent 6 }}
+                {{- include "repro.annotations" . | nindent 8 }}
               spec:
                 accessModes:
                   - ReadWriteOnce
@@ -3439,7 +3352,7 @@ fn base64_encoded_secret_data_does_not_inherit_rendered_byte_format() {
         .pointer("/properties/directSecretData")
         .expect("directSecretData present");
     assert!(
-        schema_has_format(direct, "byte"),
+        property_schema_has_format(&schema, "directSecretData", "byte"),
         "direct Secret.data input should keep provider byte format, got {direct}; schema={schema}"
     );
 
@@ -3447,11 +3360,21 @@ fn base64_encoded_secret_data_does_not_inherit_rendered_byte_format() {
         .pointer("/properties/password")
         .expect("password present");
     assert!(
-        permits_type(password, "string"),
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "directSecretData": "c2FmZQ==", "password": "secret" })
+        ),
         "encoded input should remain string-like, got {password}; schema={schema}"
     );
     assert!(
-        !schema_has_format(password, "byte"),
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "directSecretData": "c2FmZQ==", "password": 7 })
+        ),
+        "base64 encoding requires a string operand: schema={schema}"
+    );
+    assert!(
+        !property_schema_has_format(&schema, "password", "byte"),
         "pre-encoded chart input must not inherit rendered Secret.data byte format, got {password}; schema={schema}"
     );
 }
@@ -4419,7 +4342,7 @@ fn branch_selected_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
               {{- end }}
                 name: test
                 resources:
-                  {{- toYaml .Values.resources | nindent 8 }}
+                  {{- toYaml .Values.resources | nindent 10 }}
     "#};
     let plain = indoc! {r"
         apiVersion: apps/v1
@@ -4433,7 +4356,7 @@ fn branch_selected_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
               - image: busybox
                 name: test
                 resources:
-                  {{- toYaml .Values.resources | nindent 8 }}
+                  {{- toYaml .Values.resources | nindent 10 }}
     "};
 
     for (label, src) in [("branch-selected", branch_selected), ("plain", plain)] {
@@ -4488,7 +4411,7 @@ fn adjacent_conditional_sequence_items_keep_their_item_slot() -> eyre::Result<()
               - name: second
               {{ end }}
                 resources:
-                  {{- toYaml .Values.resources | nindent 8 }}
+                  {{- toYaml .Values.resources | nindent 10 }}
     "};
 
     let signals = schema_signals_for(parse_ir(src));
@@ -4712,7 +4635,7 @@ fn bare_splices_escape_to_the_container_their_column_names() -> eyre::Result<()>
         kind: ServiceAccount
         metadata:
           name: {{ include "x.saName" . }}
-        {{- include "x.pullSecrets" . }}
+        {{ include "x.pullSecrets" . }}
     "#};
     // The splice sits at column 2 under a `matchLabels:` whose members are at
     // 6, so it has to climb out of both `matchLabels` and `selector`.

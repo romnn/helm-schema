@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 
+use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{Conjunction, Guard, GuardValue, Predicate, ValuesPath};
 use helm_schema_syntax::Span;
@@ -8,9 +9,24 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::{CaptureKind, FailCapture, HintGrade, StringRequirementRoute};
+use crate::value::ConsumptionDomain;
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct ConsumedType {
+    path: ValuesPath,
+    requirement: helm_schema_core::FailValueRequirement,
+    condition: Predicate,
+    requires_presence: bool,
+}
 
 struct Observation {
-    execution: crate::value::DocumentExecution,
+    sites: Vec<crate::value::ExecutedSite>,
+    facts: crate::observed_facts::ObservedFacts,
+    reads: Vec<crate::fragment_eval::ValueRead>,
+    yes: Predicate,
+    no: Predicate,
+    markers_complete: bool,
+    abort: Predicate,
     value_span: Span,
     true_span: Span,
     false_span: Span,
@@ -19,8 +35,8 @@ struct Observation {
 
 impl Observation {
     fn sequences(&self) -> Vec<Vec<Option<GuardValue>>> {
-        self.execution
-            .sites()
+        self.sites
+            .iter()
             .filter(|site| site.rendered() && site.span() == self.value_span)
             .flat_map(|site| site.value().alternatives())
             .filter_map(|alternative| alternative.value().sequence_items())
@@ -29,8 +45,8 @@ impl Observation {
     }
 
     fn literals(&self) -> BTreeSet<GuardValue> {
-        self.execution
-            .sites()
+        self.sites
+            .iter()
             .filter(|site| site.rendered() && site.span() == self.value_span)
             .flat_map(|site| site.value().alternatives())
             .filter_map(|alternative| alternative.value().literal().cloned())
@@ -38,8 +54,8 @@ impl Observation {
     }
 
     fn paths(&self) -> BTreeSet<ValuesPath> {
-        self.execution
-            .sites()
+        self.sites
+            .iter()
             .filter(|site| site.rendered() && site.span() == self.value_span)
             .flat_map(|site| site.value().inputs())
             .collect()
@@ -49,8 +65,8 @@ impl Observation {
         let path = ValuesPath::parse(path);
         let mut conditions = Vec::new();
         for site in self
-            .execution
-            .sites()
+            .sites
+            .iter()
             .filter(|site| site.rendered() && site.span() == self.value_span)
         {
             for alternative in site.value().alternatives() {
@@ -77,13 +93,15 @@ impl Observation {
     }
 
     fn marker(&self, span: Span, _marker: &str) -> Predicate {
-        self.execution.observed_marker_condition(span)
+        if span == self.true_span {
+            self.yes.clone()
+        } else {
+            self.no.clone()
+        }
     }
 
     fn truth(&self) -> Option<Predicate> {
-        if !self.execution.observed_marker_complete(self.true_span)
-            || !self.execution.observed_marker_complete(self.false_span)
-        {
+        if !self.markers_complete {
             return None;
         }
         let yes = self.when_true();
@@ -92,7 +110,7 @@ impl Observation {
     }
 
     fn captures(&self) -> BTreeSet<FailCapture> {
-        self.execution.observed_facts().captures.clone()
+        self.facts.captures.clone()
     }
 
     fn kinds(&self) -> BTreeSet<CaptureKind> {
@@ -105,8 +123,8 @@ impl Observation {
     fn captured_boolean_subset(&self, truth: bool) -> Predicate {
         let mut conditions = Vec::new();
         for site in self
-            .execution
-            .sites()
+            .sites
+            .iter()
             .filter(|site| site.rendered() && site.span() == self.value_span)
         {
             if !site.coverage_exact() {
@@ -188,20 +206,86 @@ impl Observation {
     }
 
     fn declared_types(&self, path: &str) -> Option<&BTreeSet<String>> {
-        self.execution
-            .observed_facts()
+        self.facts
             .type_hints
             .get(&HintGrade::DECLARED)?
             .get(&ValuesPath::parse(path))
     }
 
+    fn consumed_types(&self) -> BTreeSet<ConsumedType> {
+        self.facts
+            .consumptions
+            .iter()
+            .filter_map(|consumption| {
+                let ConsumptionDomain::Known {
+                    preimage:
+                        requirement @ (helm_schema_core::FailValueRequirement::SchemaType(_)
+                        | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(_)
+                        | helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(
+                            _,
+                        )),
+                    requires_presence,
+                } = &consumption.domain
+                else {
+                    return None;
+                };
+                Some(ConsumedType {
+                    path: consumption.path.clone(),
+                    requirement: requirement.clone(),
+                    condition: consumption.test_condition(),
+                    requires_presence: *requires_presence,
+                })
+            })
+            .collect()
+    }
+
+    fn string_consumptions(&self) -> BTreeSet<ConsumedType> {
+        self.consumed_types()
+            .into_iter()
+            .filter(|consumption| {
+                matches!(&consumption.requirement,
+                helm_schema_core::FailValueRequirement::SchemaType(schema_type)
+                | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(schema_type)
+                | helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(schema_type)
+                if schema_type == "string")
+            })
+            .collect()
+    }
+
     fn has_boolean_contract(&self, path: &str) -> bool {
-        self.kinds().iter().any(|kind| {
-            matches!(kind,
-            CaptureKind::ComparableKind { path: actual, schema_type }
-            | CaptureKind::ValueType { path: actual, schema_type, .. }
-            if actual == &ValuesPath::parse(path) && schema_type == "boolean")
+        self.consumed_types().iter().any(|consumption| {
+            consumption.path == ValuesPath::parse(path)
+                && matches!(&consumption.requirement,
+                    helm_schema_core::FailValueRequirement::SchemaType(schema_type)
+                    | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(schema_type)
+                    | helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(schema_type)
+                    if schema_type == "boolean")
         })
+    }
+
+    fn requirement_schema(&self) -> serde_json::Value {
+        let signals = crate::contract_signal_builder::derive_schema_signals_from_contract_parts(
+            &self.rows,
+            &self.facts,
+            &BTreeSet::new(),
+            &helm_schema_core::PredicateMemo::new(),
+        );
+        helm_schema_gen::generate_values_schema(helm_schema_gen::ValuesSchemaInput::new(
+            &signals,
+            &NoProvider,
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct NoProvider;
+
+impl helm_schema_core::ResourceSchemaOracle for NoProvider {
+    fn schema_fragment_for_use(
+        &self,
+        _: &helm_schema_core::ProviderSchemaUse,
+    ) -> Option<helm_schema_core::ProviderSchemaFragment> {
+        None
     }
 }
 
@@ -225,22 +309,38 @@ fn observe_with_db(prefix: &str, expression: &str, db: &IrAnalysisDb) -> Observa
     source.push_str("other");
     let false_span = Span::new(start, source.len());
     source.push_str("{{ end }}");
-    let execution = crate::value::tests::execute_document(&source, None, db);
-    let projected = crate::tests::support::project_execution(&source, None, db, &execution);
-    let contract = projected.contract.clone().finalize();
-    let rows = contract
-        .uses()
-        .iter()
-        .filter(|row| row.path == crate::YamlPath(vec!["value".to_owned()]))
-        .cloned()
-        .collect();
-    Observation {
-        execution,
+    let mut observation = Observation {
+        sites: Vec::new(),
+        facts: crate::observed_facts::ObservedFacts::default(),
+        reads: Vec::new(),
+        yes: Predicate::False,
+        no: Predicate::False,
+        markers_complete: false,
+        abort: Predicate::False,
         value_span,
         true_span,
         false_span,
-        rows,
-    }
+        rows: Vec::new(),
+    };
+    crate::tests::support::with_execution(&source, None, db, |execution| {
+        observation.sites = execution.sites().cloned().collect();
+        observation.facts = execution.observed_facts().clone();
+        observation.reads = execution.reads();
+        observation.abort = execution.abort_predicate();
+        observation.yes = execution.observed_marker_condition(true_span);
+        observation.no = execution.observed_marker_condition(false_span);
+        observation.markers_complete = execution.observed_marker_complete(true_span)
+            && execution.observed_marker_complete(false_span);
+        observation.rows = crate::tests::support::project_execution(&source, None, db, execution)
+            .contract
+            .finalize()
+            .uses()
+            .iter()
+            .filter(|row| row.path == crate::YamlPath(vec!["value".to_owned()]))
+            .cloned()
+            .collect();
+    });
+    observation
 }
 
 fn paths(names: &[&str]) -> BTreeSet<ValuesPath> {
@@ -542,7 +642,7 @@ fn set_default_chart_paths_ignores_unrelated_default_inside_set_rhs() {
         r#"{{ $_ := set $ "serviceAccount" .Values.serviceAccount }}{{ $_ := set $ "other" .Values.other }}"#,
         r#"set .serviceAccount "name" (printf "%s" (.other | default "fallback"))"#,
     );
-    sim_assert_eq!(have: result.execution.observed_facts().values_default_sources, want: BTreeSet::new());
+    sim_assert_eq!(have: result.facts.values_default_sources, want: BTreeSet::new());
 }
 
 #[test]
@@ -560,15 +660,12 @@ fn quote_pipeline_erases_input_shape_without_typing() {
     let result = observe("", ".Values.flag | quote");
     assert_no_raw_type(&result, &["flag"]);
     sim_assert_eq!(have: result.paths(), want: paths(&["flag"]));
-    assert!(
-        result
-            .execution
-            .observed_facts()
-            .shape_erased_paths
-            .contains(&ValuesPath::parse("flag")),
-        "quote must record shape erasure; placed rows: {:?}",
-        result.rows
-    );
+    sim_assert_eq!(have: result.raw_conditions("flag"), want: Some(Predicate::False), "placed rows: {:?}", result.rows);
+    assert!(result.facts.consumptions.iter().any(|consumption| {
+        consumption.path == ValuesPath::parse("flag")
+            && consumption.domain == ConsumptionDomain::KnownAny
+    }));
+    sim_assert_eq!(have: result.consumed_types(), want: BTreeSet::new());
 }
 
 #[test]
@@ -668,15 +765,34 @@ fn unsupported_printf_format_types_nothing_without_exact_string() {
 }
 
 #[test]
-fn pipeline_ternary_collapses_value_but_keeps_branch_facts() {
+fn pipeline_ternary_collapses_value_but_keeps_branch_facts() -> eyre::Result<()> {
     let expression =
         r#"typeIs "string" .Values.config | ternary .Values.config (.Values.config | toYaml)"#;
     let result = observe("", expression);
     sim_assert_eq!(have: result.paths(), want: paths(&["config"]));
     assert_no_raw_type(&result, &["config"]);
-    sim_assert_eq!(have: result.execution.observed_facts().type_hints.get(&HintGrade::GUARDED_DECLARED).and_then(|hints| hints.get(&ValuesPath::parse("config"))), want: Some(&BTreeSet::from(["string".to_owned()])));
+    assert_selected(&result, "config", typed("config", "string"));
     let consumed = observe("", &format!("{expression} | b64enc"));
-    sim_assert_eq!(have: consumed.string_routes(), want: BTreeSet::new());
+    // The selected string arm already proves the encoder's type precondition.
+    let schema = consumed.requirement_schema();
+    let validator = jsonschema::validator_for(&schema)?;
+    for value in [
+        serde_json::json!(null),
+        serde_json::json!(false),
+        serde_json::json!(true),
+        serde_json::json!(0),
+        serde_json::json!(7),
+        serde_json::json!(""),
+        serde_json::json!("text"),
+        serde_json::json!([]),
+        serde_json::json!({"key": "value"}),
+    ] {
+        assert!(
+            validator.is_valid(&serde_json::json!({"config": value})),
+            "the guarded encoder cannot retype the raw input: {value}; schema={schema}"
+        );
+    }
+    Ok(())
 }
 
 #[test]
@@ -926,7 +1042,7 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
         ),
     ] {
         let result = observe("", expression);
-        sim_assert_eq!(have: result.execution.abort_predicate(), want: accepted.negated().normalize_boolean());
+        sim_assert_eq!(have: result.abort, want: accepted.negated().normalize_boolean());
         sim_assert_eq!(have: result.kinds(), want: BTreeSet::from([CaptureKind::Fail]));
     }
 }
@@ -1032,10 +1148,15 @@ fn serializer_output_does_not_retype_raw_input() {
         ".Values.labels | toYaml | b64enc",
         "merge .Values.override .Values.base | toYaml | b64enc",
     ] {
-        sim_assert_eq!(have: observe("", expression).string_routes(), want: BTreeSet::new());
+        sim_assert_eq!(have: observe("", expression).string_consumptions(), want: BTreeSet::new());
     }
     let raw = observe("{{ $encoded := .Values.labels }}", "$encoded | b64enc");
-    sim_assert_eq!(have: raw.string_routes().into_iter().map(|(_, route, _)| route).collect::<BTreeSet<_>>(), want: BTreeSet::from([StringRequirementRoute::Direct]));
+    sim_assert_eq!(have: raw.string_consumptions(), want: BTreeSet::from([ConsumedType {
+        path: ValuesPath::parse("labels"),
+        requirement: helm_schema_core::FailValueRequirement::SchemaTypeEvenNull("string".to_owned()),
+        condition: Predicate::True,
+        requires_presence: true,
+    }]));
 }
 
 #[test]
@@ -1078,9 +1199,19 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
         ]),
     );
     let consumed = observe("", "coalesce .Values.primary .Values.fallback | b64enc");
-    sim_assert_eq!(have: consumed.requirements(), want: BTreeSet::from([
-        (CaptureKind::StringRequirement { path: ValuesPath::parse("primary"), route: StringRequirementRoute::Selected, selection: vec![truthy("primary")].into() }, BTreeSet::new()),
-        (CaptureKind::StringRequirement { path: ValuesPath::parse("fallback"), route: StringRequirementRoute::Selected, selection: vec![truthy("fallback"), truthy("primary").negated()].into() }, BTreeSet::new()),
+    sim_assert_eq!(have: consumed.string_consumptions(), want: BTreeSet::from([
+        ConsumedType {
+            path: ValuesPath::parse("primary"),
+            requirement: helm_schema_core::FailValueRequirement::SchemaTypeEvenNull("string".to_owned()),
+            condition: truthy("primary"),
+            requires_presence: true,
+        },
+        ConsumedType {
+            path: ValuesPath::parse("fallback"),
+            requirement: helm_schema_core::FailValueRequirement::SchemaTypeEvenNull("string".to_owned()),
+            condition: Predicate::all(vec![truthy("fallback"), truthy("primary").negated()]).normalize_boolean(),
+            requires_presence: true,
+        },
     ]));
 }
 
@@ -1337,7 +1468,7 @@ fn root_values_merge_records_the_fallback_values_subtree() {
         r#"{{ $defaults := .Values._internal_defaults }}{{ $_ := set $ "Values" (mustMergeOverwrite $defaults $.Values) }}"#,
         ".Values",
     );
-    sim_assert_eq!(have: result.execution.observed_facts().values_default_sources, want: BTreeSet::from([crate::ValuesDefaultSource { target_path: ValuesPath::default(), source_path: ValuesPath::parse("_internal_defaults") }]));
+    sim_assert_eq!(have: result.facts.values_default_sources, want: BTreeSet::from([crate::ValuesDefaultSource { target_path: ValuesPath::default(), source_path: ValuesPath::parse("_internal_defaults") }]));
 }
 
 #[test]
@@ -1345,15 +1476,8 @@ fn coercing_arithmetic_erases_raw_operand_shape() {
     let result = observe("", "mulf .Values.pct 1048576.0 | divf 1048576.0 | floor");
     assert_no_raw_type(&result, &["pct"]);
     sim_assert_eq!(have: result.paths(), want: paths(&["pct"]));
-    assert!(
-        result
-            .execution
-            .observed_facts()
-            .shape_erased_paths
-            .contains(&ValuesPath::parse("pct")),
-        "numeric coercion must record shape erasure; placed rows: {:?}",
-        result.rows
-    );
+    sim_assert_eq!(have: result.raw_conditions("pct"), want: Some(Predicate::False), "placed rows: {:?}", result.rows);
+    sim_assert_eq!(have: result.consumed_types(), want: BTreeSet::new());
 }
 
 #[test]
@@ -1361,8 +1485,7 @@ fn division_operand_is_not_arithmetic_erased() {
     let result = observe("", "div .Values.count 2");
     assert!(
         !result
-            .execution
-            .observed_facts()
+            .facts
             .shape_erased_paths
             .contains(&ValuesPath::parse("count"))
     );
@@ -1408,14 +1531,17 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
     );
     assert!(
         nested
-            .string_routes()
+            .string_consumptions()
             .iter()
-            .any(|(path, _, _)| path == &ValuesPath::parse("payload"))
+            .any(
+                |consumption| consumption.path == ValuesPath::parse("payload")
+                    && consumption.condition == Predicate::True
+                    && consumption.requires_presence
+            )
     );
     assert!(
         nested
-            .execution
-            .reads()
+            .reads
             .iter()
             .any(|read| read.values_path == ValuesPath::parse("payload"))
     );

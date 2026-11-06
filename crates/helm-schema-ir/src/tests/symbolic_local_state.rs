@@ -1,8 +1,8 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{Predicate, ValuesPath};
+use helm_schema_core::{Guard, Predicate, PredicateKind, ValuesPath};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -41,11 +41,10 @@ fn outputs(source: &str) -> BTreeSet<(Predicate, Option<String>)> {
 
 fn selected_condition(source: &str) -> Predicate {
     Predicate::Or(
-        outputs(source)
-            .into_iter()
-            .filter_map(|(condition, text)| {
-                (text.as_deref() == Some("selected")).then_some(condition)
-            })
+        execute(source)
+            .text_sites()
+            .filter(|site| site.bytes() == "selected")
+            .map(|site| site.condition().clone())
             .collect(),
     )
     .normalize_boolean()
@@ -292,13 +291,232 @@ fn branch_join_unions_truthy_reductions_across_outcomes() {
 }
 
 #[test]
-fn over_cap_branch_stamp_removes_the_changed_truthy_reduction() {
-    let source = "{{ $message := false }}{{ if and .Values.guard.a .Values.guard.b .Values.guard.c .Values.guard.d .Values.guard.e .Values.guard.f }}{{ $message = .Values.result }}{{ end }}{{ if $message }}selected{{ end }}";
-    let condition = selected_condition(source);
-    assert!(
-        condition.contains_approximation() || condition == Predicate::True,
-        "over-cap condition was published as exact: {condition:?}"
+fn bounded_control_guards_preserve_exact_selected_truth() {
+    let paths = [
+        "guard.a", "guard.b", "guard.c", "guard.d", "guard.e", "guard.f", "result",
+    ];
+    let program = |empty: Option<&str>| {
+        let guards = paths
+            .iter()
+            .take(6)
+            .map(|path| {
+                if empty == Some(*path) {
+                    "false".to_owned()
+                } else {
+                    format!(".Values.{path}")
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
+        let result = if empty == Some("result") {
+            "false"
+        } else {
+            ".Values.result"
+        };
+        format!(
+            "{{{{ $message := false }}}}{{{{ if and {guards} }}}}{{{{ $message = {result} }}}}{{{{ end }}}}{{{{ if $message }}}}selected{{{{ end }}}}"
+        )
+    };
+    // These seven terms fit the structural control budget and remain exact across the join.
+    let expected = Predicate::all(
+        paths
+            .iter()
+            .map(|path| Predicate::truthy_path(*path))
+            .collect(),
+    )
+    .normalize_boolean();
+    sim_assert_eq!(have: selected_condition(&program(None)), want: expected);
+    for path in paths {
+        sim_assert_eq!(have: selected_condition(&program(Some(path))), want: Predicate::False);
+    }
+}
+
+/// A truthiness formula's value under a partial assignment of its paths.
+enum Truth {
+    Known(bool),
+    /// Undetermined until this path is assigned.
+    Open(String),
+}
+
+/// Evaluates an exact formula over `Truthy` and `Not` guards; `None` for any other atom.
+fn partial_truth(predicate: &Predicate, assignment: &BTreeMap<String, bool>) -> Option<Truth> {
+    match predicate.kind() {
+        PredicateKind::True => Some(Truth::Known(true)),
+        PredicateKind::False => Some(Truth::Known(false)),
+        PredicateKind::Approximate { .. } => None,
+        PredicateKind::Guard(guard) => {
+            let (path, negated) = match guard {
+                Guard::Truthy { path } => (path, false),
+                Guard::Not { path } => (path, true),
+                _ => return None,
+            };
+            let path = path.encode();
+            Some(match assignment.get(&path) {
+                Some(value) => Truth::Known(*value != negated),
+                None => Truth::Open(path),
+            })
+        }
+        PredicateKind::Not(inner) => Some(match partial_truth(inner, assignment)? {
+            Truth::Known(value) => Truth::Known(!value),
+            Truth::Open(path) => Truth::Open(path),
+        }),
+        PredicateKind::And(parts) => junction(parts, assignment, false),
+        PredicateKind::Or(parts) => junction(parts, assignment, true),
+    }
+}
+
+/// `And` when `absorbing` is false, `Or` when it is true.
+fn junction(
+    parts: &[Predicate],
+    assignment: &BTreeMap<String, bool>,
+    absorbing: bool,
+) -> Option<Truth> {
+    let mut open = None;
+    for part in parts {
+        match partial_truth(part, assignment)? {
+            Truth::Known(value) if value == absorbing => return Some(Truth::Known(absorbing)),
+            Truth::Known(_) => {}
+            Truth::Open(path) => {
+                open.get_or_insert(path);
+            }
+        }
+    }
+    Some(open.map_or(Truth::Known(!absorbing), Truth::Open))
+}
+
+/// Decides equivalence by splitting on undetermined paths; `None` when an atom is not a
+/// truthiness guard or the split budget runs out.
+fn truth_equivalent(
+    left: &Predicate,
+    right: &Predicate,
+    assignment: &mut BTreeMap<String, bool>,
+    budget: &mut usize,
+) -> Option<bool> {
+    *budget = budget.checked_sub(1)?;
+    let path = match (
+        partial_truth(left, assignment)?,
+        partial_truth(right, assignment)?,
+    ) {
+        (Truth::Known(left), Truth::Known(right)) => return Some(left == right),
+        (Truth::Open(path), Truth::Known(_) | Truth::Open(_))
+        | (Truth::Known(_), Truth::Open(path)) => path,
+    };
+    for value in [false, true] {
+        assignment.insert(path.clone(), value);
+        let equivalent = truth_equivalent(left, right, assignment, budget);
+        assignment.remove(&path);
+        if !equivalent? {
+            return Some(false);
+        }
+    }
+    Some(true)
+}
+
+/// Holds when `actual` is exact and is the same Boolean function as `expected`.
+fn exactly_equivalent(actual: &Predicate, expected: &Predicate) -> bool {
+    !actual.contains_approximation()
+        && truth_equivalent(actual, expected, &mut BTreeMap::new(), &mut (1 << 16)) == Some(true)
+}
+
+/// Over the interpreter's bounds the selected output keeps its arm and is never published
+/// as an exact predicate that differs from Helm's: it is either the exact correct predicate
+/// or an explicit unknown (`Predicate::Approximate`). Two bounded shapes are covered: an
+/// `and` with more operands than the 128-state dispatch bound, and a chain of sequential
+/// guarded reassignments past the branch-join bound. The exact predicates are Go-template
+/// semantics: the wide `and` selects iff every guard and `result` are truthy; the chain
+/// selects iff the last taken guard's value is truthy.
+///
+/// Kept red on the current model (probe 2026-11-06): the 129-operand `and` publishes the
+/// exact `truthy(result)`, discarding all 129 guard conjuncts, and six or more sequential
+/// reassignments publish the exact `True`. Helm controls in
+/// `transfer/receipts/over_cap_control_joins_widen_to_an_explicit_unknown` show both are
+/// wrong. Missing mechanism: bounded control and value joins must either stay exact or
+/// lower the dropped decisions to an explicit approximation over their inputs.
+#[test]
+fn over_cap_control_joins_widen_to_an_explicit_unknown() -> eyre::Result<()> {
+    use std::fmt::Write as _;
+
+    let guards = (0..129)
+        .map(|index| format!(".Values.g{index}"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let wide_and = format!(
+        "{{{{ $message := false }}}}{{{{ if and {guards} }}}}{{{{ $message = .Values.result }}}}{{{{ end }}}}{{{{ if $message }}}}selected{{{{ end }}}}"
     );
+    let wide_and_exact = Predicate::all(
+        (0..129)
+            .map(|index| Predicate::truthy_path(format!("g{index}")))
+            .chain(std::iter::once(Predicate::truthy_path("result")))
+            .collect(),
+    );
+
+    let mut sequential = String::from("{{ $message := false }}");
+    for index in 0..6 {
+        write!(
+            sequential,
+            "{{{{ if .Values.g{index} }}}}{{{{ $message = .Values.r{index} }}}}{{{{ end }}}}"
+        )?;
+    }
+    sequential.push_str("{{ if $message }}selected{{ end }}");
+    // The last writer wins: arm `index` decides when its guard holds and no later guard does.
+    let sequential_exact = Predicate::Or(
+        (0..6)
+            .map(|index| {
+                Predicate::all(
+                    [
+                        Predicate::truthy_path(format!("g{index}")),
+                        Predicate::truthy_path(format!("r{index}")),
+                    ]
+                    .into_iter()
+                    .chain(
+                        (index + 1..6)
+                            .map(|later| Predicate::truthy_path(format!("g{later}")).negated()),
+                    )
+                    .collect(),
+                )
+            })
+            .collect(),
+    );
+
+    for (label, exact, wrong) in [
+        (
+            "wide and",
+            &wide_and_exact,
+            Predicate::truthy_path("result"),
+        ),
+        ("sequential joins", &sequential_exact, Predicate::True),
+    ] {
+        // The equivalence check decides at these sizes and separates today's exact-but-wrong
+        // predicate from the correct one, so the acceptance below is neither vacuous nor lax.
+        assert!(
+            exactly_equivalent(&exact.clone().normalize_boolean(), exact),
+            "{label}: the equivalence check did not decide the exact predicate"
+        );
+        assert!(
+            !exactly_equivalent(&wrong, exact),
+            "{label}: the equivalence check accepts the known-wrong predicate {wrong:?}"
+        );
+    }
+
+    for (label, source, exact) in [
+        ("wide and", wide_and, wide_and_exact),
+        ("sequential joins", sequential, sequential_exact),
+    ] {
+        let execution = execute(&source);
+        let selected = execution
+            .text_sites()
+            .filter(|site| site.bytes() == "selected")
+            .count();
+        sim_assert_eq!(have: selected, want: 1, "{label}: the selected arm must survive the bound");
+        let condition = selected_condition(&source);
+        assert!(
+            condition != Predicate::False
+                && (condition.contains_approximation() || exactly_equivalent(&condition, &exact)),
+            "{label}: the over-cap condition is neither Helm's exact predicate nor an explicit \
+             unknown: {condition:?}"
+        );
+    }
+    Ok(())
 }
 
 #[test]

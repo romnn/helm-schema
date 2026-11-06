@@ -72,6 +72,7 @@ mod requirement_domain;
 mod resolve_policy;
 mod resource_availability;
 mod schema_node;
+mod schema_quotient;
 mod serialized_descendant_contracts;
 mod shape_alternatives;
 mod string_transform_contracts;

@@ -1408,6 +1408,28 @@ fn deployment_annotations_fragment_stays_annotations_map() -> eyre::Result<()> {
         schema_contains_open_string_map(pod_annotations),
         "podAnnotations should be an open annotations string map, got {pod_annotations}"
     );
+    // Verdicts adjudicated with Helm 4.2.3 and the Deployment destination schema
+    // (transfer/receipts/deployment_annotations_fragment_stays_annotations_map{,-r2}).
+    // A null member survives coalescing (no chart default declares `audit`) and renders
+    // `audit: null`; a `<no value>` member renders as an empty YAML value, also null.
+    // The annotations destination rejects both.
+    let validator = jsonschema::validator_for(&actual)?;
+    for (value, accepted) in [
+        (serde_json::json!({"audit": "ok"}), true),
+        (serde_json::json!({"audit": 7}), false),
+        (serde_json::json!({"audit": null}), false),
+        (serde_json::json!({"audit": "<no value>"}), false),
+        (serde_json::json!(null), true),
+        (serde_json::json!(false), true),
+        (serde_json::json!(0), true),
+        (serde_json::json!(""), true),
+        (serde_json::json!([]), true),
+        (serde_json::json!({}), true),
+        (serde_json::json!(true), false),
+        (serde_json::json!("text"), false),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&serde_json::json!({"podAnnotations": value})), want: accepted);
+    }
 
     Ok(())
 }
@@ -1945,10 +1967,6 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads() -> eyre:
 /// carries the default-driven nullability for both `fullnameOverride` and
 /// `nameOverride`; the surrounding `printf` must not erase that signal.
 #[test]
-#[expect(
-    clippy::too_many_lines,
-    reason = "the nested helper fixture and nullability assertions form one focused regression"
-)]
 fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -2022,76 +2040,9 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
     // nameOverride is selected by default and reaches the strict `contains`
     // call only when truthy. The bases therefore stay open and the two live
     // consumer domains remain conditional.
-    let expected = serde_json::json!({
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": {
-            "t": {
-                "anyOf": [
-                    { "const": true },
-                    { "not": { "const": 0 }, "type": "number" },
-                    { "minLength": 1, "type": "string" },
-                    { "minItems": 1, "type": "array" },
-                    { "minProperties": 1, "type": "object" }
-                ]
-            }
-        },
-        "additionalProperties": false,
-        "allOf": [
-            {
-                "if": {
-                    "properties": {
-                        "fullnameOverride": { "$ref": "#/$defs/t" }
-                    },
-                    "required": ["fullnameOverride"],
-                    "type": "object"
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "fullnameOverride": {
-                            "type": ["null", "string"]
-                        }
-                    }
-                }
-            },
-            {
-                "if": {
-                    "allOf": [
-                        {
-                            "properties": {
-                                "nameOverride": { "$ref": "#/$defs/t" }
-                            },
-                            "required": ["nameOverride"],
-                            "type": "object"
-                        },
-                        {
-                            "not": {
-                                "properties": {
-                                    "fullnameOverride": { "$ref": "#/$defs/t" }
-                                },
-                                "required": ["fullnameOverride"],
-                                "type": "object"
-                            }
-                        }
-                    ]
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "nameOverride": {
-                            "type": ["null", "string"]
-                        }
-                    }
-                }
-            }
-        ],
-        "properties": {
-            "global": {},
-            "fullnameOverride": {},
-            "nameOverride": {}
-        },
-        "type": "object"
-    });
+    let expected: serde_json::Value = serde_json::from_str(include_str!(
+        "fixtures/testport1/nested_printf_around_common_fullname_keeps_name_overrides_nullable.schema.json"
+    ))?;
 
     sim_assert_eq!(have: actual, want: expected);
     Ok(())

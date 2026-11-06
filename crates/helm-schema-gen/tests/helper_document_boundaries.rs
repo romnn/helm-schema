@@ -335,28 +335,9 @@ fn opaque_root_rebinding_withdraws_only_key_closure() -> eyre::Result<()> {
         {body}
     "#};
     let have = template_schema(&source, &values)?;
-    let want = json!({
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "additionalProperties": {},
-        "properties": {"_internal_defaults": {}, "global": {}},
-        "$defs": {
-            "constrains/_internal_defaults+_internal_defaults=null": {
-                "anyOf": [
-                    {"not": {"type": "object", "properties": {"_internal_defaults": {}}, "required": ["_internal_defaults"]}},
-                    {"type": "object", "properties": {"_internal_defaults": {"type": "object"}}, "required": ["_internal_defaults"]},
-                    {"type": "object", "properties": {"_internal_defaults": {"enum": [null]}}, "required": ["_internal_defaults"]}
-                ]
-            },
-            "constrains/_internal_defaults+_internal_defaults=null@2": {
-                "not": {"$ref": "#/$defs/constrains~1_internal_defaults+_internal_defaults=null"}
-            }
-        },
-        "allOf": [{
-            "if": {"$ref": "#/$defs/constrains~1_internal_defaults+_internal_defaults=null@2"},
-            "then": false
-        }]
-    });
+    let want: serde_json::Value = serde_json::from_str(include_str!(
+        "expectations/opaque_root_rebinding_withdraws_only_key_closure.schema.json"
+    ))?;
     sim_assert_eq!(have: &have, want: &want);
     let helper_source = indoc::formatdoc! {r#"
         {{{{ define "replace-original-root" }}}}

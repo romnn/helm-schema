@@ -913,7 +913,7 @@ fn json_decoded_range_excludes_integer_without_changing_raw_range() {
 }
 
 #[test]
-#[ignore = "R3b regression vs main, package B (iterable domains and loop outcomes): complementary raw and decoded ranges keep branch local domains; tracked in plan/value-algebra-r3b.md follow-ups"]
+#[ignore = "R3b regression: raw numeric and decoded error-map range requirements must match the pinned Helm receipts."]
 fn complementary_raw_and_decoded_ranges_keep_branch_local_domains() -> eyre::Result<()> {
     let source = indoc! {r"
         {{- if .Values.decode }}
@@ -933,23 +933,18 @@ fn complementary_raw_and_decoded_ranges_keep_branch_local_domains() -> eyre::Res
         .get(&helm_schema_core::ValuesPath::parse("items"))
         .ok_or_eyre("complementary range evidence")?;
     let domains = evidence
-        .conditional_overlays
+        .requirement_implications
         .iter()
-        .filter_map(|overlay| {
-            overlay
-                .evidence
-                .range_domain
-                .map(|domain| (overlay.guards.clone(), domain))
+        .flat_map(|implication| &implication.requirements)
+        .filter_map(|requirement| {
+            if let helm_schema_core::FailValueRequirement::Iterable { allow_integer } = requirement
+            {
+                Some(*allow_integer)
+            } else {
+                None
+            }
         })
-        .collect::<BTreeMap<_, _>>();
-
-    sim_assert_eq!(
-        have: domains.values().copied().collect::<BTreeSet<_>>(),
-        want: BTreeSet::from([
-            helm_schema_core::RangeDomain::CollectionOnly,
-            helm_schema_core::RangeDomain::CollectionOrIntegerCount,
-        ])
-    );
+        .collect::<BTreeSet<_>>();
 
     let schema = schema_for_values_yaml(
         ir,
@@ -959,12 +954,31 @@ fn complementary_raw_and_decoded_ranges_keep_branch_local_domains() -> eyre::Res
         "}),
     );
     assert!(
-        schema_accepts_instance(&schema, &serde_json::json!({ "decode": false, "items": 3 })),
-        "the raw branch retains integer counts: {schema}"
+        schema_accepts_instance(&schema, &serde_json::json!({ "decode": true, "items": 3 })),
+        "fromJson turns a non-object number into an iterable error map: {schema}"
     );
     assert!(
-        !schema_accepts_instance(&schema, &serde_json::json!({ "decode": true, "items": 3 })),
-        "the decoded branch rejects JSON numbers: {schema}"
+        !schema_accepts_instance(&schema, &serde_json::json!({ "decode": false, "items": 3 })),
+        "coalesced numeric input is float64, not a native Go integer: {schema}"
+    );
+
+    for items in [
+        serde_json::json!(true),
+        serde_json::json!("text"),
+        serde_json::json!(1.5),
+    ] {
+        for decode in [false, true] {
+            sim_assert_eq!(
+                have: schema_accepts_instance(&schema, &serde_json::json!({"decode": decode, "items": items})),
+                want: decode,
+                "non-object JSON is iterable only after fromJson returns its error map: items={items}; schema={schema}"
+            );
+        }
+    }
+    sim_assert_eq!(
+        have: domains,
+        want: BTreeSet::from([true]),
+        "only the raw branch constrains its source to an iterable domain; decoded error maps are already iterable"
     );
     Ok(())
 }

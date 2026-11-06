@@ -1,7 +1,8 @@
 use super::*;
+use helm_schema_core::ValuesPath;
+use test_util::prelude::sim_assert_eq;
 
-/// Step 2 (prefix form): `default <literal> .Values.X` with null default in
-/// values.yaml produces a nullable-typed union for X.
+/// A prefix default preserves nullable primary inputs of every scalar type.
 #[test]
 fn step2_default_prefix_string_literal_is_nullable_string() {
     let src = indoc! {r#"
@@ -10,18 +11,30 @@ fn step2_default_prefix_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let contract = parse_ir(src);
+    sim_assert_eq!(
+        have: type_hints_for(contract.clone()),
+        want: BTreeMap::<String, BTreeSet<String>>::new()
+    );
+    let schema = schema_for_values_yaml(contract, Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
     assert!(permits_null(name));
-    assert!(
-        permits_type(name, "string"),
-        "default fallback should keep the string branch, got {name}"
-    );
+    for value in [
+        Value::Null,
+        serde_json::json!("custom"),
+        serde_json::json!(true),
+        serde_json::json!(7),
+    ] {
+        let instance = serde_json::json!({ "name": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "instance={instance}; schema={schema}"
+        );
+    }
 }
 
-/// Step 2 (pipeline form): `.Values.X | default <literal>` is recognised
-/// equivalently to the prefix form.
+/// A piped default preserves the same nullable primary domain as the prefix form.
 #[test]
 fn step2_default_pipeline_string_literal_is_nullable_string() {
     let src = indoc! {r#"
@@ -30,14 +43,27 @@ fn step2_default_pipeline_string_literal_is_nullable_string() {
     let values_yaml = indoc! {"
         name:
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let contract = parse_ir(src);
+    sim_assert_eq!(
+        have: type_hints_for(contract.clone()),
+        want: BTreeMap::<String, BTreeSet<String>>::new()
+    );
+    let schema = schema_for_values_yaml(contract, Some(values_yaml));
 
     let name = schema.pointer("/properties/name").expect("name present");
     assert!(permits_null(name));
-    assert!(
-        permits_type(name, "string"),
-        "default fallback should keep the string branch, got {name}"
-    );
+    for value in [
+        Value::Null,
+        serde_json::json!("custom"),
+        serde_json::json!(true),
+        serde_json::json!(7),
+    ] {
+        let instance = serde_json::json!({ "name": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "instance={instance}; schema={schema}"
+        );
+    }
 }
 
 #[test]
@@ -65,18 +91,37 @@ fn step2_default_non_literal_first_arg_no_hint() {
     assert!(hints.is_empty(), "expected no hints, got {hints:?}");
 }
 
-/// Step 2: integer literal → integer type hint (not string).
+/// An integer fallback leaves the primary input untyped.
 #[test]
 fn step2_default_integer_literal() {
     let src = indoc! {r"
         replicas: {{ default 5 .Values.replicas }}
     "};
-    let hints = type_hints_for(parse_ir(src));
-    let schemas = hints.get("replicas").expect("replicas hint present");
+    let contract = parse_ir(src);
+    let signals = schema_signals_for(contract.clone());
     assert!(
-        schemas.contains("integer"),
-        "expected integer hint, got {schemas:?}"
+        signals
+            .evidence_for(&ValuesPath::parse("replicas"))
+            .is_some(),
+        "the primary input must remain referenced"
     );
+    sim_assert_eq!(
+        have: type_hints_for(contract.clone()),
+        want: BTreeMap::<String, BTreeSet<String>>::new()
+    );
+    let schema = schema_for(contract);
+    for value in [
+        Value::Null,
+        serde_json::json!("custom"),
+        serde_json::json!(true),
+        serde_json::json!(7),
+    ] {
+        let instance = serde_json::json!({ "replicas": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "instance={instance}; schema={schema}"
+        );
+    }
 }
 /// `with or .Values.A .Values.B` now tags both A and B with `Guard::With`
 /// (instead of keeping them as `Guard::Or`), so a downstream Fragment use of

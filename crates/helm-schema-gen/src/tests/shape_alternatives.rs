@@ -709,13 +709,26 @@ fn step1_with_fragment_null_default_is_nullable() {
         .pointer("/properties/extraAnnotations")
         .expect("extraAnnotations present");
     assert!(
-        permits_type(extra, "object"),
+        ranged_arm_of_type(extra, "object").is_some(),
         "extraAnnotations should keep the K8s annotations object shape, got {extra}"
     );
-    assert!(
-        permits_null(extra),
-        "with-guarded fragment object should allow null, got {extra}"
-    );
+    for (value, want) in [
+        (Value::Null, true),
+        (serde_json::json!({}), true),
+        (serde_json::json!({ "owner": "infra" }), true),
+        (serde_json::json!({ "owner": 7 }), false),
+        (serde_json::json!(7), false),
+        (serde_json::json!("not a map"), false),
+        (serde_json::json!(0), true),
+        (serde_json::json!(false), true),
+    ] {
+        let instance = serde_json::json!({ "extraAnnotations": value });
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "with-guarded annotation fragment: instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// Step 1 negative: a path with no `with`-fragment use does not get widened

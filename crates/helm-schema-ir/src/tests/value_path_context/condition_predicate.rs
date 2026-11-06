@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::{DefineIndex, parse_action_expressions};
@@ -722,28 +722,75 @@ fn alias_comparison_preserves_typed_predicates() {
 }
 
 #[test]
-fn output_meta_comparison_preserves_typed_predicates() {
+fn output_meta_comparison_preserves_typed_predicates() -> eyre::Result<()> {
     let template_bindings = HashMap::from([(
         "customUser".to_string(),
         "(coalesce .Values.auth.username .Values.global.postgresql.auth.username)".to_owned(),
     )]);
 
-    sim_assert_eq!(
-        have: parse_condition_with_template_facts(
-            r#"ne $customUser "postgres""#,
-            template_bindings,
-        ),
-        want: vec![
-            Guard::NotEq {
-                path: helm_schema_core::ValuesPath::parse("auth.username"),
+    // Only the first truthy candidate is compared; incompatible selected types abort.
+    let selected_non_postgres = |path: &str| {
+        Predicate::all(vec![
+            Predicate::truthy_path(path),
+            Predicate::from(Guard::TypeIs {
+                path: helm_schema_core::ValuesPath::parse(path),
+                schema_type: "string".to_owned(),
+            }),
+            Predicate::from(Guard::NotEq {
+                path: helm_schema_core::ValuesPath::parse(path),
                 value: GuardValue::string("postgres"),
-            },
-            Guard::NotEq {
-                path: helm_schema_core::ValuesPath::parse("global.postgresql.auth.username"),
-                value: GuardValue::string("postgres"),
-            },
-        ],
-    );
+            }),
+        ])
+    };
+    let primary_empty = Predicate::truthy_path("auth.username").negated();
+    let fallback_empty = Predicate::truthy_path("global.postgresql.auth.username").negated();
+    let expected = Predicate::Or(vec![
+        selected_non_postgres("auth.username"),
+        Predicate::all(vec![
+            primary_empty.clone(),
+            selected_non_postgres("global.postgresql.auth.username"),
+        ]),
+        // An entirely empty selection returns nil, which is unequal to the string.
+        Predicate::all(vec![primary_empty, fallback_empty]),
+    ]);
+    let expression = parse_action_expressions(r#"{{ ne $customUser "postgres" }}"#)
+        .into_iter()
+        .next()
+        .ok_or_eyre("missing coalesced comparison")?;
+    let actual = condition_context(template_bindings).condition_predicate_expr(&expression);
+    assert!(!actual.contains_approximation());
+    sim_assert_eq!(have: actual.value_paths(), want: BTreeSet::from([
+        helm_schema_core::ValuesPath::parse("auth.username"),
+        helm_schema_core::ValuesPath::parse("global.postgresql.auth.username"),
+    ]));
+    let representatives = [
+        None,
+        Some(serde_json::json!(null)),
+        Some(serde_json::json!(false)),
+        Some(serde_json::json!(0)),
+        Some(serde_json::json!("")),
+        Some(serde_json::json!(true)),
+        Some(serde_json::json!(1)),
+        Some(serde_json::json!("alice")),
+        Some(serde_json::json!("postgres")),
+        Some(serde_json::json!([])),
+        Some(serde_json::json!([1])),
+        Some(serde_json::json!({})),
+        Some(serde_json::json!({"key": 1})),
+    ];
+    assert_coalesce_quotient_complete(&representatives)?;
+    // The supported atoms distinguish only these quotient classes, so their product is exhaustive.
+    for primary in &representatives {
+        for fallback in &representatives {
+            let document = coalesce_document(primary.as_ref(), fallback.as_ref());
+            sim_assert_eq!(
+                have: coalesce_predicate_holds(&actual, &document)?,
+                want: coalesce_predicate_holds(&expected, &document)?,
+                "coalesced document: {document}",
+            );
+        }
+    }
+    Ok(())
 }
 
 /// A binding defaulted from a literal (`$mode := .Values.x | default
@@ -974,4 +1021,199 @@ fn comparison_normality(path: &str, schema_type: &str) -> Guard {
             }],
         ],
     }
+}
+
+fn coalesce_document(
+    primary: Option<&serde_json::Value>,
+    fallback: Option<&serde_json::Value>,
+) -> serde_json::Value {
+    let username = |value: Option<&serde_json::Value>| {
+        let mut mapping = serde_json::Map::new();
+        if let Some(value) = value {
+            mapping.insert("username".to_owned(), value.clone());
+        }
+        mapping
+    };
+    serde_json::json!({
+        "auth": username(primary),
+        "global": {"postgresql": {"auth": username(fallback)}},
+    })
+}
+
+fn coalesce_value<'a>(
+    document: &'a serde_json::Value,
+    path: &helm_schema_core::ValuesPath,
+) -> eyre::Result<Option<&'a serde_json::Value>> {
+    let mut value = Some(document);
+    for segment in path.segments() {
+        let key = segment
+            .literal()
+            .ok_or_eyre("coalesce quotient cannot evaluate wildcards")?;
+        value = value.and_then(|value| value.get(key));
+    }
+    Ok(value)
+}
+
+fn coalesce_truthy(value: Option<&serde_json::Value>) -> bool {
+    match value {
+        None | Some(serde_json::Value::Null) => false,
+        Some(serde_json::Value::Bool(value)) => *value,
+        Some(serde_json::Value::Number(value)) => value.as_f64().is_some_and(|value| value != 0.0),
+        Some(serde_json::Value::String(value)) => !value.is_empty(),
+        Some(serde_json::Value::Array(value)) => !value.is_empty(),
+        Some(serde_json::Value::Object(value)) => !value.is_empty(),
+    }
+}
+
+fn coalesce_guard_holds(guard: &Guard, document: &serde_json::Value) -> eyre::Result<bool> {
+    match guard {
+        Guard::Truthy { path } => Ok(coalesce_truthy(coalesce_value(document, path)?)),
+        Guard::Eq { path, value } | Guard::NotEq { path, value } => {
+            let actual = coalesce_value(document, path)?;
+            let equal = match value {
+                GuardValue::Null => actual.is_none_or(serde_json::Value::is_null),
+                GuardValue::String(value) if value == "postgres" => {
+                    actual.and_then(serde_json::Value::as_str) == Some("postgres")
+                }
+                GuardValue::String(_)
+                | GuardValue::Bool(_)
+                | GuardValue::Int(_)
+                | GuardValue::Float(_) => eyre::bail!("unsupported coalesce literal: {value:?}"),
+            };
+            Ok(equal == matches!(guard, Guard::Eq { path: _, value: _ }))
+        }
+        Guard::TypeIs { path, schema_type } if schema_type == "string" => {
+            Ok(coalesce_value(document, path)?.is_some_and(serde_json::Value::is_string))
+        }
+        Guard::Absent { path } => Ok(coalesce_value(document, path)?.is_none()),
+        Guard::Not { path: _ }
+        | Guard::MatchesPattern {
+            path: _,
+            pattern: _,
+            templated: _,
+        }
+        | Guard::MatchesValue {
+            path: _,
+            pattern: _,
+        }
+        | Guard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        }
+        | Guard::NotMatchesPattern {
+            path: _,
+            pattern: _,
+        }
+        | Guard::RangeKeyPrefix { path: _, prefix: _ }
+        | Guard::RangeKeyEquals { path: _, key: _ }
+        | Guard::RangeKeyMatches {
+            path: _,
+            pattern: _,
+        }
+        | Guard::Or { paths: _ }
+        | Guard::AnyOf { alternatives: _ }
+        | Guard::Range { path: _ }
+        | Guard::With { path: _ }
+        | Guard::Default { path: _ }
+        | Guard::TypeIs {
+            path: _,
+            schema_type: _,
+        }
+        | Guard::NotTypeIs {
+            path: _,
+            schema_type: _,
+        }
+        | Guard::IntGt { path: _, bound: _ }
+        | Guard::IntLt { path: _, bound: _ }
+        | Guard::AtMostOneMember { path: _ }
+        | Guard::MinMembers { path: _, bound: _ }
+        | Guard::HasKey { path: _, key: _ }
+        | Guard::NotHasKey { path: _, key: _ }
+        | Guard::ContainsEquals { path: _, value: _ }
+        | Guard::ContainsMemberEquals {
+            path: _,
+            member: _,
+            value: _,
+        }
+        | Guard::ContainsTruthyMember { path: _, member: _ } => {
+            eyre::bail!("unsupported coalesce guard: {guard:?}")
+        }
+    }
+}
+
+fn coalesce_predicate_holds(
+    predicate: &Predicate,
+    document: &serde_json::Value,
+) -> eyre::Result<bool> {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::True => Ok(true),
+        helm_schema_core::PredicateKind::False => Ok(false),
+        helm_schema_core::PredicateKind::Guard(guard) => coalesce_guard_holds(guard, document),
+        helm_schema_core::PredicateKind::Not(inner) => {
+            Ok(!coalesce_predicate_holds(inner, document)?)
+        }
+        helm_schema_core::PredicateKind::And(parts) => {
+            let mut result = true;
+            for part in parts {
+                result &= coalesce_predicate_holds(part, document)?;
+            }
+            Ok(result)
+        }
+        helm_schema_core::PredicateKind::Or(parts) => {
+            let mut result = false;
+            for part in parts {
+                result |= coalesce_predicate_holds(part, document)?;
+            }
+            Ok(result)
+        }
+        helm_schema_core::PredicateKind::Approximate {
+            marker,
+            paths: _,
+            role: _,
+            sound_subset: _,
+        } => eyre::bail!("coalesce quotient cannot certify approximation: {marker}"),
+    }
+}
+
+fn assert_coalesce_quotient_complete(
+    representatives: &[Option<serde_json::Value>],
+) -> eyre::Result<()> {
+    let path = helm_schema_core::ValuesPath::parse("auth.username");
+    let truthy = Guard::Truthy { path: path.clone() };
+    let nil = Guard::Eq {
+        path: path.clone(),
+        value: GuardValue::Null,
+    };
+    let postgres = Guard::Eq {
+        path: path.clone(),
+        value: GuardValue::string("postgres"),
+    };
+    let string = Guard::TypeIs {
+        path: path.clone(),
+        schema_type: "string".to_owned(),
+    };
+    let absent = Guard::Absent { path };
+    let mut signatures = BTreeSet::new();
+    for representative in representatives {
+        let document = coalesce_document(representative.as_ref(), None);
+        let mut signature = BTreeSet::new();
+        for guard in [&truthy, &nil, &postgres, &string, &absent] {
+            if coalesce_guard_holds(guard, &document)? {
+                signature.insert(guard.clone());
+            }
+        }
+        signatures.insert(signature);
+    }
+    sim_assert_eq!(have: signatures, want: BTreeSet::from([
+        BTreeSet::from([nil.clone(), absent]),
+        BTreeSet::from([nil]),
+        BTreeSet::new(),
+        BTreeSet::from([string.clone()]),
+        BTreeSet::from([truthy.clone()]),
+        BTreeSet::from([truthy.clone(), string.clone()]),
+        BTreeSet::from([truthy, string, postgres]),
+    ]));
+    Ok(())
 }

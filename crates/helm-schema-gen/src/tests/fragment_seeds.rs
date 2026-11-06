@@ -69,18 +69,32 @@ fn mapping_key_template_does_not_project_scalar_onto_parent_map_value_schema() {
         .pointer("/properties/account/properties/name")
         .expect("account.name present");
 
-    // A key position formats every scalar (a numeric key renders and
-    // YAML-to-JSON stringifies it), so the declared string default widens
-    // to the scalar union rather than pinning the raw input as a string.
-    sim_assert_eq!(
-        have: name.get("type"),
-        want: Some(&serde_json::json!(["boolean", "integer", "number", "string"])),
-        "mapping-key interpolation accepts the scalar union, got {name}"
-    );
     assert!(
         name.get("anyOf").is_none(),
         "mapping-key interpolation must not widen account.name with ConfigMap.data provider shape, got {name}"
     );
+    // Helm 4.2.3 verdicts (transfer/receipts/mapping_key_template_*{,-r2}): Go formats scalars and
+    // maps (`map[bad:1]`) into a plain mapping key, while a list renders as a flow sequence key and
+    // aborts YAML-to-JSON conversion. The ConfigMap value schema imposes no type on the key source.
+    // A string that breaks the key's YAML (`x: y`) also aborts; that lexical rejection is outside
+    // this test's scope and stays an accepted uncertainty (ADR 0013).
+    for (account, want) in [
+        (serde_json::json!({ "name": "surveyor" }), true),
+        (serde_json::json!({ "name": 7 }), true),
+        (serde_json::json!({ "name": 1.5 }), true),
+        (serde_json::json!({ "name": true }), true),
+        (serde_json::json!({ "name": { "bad": 1 } }), true),
+        (serde_json::json!({}), true),
+        (serde_json::json!({ "name": ["a"] }), false),
+        (serde_json::json!({ "name": [] }), false),
+    ] {
+        let instance = serde_json::json!({ "account": account });
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "mapping-key source verdict: instance={instance}; schema={schema}"
+        );
+    }
 }
 
 #[test]

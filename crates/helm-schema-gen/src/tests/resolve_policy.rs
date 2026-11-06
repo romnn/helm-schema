@@ -595,7 +595,7 @@ fn plain_string_comment_preimage_tracks_the_parsed_prefix() -> eyre::Result<()> 
 }
 
 #[test]
-fn plain_probe_port_preserves_provider_one_of_semantics() {
+fn plain_probe_port_preserves_provider_one_of_semantics() -> eyre::Result<()> {
     let src = indoc! {"
         apiVersion: v1
         kind: Pod
@@ -611,118 +611,32 @@ fn plain_probe_port_preserves_provider_one_of_semantics() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("port: 9878\n"));
 
-    sim_assert_eq!(have: schema, want: plain_probe_port_expected_schema());
+    for (port, accepted) in [
+        (serde_json::json!(9878), true),
+        (serde_json::json!("http"), true),
+        (serde_json::json!("http\n          host: localhost"), true),
+        // Known acceptance: Helm 4.2.3 rejects `a\n1` (exit 1, the continuation line is not a
+        // mapping entry), but the newline spelling class stays unresolved and widens open
+        // rather than guessing a rejection (ADR 0013). Receipt: plain_probe_port_*/original-invalid.
+        (serde_json::json!("a\n1"), true),
+        (serde_json::json!(true), false),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &serde_json::json!({"port": port})),
+            want: accepted,
+            "the provider union survives safe values and a Helm-proven placement escape: {port}"
+        );
+    }
+
+    sim_assert_eq!(have: schema, want: plain_probe_port_expected_schema()?);
+    Ok(())
 }
 
-#[expect(
-    clippy::too_many_lines,
-    reason = "the complete expected schema is clearest as one literal"
-)]
-fn plain_probe_port_expected_schema() -> Value {
-    serde_json::json!({
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            "properties": {
-                "global": {},
-                "port": {
-                    "oneOf": [
-                        {
-                            "anyOf": [
-                                {
-                                    "additionalProperties": {
-                                        "anyOf": [
-                                            { "type": "boolean" },
-                                            { "type": "integer" },
-                                            { "type": "null" },
-                                            { "type": "number" },
-                                            {
-                                                "allOf": [
-                                                    { "not": { "pattern": ":[ \\t]|:$" } },
-                                                    { "not": { "pattern": "[ \\t]#" } },
-                                                    { "not": { "pattern": "[\\r\\n]" } }
-                                                ],
-                                                "type": "string"
-                                            },
-                                            { "maxItems": 0, "type": "array" },
-                                            { "maxProperties": 0, "type": "object" }
-                                        ]
-                                    },
-                                    "propertyNames": {
-                                        "allOf": [
-                                            { "not": { "pattern": ":[ \\t]|:$" } },
-                                            { "not": { "pattern": "[ \\t]#" } },
-                                            { "not": { "pattern": "[\\r\\n]" } }
-                                        ],
-                                        "type": "string"
-                                    },
-                                    "type": "object"
-                                },
-                                {
-                                    "allOf": [
-                                        { "not": { "pattern": "^[!&*#{}\\[\\],|>@`%]" } },
-                                        { "not": { "pattern": "^[-?:]([ \\t]|$)" } },
-                                        { "not": { "pattern": ":[ \\t]|:$" } },
-                                        { "not": { "pattern": "[ \\t]#" } },
-                                        { "not": { "pattern": "[\\r\\n]" } },
-                                        { "not": { "pattern": "^(|~|null|Null|NULL)$" } },
-                                        {
-                                            "not": {
-                                                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                                            }
-                                        },
-                                        {
-                                            "not": {
-                                                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                                            }
-                                        },
-                                        {
-                                            "not": {
-                                                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                                            }
-                                        },
-                                        {
-                                            "not": {
-                                                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                                            }
-                                        }
-                                    ],
-                                    "type": "string"
-                                },
-                                {
-                                    "allOf": [
-                                        {
-                                            "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                                        },
-                                        {
-                                            "not": {
-                                                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                                            }
-                                        },
-                                        {
-                                            "not": {
-                                                "pattern": "^(null|Null|NULL)[ \\t]+#"
-                                            }
-                                        }
-                                    ],
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        {
-                            "anyOf": [
-                                {
-                                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-                                    "type": "string"
-                                },
-                                { "type": "integer" }
-                            ]
-                        }
-                    ]
-                }
-            },
-            "required": ["port"],
-            "type": "object"
-    })
+fn plain_probe_port_expected_schema() -> eyre::Result<Value> {
+    // A newline can rewrite the placement, so its unresolved spelling class stays open.
+    Ok(serde_json::from_str(include_str!(
+        "fixtures/plain_probe_port_preserves_provider_one_of_semantics.schema.json"
+    ))?)
 }
 
 #[test]

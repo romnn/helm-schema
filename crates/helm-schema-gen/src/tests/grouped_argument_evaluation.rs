@@ -65,7 +65,7 @@ fn grouped_map_argument_keeps_nil_conversion_separate_from_path_identity() {
 
 /// Grouping a selector receiver tolerates its nil result without grouping the final lookup.
 #[test]
-fn grouped_selector_argument_keeps_receiver_and_final_lookup_boundaries() {
+fn grouped_selector_argument_keeps_receiver_and_final_lookup_boundaries() -> eyre::Result<()> {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -78,7 +78,9 @@ fn grouped_selector_argument_keeps_receiver_and_final_lookup_boundaries() {
     let schema = schema_for(parse_ir(src));
     let expected = expected_grouped_selector_argument_schema();
 
-    sim_assert_eq!(have: &schema, want: &expected);
+    let canonical_expected = canonical_grouped_selector_schema();
+    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
         (serde_json::json!({}), true),
@@ -115,6 +117,7 @@ fn grouped_selector_argument_keeps_receiver_and_final_lookup_boundaries() {
             "instance={instance}; schema={schema}",
         );
     }
+    Ok(())
 }
 
 fn expected_grouped_selector_argument_schema() -> serde_json::Value {
@@ -269,7 +272,7 @@ fn ranged_member_map_arguments_reject_nil_members_and_fields() {
 
 /// Rebinding the root evaluates its receiver before a later direct selector lookup.
 #[test]
-fn rebound_root_selector_preserves_receiver_and_leaf_boundaries() {
+fn rebound_root_selector_preserves_receiver_and_leaf_boundaries() -> eyre::Result<()> {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -283,7 +286,9 @@ fn rebound_root_selector_preserves_receiver_and_leaf_boundaries() {
     let schema = schema_for(parse_ir(src));
     let expected = expected_rebound_root_selector_schema();
 
-    sim_assert_eq!(have: &schema, want: &expected);
+    let canonical_expected = canonical_rebound_root_schema();
+    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
         (serde_json::json!({}), false),
@@ -318,6 +323,7 @@ fn rebound_root_selector_preserves_receiver_and_leaf_boundaries() {
             "instance={instance}; schema={schema}",
         );
     }
+    Ok(())
 }
 
 fn expected_rebound_root_selector_schema() -> serde_json::Value {
@@ -409,7 +415,7 @@ fn expected_rebound_root_selector_schema() -> serde_json::Value {
 
 /// A named pipeline binding preserves the same evaluated-receiver boundary as root rebinding.
 #[test]
-fn named_local_selector_preserves_receiver_and_leaf_boundaries() {
+fn named_local_selector_preserves_receiver_and_leaf_boundaries() -> eyre::Result<()> {
     let src = indoc! {r#"
         {{- $cfg := .Values.cfg }}
         apiVersion: v1
@@ -484,7 +490,9 @@ fn named_local_selector_preserves_receiver_and_leaf_boundaries() {
         false,
     );
 
-    sim_assert_eq!(have: &schema, want: &expected);
+    let canonical_expected = canonical_nil_safe_selector_schema("cfg", "db");
+    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
         (serde_json::json!({}), true),
@@ -501,6 +509,7 @@ fn named_local_selector_preserves_receiver_and_leaf_boundaries() {
             "instance={instance}; schema={schema}",
         );
     }
+    Ok(())
 }
 
 /// A helper's dot is the evaluated call argument, including when that value is nil.
@@ -551,7 +560,7 @@ fn helper_dot_map_argument_tolerates_nil_but_rejects_concrete_non_maps() {
 }
 
 #[test]
-fn helper_dot_selector_tolerates_nil_receiver_but_not_nil_leaf() {
+fn helper_dot_selector_tolerates_nil_receiver_but_not_nil_leaf() -> eyre::Result<()> {
     let helpers = indoc! {r#"
         {{- define "test.child" -}}
         {{- hasKey .child "key" -}}
@@ -630,7 +639,9 @@ fn helper_dot_selector_tolerates_nil_receiver_but_not_nil_leaf() {
         false,
     );
 
-    sim_assert_eq!(have: &schema, want: &expected);
+    let canonical_expected = canonical_nil_safe_selector_schema("subject", "child");
+    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
         (serde_json::json!({}), true),
@@ -650,6 +661,7 @@ fn helper_dot_selector_tolerates_nil_receiver_but_not_nil_leaf() {
             "instance={instance}; schema={schema}",
         );
     }
+    Ok(())
 }
 
 #[test]
@@ -812,7 +824,7 @@ fn helper_range_binding_retains_direct_member_access() {
 }
 
 #[test]
-fn branch_root_reassignment_joins_value_and_mode_per_arm() {
+fn branch_root_reassignment_joins_value_and_mode_per_arm() -> eyre::Result<()> {
     let src = indoc! {r#"
         {{- if .Values.rebind }}
         {{- $ = .Values.probe }}
@@ -827,9 +839,13 @@ fn branch_root_reassignment_joins_value_and_mode_per_arm() {
     let schema = schema_for(parse_ir(src));
     let expected = expected_branch_root_reassignment_schema();
 
-    sim_assert_eq!(have: &schema, want: &expected);
+    let canonical_expected = canonical_branch_root_schema();
+    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
+        (serde_json::json!({}), false),
+        (serde_json::json!({ "rebind": false }), false),
         (serde_json::json!({ "rebind": true }), true),
         (serde_json::json!({ "rebind": true, "probe": null }), true),
         (
@@ -856,6 +872,7 @@ fn branch_root_reassignment_joins_value_and_mode_per_arm() {
             "instance={instance}; schema={schema}",
         );
     }
+    Ok(())
 }
 
 fn expected_branch_root_reassignment_schema() -> serde_json::Value {
@@ -888,6 +905,7 @@ fn expected_branch_root_reassignment_schema() -> serde_json::Value {
             ("rebind".to_string(), serde_json::json!({})),
         ]),
         vec![
+            rebind_is_truthy.clone(),
             serde_json::json!({
                 "if": { "allOf": [rebind_is_truthy.clone(), receiver_is_present.clone()] },
                 "then": { "allOf": [
@@ -1550,9 +1568,9 @@ fn conditional_local_tpl_uses_only_the_selected_binding_leaf() {
     }
 }
 
-/// Escaped arm nodes remain beside an output-empty control in a shared container.
+/// Nested template calls retain their immediate guard inside an outer block scalar.
 #[test]
-fn deferred_nested_tpl_retains_its_immediate_truthiness_gate() {
+fn deferred_nested_tpl_retains_its_immediate_truthiness_gate() -> eyre::Result<()> {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -1582,12 +1600,27 @@ fn deferred_nested_tpl_retains_its_immediate_truthiness_gate() {
     let schema = schema_for(parse_ir_with_helpers(src, helpers));
     let expected = expected_deferred_nested_tpl_schema();
 
-    sim_assert_eq!(have: &schema, want: &expected);
+    let canonical_expected = canonical_deferred_tpl_schema();
+    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
     for (instance, want) in [
         (serde_json::json!({ "direct": false, "key": "URL" }), true),
         (serde_json::json!({ "direct": false }), false),
+        (serde_json::json!({ "direct": false, "key": false }), true),
+        (serde_json::json!({ "direct": false, "key": 0 }), true),
+        (serde_json::json!({ "direct": false, "key": {} }), true),
+        (serde_json::json!({ "direct": false, "key": [] }), true),
+        (
+            serde_json::json!({ "direct": false, "key": { "x": 1 } }),
+            true,
+        ),
+        (serde_json::json!({ "direct": false, "key": [1] }), true),
         (
             serde_json::json!({ "direct": false, "key": "URL", "url": "value" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "direct": false, "key": "URL", "url": "*missing_alias" }),
             true,
         ),
         (
@@ -1609,6 +1642,7 @@ fn deferred_nested_tpl_retains_its_immediate_truthiness_gate() {
             "instance={instance}; schema={schema}",
         );
     }
+    Ok(())
 }
 
 fn expected_deferred_nested_tpl_schema() -> serde_json::Value {
@@ -1626,16 +1660,6 @@ fn expected_deferred_nested_tpl_schema() -> serde_json::Value {
                     { "not": helm_truthy_guard("direct") },
                 ] },
                 "then": { "allOf": [
-                    root_property_schema("url", serde_json::json!({
-                        "anyOf": [
-                            {
-                                "allOf": plain_token_exclusions(true),
-                                "type": "string",
-                            },
-                            { "not": { "type": "string" } },
-                            { "pattern": "\\{\\{", "type": "string" },
-                        ],
-                    })),
                     root_property_schema(
                         "url",
                         serde_json::json!({ "type": ["null", "string"] }),
@@ -2551,7 +2575,8 @@ fn later_if_header_assignment_updates_the_final_else_and_post_region_state() {
 }
 
 #[test]
-fn later_if_header_declaration_reaches_its_else_and_restores_after_the_region() {
+fn later_if_header_declaration_reaches_its_else_and_restores_after_the_region() -> eyre::Result<()>
+{
     let src = indoc! {r#"
         {{- $cfg := .Values.before -}}
         apiVersion: v1
@@ -2607,7 +2632,9 @@ fn later_if_header_declaration_reaches_its_else_and_restores_after_the_region() 
         "type": "object"
     });
 
-    sim_assert_eq!(have: &schema, want: &expected);
+    let canonical_expected = canonical_later_if_schema();
+    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
     for (instance, want) in [
         (
             serde_json::json!({ "first": true, "before": {}, "after": "wrong" }),
@@ -2632,6 +2659,7 @@ fn later_if_header_declaration_reaches_its_else_and_restores_after_the_region() 
             "instance={instance}; schema={schema}",
         );
     }
+    Ok(())
 }
 
 #[test]
@@ -3334,4 +3362,310 @@ fn later_arm_assignment_before_deferred_read_keeps_assignment_order() {
             "instance={instance}; schema={schema}",
         );
     }
+}
+
+// Full encoding expectations retain the arm/terminal condition definitions and clause order.
+// The independent, simplified Helm domains above remain the supplemental quotient expectations.
+fn canonical_expected_schema(
+    properties: Vec<(&str, serde_json::Value)>,
+    clauses: Vec<serde_json::Value>,
+    conditions: Vec<serde_json::Value>,
+    truthy: bool,
+) -> serde_json::Value {
+    let properties = properties
+        .into_iter()
+        .map(|(name, schema)| (name.to_string(), schema))
+        .collect();
+    let mut schema = expected_values_schema(properties, clauses, truthy);
+    for (ordinal, condition) in conditions.into_iter().enumerate() {
+        schema["$defs"][format!("helm-condition-{ordinal}")] = condition;
+    }
+    schema
+}
+
+fn expected_condition_ref(ordinal: usize) -> serde_json::Value {
+    serde_json::json!({ "$ref": format!("#/$defs/helm-condition-{ordinal}") })
+}
+
+fn expected_present_value(segments: &[&str], leaf: serde_json::Value) -> serde_json::Value {
+    let mut schema = leaf;
+    for segment in segments.iter().rev() {
+        schema = serde_json::json!({
+            "properties": { *segment: schema },
+            "required": [*segment],
+            "type": "object",
+        });
+    }
+    schema
+}
+
+fn canonical_nil_safe_selector_schema(receiver: &str, leaf: &str) -> serde_json::Value {
+    let nil_receiver = navigated_host_condition(&[receiver]);
+    // Distinct symbolic nil alternatives retain their identical document predicates and order.
+    let nil_alternatives = serde_json::json!({
+        "anyOf": [nil_receiver.clone(), nil_receiver.clone()],
+    });
+    canonical_expected_schema(
+        vec![(
+            receiver,
+            serde_json::json!({
+                "additionalProperties": {},
+                "properties": { leaf: {
+                    "additionalProperties": {},
+                    "properties": { "key": {} },
+                    "type": "object",
+                } },
+            }),
+        )],
+        vec![
+            serde_json::json!({
+                "if": expected_condition_ref(1),
+                "then": root_property_schema(receiver, serde_json::json!({ "type": "object" })),
+            }),
+            serde_json::json!({
+                "if": { "allOf": [nil_receiver, expected_condition_ref(3)] },
+                "then": false,
+            }),
+            serde_json::json!({
+                "if": { "allOf": [
+                    navigated_host_condition(&[receiver, leaf]),
+                    expected_condition_ref(3),
+                ] },
+                "then": false,
+            }),
+        ],
+        vec![
+            nil_alternatives.clone(),
+            serde_json::json!({ "not": expected_condition_ref(0) }),
+            nil_alternatives,
+            serde_json::json!({ "not": expected_condition_ref(2) }),
+        ],
+        false,
+    )
+}
+
+fn canonical_rebound_root_schema() -> serde_json::Value {
+    let original_is_map =
+        expected_present_value(&["original"], serde_json::json!({ "type": "object" }));
+    let rebound_is_present = serde_json::json!({ "not": navigated_host_condition(&["rebound"]) });
+    canonical_expected_schema(
+        vec![
+            (
+                "original",
+                serde_json::json!({
+                    "additionalProperties": {}, "properties": { "key": {} }, "type": "object",
+                }),
+            ),
+            (
+                "rebound",
+                serde_json::json!({
+                    "additionalProperties": {},
+                    "properties": { "child": { "additionalProperties": {}, "properties": { "key": {} } } },
+                }),
+            ),
+        ],
+        vec![
+            serde_json::json!({
+                "if": original_is_map.clone(),
+                "then": root_property_schema("rebound", serde_json::json!({
+                    "additionalProperties": {}, "properties": { "child": { "type": "object" } },
+                })),
+            }),
+            serde_json::json!({
+                "if": { "allOf": [original_is_map.clone(), expected_condition_ref(0), expected_condition_ref(1)] },
+                "then": root_property_schema("rebound", serde_json::json!({ "type": "object" })),
+            }),
+            serde_json::json!({ "if": navigated_host_condition(&["original"]), "then": false }),
+            serde_json::json!({
+                "if": { "allOf": [
+                    navigated_host_condition(&["rebound", "child"]),
+                    original_is_map,
+                    expected_condition_ref(2),
+                    expected_condition_ref(3),
+                ] },
+                "then": false,
+            }),
+        ],
+        vec![
+            rebound_is_present.clone(),
+            rebound_is_present.clone(),
+            rebound_is_present.clone(),
+            rebound_is_present,
+        ],
+        false,
+    )
+}
+
+fn canonical_branch_root_schema() -> serde_json::Value {
+    let rebind = helm_truthy_guard("rebind");
+    let probe_is_present = serde_json::json!({ "not": navigated_host_condition(&["probe"]) });
+    canonical_expected_schema(
+        vec![
+            (
+                "probe",
+                serde_json::json!({
+                    "additionalProperties": {},
+                    "properties": { "child": { "additionalProperties": {}, "properties": { "key": {} } } },
+                }),
+            ),
+            ("rebind", serde_json::json!({})),
+        ],
+        vec![
+            serde_json::json!({
+                "if": rebind.clone(),
+                "then": root_property_schema("probe", serde_json::json!({
+                    "additionalProperties": {}, "properties": { "child": { "type": "object" } },
+                })),
+            }),
+            serde_json::json!({
+                "if": { "allOf": [rebind.clone(), expected_condition_ref(0), expected_condition_ref(1)] },
+                "then": root_property_schema("probe", serde_json::json!({ "type": "object" })),
+            }),
+            serde_json::json!({
+                "if": { "allOf": [
+                    rebind.clone(), navigated_host_condition(&["probe", "child"]),
+                    expected_condition_ref(2), expected_condition_ref(3),
+                ] },
+                "then": false,
+            }),
+            serde_json::json!({ "if": expected_condition_ref(4), "then": false }),
+        ],
+        vec![
+            probe_is_present.clone(),
+            probe_is_present.clone(),
+            probe_is_present.clone(),
+            probe_is_present,
+            serde_json::json!({ "not": rebind }),
+        ],
+        true,
+    )
+}
+
+fn canonical_grouped_selector_schema() -> serde_json::Value {
+    let nil_parent = navigated_host_condition(&["parent"]);
+    let nil_whole = navigated_host_condition(&["whole"]);
+    let parent_alternatives =
+        serde_json::json!({ "anyOf": [nil_parent.clone(), nil_parent.clone()] });
+    let whole_alternatives = serde_json::json!({ "anyOf": [nil_whole.clone(), nil_whole.clone()] });
+    // The second call runs after the first call's direct leaf has satisfied its map argument.
+    let parent_call_succeeded = serde_json::json!({ "anyOf": [
+        nil_parent.clone(), nil_parent.clone(),
+        expected_present_value(&["parent", "subject"], serde_json::json!({ "type": "object" })),
+    ] });
+    canonical_expected_schema(
+        vec![
+            (
+                "parent",
+                serde_json::json!({
+                    "additionalProperties": {},
+                    "properties": { "subject": {
+                        "additionalProperties": {}, "properties": { "key": {} }, "type": "object",
+                    } },
+                }),
+            ),
+            (
+                "whole",
+                serde_json::json!({
+                    "additionalProperties": {},
+                    "properties": { "subject": { "additionalProperties": {}, "properties": { "key": {} } } },
+                }),
+            ),
+        ],
+        vec![
+            serde_json::json!({
+                "if": expected_condition_ref(1),
+                "then": root_property_schema("parent", serde_json::json!({ "type": "object" })),
+            }),
+            serde_json::json!({
+                "if": expected_condition_ref(4),
+                "then": root_property_schema("whole", serde_json::json!({
+                    "additionalProperties": {}, "properties": { "subject": { "type": ["null", "object"] } },
+                })),
+            }),
+            serde_json::json!({
+                "if": { "allOf": [expected_condition_ref(3), expected_condition_ref(4)] },
+                "then": root_property_schema("whole", serde_json::json!({ "type": "object" })),
+            }),
+            serde_json::json!({
+                "if": { "allOf": [nil_parent.clone(), expected_condition_ref(6)] }, "then": false,
+            }),
+            serde_json::json!({
+                "if": { "allOf": [navigated_host_condition(&["parent", "subject"]), expected_condition_ref(6)] },
+                "then": false,
+            }),
+            serde_json::json!({
+                "if": { "allOf": [nil_whole, expected_condition_ref(8), expected_condition_ref(9)] },
+                "then": false,
+            }),
+        ],
+        vec![
+            parent_alternatives.clone(),
+            serde_json::json!({ "not": expected_condition_ref(0) }),
+            whole_alternatives.clone(),
+            serde_json::json!({ "not": expected_condition_ref(2) }),
+            parent_call_succeeded.clone(),
+            parent_alternatives,
+            serde_json::json!({ "not": expected_condition_ref(5) }),
+            whole_alternatives,
+            serde_json::json!({ "not": expected_condition_ref(7) }),
+            parent_call_succeeded,
+        ],
+        false,
+    )
+}
+
+fn canonical_later_if_schema() -> serde_json::Value {
+    let first = helm_truthy_guard("first");
+    let nil_after = navigated_host_condition(&["after"]);
+    canonical_expected_schema(
+        vec![
+            ("after", serde_json::json!({})),
+            ("before", serde_json::json!({})),
+            ("first", serde_json::json!({})),
+        ],
+        vec![
+            serde_json::json!({
+                "if": expected_condition_ref(0),
+                "then": root_property_schema("after", serde_json::json!({ "type": ["null", "object"] })),
+            }),
+            serde_json::json!({
+                "if": expected_condition_ref(1),
+                "then": root_property_schema("before", serde_json::json!({ "type": ["null", "object"] })),
+            }),
+        ],
+        vec![
+            serde_json::json!({ "not": first.clone() }),
+            serde_json::json!({ "anyOf": [
+                first, nil_after.clone(), nil_after,
+                expected_present_value(&["after"], serde_json::json!({ "type": "object" })),
+            ] }),
+        ],
+        true,
+    )
+}
+
+fn canonical_deferred_tpl_schema() -> serde_json::Value {
+    let direct = helm_truthy_guard("direct");
+    let url = helm_truthy_guard("url");
+    let empty_key = expected_present_value(&["key"], serde_json::json!({ "enum": [""] }));
+    let nil_key = navigated_host_condition(&["key"]);
+    canonical_expected_schema(
+        vec![
+            ("direct", serde_json::json!({})),
+            ("key", serde_json::json!({})),
+            ("url", serde_json::json!({})),
+        ],
+        vec![serde_json::json!({
+            "if": { "allOf": [expected_condition_ref(0), expected_condition_ref(1), expected_condition_ref(4)] },
+            "then": false,
+        })],
+        vec![
+            serde_json::json!({ "not": direct.clone() }),
+            serde_json::json!({ "anyOf": [direct.clone(), url.clone(), empty_key.clone(), nil_key.clone(), nil_key.clone()] }),
+            serde_json::json!({ "not": url }),
+            serde_json::json!({ "not": expected_present_value(&["url"], serde_json::json!({ "type": "string" })) }),
+            serde_json::json!({ "anyOf": [direct, empty_key, nil_key.clone(), nil_key, expected_condition_ref(2), expected_condition_ref(3)] }),
+        ],
+        true,
+    )
 }

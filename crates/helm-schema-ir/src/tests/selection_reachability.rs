@@ -60,39 +60,51 @@ fn partial_truth_keeps_its_positive_proof_without_inverting_the_unknown_remainde
 }
 
 #[test]
-fn condition_polarities_preserve_independent_partial_proofs() {
-    let positive =
-        execute(r#"{{ if or .Values.enabled (eq (randAlphaNum 1) "a") }}# selected{{ end }}"#);
-    let negative = execute(
-        r#"{{ if not (or .Values.enabled (eq (randAlphaNum 1) "a")) }}# selected{{ end }}"#,
-    );
-    let positive = positive
-        .text_sites()
-        .filter(|site| site.bytes() == "# selected")
-        .collect::<Vec<_>>();
-    let negative = negative
-        .text_sites()
-        .filter(|site| site.bytes() == "# selected")
-        .collect::<Vec<_>>();
-    assert!(
-        positive
-            .iter()
-            .any(|site| site.coverage_exact()
-                && site.condition() == Predicate::truthy_path("enabled")),
-        "the known positive arm was lost"
-    );
-    assert!(
-        positive.iter().any(|site| !site.coverage_exact()),
-        "the random remainder became exact"
-    );
-    assert!(
-        !negative.is_empty(),
-        "the possible negative arm was dropped"
-    );
-    assert!(
-        negative.iter().all(|site| !site.coverage_exact()),
-        "the random remainder became an exact complement"
-    );
+fn condition_polarities_preserve_independent_partial_proofs() -> eyre::Result<()> {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    for (source, positive) in [
+        (
+            r#"{{ if or .Values.enabled (eq (randAlphaNum 1) "a") }}# selected{{ end }}"#,
+            true,
+        ),
+        (
+            r#"{{ if not (or .Values.enabled (eq (randAlphaNum 1) "a")) }}# selected{{ end }}"#,
+            false,
+        ),
+    ] {
+        let start = source
+            .find("# selected")
+            .ok_or_eyre("missing selected marker")?;
+        let span = helm_schema_syntax::Span::new(start, start + "# selected".len());
+        crate::tests::support::with_execution(source, None, &db, |execution| {
+            let expected = if positive {
+                Predicate::truthy_path("enabled")
+            } else {
+                Predicate::False
+            };
+            sim_assert_eq!(have: execution.observed_marker_sufficient_condition(span), want: expected);
+            assert!(
+                !execution.observed_marker_complete(span),
+                "the random remainder became exact"
+            );
+            let sites = execution
+                .text_sites()
+                .filter(|site| site.bytes() == "# selected")
+                .collect::<Vec<_>>();
+            assert!(!sites.is_empty(), "the possible arm was dropped");
+            assert!(
+                sites.iter().any(|site| !site.coverage_exact()),
+                "the random remainder became exact"
+            );
+            if !positive {
+                assert!(
+                    sites.iter().all(|site| !site.coverage_exact()),
+                    "the random remainder became an exact complement"
+                );
+            }
+        });
+    }
+    Ok(())
 }
 
 #[test]

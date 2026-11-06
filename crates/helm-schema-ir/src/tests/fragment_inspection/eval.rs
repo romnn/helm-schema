@@ -46,9 +46,34 @@ pub(crate) fn project_execution_at_offset(
     db: &IrAnalysisDb,
     execution: &DocumentExecution,
 ) -> EvaluatedDocument {
+    inspect_execution(source_path, source_offset, db, execution, false)
+}
+
+/// Preserve literal-only layouts when inspecting the complete executed document.
+pub(crate) fn project_complete_execution_at_offset(
+    source_path: Option<&str>,
+    source_offset: usize,
+    db: &IrAnalysisDb,
+    execution: &DocumentExecution,
+) -> EvaluatedDocument {
+    inspect_execution(source_path, source_offset, db, execution, true)
+}
+
+fn inspect_execution(
+    source_path: Option<&str>,
+    source_offset: usize,
+    db: &IrAnalysisDb,
+    execution: &DocumentExecution,
+    include_literals: bool,
+) -> EvaluatedDocument {
     let mut root = Guarded::empty();
     let mut observed_facts = execution.observed_facts().clone();
-    for document in execution.placed_documents() {
+    let documents = if include_literals {
+        execution.inspection_documents().collect::<Vec<_>>()
+    } else {
+        execution.placed_documents().collect::<Vec<_>>()
+    };
+    for document in documents {
         let resources = crate::resource_identity::placed_resources(&document, execution);
         observed_facts
             .resources

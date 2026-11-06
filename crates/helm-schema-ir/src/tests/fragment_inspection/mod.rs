@@ -7,4 +7,4 @@ mod lower;
 
 pub(crate) use dump::dump_document;
 pub(crate) use eval::EvaluatedDocument;
-pub(crate) use eval::project_execution_at_offset;
+pub(crate) use eval::{project_complete_execution_at_offset, project_execution_at_offset};

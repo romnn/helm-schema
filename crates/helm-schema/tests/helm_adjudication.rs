@@ -141,6 +141,11 @@ fn every_helm_child_is_recorded_under_its_stage() -> eyre::Result<()> {
 fn only_renders_of_a_nondeterministic_chart_bypass_replay() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_adjudication")?;
     let cache = ScratchDir::new("helm_adjudication")?;
+    let invocation_cache = ScratchDir::new("helm_adjudication")?;
+    let runner: &'static _ = Box::leak(Box::new(helm_invocation::HelmRunner::new(
+        invocation_cache.path(),
+        true,
+    )?));
     write_chart(root.path(), "clock", "token: original\n")?;
     write_configmap_schema(cache.path())?;
     fs::write(
@@ -155,7 +160,7 @@ fn only_renders_of_a_nondeterministic_chart_bypass_replay() -> eyre::Result<()> 
           year: {{ now | date "2006" | quote }}
     "#},
     )?;
-    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, root.path())?;
+    let chart = PinnedHelmChart::prepare(runner, root.path())?;
     let probe = chart.adjudicate(&json!({"token": "changed"}))?;
     OfflineKubernetesValidator::new(cache.path(), helm_adjudication::KUBERNETES_RELEASE)?
         .compare_with_defaults(&chart, &probe)?;

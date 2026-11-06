@@ -6,7 +6,10 @@
 
 use indoc::indoc;
 
-use super::{parse_ir, parse_ir_with_helpers, schema_accepts_instance, schema_for_values_yaml};
+use super::{
+    parse_ir, parse_ir_with_files, parse_ir_with_helpers, schema_accepts_instance,
+    schema_for_values_yaml,
+};
 
 const ENGINE_HELPERS: &str = indoc! {r#"
     {{- define "test.tplValues" -}}
@@ -105,39 +108,34 @@ fn program_wrappers_do_not_rewrite_truthiness_definitions() {
     }
 }
 
-/// An engine with a replace AND a spread sentinel: the spread key's
-/// `hasKey` test guards a `fail` (the root-object refusal), which
-/// classifies it structurally. Program constraints then differ per key —
-/// the replace program must be able to inhabit the node, the spread
-/// program must be able to spread into the parent collection's kind.
-const SPREAD_ENGINE_HELPERS: &str = indoc! {r#"
-    {{- define "test.tplValues" -}}
-    {{- $doc := .doc -}}
-    {{- if and (eq (kindOf $doc) "map") (eq (len $doc) 1) (or (hasKey $doc "$tplYaml") (hasKey $doc "$tplYamlSpread")) -}}
-    {{- $tpl := get $doc "$tplYaml" -}}
-    {{- if hasKey $doc "$tplYamlSpread" -}}
-    {{- if eq .path "/" -}}
-    {{- fail "cannot spread on the root object" -}}
-    {{- end -}}
-    {{- $tpl = get $doc "$tplYamlSpread" -}}
-    {{- end -}}
-    {{- toJson (dict "doc" (fromYaml (tpl $tpl .ctx))) -}}
-    {{- else -}}
-    {{- toJson (dict "doc" $doc) -}}
-    {{- end -}}
-    {{- end -}}
-"#};
+/// An engine with a replace AND a spread sentinel: nats' own recursive
+/// `tplYaml` engine (verbatim from the corpus chart), which walks the whole
+/// values tree, replaces singleton `$tplYaml` maps with their decoded
+/// program result and splices `$tplYamlSpread` results into the parent
+/// collection, failing when the result kind cannot spread there. The engine
+/// runs before the manifest reads `.Values`, so the labels render the
+/// rewritten tree.
+const SPREAD_ENGINE_FILES: [(&str, &str); 2] = [
+    (
+        "templates/_tplYaml.tpl",
+        include_str!("../../../../testdata/charts/nats/templates/_tplYaml.tpl"),
+    ),
+    (
+        "templates/_jsonpatch.tpl",
+        include_str!("../../../../testdata/charts/nats/templates/_jsonpatch.tpl"),
+    ),
+];
 
 const SPREAD_ENGINE_SRC: &str = indoc! {r#"
+    {{- $values := get (include "tplYaml" (dict "doc" .Values "ctx" $) | fromJson) "doc" }}
+    {{- $_ := set . "Values" $values }}
     apiVersion: v1
     kind: ConfigMap
     metadata:
       name: test
-      labels: {{ .Values.labels | toYaml | nindent 4 }}
-    data:
-      port: {{ .Values.port }}
-    {{- $values := get (include "test.tplValues" (dict "doc" .Values "ctx" $ "path" "/") | fromJson) "doc" }}
-    {{- $_ := set . "Values" $values }}
+      {{- with .Values.labels }}
+      labels: {{ toYaml . | nindent 4 }}
+      {{- end }}
 "#};
 
 /// The engine substitutes wrapper maps before consumers read the tree, so
@@ -146,15 +144,26 @@ const SPREAD_ENGINE_SRC: &str = indoc! {r#"
 /// replace program whose decoded kind certainly cannot inhabit the node
 /// rejects; a spread program whose decoded kind cannot spread into the
 /// parent map rejects; dynamic programs stay open.
+///
+/// Every verdict is adjudicated with Helm 4.2.3 and the `ConfigMap` destination
+/// schema over the coalesced document (`transfer/receipts/wrapper_program_*-r2`).
+/// One accepted verdict is a documented uncertainty (ADR 0013): the dynamic
+/// replace program `{{ .Release.Name }}` renders a string label set, which the
+/// destination rejects, but a template program's result is not decided
+/// statically.
+///
+/// Kept red on the current model, as at the line base: the interpreter does not
+/// carry the values tree through the engine's recursive `tplYamlItr` patch
+/// walk and `jsonpatch` application, so the rewritten `.Values` is opaque. The
+/// schema then has no `labels` node, admits every root member, and emits
+/// neither the wrapper alternatives nor the replace/spread program
+/// constraints. Missing mechanism: executing the recursive values rewrite
+/// (patch list construction and application) as ordinary value flow.
 #[test]
 fn wrapper_program_results_must_be_compatible_with_node_and_parent() {
     let schema = schema_for_values_yaml(
-        parse_ir_with_helpers(SPREAD_ENGINE_SRC, SPREAD_ENGINE_HELPERS),
-        Some(indoc! {"
-            port: 4222
-            labels:
-              app: test
-        "}),
+        parse_ir_with_files(SPREAD_ENGINE_SRC, &SPREAD_ENGINE_FILES),
+        Some("labels: {}\n"),
     );
     for (instance, want) in [
         // Replace programs at the object-typed node: the decoded result
@@ -213,6 +222,8 @@ fn wrapper_program_results_must_be_compatible_with_node_and_parent() {
             serde_json::json!({ "labels": { "$tplYaml": "true", "x": "y" } }),
             true,
         ),
+        (serde_json::json!({ "labels": {} }), true),
+        (serde_json::json!({}), true),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,

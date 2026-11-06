@@ -4,6 +4,7 @@
 //! were dropped (luup3 `common.*` dict-config pattern).
 
 use crate::SymbolicIrContext;
+use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_eval::dump_document;
 use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
@@ -15,7 +16,8 @@ fn assert_fragment_dump(source: &str, helpers: &str, expected: &str) {
     if !helpers.is_empty() {
         idx.add_file_source("_helpers.tpl", helpers);
     }
-    let document = SymbolicIrContext::new(&idx).eval_document_fragment(source);
+    let document =
+        crate::tests::support::eval_complete_document(source, None, &IrAnalysisDb::new(&idx));
     sim_assert_eq!(have: dump_document(&document), want: expected);
 }
 

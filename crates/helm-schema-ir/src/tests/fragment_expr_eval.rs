@@ -247,24 +247,44 @@ fn expression_source(expression: &TemplateExpr) -> String {
 }
 
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): wrapped with program keeps exact else requirements; tracked in plan/value-algebra-r3b.md follow-ups"]
+#[ignore = "R3b missing mechanism: the wrapped block-scalar else arm exports no hard auth.username requirement."]
 fn wrapped_with_program_keeps_exact_else_requirements() {
     let defines = DefineIndex::new();
-    let context = crate::SymbolicIrContext::new(&defines);
     let source = indoc! {r#"
         program: |-
           {{- with $tenants := .Values.tenants }}{{ $tenants }}{{- else }}{{ required "username required" .Values.auth.username }}{{- end }}
     "#};
-    let document = context.eval_document_fragment(source);
-    assert!(
-        !document.observed_facts.captures.is_empty()
-            && document
-                .observed_facts
-                .captures
-                .iter()
-                .all(|capture| !capture.contains_approximation()),
-        "{document:#?}"
-    );
+    let db = IrAnalysisDb::new(&defines);
+    super::support::with_execution(source, None, &db, |execution| {
+        let requirements: Vec<_> = execution
+            .observed_facts()
+            .consumptions
+            .iter()
+            .filter(|consumption| {
+                matches!(
+                    &consumption.domain,
+                    crate::value::ConsumptionDomain::Known { .. }
+                )
+            })
+            .collect();
+        assert!(
+            !requirements.is_empty()
+                && requirements
+                    .iter()
+                    .any(|requirement| requirement.path == ValuesPath::parse("auth.username"))
+                && requirements
+                    .iter()
+                    .all(|requirement| !requirement.test_condition().contains_approximation()),
+            "the else arm must retain nonempty exact executed requirements: {requirements:#?}"
+        );
+        let contract = super::support::project_execution(source, None, &db, execution)
+            .contract
+            .finalize();
+        assert!(
+            !contract.schema_signals().terminal_clauses().is_empty(),
+            "the exact required failure must survive export: {contract:#?}"
+        );
+    });
 }
 
 #[test]

@@ -390,7 +390,7 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
                 - name: app
                   image: nginx
                   {{- if .Values.livenessProbe.enabled }}
-                  livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled" "probeCommandTimeout") "context" $) | nindent 20 }}
+                  livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled" "probeCommandTimeout") "context" $) | nindent 12 }}
                     exec:
                       command: ['/bin/bash', '-c', 'timeout {{ .Values.livenessProbe.probeCommandTimeout }} true']
                   {{- end }}
@@ -1182,10 +1182,11 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
     );
 }
 
-/// A scalar spliced as a mapping KEY formats every scalar kind — a numeric
-/// label key renders `7:` and YAML-to-JSON stringifies it — so the declared
-/// string default widens to the scalar union while composite inputs stay
-/// out of the key lane (external-secrets' `grafanaDashboard.sidecarLabel`).
+/// A value spliced as a mapping KEY formats every scalar kind — a numeric
+/// label key renders `7:` and YAML-to-JSON stringifies it — and Go formats a
+/// map as one plain scalar (`map[bad:1]`), so the declared string default
+/// widens beyond strings. Lists, null and an absent key still abort the
+/// render (external-secrets' `grafanaDashboard.sidecarLabel`).
 #[test]
 fn mapping_key_splice_accepts_every_scalar_kind() {
     let src = indoc! {r#"
@@ -1201,11 +1202,16 @@ fn mapping_key_splice_accepts_every_scalar_kind() {
         (serde_json::json!({ "sidecarLabel": 7 }), true),
         (serde_json::json!({ "sidecarLabel": true }), true),
         (serde_json::json!({ "sidecarLabel": "ok" }), true),
-        (serde_json::json!({ "sidecarLabel": { "bad": 1 } }), false),
+        (serde_json::json!({ "sidecarLabel": { "bad": 1 } }), true),
+        // Helm 4.2.3 aborts on each of these (transfer/receipts/mapping_key_splice_*{,-r2}): a list
+        // renders an invalid map key, and null or absent render an empty key (`: "1"`).
+        (serde_json::json!({ "sidecarLabel": ["a"] }), false),
+        (serde_json::json!({ "sidecarLabel": null }), false),
+        (serde_json::json!({}), false),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
-            "key positions format scalars and exclude composites: \
+            "key positions accept scalars and safely formatted maps: \
              instance={instance}; schema={schema}"
         );
     }

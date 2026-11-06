@@ -662,3 +662,12 @@ fn stringification_does_not_reapply_an_overwritten_input_members_text() -> eyre:
     sim_assert_eq!(have: states.get(&super::LexicalState::Invalid), want: None);
     Ok(())
 }
+
+impl super::FilePlacement {
+    /// Inspect sealed YAML ownership even when a layout has no constraint-bearing origin.
+    pub(crate) fn inspection_documents(&self) -> impl Iterator<Item = super::PlacedDocument<'_>> {
+        self.outputs
+            .iter()
+            .flat_map(super::OutputPlacement::placed_documents)
+    }
+}
