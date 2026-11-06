@@ -10476,4 +10476,6 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Seam requests: S11 (WFREE2) layered remainder; S10 (CATALOG1) accepts-any-type and decoder-pairing columns.
   - Continuation briefed with its 29 ignored-test witnesses and TESTPORT1's corrected fail_validators.rs:917 expectation.
 
+- 08:20 (Nov 06) — **Memory free 52%: CPUPROF launched (native).** It profiles the WFREE+GUARDX base against main on the 10 worst of the 39 over-main charts (paired, interleaved, Perfetto spans). Output: span families with excess seconds, owning lane, structural fix and estimated saving, plus the F1–F3 status. Reason: the base corpus total is 1.12× main, which blocks landing, and no lane owns corpus-wide CPU attribution.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
