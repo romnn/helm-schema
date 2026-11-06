@@ -10416,4 +10416,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
 
 - 03:40 (Nov 06) — **T7 cleanup done: free space 50 → 188 GiB.** Removed six idle cargo target folders (guardl/wfree-{d231,s1,lineperf}, r3b-tplt, effects1/abort1-{d23159c7,s1}). Clones and evidence were kept.
 
+- 04:20 (Nov 06) — **TESTPORT1 hands back a test-only patch: units 258→223, integration 166→162, 0 new failure IDs. A native Opus pre-landing review is running.**
+  - Patch: testport1.patch, 39 test files against ef701ad1, sha 4bebfccd.
+  - View ports: 43 repointed; 9 pass, 34 kept red with named mechanisms.
+  - Open adjudications: 9; 5 pass, 4 red.
+  - UNITREC rewrites: 24, rechecked with 212 Helm cases; 21 pass, 3 red.
+  - Encoding-only integration group: 17 compared; 5 updated (4 pass), 11 semantic differences left red.
+  - Extension: 1 of 7 ignored view tests enabled.
+  - fail_validators.rs:917: adjudicated with 36 Helm controls; the corrected test stays ignored and red (the raw 3 gap).
+  - Gates: fmt 0, lint 0, lint:fc 0, units 100, integration 201.
+  - Plan: land on r3b/construction directly if the review says LAND. It is test-only and moves no fixtures, so no battery is needed.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
