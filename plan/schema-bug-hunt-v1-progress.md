@@ -10464,4 +10464,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Routing: TPLT2 steered (S6, loki). A native measurement lane, STACKLA, stacks CATALOG1 (it claims charged-work export admission and catalog has/mustHas) under ABORT3 on WFREE+GUARDX and measures loki.
   - The corpus-total CPU gap (base 1.12× main) is an open landing blocker that WFREE2 owns first.
 
+- 08:20 (Nov 06) — **DECODE1 X2 checkpoint: 22 laws red→green, units 255→251, corpus replay identical to base (0 closures, 0 reopenings, 0 FR). CPU and schema growth from B1 must be fixed in X3. Continued as a native Opus subagent for X3–X5.**
+  - Patch: x2.patch, sha 6e49ca88, plus x2-new-files.tar (930e5c60). +954 LOC.
+  - Gates: fmt 0, lint 0, lint:fc 0.
+  - Earlier preview reopenings (alertmanager 60, jupyterhub 32) were fixed before the final dump: a merge with the root context fell back to a global wipe, and the any-type rule marked a placed toYaml as serialized.
+  - Growth with no acceptance change:
+    - schemas: cert-manager 879 KB → 3.87 MB, jupyterhub, daskhub, alloy, trino;
+    - CPU >10% on 12 charts: cert-manager 1.64×, bitnami-postgresql 1.59× (byte-identical schema), redmine 1.49×, …;
+    - the cost sits in the heap-coverage projection walking per-merge region writes.
+  - X3 (the layered remainder, an S11 proposal to WFREE2) must bring CPU and size back within the bar, or file a memo seam request.
+  - Seam requests: S11 (WFREE2) layered remainder; S10 (CATALOG1) accepts-any-type and decoder-pairing columns.
+  - Continuation briefed with its 29 ignored-test witnesses and TESTPORT1's corrected fail_validators.rs:917 expectation.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
