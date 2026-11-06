@@ -10550,4 +10550,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - DECODE1 Layered: approved in principle after W2, including heap_coverage shared-subtree havoc and targeted rebuild; its eviction cache was declined.
   - Next round: (1) restore the tests; (2) bring the 60 new unit IDs to 0; (3) the 13 reopenings (per-group allowance, provider preimage); (4) CPU (guard size, seal layout walk).
 
+- 23:40 (Nov 06) — **WFREE2 round 2: 24 deleted tests restored and re-homed; the 60 new unit IDs are down to 44. Sent on to round 3.**
+  - Restored tests: 24, re-homed on consumptions, contract signals and schema verdicts.
+    - The 5 ignored R3b-regression tests pass under --run-ignored and are to be un-ignored.
+    - 2 restored tests stay red: ranged_wildcard (b64enc member consumption), and scoped_string merge-source rerouting, where the orchestrator decided to rebuild from consumptions and not restore the deleted lowering.
+  - Triage: 18 of 60 fixed. 6 D2 identity tests repointed via fresh_guard_copy, 3 D3 rows, 1 real D1 regression (known_outcome checks the abort twin), 8 others.
+  - 42 inherited real regressions remain (they predate the takeover). F1 (22): the YAML failure is an OR of 19–25 multi-KB regex atoms that exhaust the fold. F2 (5): helper default rows. F3 (15).
+  - Replay: preview 5 6,336/0/0; preview-4 guard 6,292/13/0.
+  - CPU was not re-screened. LOC +7,362.
+  - Gates: fmt 0, lint 0, lint:fc 0; units 294 failed, 44 new, 9 resolved.
+  - Round 3 order: F1 (one YAML-validity fact per site, no cap raises) → F2/F3 → 13 reopenings → CPU.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
