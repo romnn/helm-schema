@@ -10478,4 +10478,45 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
 
 - 08:20 (Nov 06) — **Memory free 52%: CPUPROF launched (native).** It profiles the WFREE+GUARDX base against main on the 10 worst of the 39 over-main charts (paired, interleaved, Perfetto spans). Output: span families with excess seconds, owning lane, structural fix and estimated saving, plus the F1–F3 status. Reason: the base corpus total is 1.12× main, which blocks landing, and no lane owns corpus-wide CPU attribution.
 
+- 17:50 (Nov 06) — **TESTPORT1 LANDED on r3b/construction (6615d4f2, pushed to github, no force). Codex lanes stopped on user instruction; native Opus takeovers launched. Batch of hand-backs recorded.**
+  - Landing 6615d4f2 (test-only, testport1-r3.patch sha e2e25b3e, 38 files):
+    - Native Opus review gave REWORK on W1–W6, then a W6 tweak, then LAND.
+    - Unit failures 258→226; integration 166→163. The only new failure ID is the deliberate over-cap red.
+    - The tree was byte-compared with the builder clone, and fmt is 0.
+  - User: "stop the codex lanes and let opus subagents continue where they left off". The four Codex runs had been stuck reconnecting (account exhausted). Cancelled: WFREE2, GUARDX, RECV2. TPLT2 had already completed with NOT ADMITTED.
+  - Native takeovers in the original clones, plus two new lanes: WFREE2 (step 1), LOCAL1-B, TPLT2, RECV2, GUARDX (step 3), CATALOG2 (17 reopenings plus exact `has`), CPUGEN (shared lint validators plus minimization; byte-identical).
+  - Hand-backs:
+    - CPUPROF:
+      - on the 10 worst charts: line 23.7 s, WFREE 124.3 s, B 166.9 s, against main 41.8 s;
+      - the excess tracks exported fact volume (3–20× bytes/$defs);
+      - families: #1 interpretation/seal +41 s (WFREE2), #2 contract finalize +27 s (LOCAL1), #3 minimize +23 s (GUARDX/WFREE2), #4 lint validators +16 s (CPUGEN), #5 executed-requirement export +11.6 s (GUARDX);
+      - fixes project the corpus total to ~475–480 s against main's 491 s, but the per-chart bar still needs less fact volume;
+      - postgresql-ha's output is 12 KB against main's 0.96 MB: a line-wide gap to check.
+    - STACKLA:
+      - B+CATALOG1: +1,040 closures, 17 reopenings (nginx-ingress 9, trivy 8);
+      - with ABORT3: +1,108;
+      - loki 0: it needs an exact `has` (CATALOG2) and S6 (TPLT2: ContinuationKey has no havoc partition; the join is at control.rs:1543). The S10 cutoff is not the blocker.
+    - RELEASE1:
+      - +725 closures, 0 reopenings, 0 FR, +479 LOC, with typed .Release fields;
+      - the 5 target FA are still open, blocked on LOCAL1-B's layout cap and with/else;
+      - CPU fails: debug pairs 1.66×, milvus 3.5×, because of more placed documents.
+    - PARSE1:
+      - +102 closures, 0/0, 24 unit tests un-ignored, +1,704 LOC;
+      - ingress-nginx 1.23×;
+      - the 18 CLI chart tests need TPLT2's tpl write certificate;
+      - the vault fixture moved, so a battery is needed.
+    - DECODE1 final: parity (0 closures), 33/33 laws, units 255→243, +2,399 LOC; CPU over the bar on identical-schema charts (weblate 1.17, redmine 1.16, phpmyadmin 1.11); S11 requests to WFREE2.
+    - EXPLAIN1: explain provenance through BodySource; 2 tests green; no schema bytes change; CPU neutral; −6 LOC.
+    - LOCAL1-C: 0 closures, 0/0; CRLF fixed; 8 KPS FR witnesses fixed; schema +5%; targeted CPU 1.125×; x509 not closed; +1,054 LOC.
+    - PROV1: census only, no product patch; retired.
+  - Stack candidates on B (each 0 reopenings, 0 FR):
+    - CATALOG2, once its reopenings are fixed;
+    - ABORT3 +45;
+    - PARSE1 +102;
+    - RELEASE1 +725, CPU blocked;
+    - EXPLAIN1;
+    - DECODE1, CPU blocked;
+    - LOCAL1-C, CPU 1.125×.
+  - CPU is now the binding constraint for landing.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
