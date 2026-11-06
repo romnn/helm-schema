@@ -10427,4 +10427,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Gates: fmt 0, lint 0, lint:fc 0, units 100, integration 201.
   - Plan: land on r3b/construction directly if the review says LAND. It is test-only and moves no fixtures, so no battery is needed.
 
+- 04:35 (Nov 06) — **TESTPORT1 pre-landing review (native Opus): REWORK on W1–W6; rework is running as a native Opus subagent in the same clone.**
+  - Blocking: six loosened expectations.
+    - W1 cli.rs:1394-1412 deployment annotations: it accepts null and "<no value>" members that the destination rejects. Not encoding-only.
+    - W2 fragment_seeds.rs:74-78: it accepts arrays that Helm aborts on.
+    - W3 fragment_projection.rs:1190-1210: Helm's rejections are missing from the cases.
+    - W4 program_wrappers.rs:143-195: all 13 cases are positive and the property is lost.
+    - W5 ir tests/mod.rs: Guard::Default expectations removed.
+    - W6 symbolic_local_state.rs:294: over-cap soundness is no longer covered.
+  - Non-blocking: plain_probe_port "a\n1" and the always_omitted marker key become documented known acceptances.
+  - Clean: apply, scope (tests only), ignore hygiene, conventions; 4 of the 5 encoding-only updates are equivalent (845-document check on one).
+  - The fix count drops by 2 after W1 and W2 (those tests go back to red, correctly).
+  - Process note: builder adjudications must include each test's distinguishing document (null members). The review caught it because it ran Helm on that document.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
