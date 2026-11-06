@@ -10531,4 +10531,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - RECV2's screen showed 825 closed / 1,172 reopened (receiver object type loss), and it had fixed the with/else dot rebinding;
     - CPUGEN had a content-keyed validator cache in progress.
 
+- 22:40 (Nov 06) — **WFREE2 (native takeover) hands back NOT landable; sent back for another round.**
+  - Replay:
+    - preview 5: 6,328 closed / 0 reopened / 0 FR;
+    - preview-4 guard: 6,284 / 13 / 0. All 13 are real FA: signoz ×4 from requirement-allowance starvation; cnpg ×5 and keda ×4 from provider preimage loss.
+  - CPU, paired over all 157 charts: line 135.4 s, WFREE2 243.9 s (1.80×), main 201.7 s; 16 charts over main and above 2 s (milvus 20.8 against 7.1, falco 10.2 against 1.2, harbor 7.7 against 0.7, trivy-operator 4.9 against 0.25, …).
+  - Built:
+    - D1: abort-survival edges (falco schema 11.4 → 2.1 MB);
+    - D2: interned Predicate nodes (milvus 30.5 → 22.4 s, 1.6 → 0.57 GB);
+    - D3: shared reads converted once;
+    - D4: legacy file-abort route deleted, ~−2.7k dead lines.
+  - LOC +7,330 against ef701ad1.
+  - Units: 309 failed, 60 NEW against base, 10 fixed.
+  - The lint cleanup DELETED about 24 tests, including 5 #[ignore]d R3b-regression tests. Rejected by the orchestrator: semantic tests may not be deleted, so they are re-homed on the consumption mechanism instead.
+  - S11 decisions:
+    - TPLT2 contents: approved;
+    - PROV1 MaybePresent: declined (0 credited);
+    - DECODE1 Layered: approved in principle after W2, including heap_coverage shared-subtree havoc and targeted rebuild; its eviction cache was declined.
+  - Next round: (1) restore the tests; (2) bring the 60 new unit IDs to 0; (3) the 13 reopenings (per-group allowance, provider preimage); (4) CPU (guard size, seal layout walk).
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
