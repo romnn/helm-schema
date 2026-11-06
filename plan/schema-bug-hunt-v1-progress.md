@@ -10445,4 +10445,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - oncall ×2: shared .Release / Capabilities API availability;
     - openebs ×3: global.imagePullPolicy through the dependency-global projection. Changes to GUARDX's graph.rs region are proposed in seam-requests.md, not edited.
 
+- 08:00 (Nov 06) — **ABORT3 hands back: +45 closures, 0 reopenings, 0 new FR on both previews. Loki 0/10,980, blocked on three cross-lane pieces.**
+  - Patch: abort3.patch, sha f91c7da9, 23 files, plus abort3-new-files.tar (value/abort.rs).
+  - Built:
+    - M1/S5: every abort goes through Exit::aborted/Flow::aborted with DEMAND1's byte-identical record_failure; YAML invalidity is recorded in seal.
+    - S12.
+    - M3: tpl over a raw input whose chart default is a template forks on "value equals the default" and runs the default program. This is U3, absorbed.
+  - The old M1 producers are kept: the per-file capture is the only path that exports YAML pattern failures while S10 refuses those atoms.
+  - Measured:
+    - CPU: loki 8.26 s (main 9.04 s), KPS 19.86 s (main 33.04 s). ABORT2's 106.9 s came from parts that were not ported.
+    - Corpus total 563.7 s against base 549.5 s and main 491.1 s. The base is already 1.12× main, and there are 0 new over-main crossings.
+    - +49 LOC.
+    - Gates: fmt 0, lint 0, lint:fc 0, units the base's 255 IDs, one clean dump with verify 0, Helm controls M1 27/27 and M3 9/9. Integration and test:all NOT run.
+  - Loki blockers:
+    1. S10 per-atom 8,192-byte cutoff against a 5,769-byte Eq atom;
+    2. an exact catalog `has` row;
+    3. TPLT2's S6 keeping the M3 branch distinct after the tpl join.
+  - Routing: TPLT2 steered (S6, loki). A native measurement lane, STACKLA, stacks CATALOG1 (it claims charged-work export admission and catalog has/mustHas) under ABORT3 on WFREE+GUARDX and measures loki.
+  - The corpus-total CPU gap (base 1.12× main) is an open landing blocker that WFREE2 owns first.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
