@@ -10888,4 +10888,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - paired CPU.
 
   Heavy lanes: WFREE r10, TPLT2, RECV2 r7, GUARDX r4. CATALOG2's loki+ABORT3 verdict sweep is finishing in the background.
+- 13:00 (Nov 07) — **Loki is still 0 of 10,656 with CATALOG2 and ABORT3 stacked.** On the preview-5 loki probes, all of which Helm rejects, every variant accepts every probe:
+  - B (allOf 41, 475,360 B);
+  - CATALOG2's C3c (41, 440,481 B);
+  - C3c+ABORT3 (44, 464,406 B).
+
+  Exact `has` (CATALOG2) together with ABORT3 is therefore not enough. The remaining dependency is S6, the continuation havoc bit (TPLT2's loki S6/M3 item). One caveat: these were CLI schemas (--exclude-tests --offline), so confirm with a dump plus replay when the stack is assembled. Evidence: catalog2 transfer/progress.md 12:55.
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
