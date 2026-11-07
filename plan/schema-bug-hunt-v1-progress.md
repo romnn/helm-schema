@@ -10575,4 +10575,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Patch: wfree2.patch sha 27f6aac0.
   - WFREE3 order: one incremental BDD per arena (byte-identical) plus cpuprof family #1 → cnpg overlay qualification → the 24 unit IDs.
 
+- 02:45 (Nov 07) — **LOCAL1-B (Claude takeover) hands back NOT green; a read-only salvage-vs-restart assessment is running. RECV2 resumed in the freed slot.**
+  - Patch: b-claude.patch, sha 59466efd, 112 files, +2,894 LOC.
+  - Marginal against its own base: +383 closures, 146 reopenings (alertmanager 63, arc 15, eck-stack 10, kubeshark 10, …; all inherited from the Codex patch), 0 FR.
+  - Only 11 of the 38 slice-B FR witnesses are accepted (all KPS).
+  - CPU on 13 charts: base 77.6 s, B 468.7 s, main 43.3 s (nginx-ingress 43×).
+  - 26 new unit IDs, all inherited.
+  - Good pieces:
+    - PredicateRewrites, one shared rewrite cache per pass: gitea 8+ GB → 2.1 GB, KPS 4.9 → 1.9 GB;
+    - nginx-ingress condition-cache stall fixed;
+    - activation narrowing for per-member guards.
+  - Elasticsearch's 16 FR witnesses are ADR 0043 declared-types assert rows; the backstop stays.
+  - Three FR witnesses (crds.annotations with a boolean value) are claimed to be correct rejections and need re-adjudication.
+  - Queue: RECV2 resumed; TPLT2, CATALOG2 and CPUGEN are still queued.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
