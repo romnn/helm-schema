@@ -13,9 +13,10 @@ use flate2::read::GzDecoder;
 use flate2::{Compression, GzBuilder};
 use helm_schema::output::LoadBudget;
 use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
+use helm_schema_k8s::cache::k8s_cache_path;
 use helm_schema_k8s::{
     CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
-    ProviderLookupResult, is_k8s_builtin_group,
+    ProviderLookupResult, default_source_id, is_k8s_builtin_group,
 };
 use indoc::indoc;
 use serde::Deserialize as _;
@@ -28,6 +29,7 @@ use crate::helm::assertion_identity::{
     verify_compiler_locations, verify_execution, verify_registry_integrity,
 };
 use crate::helm::cache_policy::render_cacheability;
+use crate::helm::definitions;
 use crate::helm::invocation::{
     Cacheability, HelmExecution, HelmRunner, InvocationRecord, PreparedTree, Replay,
     TemplateRequest, tree_sha256,
@@ -958,6 +960,16 @@ pub struct UsableKubernetesControls {
 struct ResourceEvidence {
     invalid: Vec<KubernetesViolation>,
     uncertain: Vec<String>,
+    /// Documents of kinds the pinned version does not serve: their one violation says nothing
+    /// about their content.
+    unserved: Vec<UnservedDocument>,
+}
+
+#[derive(Clone)]
+struct UnservedDocument {
+    /// The document's location and identity, as diagnostics name it.
+    label: String,
+    document: Value,
 }
 
 impl ResourceEvidence {
@@ -970,6 +982,28 @@ impl ResourceEvidence {
             uncertain: self.uncertain.clone(),
             ..DefaultsComparison::default()
         };
+        // An inherited "not served" violation excuses only the control's own content.
+        // Changed content of an unserved document was never checked, so it decides nothing.
+        let mut unchanged: Vec<&Value> = control
+            .unserved
+            .iter()
+            .map(|unserved| &unserved.document)
+            .collect();
+        for unserved in &self.unserved {
+            match unchanged
+                .iter()
+                .position(|document| **document == unserved.document)
+            {
+                Some(index) => {
+                    unchanged.swap_remove(index);
+                }
+                None => comparison.uncertain.push(format!(
+                    "{}: the pinned Kubernetes version does not serve it, so its content changed \
+                     from the control is unchecked",
+                    unserved.label
+                )),
+            }
+        }
         for violation in &self.invalid {
             match remaining.get_mut(&violation.key) {
                 Some(count) if *count > 0 => {
@@ -1131,7 +1165,10 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v10";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v11";
+
+/// The `ObjectMeta` every Kubernetes object carries, whether or not a schema decides the rest.
+const OBJECT_META: &str = "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta";
 
 /// Base for anonymous schemas; resource API/kind separately qualify every assertion.
 const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
@@ -1248,6 +1285,12 @@ pub struct OfflineKubernetesValidator {
     bundles: Vec<(PathBuf, String)>,
     schema_identity: String,
     schemas: Arc<CompiledSchemas>,
+    /// The release's `_definitions.json` inside the Kubernetes bundle.
+    definitions_path: PathBuf,
+    /// The parsed release definitions, `None` when the bundle carries none.
+    definitions: OnceLock<Result<Option<Value>, String>>,
+    /// `ObjectMeta` alone, for documents no pinned schema decides.
+    object_meta: OnceLock<Result<Arc<ResourceSchema>, String>>,
 }
 
 impl OfflineKubernetesValidator {
@@ -1310,7 +1353,83 @@ impl OfflineKubernetesValidator {
             bundles,
             schema_identity: identity,
             schemas,
+            definitions_path: k8s_cache_path(
+                cache,
+                default_source_id(),
+                release
+                    .split_once("-standalone")
+                    .map_or(release, |(version, _)| version),
+                "_definitions.json",
+            ),
+            definitions: OnceLock::new(),
+            object_meta: OnceLock::new(),
         })
+    }
+
+    /// The release definitions the Kubernetes bundle pins, if it pins any.
+    fn release_definitions(&self) -> Result<Option<&Value>, String> {
+        self.definitions
+            .get_or_init(|| match fs::read(&self.definitions_path) {
+                Ok(raw) => serde_json::from_slice(&raw)
+                    .map(Some)
+                    .map_err(|error| format!("corrupt release definitions: {error}")),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+                Err(error) => Err(format!("unreadable release definitions: {error}")),
+            })
+            .as_ref()
+            .map(Option::as_ref)
+            .map_err(Clone::clone)
+    }
+
+    /// Whether the release definitions may declare `apiVersion`/`kind`. A declared kind's
+    /// missing bundle file is no evidence of absence; declaration is no proof of being served
+    /// either, since alpha roots are off by default (ADR 0029).
+    fn release_declares(&self, api_version: &str, kind: &str) -> bool {
+        match self.release_definitions() {
+            Ok(Some(definitions)) => !matches!(
+                definitions::resource_schema(definitions, api_version, kind),
+                Ok(None)
+            ),
+            // Absent or unreadable definitions cannot prove a kind unserved: abstain.
+            Ok(None) | Err(_) => true,
+        }
+    }
+
+    /// Records the `ObjectMeta` violations of a document no pinned schema decides.
+    ///
+    /// Under ADR 0051 Kubernetes judges the rendered output, so its metadata is typed as
+    /// rendered. Helm's own install merges ownership metadata first and would drop a
+    /// non-string map; the chart-proof path judges that post-merge sidecar, so a violation
+    /// here also vetoes its acceptance.
+    fn collect_object_meta_violations(
+        &self,
+        document: &Value,
+        location: &str,
+        evidence: &mut ResourceEvidence,
+    ) -> eyre::Result<()> {
+        let schema = self.object_meta.get_or_init(|| {
+            let Some(definitions) = self
+                .release_definitions()?
+                .and_then(|definitions| definitions.get("definitions").and_then(Value::as_object))
+            else {
+                return Err("the bundle pins no release definitions".to_string());
+            };
+            let root = json!({
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {"metadata": {"$ref": format!("#/definitions/{OBJECT_META}")}},
+            });
+            let schema = definitions::derive(definitions, &root)?;
+            ResourceSchema::compile(&schema, jsonschema::Draft::Draft7)
+                .map(Arc::new)
+                .map_err(|error| format!("ObjectMeta schema did not compile: {error}"))
+        });
+        // Without release definitions the document only stays undecided.
+        if let Ok(schema) = schema {
+            schema.verify_pattern_execution(document)?;
+            evidence.collect_violations(document, location, schema)?;
+        }
+        Ok(())
     }
 
     /// Fails when a pinned bundle changed after this validator was made,
@@ -1649,7 +1768,12 @@ impl OfflineKubernetesValidator {
                 Some(crds) if !is_k8s_builtin_group(group) => {
                     compile_crd_validator(crds, api_version, kind)
                 }
-                _ => compile_resource_validator(&self.provider, api_version, kind),
+                _ => compile_resource_validator(
+                    &self.provider,
+                    self.release_definitions(),
+                    api_version,
+                    kind,
+                ),
             }
             .map(Arc::new)
         })
@@ -1707,8 +1831,9 @@ impl OfflineKubernetesValidator {
             }
             Err(error) => {
                 // The bundle records a built-in group's kind as absent
-                // upstream: the pinned server does not serve it. Any other
-                // missing schema, a CRD's above all, stays undecided.
+                // upstream and the release definitions do not declare it:
+                // the pinned server does not serve it. Any other missing
+                // schema, a custom resource's above all, stays undecided.
                 let query = ApiPresenceQuery::Resource {
                     api_version: api_version.to_string(),
                     kind: kind.to_string(),
@@ -1717,7 +1842,16 @@ impl OfflineKubernetesValidator {
                     .provider
                     .capability_has_query_at_primary_version(&query)
                     == Some(false)
+                    && !self.release_declares(api_version, kind)
                 {
+                    let label = format!(
+                        "{location}: {api_version}/{kind} {}",
+                        name.as_deref().unwrap_or("<unnamed>")
+                    );
+                    evidence.unserved.push(UnservedDocument {
+                        label,
+                        document: document.clone(),
+                    });
                     evidence.invalid.push(KubernetesViolation {
                         location: location.to_string(),
                         namespace,
@@ -1737,6 +1871,7 @@ impl OfflineKubernetesValidator {
                     });
                     return Ok(());
                 }
+                self.collect_object_meta_violations(document, location, evidence)?;
                 let name = name.as_deref().unwrap_or("<unnamed>");
                 evidence
                     .uncertain
@@ -1875,6 +2010,7 @@ fn compile_crd_validator(
 
 fn compile_resource_validator(
     provider: &KubernetesJsonSchemaProvider,
+    definitions: Result<Option<&Value>, String>,
     api_version: &str,
     kind: &str,
 ) -> Result<ResourceSchema, String> {
@@ -1882,7 +2018,7 @@ fn compile_resource_validator(
     let fragment = match provider.lookup(&resource, &YamlPath::default()) {
         ProviderLookupResult::Found { schema, .. } => schema,
         ProviderLookupResult::NotOwned => {
-            return Err("pinned resource schema not found".to_string());
+            return compile_definitions_validator(definitions?, api_version, kind);
         }
         ProviderLookupResult::PathUnresolved => {
             return Err("provider could not resolve the resource schema root".to_string());
@@ -1919,6 +2055,27 @@ fn compile_resource_validator(
     }
     ResourceSchema::compile(source.source_schema(), draft)
         .map_err(|error| format!("original resource schema did not compile: {error}"))
+}
+
+/// A served kind the standalone bundle omits, derived from the same release's definitions.
+fn compile_definitions_validator(
+    definitions: Option<&Value>,
+    api_version: &str,
+    kind: &str,
+) -> Result<ResourceSchema, String> {
+    let schema = definitions
+        .map(|definitions| definitions::resource_schema(definitions, api_version, kind))
+        .transpose()?
+        .flatten()
+        .ok_or("pinned resource schema not found")?;
+    let draft = jsonschema::Draft::Draft7;
+    if !schema_declares_resource(&schema, api_version, kind, draft) {
+        return Err(format!(
+            "derived schema does not prove exact identity {api_version}/{kind}"
+        ));
+    }
+    ResourceSchema::compile(&schema, draft)
+        .map_err(|error| format!("derived resource schema did not compile: {error}"))
 }
 
 fn schema_declares_resource(

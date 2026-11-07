@@ -7,6 +7,7 @@ pub mod adjudication;
 pub(crate) mod assertion_identity;
 pub mod cache_policy;
 pub mod chart_crds;
+pub(crate) mod definitions;
 pub mod invocation;
 pub mod kubernetes_version;
 pub mod lint;

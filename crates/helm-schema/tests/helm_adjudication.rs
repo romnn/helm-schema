@@ -1658,3 +1658,180 @@ fn a_failed_yaml_decoding_preserves_a_complete_bundle() -> eyre::Result<()> {
     );
     Ok(())
 }
+
+/// The offline validator the battery judges corpus charts with.
+fn bundle_validator() -> eyre::Result<OfflineKubernetesValidator> {
+    let bundle = test_util::workspace_testdata().join("provider-bundle");
+    OfflineKubernetesValidator::with_crd_catalog(
+        &bundle.join("kubernetes-json-schema-cache"),
+        &bundle.join("crds-catalog-cache"),
+        helm_adjudication::KUBERNETES_RELEASE,
+    )
+}
+
+/// Kubernetes judges the rendered output (ADR 0051), where a boolean CRD annotation from values
+/// violates `ObjectMeta`. (`helm install` itself would merge ownership metadata first and drop
+/// the non-string map.) Preview 5 called these three corpus witnesses false rejections because
+/// it judged every CRD "not served" and so never read its content.
+#[test]
+fn a_boolean_crd_annotation_is_a_new_kubernetes_violation() -> eyre::Result<()> {
+    let validator = bundle_validator()?;
+    let mut have = Vec::new();
+    let mut want = Vec::new();
+    for (name, crds) in [("argo-events", 3), ("external-secrets", 24), ("okteto", 6)] {
+        let chart = PinnedHelmChart::prepare(
+            helm_invocation::HelmRunner::shared()?,
+            &test_util::workspace_testdata().join("charts").join(name),
+        )?;
+        let probe = chart.adjudicate(&json!({"crds": {"annotations": {"unknown": true}}}))?;
+        eyre::ensure!(
+            probe.rendered.success(),
+            "{name}: {}",
+            String::from_utf8_lossy(&probe.rendered.stderr)
+        );
+        let comparison = validator.compare_with_defaults(&chart, &probe)?;
+        let new: Vec<(String, String)> = comparison
+            .new_violations
+            .iter()
+            .map(|violation| (violation.key.kind.clone(), violation.instance_path.clone()))
+            .collect();
+        have.push((name, new, comparison.uncertain));
+        let annotation = (
+            "CustomResourceDefinition".to_string(),
+            "/metadata/annotations/unknown".to_string(),
+        );
+        want.push((name, vec![annotation; crds], Vec::<String>::new()));
+    }
+    sim_assert_eq!(have: have, want: want);
+    Ok(())
+}
+
+/// A kind the pinned version does not serve carries one inherited violation that says nothing
+/// about its content: a probe that changes that content is undecided, never accepted.
+#[test]
+fn changed_content_of_an_unserved_kind_is_undecided() -> eyre::Result<()> {
+    let root = ScratchDir::new("helm_adjudication")?;
+    write_chart(root.path(), "unserved", "minAvailable: 1\n")?;
+    fs::write(
+        root.path().join("templates/budget.yaml"),
+        indoc! {r"
+        apiVersion: policy/v1beta1
+        kind: PodDisruptionBudget
+        metadata:
+          name: budget
+        spec:
+          minAvailable: {{ toJson .Values.minAvailable }}
+    "},
+    )?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, root.path())?;
+    let validator = bundle_validator()?;
+    let unchanged = validator.compare_with_defaults(&chart, &chart.adjudicate(&json!({}))?)?;
+    sim_assert_eq!(
+        have: (unchanged.new_violations.len(), unchanged.inherited_violations.len(), unchanged.uncertain),
+        want: (0, 1, Vec::<String>::new()),
+    );
+    let changed = validator
+        .compare_with_defaults(&chart, &chart.adjudicate(&json!({"minAvailable": true}))?)?;
+    sim_assert_eq!(
+        have: (changed.new_violations.len(), changed.inherited_violations.len(), changed.uncertain),
+        want: (0, 1, vec![
+            "document 0: policy/v1beta1/PodDisruptionBudget budget: the pinned Kubernetes version \
+             does not serve it, so its content changed from the control is unchecked"
+                .to_string(),
+        ]),
+    );
+    Ok(())
+}
+
+/// A resource no pinned schema decides still carries Kubernetes' `ObjectMeta`: a boolean label
+/// is rejected however the rest of the object is judged.
+#[test]
+fn an_undecided_resource_still_has_typed_metadata() -> eyre::Result<()> {
+    let judge = |labels: &str| -> eyre::Result<KubernetesVerdict> {
+        let root = ScratchDir::new("helm_adjudication")?;
+        write_chart(root.path(), "unknown", "{}\n")?;
+        fs::write(
+            root.path().join("templates/resource.yaml"),
+            formatdoc! {"
+                apiVersion: example.test/v1
+                kind: Unknown
+                metadata:
+                  name: sample
+                  labels: {labels}
+            "},
+        )?;
+        let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, root.path())?;
+        let probe = chart.adjudicate(&json!({}))?;
+        bundle_validator()?.validate(
+            helm_invocation::HelmRunner::shared()?,
+            &probe.rendered.stdout,
+        )
+    };
+    sim_assert_eq!(
+        have: judge("{app: sample}")?,
+        want: KubernetesVerdict::Uncertain(vec![
+            "document 0: example.test/v1/Unknown sample: pinned CRD schema not found".to_string(),
+        ]),
+    );
+    let KubernetesVerdict::Invalid(violations) = judge("{enabled: true}")? else {
+        eyre::bail!("a boolean label is no proven violation");
+    };
+    let paths: Vec<&str> = violations
+        .iter()
+        .map(|violation| violation.instance_path.as_str())
+        .collect();
+    sim_assert_eq!(have: paths, want: vec!["/metadata/labels/enabled"]);
+    Ok(())
+}
+
+/// A bundle without the release definitions cannot prove a kind unserved: its missing schema
+/// files stay undecided instead of becoming "not served" violations.
+#[test]
+fn a_bundle_without_release_definitions_abstains() -> eyre::Result<()> {
+    let bundle =
+        test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
+    let cache = ScratchDir::new("helm_adjudication")?;
+    fs::copy(
+        bundle.join(LAYOUT_MARKER_FILENAME),
+        cache.path().join(LAYOUT_MARKER_FILENAME),
+    )?;
+    let release = bundle
+        .join(helm_schema_k8s::default_source_id())
+        .join(helm_adjudication::KUBERNETES_RELEASE);
+    let copy = cache
+        .path()
+        .join(helm_schema_k8s::default_source_id())
+        .join(helm_adjudication::KUBERNETES_RELEASE);
+    fs::create_dir_all(&copy)?;
+    for entry in fs::read_dir(release)? {
+        let entry = entry?;
+        fs::copy(entry.path(), copy.join(entry.file_name()))?;
+    }
+    let root = ScratchDir::new("helm_adjudication")?;
+    write_chart(root.path(), "undeclared", "{}\n")?;
+    fs::write(
+        root.path().join("templates/resource.yaml"),
+        indoc! {"
+        apiVersion: extensions/v1beta1
+        kind: Ingress
+        metadata:
+          name: removed
+    "},
+    )?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, root.path())?;
+    let probe = chart.adjudicate(&json!({}))?;
+    let verdict =
+        OfflineKubernetesValidator::new(cache.path(), helm_adjudication::KUBERNETES_RELEASE)?
+            .validate(
+                helm_invocation::HelmRunner::shared()?,
+                &probe.rendered.stdout,
+            )?;
+    sim_assert_eq!(
+        have: verdict,
+        want: KubernetesVerdict::Uncertain(vec![
+            "document 0: extensions/v1beta1/Ingress removed: pinned resource schema not found"
+                .to_string(),
+        ]),
+    );
+    Ok(())
+}

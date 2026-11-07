@@ -3,3 +3,4 @@
 mod assertion_identity;
 mod chart_crds;
 mod corpus_replay;
+mod definitions;
