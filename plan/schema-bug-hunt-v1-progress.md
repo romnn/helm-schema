@@ -10849,4 +10849,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - RECV2 round 6: gen+cli new failures 35 → 19 (falsy class fixed); grouping charge content-keyed.
     - WFREE round 9: S-C ceiling only 1–4% with exact keys (deferred); S-F 0.1% (dropped). R9-1 brought falco back. R9-3 projection P1: +24 closures but 5 datadog reopenings (P4 class), reverted.
 
+- 10:15 (Nov 07) — **WFREE round 9: falco slowdown fixed byte-identically (R9-1: small apply steps share one table; falco pairs 61.7M → 29.8M). S-C measured and NOT built: ceiling 1–4% with exact keys. S-F dropped (0.1%). Projection P1 built and reverted (5 datadog reopenings, the P4 class). Round 10 = P4.**
+  - Replays unchanged (7,277/0/0; 7,233/0/0). Units unchanged (7 new). Patch sha b52eae26.
+  - Lesson: the review's S-C and S-F estimates were far too high. The call counts overstate redundancy; harbor helper time is argument case-splitting (transfer_values 31%, satisfiable 29%).
+  - Exact summaries are also blocked: caller output counts flow into callees, records carry the caller's path, and ids are fresh per execution.
+  - P4 next: the layout walk is 13–29% of falco, harbor, milvus and okteto, and P4 unblocks R9-3 and R4-2. New tool: transfer/tools/instr1.sh, a load-independent instruction-count A/B.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
