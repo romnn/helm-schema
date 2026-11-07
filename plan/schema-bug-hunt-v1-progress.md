@@ -10894,4 +10894,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - C3c+ABORT3 (44, 464,406 B).
 
   Exact `has` (CATALOG2) together with ABORT3 is therefore not enough. The remaining dependency is S6, the continuation havoc bit (TPLT2's loki S6/M3 item). One caveat: these were CLI schemas (--exclude-tests --offline), so confirm with a dump plus replay when the stack is assembled. Evidence: catalog2 transfer/progress.md 12:55.
+- 13:25 (Nov 07) — **RECV2 round 7: 0 new unit failures against base (9 fixed); all 4 regressions closed, each with a Helm 4.2.3 receipt. Landing evidence is blocked by a kube-prometheus-stack blow-up.** Patch recv2-evidence/claude7/recv2-round7-checkpoint.patch, sha 74371f1e. Gates: fmt 0, lint 0, lint:fc 0; LOC +2,306 vs base.
+
+  Regressions:
+  - whole_root: the root is always a map; a `*` row adds one member constraint.
+  - symbolic_range: a kind-dispatch guard no longer types a path on its own. This also closes the inherited `kindIs "map"` false rejection.
+  - included_encoded_secret: executed sites judge exactness like sealed exits, which restores the Secret.data byte demand.
+  - unrelated_default: failure preimages assume the decisions already taken on the path (relationship.rs assume_path).
+
+  Duplicate abort producer: recorded as debt per the S5 amendment. The 5 byte/locality tests are restated as verdict laws with fresh receipts (0 mismatches). One property is lost until the duplicate is removed: the vacuous error is located at the root instead of /check.
+
+  Blocker: kube-prometheus-stack takes 404 s user / 8.2 GB with the candidate, against 9 s / 0.5 GB on base. Every Claude checkpoint from round 2 to round 6 is above 90 s, so it arrived between the seam checkpoint and Claude round 1. The debug dump was memcap-killed twice, so replays and CPU were not run.
+
+  RECV2 round 8 started (fresh native agent):
+  1. Bisect seam → round 1.
+  2. Run a Perfetto trace and find the per-site × alternative multiplier.
+  3. Fix it structurally, testing the survival-conjunct identity from 12:05 as the candidate fix.
+  4. Then the dump, replays, CPU and integration.
+
+  Heavy lanes: WFREE r10, TPLT2, GUARDX r4, RECV2 r8.
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
