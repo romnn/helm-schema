@@ -17,7 +17,17 @@ evidence is `Uncertain`. Typed `ProbeOutcome` distinguishes `Found`,
 `AuthoritativelyAbsent`, `Uncertain`. The oracle returns `Some(true/false)`
 only on authoritative evidence; `None` keeps a branch potentially live.
 Only clean upstream not-found signals become negative records; network
-errors stay uncertain. In-process negatives are not persisted; the Kubernetes
+errors stay uncertain. A document miss is authoritative only against the
+release's API catalog: `Some(false)` also requires the release directory's
+`_definitions.json` (bundle variants such as `-standalone-strict` read it)
+to have no single-root definition of the exact group/version/kind. Only
+single-entry `x-kubernetes-group-version-kind` definitions count; generic
+meta types list retired group/versions. A miss whose kind the catalog
+declares stays `None`, because declaration does not prove service (alpha
+roots and discovery types are declared too), and so does a miss without a
+readable catalog. Bundles omit documents of served kinds (the standalone
+bundles drop the self-referencing CustomResourceDefinition); this rule
+closes that class without a per-group exception. In-process negatives are not persisted; the Kubernetes
 provider additionally writes disk not-found markers.
 
 For `group/version`, a declarative canonical-kind table remains bounded debt;
@@ -59,7 +69,7 @@ completeness. No denylist or core-sentinel approximation replaces the table.
   separate exact inventory solution; index retirement is not claimed.
 - Provider uncertainty rework 9 had two LAND reviews (Sep 30), but is off main.
   The queued kube-version fix also limits 404 authority to published kinds;
-  standalone bundles omit CustomResourceDefinition despite API availability.
+  the CAPPROBE lane (2026-11-07) did so through the release catalog check above.
 
 ## References
 

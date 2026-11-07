@@ -34,7 +34,9 @@ fn assert_refresh_evidence(response: MockResponse, expected: &ExpectedRefresh) -
         .with_cache_dir(cache.path())
         .with_allow_download(true)
         .with_negative_cache(Arc::clone(&negative))
-        .with_fetcher(Arc::new(MockFetcher::new()));
+        .with_fetcher(Arc::new(
+            MockFetcher::new().with_empty_release_catalog("v1.35.0"),
+        ));
     sim_assert_eq!(have: provider.capability_has_query_at_primary_version(&query), want: Some(false));
 
     negative.record("mirror", "v1.35.0", "configmap-v1.json");
@@ -140,7 +142,9 @@ fn failed_marker_deletion_and_schema_write_do_not_restore_absence() -> eyre::Res
     let query = ApiPresenceQuery::GroupVersion {
         api_version: "v1".to_string(),
     };
-    let initial = provider().with_fetcher(Arc::new(MockFetcher::new()));
+    let initial = provider().with_fetcher(Arc::new(
+        MockFetcher::new().with_empty_release_catalog("v1.35.0"),
+    ));
     sim_assert_eq!(have: initial.capability_has_query_at_primary_version(&query), want: Some(false));
 
     // A readable, unwritable directory keeps the old marker but prevents both
@@ -176,7 +180,7 @@ fn failed_marker_deletion_and_schema_write_do_not_restore_absence() -> eyre::Res
     );
 
     // Cache-enabled online probes retry contradicted markers, and a fresh 404
-    // establishes authoritative absence again.
+    // establishes authoritative absence again against the cached release catalog.
     let retry_fetcher = Arc::new(MockFetcher::new());
     let retry = provider().with_fetcher(retry_fetcher.clone());
     sim_assert_eq!(have: retry.capability_has_query_at_primary_version(&query), want: Some(false));

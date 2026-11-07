@@ -56,6 +56,18 @@ impl MockFetcher {
         self.with(url, MockResponse::Body(body.into()))
     }
 
+    /// Serves the default upstream's API catalog for `release` without any kind, so a document
+    /// miss there is authoritative absence.
+    #[must_use]
+    pub fn with_empty_release_catalog(self, release: &str) -> Self {
+        self.with_body(
+            format!(
+                "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{release}/_definitions.json"
+            ),
+            br#"{"definitions":{}}"#.to_vec(),
+        )
+    }
+
     /// Changes the response used for unconfigured URLs.
     #[must_use]
     pub fn with_default(self, response: MockResponse) -> Self {

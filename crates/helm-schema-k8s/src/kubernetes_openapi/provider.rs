@@ -11,7 +11,6 @@ use crate::cache::{
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::filename::candidate_filenames_for_resource;
-use crate::group_version::GroupVersion;
 use crate::lookup::source_bundle::{SourceBundleNode, bundle_source_definition};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
@@ -23,7 +22,9 @@ use crate::source_cache::{
     load_source_schema_doc, probe_source_schema_doc, source_url,
 };
 
-use super::capability_probe::build_capability_probe;
+use super::capability_probe::{
+    RELEASE_CATALOG, build_capability_probe, catalog_declares, catalog_release,
+};
 use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf_with_location};
 use super::version_chain::K8sVersionChain;
 use crate::mirror_chain::{MirrorChain, SchemaSource};
@@ -279,6 +280,29 @@ impl KubernetesJsonSchemaProvider {
             mem_key(&source.source_id, version, filename),
         )
     }
+
+    /// Decides a probe whose document every source reported missing from the release API
+    /// catalog of each source: a kind that readable catalogs all omit is absent. A declared kind
+    /// stays uncertain, since declaration does not prove the kind is served, and so does a miss
+    /// without a readable catalog.
+    fn release_catalog_omits(&self, version: &str, probe: &ResourceRef) -> Option<bool> {
+        let release = catalog_release(version);
+        let mut uncertain = false;
+        let mut omitted = false;
+        for source in &self.mirrors.sources {
+            match self.probe_at(source, release, RELEASE_CATALOG) {
+                SourceDocOutcome::Found(catalog) => {
+                    if catalog_declares(catalog.root(), probe) {
+                        return None;
+                    }
+                    omitted = true;
+                }
+                SourceDocOutcome::Uncertain => uncertain = true,
+                SourceDocOutcome::AuthoritativelyAbsent => {}
+            }
+        }
+        (omitted && !uncertain).then_some(false)
+    }
 }
 
 fn bundled_definition_schema_for_source_leaf<F: FnMut(&str) -> Option<SchemaDoc>>(
@@ -404,11 +428,6 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
         {
             return None;
         }
-        // The catalog omits the API extension server's CRD definitions.
-        // Its missing documents cannot establish that those APIs are unserved.
-        if GroupVersion::parse(api_version)?.group == "apiextensions.k8s.io" {
-            return None;
-        }
         self.capability_has_query_at_primary_version(&ApiPresenceQuery::Resource {
             api_version: api_version.clone(),
             kind: kind.clone(),
@@ -424,19 +443,25 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
     /// `group/version/Kind` or `version` (core API).
     ///
     /// Returns:
-    ///   - `Some(true)` — probe was positively found (in-mem cache hit,
-    ///     disk cache hit, or successful upstream fetch).
-    ///   - `Some(false)` — probe is authoritatively absent (the
-    ///     upstream fetcher reported "not found", which recorded a
-    ///     negative-cache entry). Includes negative-cache hits from a
-    ///     prior online run even when downloads are now disabled —
-    ///     those represent a confirmed past 404.
+    ///   - `Some(true)` — the probe's document was positively found
+    ///     (in-mem cache hit, disk cache hit, or successful upstream
+    ///     fetch). A release catalog declaration never yields `Some(true)`.
+    ///   - `Some(false)` — probe is authoritatively absent: every
+    ///     source reported its document "not found" (including
+    ///     negative-cache hits from a prior online run, which represent a
+    ///     confirmed past 404) AND the release's API catalog has no
+    ///     single-root definition of the kind. Bundles omit documents for
+    ///     some served kinds (the standalone bundles drop the
+    ///     self-referencing `CustomResourceDefinition`), so a miss alone
+    ///     proves nothing.
     ///   - `None` — uncertain. We can't reach a conclusion either way:
     ///     no primary version configured, unknown probe target (no
     ///     canonical kind for this 2-part api version), downloads
     ///     disabled with the probe absent from both the local cache
     ///     AND the negative cache (offline + the probe was never
-    ///     previously attempted), or a network error during fetch.
+    ///     previously attempted), a network error during fetch, or a
+    ///     document miss whose release catalog declares the kind or is
+    ///     unreadable.
     ///
     /// The branch selector treats `None` as "potentially live" so
     /// uncertainty never silently drops a branch — the cache
@@ -461,7 +486,10 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
                 }
             }
         }
-        (!uncertain).then_some(false)
+        if uncertain {
+            return None;
+        }
+        self.release_catalog_omits(primary, &probe)
     }
 }
 

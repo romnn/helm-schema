@@ -138,16 +138,18 @@ fn offline_empty_cache_returns_none() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Online + the fetcher reports "not found": that's an authoritative
-/// upstream signal. Return `Some(false)`. The negative cache also
-/// gets populated so subsequent probes to the same target in the
-/// same process short-circuit without re-fetching.
+/// Online + the fetcher reports "not found" and the release catalog does
+/// not declare the kind: that's an authoritative upstream signal. Return
+/// `Some(false)`. The negative cache also gets populated so subsequent
+/// probes to the same target in the same process short-circuit without
+/// re-fetching.
 #[test]
 fn online_404_returns_authoritative_false_and_caches_negative() -> eyre::Result<()> {
     let cache_dir = tmp_dir("capability_oracle_online_404")?;
     let primary = "v1.35.0";
 
-    let mock = Arc::new(MockFetcher::new()); // empty → every fetch is Ok(None) (404)
+    // Every document fetch is Ok(None) (404); the release catalog lists no kind.
+    let mock = Arc::new(MockFetcher::new().with_empty_release_catalog(primary));
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec![primary.to_string()],
         None,
@@ -156,7 +158,7 @@ fn online_404_returns_authoritative_false_and_caches_negative() -> eyre::Result<
     .with_allow_download(true)
     .with_fetcher(mock.clone());
 
-    // First probe: the fetcher is consulted, returns 404 → authoritative absent.
+    // First probe: the document 404s and the catalog omits the kind → authoritative absent.
     let query =
         ApiPresenceQuery::parse_helm_literal("autoscaling/v2").expect("parse api presence query");
     let first = provider.capability_has_query_at_primary_version(&query);
@@ -175,16 +177,16 @@ fn online_404_returns_authoritative_false_and_caches_negative() -> eyre::Result<
         want: Some(false),
         "second probe in same process must still be authoritatively absent; got {second:?}"
     );
-    sim_assert_eq!(have: calls_after_first, want: 1);
+    sim_assert_eq!(have: calls_after_first, want: 2);
     sim_assert_eq!(have: mock.total_calls(), want: calls_after_first);
     Ok(())
 }
 
 #[test]
-fn online_404_returns_false_after_one_source_fetch() -> eyre::Result<()> {
+fn online_404_returns_false_after_one_source_and_catalog_fetch() -> eyre::Result<()> {
     let cache_dir = tmp_dir("capability_oracle_trace_404")?;
     let primary = "v1.35.0";
-    let fetcher = Arc::new(MockFetcher::new());
+    let fetcher = Arc::new(MockFetcher::new().with_empty_release_catalog(primary));
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec![primary.to_string()],
         None,
@@ -198,7 +200,7 @@ fn online_404_returns_false_after_one_source_fetch() -> eyre::Result<()> {
     let answer = provider.capability_has_query_at_primary_version(&query);
 
     sim_assert_eq!(have: answer, want: Some(false));
-    sim_assert_eq!(have: fetcher.total_calls(), want: 1);
+    sim_assert_eq!(have: fetcher.total_calls(), want: 2);
     Ok(())
 }
 

@@ -1,4 +1,5 @@
 use helm_schema_core::{ApiPresenceQuery, ResourceRef};
+use serde_json::Value;
 
 use crate::builtin_groups::is_k8s_builtin_group;
 use crate::group_version::GroupVersion;
@@ -22,6 +23,51 @@ pub(super) fn build_capability_probe(query: &ApiPresenceQuery) -> Option<Resourc
             canonical_kind(api_version)?.to_string(),
         )),
     }
+}
+
+/// The release API catalog every bundle directory of one release derives from.
+pub(super) const RELEASE_CATALOG: &str = "_definitions.json";
+
+/// Bundle variants published beside each release directory. Their catalogs declare the same
+/// kinds as the release's, and the `-strict` variant publishes none, so every variant reads the
+/// one release catalog (the one a vendored bundle keeps).
+const BUNDLE_VARIANT_SUFFIXES: &[&str] =
+    &["-standalone-strict", "-standalone", "-strict", "-local"];
+
+/// The release directory publishing the API catalog for `version_dir`
+/// (`v1.29.0-standalone-strict` → `v1.29.0`).
+pub(super) fn catalog_release(version_dir: &str) -> &str {
+    BUNDLE_VARIANT_SUFFIXES
+        .iter()
+        .find_map(|suffix| version_dir.strip_suffix(suffix))
+        .unwrap_or(version_dir)
+}
+
+/// Whether the release API catalog declares `probe`'s exact group, version and kind as the
+/// single root of a definition.
+///
+/// Generic meta types (`DeleteOptions`, `WatchEvent`) list every group/version, retired ones
+/// included, so only single-entry definitions count as declaring a kind.
+pub(super) fn catalog_declares(catalog: &Value, probe: &ResourceRef) -> bool {
+    let Some(target) = GroupVersion::parse(&probe.api_version) else {
+        return false;
+    };
+    let Some(definitions) = catalog.get("definitions").and_then(Value::as_object) else {
+        return false;
+    };
+    definitions
+        .values()
+        .filter_map(|definition| definition.get("x-kubernetes-group-version-kind"))
+        .filter_map(Value::as_array)
+        .filter_map(|entries| match entries.as_slice() {
+            [entry] => Some(entry),
+            _ => None,
+        })
+        .any(|entry| {
+            entry.get("group").and_then(Value::as_str) == Some(target.group)
+                && entry.get("version").and_then(Value::as_str) == Some(target.version)
+                && entry.get("kind").and_then(Value::as_str) == Some(probe.kind.as_str())
+        })
 }
 
 fn canonical_kind(api_version: &str) -> Option<&'static str> {
