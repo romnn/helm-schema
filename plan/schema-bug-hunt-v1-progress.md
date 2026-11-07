@@ -10826,4 +10826,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - GUARDX next, when WFREE settles: move S2 onto SharedBdd (needs choice variables and projection), then rebase onto the final WFREE2.
   - CATALOG2 resumed in the freed slot (+ EQ-NUMERIC, + P1).
 
+- 09:50 (Nov 07) — **RECV2 round 5: IR lib 0 new against base; 35 new failures in other crates (all from earlier rounds, all adjudicated against Helm); P1 monotonicity law added; round 6 (fresh) launched.**
+  - helper_range_fallback fixed. The cause was toYaml/nindent forking on a value choice whose operand was resolved only through a bounded implication search that abort aliases exhausted. Value::under_path now decides on-path edges exactly.
+  - Range-equivalence laws: 18 discriminating documents, 54/54 rows where candidate == Helm.
+  - Open:
+    - the falsy-receiver class (~11; TypeIs survival leaks into row conditions);
+    - 5 real regressions;
+    - a duplicate ternary abort producer;
+    - ~15 expectation-only tests;
+    - the MAX_EXPORT_WORK grouping charge is order-dependent (P1).
+  - Checkpoint: recv2-round5-checkpoint.patch, sha c298662c.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
