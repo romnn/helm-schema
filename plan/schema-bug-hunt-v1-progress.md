@@ -10636,4 +10636,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - The declared-typing restore stays on the tree (harmless; ADR 0071).
   - Next for RECV2: the 77 IR lib regressions (continuation laws first), then the full gates.
 
+- 04:30 (Nov 07) — **WFREE round 4: CPU 238.8 → 214.2 s against main 197.4 (1.085×; 12 charts still over main); replay unchanged (p5 7,277/0/0, guard 7,233/5/0); 23 new unit IDs. Round 5 sent.**
+  - R4-1: one incremental BDD per analysis (predicate_bdd/incremental.rs). Its feasibility certificates are exact; other queries take the fresh path. Law: incremental_feasibility_certificates_match_fresh_answers. Dump byte-identical, 542/542.
+  - R4-3: PredicateRewrites ported. Interning had already removed its memory win; it still saves a little CPU.
+  - R4-0b: the merge-fallback test is #[ignore]d pending DECODE1 B3.
+  - The cnpg trace refuted the overlay hypothesis:
+    - the fullname helper's contains arms spell the same hole with an extra zero-length capture piece, so they don't zip and layout contexts explode past 32;
+    - rbac.yaml exhausts the 1,024-step walk because the payload-spelling cache is keyed by pointer and never hits.
+    - Dropping empty pieces gave +254 closures but 5 datadog reopenings, so it was reverted.
+  - Round 5:
+    - capture boundary as a node property, plus hash-consing frozen values (S11), for cnpg and +254;
+    - CPU on the 12 charts;
+    - the 23 unit IDs.
+  - Patch: wfree2.patch sha 14d1537a; +8,114 LOC against base.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
