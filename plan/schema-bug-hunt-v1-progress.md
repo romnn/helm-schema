@@ -10707,4 +10707,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Projected ~105–125 s of the 145 s excess removed; corpus below main; per-chart bar likely except falco.
   - Lanes: WFREE2 takes P2/P1/P3/P4 after round 7's unit work; GUARDX round 2 takes the per-key memoized allowance and finish once per node; LOCAL1 takes P5 after step 3.
 
+- 06:20 (Nov 07) — **ORACLE1 hands back: the oracle's CRD blind spot is fixed. 3 FR become correct rejections, 41 FA become correct acceptances, 2 undecided become FA. An independent native review is running before landing. CAPPROBE queued.**
+  - Root cause: the yannh standalone-strict bundle lacks the self-referential apiextensions v1 CRD schema. The cached miss made every CRD "not served", which excused all CRD content.
+  - Fix (test-support only, 6 files, +670/−6, sha 13a18bae):
+    - derive standalone-strict schemas from the release's _definitions.json when the file is missing;
+    - an unserved kind with changed content is undecided, never accepted;
+    - strict ObjectMeta on undecided resources;
+    - VALIDATOR_POLICY v11.
+  - Census:
+    - 23 of 58 FR carry an inherited CRD "not served" error (only 3 change CRD content);
+    - 4,695 of 98,188 FA carry one.
+  - Corrected preview-5 lists: FR 55, FA 98,149, undecided 45 (oracle1 transfer/corrected/).
+  - Tests: 3 red→green plus a derived-schema equality test over all 36 pinned schemas.
+  - Gates: fmt, lint, lint:fc 0; units identical to base (226); integration 160/162, with both failures inherited.
+  - Open: matched loosenings were never saved, so 25 CRD-rendering charts need a battery run.
+  - Product finding, queued as CAPPROBE (high): the helm-schema-k8s capability probe also answers "absent" for apiextensions v1 at 1.29. If .Capabilities.APIVersions.Has reaches it, product schemas take the wrong branch (check main too).
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
