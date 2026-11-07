@@ -26,7 +26,11 @@
 //! to short keys; [`expand_short_definition_names`] translates text that
 //! mentions them back.
 
+use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::ops::Bound;
+
+use ahash::{AHashMap, AHashSet};
 
 use helm_schema_json_schema_walk::{
     DefinitionReference, ReferenceSiblings, SchemaTraversalContext, canonical_json_string,
@@ -92,6 +96,7 @@ pub struct ShortenedSchema {
 /// `anonymous` lists private handles with the recorded origins of their
 /// content, which may be none.
 /// Handles that are not root definitions are ignored.
+#[tracing::instrument(skip_all, fields(anonymous = anonymous.len()))]
 pub fn name_definitions(
     schema: &mut Value,
     anonymous: &BTreeMap<String, Vec<DefinitionOrigin>>,
@@ -211,6 +216,7 @@ fn definition_pointer_token(name: &str) -> String {
 /// such as `default` or `examples`, and never references inside a nested
 /// resource, which resolve against that resource instead of the root.
 /// A reference keeps its pointer suffix below the renamed definition.
+#[tracing::instrument(skip_all, fields(renames = renames.len()))]
 pub fn rename_definitions(schema: &mut Value, renames: &BTreeMap<String, String>) {
     if renames.is_empty() {
         return;
@@ -240,12 +246,13 @@ pub fn rename_definitions(schema: &mut Value, renames: &BTreeMap<String, String>
 /// A definition is named once every container referencing it is, so each
 /// minimum is exact; a reference cycle among unnamed definitions is broken
 /// at its first handle.
+#[tracing::instrument(skip_all)]
 fn source_names(
     schema: &Value,
     definitions: &Map<String, Value>,
     anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
 ) -> BTreeMap<String, String> {
-    let mut taken = BTreeSet::new();
+    let mut taken = TakenNames::default();
     let mut names = BTreeMap::new();
     for name in definitions.keys() {
         if !anonymous.contains_key(name) {
@@ -255,9 +262,10 @@ fn source_names(
     }
     for (handle, origins) in anonymous {
         if let Some(name) = origins.iter().map(origin_name).min() {
-            names.insert(handle.clone(), unique_name(name, &mut taken));
+            names.insert(handle.clone(), taken.unique(name));
         }
     }
+    let index = DefinitionIndex::new(definitions, anonymous);
 
     let references = references_by_target(schema, definitions);
 
@@ -297,18 +305,17 @@ fn source_names(
             .unwrap_or_default();
         let (stable, ancestor) = position_names(sites, &names, &by_meaning);
         if let Some(name) = stable {
-            names.insert(handle.to_string(), unique_name(name, &mut taken));
+            names.insert(handle.to_string(), taken.unique(name));
         } else if let Some(body) = definitions.get(handle) {
-            let (meaning, ancestor) =
-                if let Some(meaning) = meaning_name(body, definitions, anonymous) {
-                    (meaning.clone(), meaning)
-                } else {
-                    // Without constrained paths, the leaf is named by what it
-                    // is, below the nearest stable path above it.
-                    let ancestor = ancestor.unwrap_or_else(|| ROOT_DOCUMENT.to_string());
-                    let leaf = leaf_name(body, definitions, anonymous, 0);
-                    (cut_name(&format!("{ancestor}/{leaf}")), ancestor)
-                };
+            let (meaning, ancestor) = if let Some(meaning) = meaning_name(body, &index) {
+                (meaning.clone(), meaning)
+            } else {
+                // Without constrained paths, the leaf is named by what it
+                // is, below the nearest stable path above it.
+                let ancestor = ancestor.unwrap_or_else(|| ROOT_DOCUMENT.to_string());
+                let leaf = leaf_name(body, &index, 0);
+                (cut_name(&format!("{ancestor}/{leaf}")), ancestor)
+            };
             names.insert(handle.to_string(), meaning.clone());
             meanings.entry(meaning).or_default().push(handle);
             by_meaning.insert(handle, ancestor);
@@ -326,18 +333,18 @@ fn source_names(
         if handles.len() > 1 {
             handles.sort_by_cached_key(|handle| {
                 let mut body = definitions.get(*handle).cloned().unwrap_or_default();
-                erase_anonymous_references(&mut body, anonymous);
+                erase_anonymous_references(&mut body, &index);
                 (canonical_json_string(&body), *handle)
             });
         }
         for handle in handles {
-            names.insert(handle.to_string(), unique_name(meaning.clone(), &mut taken));
+            names.insert(handle.to_string(), taken.unique(meaning.clone()));
         }
     }
     // Unreferenced definitions have no source path and keep their handles.
     for handle in anonymous.keys() {
         if !names.contains_key(handle) {
-            names.insert(handle.clone(), unique_name(handle.clone(), &mut taken));
+            names.insert(handle.clone(), taken.unique(handle.clone()));
         }
     }
     names
@@ -345,6 +352,7 @@ fn source_names(
 
 /// Every plain reference to a root definition, from the document or a
 /// definition body, grouped by the definition it references.
+#[tracing::instrument(skip_all)]
 fn references_by_target<'a>(
     schema: &'a Value,
     definitions: &'a Map<String, Value>,
@@ -431,18 +439,15 @@ fn position_names(
 
 /// Replaces references to anonymous definitions, whose handles are not
 /// stable, with one placeholder.
-fn erase_anonymous_references(
-    schema: &mut Value,
-    anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
-) {
+fn erase_anonymous_references(schema: &mut Value, index: &DefinitionIndex<'_>) {
     if let Some(Value::String(reference)) = schema.get_mut("$ref")
         && let Some(parsed) = parse_definition_reference(reference)
-        && anonymous.contains_key(&parsed.name)
+        && index.anonymous.contains(parsed.name.as_str())
     {
         *reference = definition_reference("");
     }
     visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |child| {
-        erase_anonymous_references(child, anonymous);
+        erase_anonymous_references(child, index);
     });
 }
 
@@ -467,15 +472,10 @@ const MEANING_WALK_BUDGET: usize = 4_000;
 /// `enum`, `!=v` for a negated one, `:name` for a reference to a named
 /// definition, `?` for a key that is only required.
 /// References to anonymous definitions are followed.
-fn meaning_name(
-    body: &Value,
-    definitions: &Map<String, Value>,
-    anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
-) -> Option<String> {
+fn meaning_name<'a>(body: &'a Value, index: &DefinitionIndex<'a>) -> Option<String> {
     let mut walker = MeaningWalker {
-        definitions,
-        anonymous,
-        visited: BTreeSet::new(),
+        index,
+        visited: AHashSet::new(),
         budget: MEANING_WALK_BUDGET,
     };
     if let Some(condition) = body.get("if") {
@@ -506,22 +506,17 @@ const LEAF_REFERENCE_DEPTH: usize = 4;
 /// `;pattern-<pattern start>` (`~` would need escaping in every `$ref`); `not/<inner>` or `anyOf/<member>+<member>`
 /// for a combinator; `:name` for a reference to a named definition; the
 /// sorted keyword list for anything else.
-fn leaf_name(
-    schema: &Value,
-    definitions: &Map<String, Value>,
-    anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
-    depth: usize,
-) -> String {
+fn leaf_name(schema: &Value, index: &DefinitionIndex<'_>, depth: usize) -> String {
     let Value::Object(object) = schema else {
         return schema.to_string();
     };
     if let Some(reference) = object.get("$ref").and_then(Value::as_str)
         && let Some(parsed) = parse_definition_reference(reference)
         && parsed.suffix.is_empty()
-        && let Some(body) = definitions.get(&parsed.name)
+        && let Some(&(_, body)) = index.bodies.get(parsed.name.as_str())
     {
-        if anonymous.contains_key(&parsed.name) && depth < LEAF_REFERENCE_DEPTH {
-            return leaf_name(body, definitions, anonymous, depth + 1);
+        if index.anonymous.contains(parsed.name.as_str()) && depth < LEAF_REFERENCE_DEPTH {
+            return leaf_name(body, index, depth + 1);
         }
         return format!(":{}", encode_document(&parsed.name));
     }
@@ -554,13 +549,13 @@ fn leaf_name(
         return name;
     }
     if let Some(inner) = object.get("not") {
-        return format!("not/{}", leaf_name(inner, definitions, anonymous, depth));
+        return format!("not/{}", leaf_name(inner, index, depth));
     }
     for keyword in ["anyOf", "allOf", "oneOf"] {
         if let Some(Value::Array(members)) = object.get(keyword) {
             let members = members
                 .iter()
-                .map(|member| leaf_name(member, definitions, anonymous, depth))
+                .map(|member| leaf_name(member, index, depth))
                 .collect::<BTreeSet<_>>();
             return format!("{keyword}/{}", render_path_list(&members));
         }
@@ -610,14 +605,98 @@ fn cut_name(name: &str) -> String {
     format!("{cut}...")
 }
 
-struct MeaningWalker<'a> {
-    definitions: &'a Map<String, Value>,
-    anonymous: &'a BTreeMap<String, &'a [DefinitionOrigin]>,
-    visited: BTreeSet<&'a str>,
+/// Root definitions by name, and the anonymous ones among them, for the
+/// lookups every naming walk repeats.
+struct DefinitionIndex<'a> {
+    bodies: AHashMap<&'a str, (&'a str, &'a Value)>,
+    anonymous: AHashSet<&'a str>,
+    /// The root definition each distinct `$ref` text names, if any.
+    references: RefCell<AHashMap<&'a str, Option<(&'a str, &'a Value)>>>,
+}
+
+impl<'a> DefinitionIndex<'a> {
+    fn new(
+        definitions: &'a Map<String, Value>,
+        anonymous: &'a BTreeMap<String, &[DefinitionOrigin]>,
+    ) -> Self {
+        Self {
+            bodies: definitions
+                .iter()
+                .map(|(name, body)| (name.as_str(), (name.as_str(), body)))
+                .collect(),
+            anonymous: anonymous.keys().map(String::as_str).collect(),
+            references: RefCell::new(AHashMap::new()),
+        }
+    }
+
+    /// The root definition `reference` names without a pointer below it.
+    fn resolve(&self, reference: &'a str) -> Option<(&'a str, &'a Value)> {
+        if let Some(target) = self.references.borrow().get(reference) {
+            return *target;
+        }
+        let target = parse_definition_reference(reference)
+            .filter(|parsed| parsed.suffix.is_empty())
+            .and_then(|parsed| self.bodies.get(parsed.name.as_str()).copied());
+        self.references.borrow_mut().insert(reference, target);
+        target
+    }
+}
+
+/// The keywords a meaning walk reads, found in one pass over a schema.
+#[derive(Default)]
+struct MeaningKeywords<'a> {
+    reference: Option<&'a Value>,
+    constant: Option<&'a Value>,
+    enumeration: Option<&'a Value>,
+    not: Option<&'a Value>,
+    properties: Option<&'a Value>,
+    required: Option<&'a Value>,
+    all_of: Option<&'a Value>,
+    any_of: Option<&'a Value>,
+    one_of: Option<&'a Value>,
+    if_schema: Option<&'a Value>,
+    then_schema: Option<&'a Value>,
+    else_schema: Option<&'a Value>,
+    items: Option<&'a Value>,
+    additional_properties: Option<&'a Value>,
+    pattern_properties: Option<&'a Value>,
+}
+
+impl<'a> MeaningKeywords<'a> {
+    fn of(object: &'a Map<String, Value>) -> Self {
+        let mut keywords = Self::default();
+        for (key, value) in object {
+            let slot = match key.as_str() {
+                "$ref" => &mut keywords.reference,
+                "const" => &mut keywords.constant,
+                "enum" => &mut keywords.enumeration,
+                "not" => &mut keywords.not,
+                "properties" => &mut keywords.properties,
+                "required" => &mut keywords.required,
+                "allOf" => &mut keywords.all_of,
+                "anyOf" => &mut keywords.any_of,
+                "oneOf" => &mut keywords.one_of,
+                "if" => &mut keywords.if_schema,
+                "then" => &mut keywords.then_schema,
+                "else" => &mut keywords.else_schema,
+                "items" => &mut keywords.items,
+                "additionalProperties" => &mut keywords.additional_properties,
+                "patternProperties" => &mut keywords.pattern_properties,
+                _ => continue,
+            };
+            *slot = Some(value);
+        }
+        keywords
+    }
+}
+
+struct MeaningWalker<'i, 'a> {
+    index: &'i DefinitionIndex<'a>,
+    visited: AHashSet<&'a str>,
     budget: usize,
 }
 
-impl<'a> MeaningWalker<'a> {
+impl<'a> MeaningWalker<'_, 'a> {
     fn path_list(&mut self, schema: &'a Value) -> String {
         if *schema == Value::Bool(false) {
             return "fail".to_string();
@@ -644,24 +723,23 @@ impl<'a> MeaningWalker<'a> {
             return;
         }
         self.budget -= 1;
-        if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-            && let Some(parsed) = parse_definition_reference(reference)
-            && parsed.suffix.is_empty()
-            && let Some((target, body)) = self.definitions.get_key_value(&parsed.name)
+        let keywords = MeaningKeywords::of(object);
+        if let Some(Value::String(reference)) = keywords.reference
+            && let Some((target, body)) = self.index.resolve(reference)
         {
-            if !self.anonymous.contains_key(target) {
+            if !self.index.anonymous.contains(target) {
                 insert_stated(paths, path, &format!(":{}", encode_document(target)));
-            } else if self.visited.insert(target.as_str()) {
+            } else if self.visited.insert(target) {
                 self.walk(body, path, paths);
             }
         }
-        if let Some(value) = object.get("const") {
+        if let Some(value) = keywords.constant {
             insert_stated(paths, path, &format!("={}", render_value(value)));
         }
-        if let Some(Value::Array(values)) = object.get("enum") {
+        if let Some(Value::Array(values)) = keywords.enumeration {
             insert_stated(paths, path, &format!("={}", render_values(values)));
         }
-        if let Some(negated) = object.get("not") {
+        if let Some(negated) = keywords.not {
             if let Some(value) = negated.get("const") {
                 insert_stated(paths, path, &format!("!={}", render_value(value)));
             } else if let Some(Value::Array(values)) = negated.get("enum") {
@@ -670,13 +748,10 @@ impl<'a> MeaningWalker<'a> {
                 self.walk(negated, path, paths);
             }
         }
-        if let Some(Value::Object(properties)) = object.get("properties") {
-            let mut keys = properties.keys().collect::<Vec<_>>();
-            keys.sort_unstable();
-            for key in keys {
-                let Some(child) = properties.get(key) else {
-                    continue;
-                };
+        if let Some(Value::Object(properties)) = keywords.properties {
+            let mut properties = properties.iter().collect::<Vec<_>>();
+            properties.sort_unstable_by_key(|(key, _)| *key);
+            for (key, child) in properties {
                 let child_path = join_property(path, key);
                 let before = paths.len();
                 self.walk(child, &child_path, paths);
@@ -685,11 +760,11 @@ impl<'a> MeaningWalker<'a> {
                 }
             }
         }
-        if let Some(Value::Array(required)) = object.get("required") {
+        if let Some(Value::Array(required)) = keywords.required {
             for key in required.iter().filter_map(Value::as_str) {
                 let child_path = join_property(path, key);
                 let constrained = paths
-                    .range(child_path.clone()..)
+                    .range::<str, _>((Bound::Included(child_path.as_str()), Bound::Unbounded))
                     .next()
                     .is_some_and(|existing| existing.starts_with(&child_path));
                 if !constrained {
@@ -697,19 +772,24 @@ impl<'a> MeaningWalker<'a> {
                 }
             }
         }
-        for keyword in ["allOf", "anyOf", "oneOf"] {
-            if let Some(Value::Array(arms)) = object.get(keyword) {
+        for arms in [keywords.all_of, keywords.any_of, keywords.one_of] {
+            if let Some(Value::Array(arms)) = arms {
                 for arm in arms {
                     self.walk(arm, path, paths);
                 }
             }
         }
-        for keyword in ["if", "then", "else"] {
-            if let Some(branch) = object.get(keyword) {
-                self.walk(branch, path, paths);
-            }
+        for branch in [
+            keywords.if_schema,
+            keywords.then_schema,
+            keywords.else_schema,
+        ]
+        .into_iter()
+        .flatten()
+        {
+            self.walk(branch, path, paths);
         }
-        match object.get("items") {
+        match keywords.items {
             Some(Value::Array(items)) => {
                 for item in items {
                     self.walk(item, &format!("{path}@items"), paths);
@@ -718,10 +798,10 @@ impl<'a> MeaningWalker<'a> {
             Some(items) => self.walk(items, &format!("{path}@items"), paths),
             None => {}
         }
-        if let Some(additional) = object.get("additionalProperties") {
+        if let Some(additional) = keywords.additional_properties {
             self.walk(additional, &format!("{path}@*"), paths);
         }
-        if let Some(Value::Object(patterns)) = object.get("patternProperties") {
+        if let Some(Value::Object(patterns)) = keywords.pattern_properties {
             for pattern in patterns.values() {
                 self.walk(pattern, &format!("{path}@*"), paths);
             }
@@ -738,11 +818,13 @@ fn insert_stated(paths: &mut BTreeSet<String>, path: &str, operator: &str) {
 }
 
 fn join_property(path: &str, key: &str) -> String {
-    if path.is_empty() {
-        encode_key(key)
-    } else {
-        format!("{path}.{}", encode_key(key))
+    let mut joined = String::with_capacity(path.len() + key.len() + 1);
+    if !path.is_empty() {
+        joined.push_str(path);
+        joined.push('.');
     }
+    push_encoded_key(&mut joined, key);
+    joined
 }
 
 /// Sorted paths joined by `+`, the tail past [`MEANING_LIST_CHARS`] counted
@@ -802,11 +884,12 @@ fn destination_names(
     definitions: &Map<String, Value>,
     anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
 ) -> BTreeMap<String, String> {
-    let mut taken = definitions
-        .keys()
-        .filter(|name| !anonymous.contains_key(*name))
-        .cloned()
-        .collect::<BTreeSet<_>>();
+    let mut taken = TakenNames::default();
+    for name in definitions.keys() {
+        if !anonymous.contains_key(name) {
+            taken.insert(name.clone());
+        }
+    }
     let mut names = BTreeMap::new();
     let mut reached = BTreeSet::new();
     let mut queue = VecDeque::new();
@@ -821,7 +904,7 @@ fn destination_names(
                 continue;
             }
             let name = if anonymous.contains_key(root) {
-                unique_name(root.to_string(), &mut taken)
+                taken.unique(root.to_string())
             } else {
                 root.to_string()
             };
@@ -851,7 +934,7 @@ fn destination_names(
                     if path.is_empty() {
                         path.push_str("@root");
                     }
-                    unique_name(path, &mut taken)
+                    taken.unique(path)
                 } else {
                     target.to_string()
                 };
@@ -1051,23 +1134,30 @@ fn origin_name(origin: &DefinitionOrigin) -> String {
 /// A property or map key as a path step: bare when it is a plain identifier,
 /// else quoted with every character a URI fragment cannot carry as `(hex)`.
 fn encode_key(key: &str) -> String {
+    let mut encoded = String::new();
+    push_encoded_key(&mut encoded, key);
+    encoded
+}
+
+/// Appends `key` as [`encode_key`] spells it.
+fn push_encoded_key(out: &mut String, key: &str) {
     if !key.is_empty()
         && key
             .chars()
             .all(|character| character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
     {
-        return key.to_string();
+        out.push_str(key);
+        return;
     }
-    let mut quoted = String::from("'");
+    out.push('\'');
     for character in key.chars() {
         if character.is_ascii_alphanumeric() || "-._~!$&*+,;=:@/?".contains(character) {
-            quoted.push(character);
+            out.push(character);
         } else {
-            push_escaped(&mut quoted, character);
+            push_escaped(out, character);
         }
     }
-    quoted.push('\'');
-    quoted
+    out.push('\'');
 }
 
 /// Appends the step `@keyword`, or `@keyword(argument)` for an index or a
@@ -1104,18 +1194,34 @@ fn encode_document(document: &str) -> String {
     encoded
 }
 
-/// `name`, or `name@2`, `name@3`, … when it is taken; records the result.
-fn unique_name(name: String, taken: &mut BTreeSet<String>) -> String {
-    if taken.insert(name.clone()) {
-        return name;
+/// The names given so far.
+///
+/// Names are only ever added, so every ordinal below a name's next ordinal
+/// stays taken, and each name's ordinals are probed once.
+#[derive(Default)]
+struct TakenNames {
+    names: AHashSet<String>,
+    next_ordinal: AHashMap<String, usize>,
+}
+
+impl TakenNames {
+    fn insert(&mut self, name: String) {
+        self.names.insert(name);
     }
-    let mut ordinal = 2;
-    loop {
-        let candidate = format!("{name}@{ordinal}");
-        if taken.insert(candidate.clone()) {
-            return candidate;
+
+    /// `name`, or `name@2`, `name@3`, … when it is taken; records the result.
+    fn unique(&mut self, name: String) -> String {
+        if self.names.insert(name.clone()) {
+            return name;
         }
-        ordinal += 1;
+        let ordinal = self.next_ordinal.entry(name.clone()).or_insert(2);
+        loop {
+            let candidate = format!("{name}@{ordinal}");
+            *ordinal += 1;
+            if self.names.insert(candidate.clone()) {
+                return candidate;
+            }
+        }
     }
 }
 

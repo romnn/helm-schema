@@ -50,6 +50,7 @@ pub fn minimize_schema(
 }
 
 /// Extracts repeated subtrees under planning ids, which are returned.
+#[tracing::instrument(skip_all)]
 fn extract_repeated_subschemas(mut schema: Value) -> (Value, BTreeSet<String>) {
     if !can_insert_generated_definitions(&schema) {
         return (schema, BTreeSet::new());
@@ -323,6 +324,7 @@ fn rewrite_schema(
     }
 }
 
+#[tracing::instrument(skip_all)]
 fn inline_unprofitable_definitions(
     schema: &mut Value,
     definitions: &mut BTreeMap<String, Value>,
@@ -443,6 +445,7 @@ fn candidate_fingerprint(
     })
 }
 
+#[tracing::instrument(skip_all)]
 fn normalize_logical_schema(schema: &mut Value) {
     let Some(protected) = protected_reference_targets(schema) else {
         return;
@@ -544,18 +547,20 @@ fn is_nested_resource(schema: &Value) -> bool {
 /// transformation leaves those documents unchanged.
 /// Targets outside lexical schema positions can introduce unindexed references,
 /// so documents using those targets are also left unchanged.
+#[tracing::instrument(skip_all)]
 fn protected_reference_targets(schema: &Value) -> Option<BTreeSet<usize>> {
     fn collect(
         node: &Value,
         nested_resource: bool,
-        references: &mut Vec<String>,
+        references: &mut BTreeSet<String>,
         schema_positions: &mut HashSet<usize>,
     ) {
         schema_positions.insert(value_address(node));
         if let Some(reference) = node.get("$ref").and_then(Value::as_str)
             && (!nested_resource || !reference.starts_with('#'))
+            && !references.contains(reference)
         {
-            references.push(reference.to_string());
+            references.insert(reference.to_string());
         }
         visit_subschemas(node, ReferenceSiblings::Visit, &mut |child| {
             let nested_resource = nested_resource || is_nested_resource(child);
@@ -563,7 +568,8 @@ fn protected_reference_targets(schema: &Value) -> Option<BTreeSet<usize>> {
         });
     }
 
-    let mut references = Vec::new();
+    // Each distinct reference protects the same targets wherever it occurs.
+    let mut references = BTreeSet::new();
     let mut schema_positions = HashSet::new();
     collect(schema, false, &mut references, &mut schema_positions);
     let mut protected = BTreeSet::new();

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_core::{
     CollectionDomain, CollectionQuantifier, ConditionalGuard, GuardValue, ValuePattern, ValuesPath,
@@ -54,6 +54,8 @@ pub(crate) struct ConditionFragmentCache {
     pub(crate) definitions: BTreeMap<String, Value>,
     reserved: BTreeSet<String>,
     shared: bool,
+    /// The schema of each distinct value pattern, which depends on the pattern alone.
+    pattern_schemas: HashMap<ValuePattern, Option<Value>>,
 }
 
 impl ConditionFragmentCache {
@@ -90,6 +92,13 @@ impl ConditionFragmentCache {
             helm_schema_json_schema_walk::ReferenceSiblings::Visit,
             &mut |child| self.reserve(child),
         );
+    }
+
+    fn pattern_schema(&mut self, pattern: &ValuePattern) -> Option<Value> {
+        self.pattern_schemas
+            .entry(pattern.clone())
+            .or_insert_with(|| value_pattern_schema(pattern))
+            .clone()
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
@@ -427,7 +436,7 @@ fn build_single_condition_fragment(
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
-                SchemaNode::foreign(value_pattern_schema(pattern)?),
+                SchemaNode::foreign(cache.pattern_schema(pattern)?),
                 value_pattern_on_yaml(pattern, yaml_value_at_path(runtime_defaults_doc, path))?,
             )
         }

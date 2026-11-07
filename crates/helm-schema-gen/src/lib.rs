@@ -10,6 +10,7 @@ mod emission_policy;
 mod emission_report;
 mod foreign_schema;
 mod generation_decisions;
+mod lint_validators;
 mod merge;
 mod overlay_lowering;
 mod path_resolver;

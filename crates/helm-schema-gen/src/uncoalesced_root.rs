@@ -9,11 +9,11 @@ use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::condition_encoding::{
-    AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, HELM_TRUTHY_DEFINITION_NAME,
-    evaluate_guard_set_on_values, helm_truthy_definition_schema, input_path_present_condition,
-    value_references_helm_truthy,
+    AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, evaluate_guard_set_on_values,
+    input_path_present_condition,
 };
 use crate::emission_report::{LintDocument, LintOutcome, LintWithdrawal};
+use crate::lint_validators::{ConstraintValidator, LintValidators};
 use crate::schema_node::SchemaNode;
 
 /// How a constraint encodes its guards, so the lint projection is encoded
@@ -28,7 +28,7 @@ pub(crate) struct GuardEncoding<'a> {
 /// A condition whose successful or failed compilation is shared by one fact's checks.
 struct LintConstraint {
     condition: Value,
-    validator: OnceCell<Option<jsonschema::Validator>>,
+    validator: OnceCell<Option<ConstraintValidator>>,
 }
 
 /// Relaxes constraints that `helm lint` documents fail.
@@ -76,9 +76,9 @@ pub(crate) struct UncoalescedRootGate<'a> {
     uncoalesced_root: Option<&'a Value>,
     lint_floor: Option<(Value, YamlValue)>,
     coalesced_defaults: &'a Value,
-    definitions: &'a BTreeMap<String, Value>,
     relaxed: Vec<LintWithdrawal>,
     conditions: RefCell<ConditionFragmentCache>,
+    validators: LintValidators<'a>,
 }
 
 impl<'a> UncoalescedRootGate<'a> {
@@ -101,9 +101,9 @@ impl<'a> UncoalescedRootGate<'a> {
             uncoalesced_root,
             lint_floor,
             coalesced_defaults,
-            definitions,
             relaxed: Vec::new(),
             conditions: RefCell::new(conditions),
+            validators: LintValidators::new(definitions),
         }
     }
 
@@ -470,48 +470,17 @@ impl<'a> UncoalescedRootGate<'a> {
         &self,
         constraint: &'b LintConstraint,
         then_value: &Value,
-    ) -> Option<&'b jsonschema::Validator> {
+    ) -> Option<&'b ConstraintValidator> {
         constraint
             .validator
-            .get_or_init(|| self.constraint_validator(&constraint.condition, then_value))
+            .get_or_init(|| {
+                self.validators.constraint_validator(
+                    &constraint.condition,
+                    then_value,
+                    &self.conditions.borrow().definitions,
+                )
+            })
             .as_ref()
-    }
-
-    /// The validator of `if condition then then_value`, or `None` when it
-    /// does not compile: an uncompilable constraint cannot be judged, so it
-    /// stays.
-    #[tracing::instrument(skip_all, fields(reachable_definitions = tracing::field::Empty))]
-    fn constraint_validator(
-        &self,
-        condition: &Value,
-        then_value: &Value,
-    ) -> Option<jsonschema::Validator> {
-        let constraint = serde_json::json!({
-            "if": condition,
-            "then": then_value,
-        });
-        let mut definitions =
-            crate::provider_definitions::definitions_reachable_from(&constraint, self.definitions);
-        let conditions = self.conditions.borrow();
-        definitions.extend(crate::provider_definitions::definitions_reachable_from(
-            &constraint,
-            &conditions.definitions,
-        ));
-        if value_references_helm_truthy(&constraint)
-            || definitions.values().any(value_references_helm_truthy)
-        {
-            definitions.insert(
-                HELM_TRUTHY_DEFINITION_NAME.to_string(),
-                helm_truthy_definition_schema(),
-            );
-        }
-        tracing::Span::current().record("reachable_definitions", definitions.len());
-        let document = serde_json::json!({
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "$defs": definitions,
-            "allOf": [constraint],
-        });
-        jsonschema::validator_for(&document).ok()
     }
 
     /// The relaxed constraints, in relaxation order.

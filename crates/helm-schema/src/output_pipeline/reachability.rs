@@ -16,7 +16,10 @@ pub(crate) struct OwnedDefinitions {
 impl OwnedDefinitions {
     pub(crate) fn capture(schema: &Value) -> Self {
         Self {
-            original: root_definitions(schema),
+            original: root_definitions(schema)
+                .into_iter()
+                .map(|(id, definition)| (id, definition.clone()))
+                .collect(),
         }
     }
 
@@ -105,7 +108,7 @@ pub(crate) fn prune_unreachable_owned_definitions(
     removable.len()
 }
 
-fn root_definitions(schema: &Value) -> BTreeMap<DefinitionId, Value> {
+fn root_definitions(schema: &Value) -> BTreeMap<DefinitionId, &Value> {
     let mut out = BTreeMap::new();
     for keyword in ["$defs", "definitions"] {
         let Some(definitions) = schema.get(keyword).and_then(Value::as_object) else {
@@ -117,7 +120,7 @@ fn root_definitions(schema: &Value) -> BTreeMap<DefinitionId, Value> {
                     keyword: keyword.to_string(),
                     name: name.clone(),
                 },
-                definition.clone(),
+                definition,
             );
         }
     }

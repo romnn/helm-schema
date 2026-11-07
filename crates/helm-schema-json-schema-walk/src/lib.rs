@@ -395,6 +395,12 @@ pub fn parse_definition_reference(reference: &str) -> Option<DefinitionReference
 /// valid URI reference.
 #[must_use]
 pub fn local_reference_fragment(reference: &str) -> Option<String> {
+    // RFC 3986 fragment characters other than `%` decode to themselves.
+    if let Some(fragment) = reference.strip_prefix('#')
+        && fragment.bytes().all(is_unencoded_fragment_byte)
+    {
+        return Some(fragment.to_string());
+    }
     let parsed = fluent_uri::UriRef::parse(reference).ok()?;
     if parsed.has_scheme()
         || parsed.has_authority()
@@ -404,6 +410,12 @@ pub fn local_reference_fragment(reference: &str) -> Option<String> {
         return None;
     }
     Some(parsed.fragment()?.decode().to_string().ok()?.into_owned())
+}
+
+/// Whether `byte` may appear unencoded in an RFC 3986 fragment: an
+/// unreserved or sub-delimiter character, `:`, `@`, `/` or `?`.
+fn is_unencoded_fragment_byte(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || b"-._~!$&'()*+,;=:@/?".contains(&byte)
 }
 
 /// Describes how a JSON value is interpreted while traversing a schema.
