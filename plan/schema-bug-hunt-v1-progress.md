@@ -10589,4 +10589,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Three FR witnesses (crds.annotations with a boolean value) are claimed to be correct rejections and need re-adjudication.
   - Queue: RECV2 resumed; TPLT2, CATALOG2 and CPUGEN are still queued.
 
+- 03:05 (Nov 07) — **LOCAL1 slice B DEFERRED (orchestrator decision, on a native Opus assessment); seams v2 amendments A1–A3 adopted; an oracle defect found.**
+  - Assessment: designs/reviews/local1b-assessment-2026-11-07.md. Neither salvage nor an immediate restart.
+  - Reopenings and CPU most likely come from layout choices pushed into the interpreter (guard.rs:619-725 CanonicalPredicates via yaml.rs) and from projection-first lowering at final_signals.rs:419.
+  - Amendments, appended to briefs/seams-v1.md:
+    - A1: the layout walk keeps possible() until the abort cone has YAML-invalidity aborts;
+    - A2: each row lowers as projected ∨ legacy (0 reopenings by construction; the 4b gate is per row);
+    - A3: FRCLASS prerequisites land as their own CPU-measured step.
+  - Harvest:
+    - PredicateRewrites → WFREE3 (only if it still pays over interning; byte identity required);
+    - the S1b core, the activation law and the S3 grouping go into a minimal B (~1k LOC) after GUARDX lands on WFREE2.
+  - Oracle defect: the 3 crds.annotations FR witnesses (argo-events, external-secrets, okteto) are correct rejections. The preview-5 Kubernetes check was vacuous on CRDs carrying the "not served" error, and validated after mergeAnnotations dropped the non-string map. Real install's strict validation rejects it.
+  - Queued: ORACLE1 (re-adjudicate every "not served" verdict; fix the oracle) at top priority, and the B-ablation (evidence only).
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
