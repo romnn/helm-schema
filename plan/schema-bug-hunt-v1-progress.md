@@ -10663,4 +10663,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - R-c: the inherited `eq .Values.n 3` FA (float64 against int) is queued for CATALOG2's eq semantics.
   - The fresh RECV2 agent does: the not fix → the 77 IR regressions → full gates.
 
+- 05:00 (Nov 07) — **WFREE round 5 reaches 0 reopenings on both snapshots (p5 7,272/0/0, guard 7,228/0/0; cnpg closed, flux2 −5); units 22 new. CPU screen running. RECV2 round 2: not() FA fixed; IR regressions 77 → 25; a fresh agent continues.**
+  - RECV2 not() cause: guard.rs negate/apply/choice zeroed the caller's SHARED GuardWorkBudget when one operand was an alias. Now an alias defers only its own operation. Red→green law abort_observation_tests::an_abort_continuation_keeps_later_negated_edges_exact.
+  - Also fixed:
+    - RuntimeCondition::exact follows the observation projection;
+    - a nil-receiver selector gives a nil map (an FR fix with a receipt);
+    - the ternary catalog row is STRICT (nil condition aborts).
+  - Rulings applied:
+    - R-a: tpl continuations ≤2;
+    - R-b: Helm agrees with the candidate (receipt-rb).
+  - Open: captured_header ×2 FA, zero_trip_ranges FA, carried_array_reads FR, and 21 not yet analysed.
+  - Checkpoint patch: recv2-round2-checkpoint.patch, sha 0f9abd73.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
