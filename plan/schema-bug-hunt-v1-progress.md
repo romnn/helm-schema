@@ -10792,4 +10792,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Line now: 6615d4f2 TESTPORT1 → d63dc03f ORACLE1 → 1f30ea0d CAPPROBE.
   - GUARDX round 2 has root-caused the allowance anomaly (signoz additionalEnvs, supplement search). Report pending.
 
+- 08:50 (Nov 07) — **RECV2 round 4: IR lib regressions 9 → 1; 36 new failures in other crates (all from earlier rounds); round 5 (fresh) launched.**
+  - Fixed:
+    - nil_helper_receiver FR (kinds.rs allows_operand_nil: an invalid operand converts to nil unless the function always aborts);
+    - exported_path_predicate reuses the runtime cache entry without abort edges;
+    - a Control test with an abort continuation is Exact when its projection on the proved-normal survivors is exact (restores rows after hasKey map requirements).
+  - Laws restated, each with a receipt.
+  - Ruling: verdict-equivalence instead of byte equality is allowed for the range-equivalence test, provided the documents discriminate every guard edge.
+  - Open:
+    - helper_range_fallback (break-assigned $result unknown, so 3 K8s-demand reopenings);
+    - 36 gen/lib new failures;
+    - the P1 law.
+  - Gates: fmt, lint, lint:fc 0; units 37 new / 8 fixed. RECV2 total +2,170 LOC.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
