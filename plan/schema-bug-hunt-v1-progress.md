@@ -10785,4 +10785,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     Most need P4.
   - Bytes grew 0.1–4.6% on 6 printf charts; the tracked charts are identical. Patch sha 45b05c0c.
 
+- 08:35 (Nov 07) — **CAPPROBE LANDED on r3b/construction (1f30ea0d, pushed, no force).**
+  - Contents: the release-catalog capability probe with the single-root rule. Declared-but-missing → None; omitted → Some(false); no catalog → None. The apiextensions recognizer is deleted and ADR 0029 updated. Patch sha 580fffce, 7 files, production +90/−16.
+  - Checks: tree byte-compared; fmt 0. Builder gates: lint 0, lint:fc 0, integration 159/159, units identical to base, dump byte-identical, replays 0/0/0.
+  - Review: REWORK (multi-entry meta, declared ≠ served), then fixed.
+  - Line now: 6615d4f2 TESTPORT1 → d63dc03f ORACLE1 → 1f30ea0d CAPPROBE.
+  - GUARDX round 2 has root-caused the allowance anomaly (signoz additionalEnvs, supplement search). Report pending.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
