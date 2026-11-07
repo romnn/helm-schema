@@ -10805,4 +10805,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - the P1 law.
   - Gates: fmt, lint, lint:fc 0; units 37 new / 8 fixed. RECV2 total +2,170 LOC.
 
+- 09:20 (Nov 07) — **WFREE round 8: step 0 (counters) and step 1a (SharedBdd for normalize, feasibility and implication, with local per-step allowances) landed in the lane; replays still 0/0 (7,277 / 7,233); units unchanged (7 new); CPU only −3% on 9 charts. Round 9 reordered to helper summaries first (orchestrator decision).**
+  - Counters (calls against distinct keys):
+    - helpers: milvus 6,078/531, harbor 3,612/117, okteto 6,654/221, keda 330/3;
+    - normalize: 11–40×;
+    - export rows: keda 8,419/396;
+    - every chart hits the 32-context cap.
+    This confirms the review's diagnosis: redundancy is in helpers and export, not BDDs.
+  - SharedBdd: core predicate_bdd/shared.rs replaces IncrementalBdd; the fresh paths are deleted. Law: shared_diagram_answers_are_independent_of_query_order.
+  - 41 chart schemas changed bytes (normal-form syntax, plus more infeasible paths proven); adjudicated verdicts unchanged; the tracked six identical.
+  - Patch sha 85d87f81. +324 LOC.
+  - Round 9 order: S-C helper summaries (with a summary-equals-direct-execution law) → falco/harbor slowdown → S-F → P1 normalize_bounded plus the monotonicity law → P4.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
