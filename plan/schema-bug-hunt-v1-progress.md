@@ -10837,4 +10837,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - the MAX_EXPORT_WORK grouping charge is order-dependent (P1).
   - Checkpoint: recv2-round5-checkpoint.patch, sha c298662c.
 
+- 10:00 (Nov 07) — **CATALOG2 reports build-layout-dependent verdicts (debug vs release disagree on nginx; trivy flips with instrumentation). DETERM investigation launched (native, CARGO_BUILD_JOBS=2).**
+  - Risk: if output depends on the build profile or on process randomness, the corpus fixtures (debug producer) don't describe the shipped release CLI. That would violate ADR 0063 (deterministic output).
+  - DETERM will:
+    - reproduce on B (same binary twice; debug vs release);
+    - bisect the first divergence;
+    - classify the cause (HashMap RandomState ordering feeding budgets or tie-breaks, address keys, cfg(debug_assertions), recursion limits, time limits);
+    - check fixture scope on 10 charts;
+    - propose or apply a deterministic fix with a law test.
+  - Progress elsewhere:
+    - RECV2 round 6: gen+cli new failures 35 → 19 (falsy class fixed); grouping charge content-keyed.
+    - WFREE round 9: S-C ceiling only 1–4% with exact keys (deferred); S-F 0.1% (dropped). R9-1 brought falco back. R9-3 projection P1: +24 closures but 5 datadog reopenings (P4 class), reverted.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
