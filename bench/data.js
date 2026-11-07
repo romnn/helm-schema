@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793724173621,
+  "lastUpdate": 1794064722737,
   "repoUrl": "https://github.com/romnn/helm-schema",
   "entries": {
     "helm-schema end-to-end": [
@@ -13968,6 +13968,474 @@ window.BENCHMARK_DATA = {
             "value": 1.0017,
             "unit": "s",
             "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 7763\"}},\"text\":\"cpu 25.200-25.712 s over 3 runs; AMD EPYC 7763 64-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "roman.dahm4@gmail.com",
+            "name": "romnn",
+            "username": "romnnn"
+          },
+          "committer": {
+            "email": "roman.dahm4@gmail.com",
+            "name": "romnn",
+            "username": "romnnn"
+          },
+          "distinct": true,
+          "id": "f9031194550175fe1d6c6cb77e730f4f91d2745a",
+          "message": "chore(plan): record the TPLT2 CPU design and S6 amendment",
+          "timestamp": "2026-11-07T14:27:22+01:00",
+          "tree_id": "7dd2f6c90f86356b112254fec64f8d8317e45c84",
+          "url": "https://github.com/romnn/helm-schema/commit/f9031194550175fe1d6c6cb77e730f4f91d2745a"
+        },
+        "date": 1794064719710,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "kubeview/full instructions",
+            "value": 606450500,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"instructions\",\"label\":\"Instructions (cachegrind)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"valgrind\":\"valgrind-3.22.0\"}},\"text\":\"one cachegrind run; valgrind-3.22.0; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full cpu",
+            "value": 0.0636,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full wall",
+            "value": 0.064,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full peak-rss",
+            "value": 50.5,
+            "unit": "MiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"peak-rss\",\"label\":\"Peak RSS\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full schema-size",
+            "value": 173.8,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"schema-size\",\"label\":\"Schema size\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full compact-size",
+            "value": 97,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"compact-size\",\"label\":\"Compact schema size (short $defs)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full defs",
+            "value": 50,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"defs\",\"label\":\"$defs entries\",\"direction\":\"unknown\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full phase:analyze_charts",
+            "value": 0.0115,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full phase:finalize",
+            "value": 0.001,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full phase:generate_values_schema_with_report",
+            "value": 0.0505,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full phase:collect_conditional_schemas",
+            "value": 0.0055,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full phase:append_selected_constraints",
+            "value": 0.0048,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kubeview/full phase:minimize_schema",
+            "value": 0.006,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 0.061-0.067 s over 9 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full instructions",
+            "value": 27941244496,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"instructions\",\"label\":\"Instructions (cachegrind)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"valgrind\":\"valgrind-3.22.0\"}},\"text\":\"one cachegrind run; valgrind-3.22.0; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full cpu",
+            "value": 2.8112,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full wall",
+            "value": 2.8121,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full peak-rss",
+            "value": 318,
+            "unit": "MiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"peak-rss\",\"label\":\"Peak RSS\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full schema-size",
+            "value": 1510.7,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"schema-size\",\"label\":\"Schema size\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full compact-size",
+            "value": 577.6,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"compact-size\",\"label\":\"Compact schema size (short $defs)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full defs",
+            "value": 825,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"defs\",\"label\":\"$defs entries\",\"direction\":\"unknown\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full phase:analyze_charts",
+            "value": 1.3243,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full phase:finalize",
+            "value": 0.3381,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full phase:generate_values_schema_with_report",
+            "value": 1.1584,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full phase:collect_conditional_schemas",
+            "value": 0.1831,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full phase:append_selected_constraints",
+            "value": 0.5434,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full phase:minimize_schema",
+            "value": 0.1435,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.797-2.911 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean cpu",
+            "value": 2.0936,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean wall",
+            "value": 2.0942,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean peak-rss",
+            "value": 259.4,
+            "unit": "MiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"peak-rss\",\"label\":\"Peak RSS\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean schema-size",
+            "value": 175.9,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"schema-size\",\"label\":\"Schema size\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean compact-size",
+            "value": 89.8,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"compact-size\",\"label\":\"Compact schema size (short $defs)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean defs",
+            "value": 81,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"defs\",\"label\":\"$defs entries\",\"direction\":\"unknown\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean phase:analyze_charts",
+            "value": 1.3141,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean phase:finalize",
+            "value": 0.3432,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean phase:generate_values_schema_with_report",
+            "value": 0.4226,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean phase:collect_conditional_schemas",
+            "value": 0.189,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean phase:append_selected_constraints",
+            "value": 0.036,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/lean phase:minimize_schema",
+            "value": 0.01,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 2.054-2.112 s over 5 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full cpu",
+            "value": 22.2138,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full wall",
+            "value": 22.2161,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full peak-rss",
+            "value": 1827.7,
+            "unit": "MiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"peak-rss\",\"label\":\"Peak RSS\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full schema-size",
+            "value": 3875.1,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"schema-size\",\"label\":\"Schema size\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full compact-size",
+            "value": 3875.1,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"compact-size\",\"label\":\"Compact schema size (short $defs)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full defs",
+            "value": 4360,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"defs\",\"label\":\"$defs entries\",\"direction\":\"unknown\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full phase:analyze_charts",
+            "value": 2.5768,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full phase:finalize",
+            "value": 2.1692,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full phase:generate_values_schema_with_report",
+            "value": 18.2156,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full phase:collect_conditional_schemas",
+            "value": 3.4462,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full phase:append_selected_constraints",
+            "value": 8.211,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/full phase:minimize_schema",
+            "value": 1.653,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"full\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 21.877-22.881 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean cpu",
+            "value": 14.8114,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean wall",
+            "value": 14.8307,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean peak-rss",
+            "value": 1368.8,
+            "unit": "MiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"peak-rss\",\"label\":\"Peak RSS\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean schema-size",
+            "value": 4357.9,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"schema-size\",\"label\":\"Schema size\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean compact-size",
+            "value": 1772.4,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"compact-size\",\"label\":\"Compact schema size (short $defs)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean defs",
+            "value": 1918,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"defs\",\"label\":\"$defs entries\",\"direction\":\"unknown\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean phase:analyze_charts",
+            "value": 2.7803,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean phase:finalize",
+            "value": 2.083,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean phase:generate_values_schema_with_report",
+            "value": 10.9903,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean phase:collect_conditional_schemas",
+            "value": 3.5307,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean phase:append_selected_constraints",
+            "value": 3.3433,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "kube-prometheus-stack/lean phase:minimize_schema",
+            "value": 0.4966,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kube-prometheus-stack\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 14.799-15.188 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean cpu",
+            "value": 17.0725,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"cpu\",\"label\":\"CPU time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean wall",
+            "value": 17.0748,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"wall\",\"label\":\"Wall time\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean peak-rss",
+            "value": 1323.6,
+            "unit": "MiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"peak-rss\",\"label\":\"Peak RSS\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean schema-size",
+            "value": 1956.1,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"schema-size\",\"label\":\"Schema size\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean compact-size",
+            "value": 1956.1,
+            "unit": "KiB",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"compact-size\",\"label\":\"Compact schema size (short $defs)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean defs",
+            "value": 2345,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"defs\",\"label\":\"$defs entries\",\"direction\":\"unknown\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean phase:analyze_charts",
+            "value": 2.9456,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:analyze_charts\",\"label\":\"Phase: template analysis (analyze_charts)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean phase:finalize",
+            "value": 2.1048,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:finalize\",\"label\":\"Phase: contract finalization (finalize)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean phase:generate_values_schema_with_report",
+            "value": 13.529,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:generate_values_schema_with_report\",\"label\":\"Phase: schema generation (generate_values_schema_with_report)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean phase:collect_conditional_schemas",
+            "value": 3.5342,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:collect_conditional_schemas\",\"label\":\"Phase: conditional schemas (collect_conditional_schemas)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean phase:append_selected_constraints",
+            "value": 5.9494,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:append_selected_constraints\",\"label\":\"Phase: selected constraints (append_selected_constraints)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "oncall/lean phase:minimize_schema",
+            "value": 0.8297,
+            "unit": "s",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"EPYC 9V45\"}},\"text\":\"cpu 16.467-17.344 s over 3 runs; AMD EPYC 9V45 96-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           }
         ]
       }
