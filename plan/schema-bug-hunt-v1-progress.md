@@ -10650,4 +10650,9 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - the 23 unit IDs.
   - Patch: wfree2.patch sha 14d1537a; +8,114 LOC against base.
 
+- 04:45 (Nov 07) — **WFREE round 5 (first attempt) stopped early when its context ran low; nothing landed, and the tree is verified back at round 4 (patch 14d1537a). A fresh agent continues from transfer/round5-resume.md.**
+  - Finding: the datadog reopening reduces to a 5-line rbac.yaml chart. Merging the fullname helper's zero-length capture arms (2 contexts instead of 10 unresolved) loses the S5 failure clause `if commonLabels truthy … then false`.
+  - Experiment saved, not applied: r5-experiment-yaml.diff (respell only the frozen arms of a merged term). It closes the cnpg reduction, but full cnpg still exhausts the 1,024-step walk.
+  - New agent's goal: a merge may never drop a failure carried by one of its arms; hash-cons frozen values; then CPU on the 12 charts.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
