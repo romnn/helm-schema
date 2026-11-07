@@ -10970,4 +10970,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Every lane now hits the same wall: CATALOG2 milvus, GUARDX volume, TPLT2 sizes. More exact requirements mean re-exported guards and output-side CPU. So P5 (fact-keyed export, LOCAL1 S-E) is the critical path. LOCAL1 is deferred, so GUARDX round 5 builds P5 as a named S-E adapter: rows keyed by (input path, demand pointer, failure kind), guards ORed, each guard node emitted once, implied rows dropped by diagram implication. Then the round-4 gates.
 
   GUARDX round 5 started (fresh native agent). Heavy lanes: WFREE r11, RECV2 r8, CPUGEN, GUARDX r5; the TPLT2 design review is read-only.
+- 15:00 (Nov 07) — **TPLT2 CPU design review (read-only native agent): the tpl havoc forks a whole second analysis because the joins are lossy. Plan adopted, with an S6 amendment in seams-v1.md.** Evidence: designs/challenge/tplt2-cpu-2026-11-07.md.
+  - **Why the joins are lossy:**
+    - bindings_exact is ANDed and output_widened ORed (state.rs:430, output.rs:1431);
+    - widening is recorded under the joined path;
+    - the havoc overwrites every input region, and later reads return all regions;
+    - all scalar locals are rebound (operations.rs:1694), which is wrong, because tpl cannot reassign the caller's $vars;
+    - only Exact decisions are interned, so every repeated `if` stays a fresh, feasible test (spark: 5,259 Top joins vs 1,043 Pristine).
+  - **Fix:** the havoc becomes one heap node with interned reads per (havoc, path) and guarded HeapNode::Join. Delete BranchCounts: three count DAGs rebuilt with fresh budgets at every fork and join, an order-dependent P1 violation that predates TPLT2. Intern Partial decisions. Estimate: TPLT2's marginal CPU ~1.2–1.5× WFREE with closures unchanged.
+  - **Sizes:** x509's growth is newly reached properties (31.6 KB of 38.3 KB is descriptions; main is 256 KB). Its bar is restated as no repeated rows plus description-free bytes ≤ main's. Airflow and postgresql-ha are ~55% same-name @N families, one export per surviving continuation: a P5 case.
+  - **okteto 50 (probable cause):** MAX_CHART_WORK `Exhausted => return` (executed_requirements.rs:30) drops all remaining requirements, which violates S4 and P1. Sent to GUARDX round 5 with the halve/double confirmation test.
+  - **Owners:**
+    - WFREE round 12, after the round-11 landing: steps 1–3; Partial interning needs GUARDX sign-off on S1.
+    - TPLT2: rebases, then deletes the S6 bit.
+    - GUARDX round 5: P5 plus the per-group allowance.
+    - Queue updated.
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
