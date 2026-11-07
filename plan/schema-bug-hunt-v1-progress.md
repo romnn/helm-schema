@@ -10753,4 +10753,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Remaining 9: nil_helper_receiver (a real FR), detector if_chain_kind_selector, and 7 not yet analysed.
   - Checkpoint: recv2-round3-checkpoint.patch, sha c8d76b7f.
 
+- 07:45 (Nov 07) — **CAPPROBE: the product probe defect is real but corpus-invisible; a structural fix deletes a recognizer exception. Under review before landing.**
+  - The probe treated a missing per-kind file as "not served", so the CRD was unserved under standalone-strict bundles (the corpus/test release). The product default (v1.35, plain bundle) was correct.
+  - R3b never asks the probe about .Capabilities.APIVersions.Has (hosts.rs:113 is an unknown bool). Its only consumer, resource_is_served, was masked by a hard-coded apiextensions exception (provider.rs:407-411), a recognizer.
+  - main has the same latent defect, unreachable in the corpus (no chart gates on Has apiextensions). It rides R3b replacing main.
+  - Helm 4.2.3 receipt: APIVersions.Has holds the client-go scheme's group/versions only (no kinds, independent of the kube version). The product models the pinned cluster (ADR 0029): a policy difference, left as is.
+  - Fix:
+    - release catalog from _definitions.json with an exact GVK match;
+    - declared means Some(true), left out by a readable catalog means Some(false), no catalog means None;
+    - exception deleted, ADR 0029 updated.
+  - Checks: dump byte-identical 542/542; replays 0/0/0; units identical; integration 155/155. Patch sha 32c6c7ed.
+  - Review question: v1alpha roots declared in _definitions.json but off by default must not read as served.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
