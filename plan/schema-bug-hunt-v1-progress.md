@@ -10773,4 +10773,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Rebase onto d63dc03f; CRD documents in adjudication never reach the probe.
   - Follow-up queued: ALPHA-SERVED, because 21 alpha roots have bundle files, so base already answers Some(true) for APIs that are off by default.
 
+- 08:20 (Nov 07) — **WFREE round 7: 15 of 22 unit IDs green (7 remain); replays 0/0 (p5 7,277, guard 7,233; okteto +5). Round 8 launched to implement the performance architecture (step 0 counters, P2 shared BDD, S-F inputs at construction, P1 local budgets plus the monotonicity law, then P4 YAML state dataflow).**
+  - R7-1: the `printf "%s"` non-string diagnostic `%!s(…)` becomes a string-language hole, so the lexical check proves its failure (2 tests fixed).
+  - R7-2: 11 tests repointed to verdict equivalence via the new test_util::verdicts (~4.5k discriminating documents each); compact_controls updated with proof.
+  - R7-3: 2 expectations tightened with Helm receipts.
+  - Still red:
+    - token_initial_printf (an inline arm breaks the skeleton);
+    - 3 helper-wrapped printf tests plus the signoz detector (walk budget);
+    - opaque_formatter_default_primary (GUARDX S4 freeze);
+    - helper_literal_or_override.
+    Most need P4.
+  - Bytes grew 0.1–4.6% on 6 printf charts; the tracked charts are identical. Patch sha 45b05c0c.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
