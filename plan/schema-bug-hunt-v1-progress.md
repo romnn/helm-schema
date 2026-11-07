@@ -10602,4 +10602,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Oracle defect: the 3 crds.annotations FR witnesses (argo-events, external-secrets, okteto) are correct rejections. The preview-5 Kubernetes check was vacuous on CRDs carrying the "not served" error, and validated after mergeAnnotations dropped the non-string map. Real install's strict validation rejects it.
   - Queued: ORACLE1 (re-adjudicate every "not served" verdict; fix the oracle) at top priority, and the B-ablation (evidence only).
 
+- 03:25 (Nov 07) — **GUARDX (Claude takeover) hands back: +1,096 closures over WFREE (p5), 15 reopenings, CPU 1.20× WFREE. Step 3 not met. ORACLE1 launched in the freed slot; GUARDX round 2 queued.**
+  - Patch: guardx-claude-final.patch, sha 7d2d02c4, 29 files against B, +2,244 LOC for the whole rework.
+  - Built:
+    - D3: CoverageIndex;
+    - D4: freeze each node once (harbor was over 7 GiB);
+    - D5: absence-coverage suppression deleted;
+    - D6: finish widens the costliest test, refusing a widening that collapses to False;
+    - D9/D12: fold plus supplements share a 2M-work group allowance.
+    - Rejected: D13 incremental widening, and RELEASE1 R3 (0 closures, 3× graylog CPU).
+  - Reopenings:
+    - p5: alertmanager 4, jira 8, openebs 3;
+    - p4: adds datadog 5 and jira 11.
+    - Owners: jira LOCAL1/S3, alertmanager S5, openebs global imagePullSecrets, datadog unclassified.
+  - CPU: W 240.5 s, C 289.4 s, main 202.1 s. Newly over main: external-secrets, kubeshark, oncall, signoz. milvus 22.8→38.6, falco 10.2→20.1. The lever is to import occurrences once and OR the failures in.
+  - Units: 0 new product failures. Gates: fmt 0, lint 0, lint:fc 0.
+  - Orchestrator concern for round 2: the reopening count moves with the allowance size (8M→23, 2M→15, 0.5M→15). More work producing more reopenings suggests the supplement search builds constraints that are not sound; that must be explained before landing.
+  - ORACLE1 launched (native, fresh line clone round8-r3b-oracle1): census the vacuous "not served" Kubernetes verdicts, fix the oracle (strict validation before metadata merge; undecided instead of accepted), re-adjudicate preview 5.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
