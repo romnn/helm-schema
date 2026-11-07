@@ -10817,4 +10817,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Patch sha 85d87f81. +324 LOC.
   - Round 9 order: S-C helper summaries (with a summary-equals-direct-execution law) → falco/harbor slowdown → S-F → P1 normalize_bounded plus the monotonicity law → P4.
 
+- 09:35 (Nov 07) — **GUARDX round 3: allowance anomaly root-caused and fixed (a generator base-ownership soundness bug); monotonicity law holds (1M ⊇ 2M ⊇ 4M). 11 reopenings remain (owned by LOCAL1 S3); CPU 1.23× W. Parked until WFREE settles. CATALOG2 resumed.**
+  - Cause: the generator's containment branch gave an inexact (sufficient-only) arm ConditionalBaseEffect::Own, so select_base_owner replaced the base with Empty although the consumer still runs.
+  - Fix: a PartialRegion containment short-circuit (Require) plus RequirementGuard::mark_partial. Two red→green tests. alertmanager's 4 closed.
+  - P1 audit: every allowance is per unit and content-keyed. The shared cone was rejected (D15): folds are almost all distinct (falco 29,651 calls / 28,375 keys), so the cost is fact volume (P5), not redundancy.
+  - Replays: against WFREE p5 +1,117/11 (jira 8, openebs 3), p4 +1,189/19 (+datadog 5); against the line p5 7,088/0/0. 0 FR everywhere. Owners: jira/datadog LOCAL1 S3; openebs S3 or the serialized-render base rule.
+  - CPU: W 246.1, C 303.7, M 214.7 (milvus 50.5 vs 26.5 vs 9.6). Units 0 new. Patch sha d771c3f2, +2,282 LOC against B.
+  - GUARDX next, when WFREE settles: move S2 onto SharedBdd (needs choice variables and projection), then rebase onto the final WFREE2.
+  - CATALOG2 resumed in the freed slot (+ EQ-NUMERIC, + P1).
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
