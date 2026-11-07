@@ -10744,4 +10744,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     3. the remaining reopenings;
     4. measure.
 
+- 07:15 (Nov 07) — **RECV2 round 3: IR lib regressions 25 → 9; two FA fixed; a fresh agent continues (round 4).**
+  - Fixed:
+    - kinds.rs: identity-free values fail on their derivation's certain preimage (the captured_header ×2 FA);
+    - control.rs range_membership_test is Exact when nonempty/empty/non-iterable cover every input (a new FA against base, a fail inside a range that writes).
+  - Laws restated, each with a Helm receipt where candidate, base and Helm agree.
+  - zero_trip's no-write law is an inherited FA: the failure is lost in export after an always-failing range body. It is #[ignore]d with a reason.
+  - Remaining 9: nil_helper_receiver (a real FR), detector if_chain_kind_selector, and 7 not yet analysed.
+  - Checkpoint: recv2-round3-checkpoint.patch, sha c8d76b7f.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
