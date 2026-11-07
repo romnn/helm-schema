@@ -10723,4 +10723,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Open: matched loosenings were never saved, so 25 CRD-rendering charts need a battery run.
   - Product finding, queued as CAPPROBE (high): the helm-schema-k8s capability probe also answers "absent" for apiextensions v1 at 1.29. If .Capabilities.APIVersions.Has reaches it, product schemas take the wrong branch (check main too).
 
+- 06:40 (Nov 07) — **ORACLE1 review: REWORK (small); sent back to the same agent.**
+  - The derivation (full equality over 36 pinned schemas) and every flip were independently confirmed (583 CRD documents; kyverno selectableFields is a 1.30 field; openebs duplicate snapshot CRDs; traefik metadata.name 0 really fails).
+  - Required:
+    - a missing _definitions.json must abstain (undecided), never fall back to "not served";
+    - correct the rationale: Helm 4.2.3 on 1.29 does no client strict validation (the server has fieldValidation), and mergeAnnotations drops non-string maps, so `helm install` succeeds with the annotation dropped. The verdicts stand only under the ADR 0051 contract (Kubernetes judges the rendered output);
+    - the declared ≠ served wording;
+    - the test asserts exactly 36, with error paths and locations;
+    - sim_assert_eq on the uncertainty text.
+  - Open: the battery on 25 CRD charts; CAPPROBE (product) is running.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
