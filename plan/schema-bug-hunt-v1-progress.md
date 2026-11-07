@@ -10864,4 +10864,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - the P1 grouping charge is content-keyed, with a green monotonicity law.
 
   Open: 4 real regressions (whole_root, symbolic_range, included_encoded_secret, unrelated_default) and the duplicate abort producer. Removing either copy fails today: seal-only breaks 34 laws, and KnownFailure-only reopens an FA, because gen's KnownFailure export drops pattern atoms. Decision (orchestrator): RECV2 may build that export as a named S3 adapter and delete the duplicate. Otherwise it restates the 5 Helm-matching tests with their receipts and records the debt. RECV2 round 7 started (fresh native agent) with the regressions first, then the landing evidence.
+- 10:20 (Nov 07) — **CATALOG2 round 1: +1,396 closed, 14 reopened, 0 new FR (P5 and P4 guard against LOCAL1's B dump). Not landable yet.** Patch transfer/patch/catalog2.patch, sha 87ca0247 (includes CATALOG1). What changed:
+  - S10 admits MatchesValue/MatchesPattern atoms that have exact ECMA spellings; one check now lives in core.
+  - The 8,192 per-atom, 64-part and 64-segment caps are deleted; atom cost is charged to the local cone work.
+  - has/mustHas membership is exact (Helm matrix: a nil haystack is false; a string, map, number or bool aborts).
+  - A catalog column `accepts_any_operand` replaces the hardcoded name list.
+  - EQ-NUMERIC: no change, because ADR 0044's transport union keeps integral numbers accepted.
+
+  Trivy 8 → 0. Nginx-ingress 9 remain: a guard inherited from earlier files exhausts the 65,536 cone fold. That is a P1 violation owned by S10 and is assigned to CATALOG2 (content-keyed charge per guard node, cone-relevant import). New and unadjudicated: alertmanager 4, imgproxy 1. Units: 4 new, 1 fixed. Decision (orchestrator): keep the cap deletions and restate those soundness laws against the local budget, never weakening them. Milvus is a real regression on clean binaries (10.2 GiB / 120 s vs 4.7 GiB / 36 s): profile it and fix structurally. Not run: lint, lint:fc, paired CPU, loki+ABORT3. CATALOG2 round 2 continues in the same agent. Heavy lanes: WFREE r10, TPLT2, RECV2 r7, CATALOG2 r2 (memory 86% free).
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
