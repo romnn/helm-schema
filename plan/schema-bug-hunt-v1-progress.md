@@ -10561,4 +10561,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Gates: fmt 0, lint 0, lint:fc 0; units 294 failed, 44 new, 9 resolved.
   - Round 3 order: F1 (one YAML-validity fact per site, no cap raises) → F2/F3 → 13 reopenings → CPU.
 
+- 01:20 (Nov 07) — **WFREE2 round 3: preview 5 7,277/0/0, guard 7,233/5/0 (cnpg only), units 24 new (from 44); CPU still fails. A fresh agent (WFREE3) continues; the old agent's context was exhausted.**
+  - Closed:
+    - keda (F2: frozen_choice_layout arms now carry their occurrence);
+    - signoz (per-group whole-fold first, smallest first);
+    - ranged_wildcard (range member binding plus exact MatchesValue atom);
+    - 13/22 F1 via ValuePattern::Named (content-digest $defs) and membership-union merge, with no cap changes;
+    - 4/5 F2, 2/13 F3.
+  - 5 R3b-regression tests un-ignored.
+  - Decision: the merge-fallback test stays red/#[ignore] until DECODE1 B3 stacks. ContractUse::merge_layers has no production producer.
+  - CPU: line 139.1, WFREE2 238.8, main 209.3; 14 charts over main. On milvus may_be_true takes 24.5% (a fresh BDD per feasibility check).
+  - Sizes: loki 39 → 42 allOf / 334,908 → 512,068 B. LOC +7,809 against ef701ad1.
+  - Patch: wfree2.patch sha 27f6aac0.
+  - WFREE3 order: one incremental BDD per arena (byte-identical) plus cpuprof family #1 → cnpg overlay qualification → the 24 unit IDs.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
