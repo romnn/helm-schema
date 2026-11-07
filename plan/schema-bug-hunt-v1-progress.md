@@ -10655,4 +10655,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Experiment saved, not applied: r5-experiment-yaml.diff (respell only the frozen arms of a merged term). It closes the cnpg reduction, but full cnpg still exhausts the 1,024-step walk.
   - New agent's goal: a merge may never drop a failure carried by one of its arms; hash-cons frozen values; then CPU on the 12 charts.
 
+- 05:00 (Nov 07) — **RECV2 found a real FA regression (`not (eq …)` / `not (hasKey …)` lose their branch condition); its context ran out, so a fresh agent continues. Orchestrator rulings R-a to R-c.**
+  - Regression: `if not (eq X "lit")` gets an opaque decision whose condition is True on both branches, so K8s demands inside are dropped. Repro: replicas "abc" under `not (eq mode "disabled")`.
+  - Mechanism: eq success forked as an S12 AbortContinuation alias, then truth_test makes a runtime-only Partial test where the negation should be exact.
+  - R-a: successive_unknown_templates becomes "bounded, ≤2 continuations (inert + havoc)". Joining them is an FA, per a Helm receipt.
+  - R-b: the runtime_execution continuation laws are checked end to end against Helm.
+  - R-c: the inherited `eq .Values.n 3` FA (float64 against int) is queued for CATALOG2's eq semantics.
+  - The fresh RECV2 agent does: the not fix → the 77 IR regressions → full gates.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
