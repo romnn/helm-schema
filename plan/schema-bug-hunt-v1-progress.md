@@ -10951,4 +10951,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   **SPLICE1 re-scoped:** its class (a toYaml splice after a sibling mapping entry is a YAML error) is a per-hole YAML failure proof, which WFREE's P4 flow.rs proves. Measure RECV2's owned-324 on the WFREE r11 + RECV2 r8 stack first, and open a lane only for the residue.
 
   **CPUGEN started (fresh native agent):** gen-side CPU (validators compiled once, minify passes per distinct subschema), byte-identical. Heavy lanes: WFREE r11, GUARDX r4, RECV2 r8, CPUGEN.
+- 14:50 (Nov 07) — **GUARDX round 4: S2 runs on one hash-consed diagram per requirement group, closing +835 over WFREE2 with 8 reopenings (jira only). The CPU bar fails badly on output volume.** Patch guardx-claude-r4.patch, sha 59183536, 36 files vs b52eae26. LOC +2,147. Gates: fmt 0; units 24 product-new; lint, lint:fc, final dump and the law not run (context limit).
+  - **Deleted:** per-fold fresh diagrams, atom inventories, coverage suppression, and the dead D6 widening.
+  - **Shared cone:** uses CATALOG2's charged-cone mechanism as an S10 adapter. Harbor +107, 0 reopenings; D15's loss does not recur.
+  - **eck-stack:** the rebase reopened 8, closed by leaving non-global observations unprojected (D20).
+  - **Replays (0 new FR in all):**
+
+    | g3 vs | P5 | P4 guard |
+    |---|---|---|
+    | WFREE2 | +835 / 8 | +835 / 11 |
+    | line | 8,104 / 0 | 8,060 / 3 |
+
+  - **CPU, C/W:** milvus 2.77, nginx 3.95, harbor 2.47, oncall 5.95, external-secrets 3.80. The cost is exported volume: external-secrets 180 KB → 1.3 MB and oncall 0.8 → 5.5 MB, both with 0 closures; minimize_schema is 47% of external-secrets' time.
+  - **Survival identity:** holds, but S2 cannot apply it, because cross-file survival is a path disjunction, not an atom. The request went to RECV2 r8: register partial abort forks' surviving edges with survives_abort.
+
+  **Decisions (orchestrator):**
+  - D17 accepted: a per-group diagram, not one global SharedBdd, because it keeps results content-keyed (the P1 unit).
+  - Every lane now hits the same wall: CATALOG2 milvus, GUARDX volume, TPLT2 sizes. More exact requirements mean re-exported guards and output-side CPU. So P5 (fact-keyed export, LOCAL1 S-E) is the critical path. LOCAL1 is deferred, so GUARDX round 5 builds P5 as a named S-E adapter: rows keyed by (input path, demand pointer, failure kind), guards ORed, each guard node emitted once, implied rows dropped by diagram implication. Then the round-4 gates.
+
+  GUARDX round 5 started (fresh native agent). Heavy lanes: WFREE r11, RECV2 r8, CPUGEN, GUARDX r5; the TPLT2 design review is read-only.
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
