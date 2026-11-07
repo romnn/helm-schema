@@ -10765,4 +10765,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Checks: dump byte-identical 542/542; replays 0/0/0; units identical; integration 155/155. Patch sha 32c6c7ed.
   - Review question: v1alpha roots declared in _definitions.json but off by default must not read as served.
 
+- 08:00 (Nov 07) — **CAPPROBE review: REWORK (small); decisions sent.**
+  - Problems found:
+    - multi-entry meta definitions (DeleteOptions/WatchEvent, 58 group/versions) would give false Some(true) for removed APIs;
+    - declared-but-not-served kinds (alpha StorageVersion, v1 discovery types) would read Some(true).
+  - Decision (ADR 0013): only single-entry GVK roots count. File missing and declared → None; catalog omits → Some(false); no catalog → None. CRD reads None, equivalent to the deleted exception without a recognizer.
+  - Rebase onto d63dc03f; CRD documents in adjudication never reach the probe.
+  - Follow-up queued: ALPHA-SERVED, because 21 alpha roots have bundle files, so base already answers Some(true) for APIs that are off by default.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
