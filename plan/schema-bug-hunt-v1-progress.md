@@ -10682,4 +10682,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - WFREE round 6: content-key the lexical and frozen-spelling caches; record the R5-1 bound-dependent proofs; the 22 unit IDs.
   - First-principles review (native Opus, read-only): why R3b is 5–10× main on falco, harbor, keda, arc and kubeshark; cost proportional to distinct facts (helper summaries, factored layouts, compositional YAML validity); budget-independent semantics; a lane plan. Reason: six rounds of local CPU fixes each moved only 5–10%.
 
+- 05:30 (Nov 07) — **WFREE round 6: record only (its context was exhausted). R6-1 lists every bound-dependent YAML proof with file:line. Round 7 (fresh) takes only the 22 unit IDs; CPU and layout architecture wait for the first-principles review.**
+  - R6-1: abort = OR(failures) ∧ ¬OR(survivors), and unknowns count as survivors.
+  - Walk/lexical allowances (yaml.rs:558,571), completion give-ups (:1920,1953,1976,2011) and seal_layout unknowns (:2133,2148,2193) turn layouts into survivors.
+  - Prefix proofs (record_prefix_abort :1731) are triggered only by the context bound (prune_root_prefixes :1710 via :1637; lost_concatenation :1763 via :1665).
+  - Suggested direction: run the prefix proof as a function of the prefix when a root document closes, with its own allowance.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
