@@ -10913,4 +10913,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   4. Then the dump, replays, CPU and integration.
 
   Heavy lanes: WFREE r10, TPLT2, GUARDX r4, RECV2 r8.
+- 13:45 (Nov 07) — **WFREE round 10 (P4a): flow.rs, a forward per-document YAML failure dataflow, now runs beside the old producers. p5 7,283/0/0 and guard 7,239/0/0 (r9d: 7,277 / 7,233). The deletion of the old producers did not land; no CPU gain.** Patch wfree2.patch, sha 380dd823. Gates: fmt, lint, lint:fc, dump and verify all 0. Units: 0 new vs r9d, but 5 are still new vs base. LOC +1,199. Corpus screen 232.1 → 234.3 s.
+  - Deleting prune_root_prefixes, record_prefix_abort, lost_concatenation and open_prefix_failure reopened 5 datadog documents (rbac.yaml helpers make Partial decisions with no certified subsets). Choice atoms close them, but cost pushgateway 9× until hole zipping lands.
+  - An FR found inside flow's own first version was fixed by the Closed boundary mode (R10-4).
+  - A builder slip, `pkill -P`, was blocked by the permission system. The next brief forbids every form of pkill.
+
+  **Decision (orchestrator): WFREE round 11 must end landable with one YAML-failure producer.** Either (a) hole zipping plus choice atoms plus the deletion with replays 0/0, or (b) flow.rs comes out and P4 becomes its own later step. Also in round 11:
+  - fix the 5 new-vs-base unit failures, or restate each with a Helm receipt;
+  - DETERM's address-keyed caches hardened under P1, with a repeated-run law;
+  - trace the trivy -4 / external-dns -1 closure losses;
+  - the full landing evidence, including test:integration.
+
+  WFREE round 11 started (fresh native agent). Heavy lanes: WFREE r11, TPLT2, GUARDX r4, RECV2 r8.
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
