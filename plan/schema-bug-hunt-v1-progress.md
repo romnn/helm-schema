@@ -10620,4 +10620,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Orchestrator concern for round 2: the reopening count moves with the allowance size (8M→23, 2M→15, 0.5M→15). More work producing more reopenings suggests the supplement search builds constraints that are not sound; that must be explained before landing.
   - ORACLE1 launched (native, fresh line clone round8-r3b-oracle1): census the vacuous "not served" Kubernetes verdicts, fix the oracle (strict validation before metadata merge; undecided instead of accepted), re-adjudicate preview 5.
 
+- 03:40 (Nov 07) — **RECV2 checkpoint: survival assumed at file boundaries takes 21-chart reopenings from 1,172 to 324, with 0 new FR. Orchestrator decisions sent.**
+  - Mechanism: session.rs assume_survival turns the surviving states' shared path prefix into the AbortContinuation alias at the end of each file; guard.rs normal_continuation becomes survival_continuation. Law: runtime_reconvergence later_file_failures_do_not_restate_an_earlier_files_survival.
+  - Screen: 1,453 closed / 324 reopened / 0 FR.
+  - Decision 1: keep the correct with/else Go semantics. The single oncall PSP (policy/v1beta1 at kube 1.29) reopening is an orchestrator-accepted residual, owned by an API-availability/activation proof (LOCAL1-B abort-joined activation, RELEASE1 trace). It is recorded, not hidden.
+  - Decision 2: the 324 come from RECV2 retiring the declared-object typing before parity (ADR 0071 violation). Restore it; the replacement is LOCAL1-C's S8 token facts proving helper output is a plain scalar.
+  - Then the full gates and hand-back.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
