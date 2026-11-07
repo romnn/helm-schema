@@ -10925,4 +10925,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - the full landing evidence, including test:integration.
 
   WFREE round 11 started (fresh native agent). Heavy lanes: WFREE r11, TPLT2, GUARDX r4, RECV2 r8.
+- 14:30 (Nov 07) — **TPLT2 takeover: not admitted. +6,027 closures over WFREE, but 177 reopenings, CPU 8.2× WFREE and size blow-ups.** Patch claude/final.patch, sha 72d6e2e9, 69 files, LOC +1,908.
+  - **Replays (one clean dump, verify 0):**
+
+    | Snapshot | Closed | Reopened | New FR |
+    |---|---:|---:|---:|
+    | WFREE+TPLT2, P5 | 11,832 | 0 | 0 |
+    | WFREE+TPLT2, P4 guard | 11,819 | 95 | 0 |
+    | WFREE, P5 | 5,982 | 0 | 0 |
+
+    Against WFREE that is P5 +6,027 / 177, net +5,850, which is 68% of the unsound V3 ceiling.
+  - **Reopenings:** 74 are TPLT2-only: okteto 50 (no tpl at all), cert-manager 10, falco 8, logstash 4, jira 2. They are inherited from the original TPLT2 patch.
+  - **Loki:** 20 closed / 0 reopened. The 10,980-document family needs ABORT3, GUARDX and CATALOG1 stacked on top.
+  - **Sizes:** x509 43,873 B (bar 5,770), airflow 479 KB, postgresql-ha 345 KB.
+  - **CPU:** 1,786 s vs WFREE 219 s and main 186 s. On b61's charts it fell from 1,632 s to 806 s, after these fixes:
+    - decision-path edge dedup (node-exporter feasibility 40 s → 0.8 s);
+    - coverage computed per history node;
+    - widened-region reads merged (synapse 4.3 → 1.1 GB; openebs 9.8 → 6.6 GB).
+  - **Residual cost:** the post-havoc separate state does about 4× WFREE's heap joins, and branch-count guards are rebuilt at every fork and join (P2/P3 seams).
+  - **Units:** 6 new vs base; 5 of them also fail on a rebuilt WFREE, and 1 is the S2 hunk.
+  - **Seam hunks named:** read_set.rs (WFREE2), yaml.rs:763 aborts through uncertain decisions (S5), and the core exact-cost admission (S2).
+
+  **Decision (orchestrator):** before another builder round, a read-only first-principles design review asks why a havoc is a separate state rather than a heap-version fact, and what makes the cost ∝ distinct reads (designs/challenge/tplt2-cpu-2026-11-07.md). The TPLT2 builder round is queued behind it.
+
+  **SPLICE1 re-scoped:** its class (a toYaml splice after a sibling mapping entry is a YAML error) is a per-hole YAML failure proof, which WFREE's P4 flow.rs proves. Measure RECV2's owned-324 on the WFREE r11 + RECV2 r8 stack first, and open a lane only for the residue.
+
+  **CPUGEN started (fresh native agent):** gen-side CPU (validators compiled once, minify passes per distinct subschema), byte-identical. Heavy lanes: WFREE r11, GUARDX r4, RECV2 r8, CPUGEN.
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
