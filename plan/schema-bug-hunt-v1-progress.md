@@ -10627,4 +10627,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Decision 2: the 324 come from RECV2 retiring the declared-object typing before parity (ADR 0071 violation). Restore it; the replacement is LOCAL1-C's S8 token facts proving helper output is a plain scalar.
   - Then the full gates and hand-back.
 
+- 04:15 (Nov 07) — **RECV2: restoring the declared typing closes nothing. The 324 are rejections base got by luck (decision: owned by S8 plus a new SPLICE1 item); 77 IR lib regressions predate the takeover.**
+  - Base rejected these documents only through an over-approximation: a whole-file include (alertmanager checksum) counted as reading the whole root, which asserted every declared default's type. RECV2 executes the include precisely.
+  - What Helm actually rejects them for:
+    - (a) K8s field-type demands lost after unquoted helper-include placement, owned by LOCAL1-C S8;
+    - (b) toYaml spliced after a rendered sibling mapping entry, a YAML parse error, queued as SPLICE1 under S5.
+  - Decision: no re-added over-approximation (a wrong guess). RECV2 lands only in a stack step with LOCAL1-C and SPLICE1, and that step must show 0 reopenings.
+  - The declared-typing restore stays on the tree (harmless; ADR 0071).
+  - Next for RECV2: the 77 IR lib regressions (continuation laws first), then the full gates.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
