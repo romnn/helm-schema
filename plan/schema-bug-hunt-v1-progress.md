@@ -10872,4 +10872,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - EQ-NUMERIC: no change, because ADR 0044's transport union keeps integral numbers accepted.
 
   Trivy 8 → 0. Nginx-ingress 9 remain: a guard inherited from earlier files exhausts the 65,536 cone fold. That is a P1 violation owned by S10 and is assigned to CATALOG2 (content-keyed charge per guard node, cone-relevant import). New and unadjudicated: alertmanager 4, imgproxy 1. Units: 4 new, 1 fixed. Decision (orchestrator): keep the cap deletions and restate those soundness laws against the local budget, never weakening them. Milvus is a real regression on clean binaries (10.2 GiB / 120 s vs 4.7 GiB / 36 s): profile it and fix structurally. Not run: lint, lint:fc, paired CPU, loki+ABORT3. CATALOG2 round 2 continues in the same agent. Heavy lanes: WFREE r10, TPLT2, RECV2 r7, CATALOG2 r2 (memory 86% free).
+- 12:05 (Nov 07) — **CATALOG2 round 2: +1,476 closed, 14 reopened, 0 new FR on both P5 and the P4 guard. Not landable: the reopenings remain and the CPU bar fails. Lane parked.** Patch transfer/patch/catalog2.patch, sha 95be4d3b, 24 files, LOC +193. Gates: fmt, lint and lint:fc 0; units 224 vs B's 223 (1 new, non-semantic: the duplicate-producer debt; 1 fixed). Restated cap laws stay green.
+  - **Fixes:** charged requirement cones charge node allocations to their local work, so MAX_BDD_NODES (4,096) now binds only uncharged BDDs. Each imported guard node is charged once, and the monotonicity law gained an inherited-guard case. Gen hash-conses Decision nodes: milvus 185 s / 10.2 GiB → 105 s / 5.7 GiB (B 38 s / 4.7 GiB).
+  - **nginx 9:** the cone truly exhausts 65,536 work on 113 atoms / 7,036 nodes inherited from earlier files' survival. A diagnostic 4M budget rejects all 9.
+  - **alertmanager 4:** base-only luck (B's unconditional anyOf also rejects "", false, 0, null, which Helm renders). C3's Iterable guard is narrowed by universal projection of range survival.
+  - **imgproxy 1:** an S3 inconsistency: the IR suppresses a covered clause while gen lowers the terminal clause more permissively. Owner: LOCAL1 S3.
+  - **CPU (12 charts):** B 100.2 s → C3 167.6 s (nginx 2.42×, milvus 1.98×, cilium 1.94×). The remainder is 1.6× constraints, each re-exporting the inherited guard. Owner: P5/S2.
+
+  **Orchestrator observation:** requirement guards need not carry survival of earlier aborts. Helm rejects whenever an earlier file aborts, so the rejected language of R under G ∧ survive equals that of R under G plus the abort. Dropping the conjunct is verdict-exact. That makes nginx's inherited cone the same class as RECV2's "survival assumed at file boundaries". Next: re-measure nginx on CATALOG2 stacked with RECV2 when RECV2 round 7 hands back.
+
+  **GUARDX round 4 started (fresh native agent) on WFREE2 b52eae26:**
+  - S2 finish on the shared BDD with choice variables and projection, memoized per node;
+  - a retry of the shared cone (D15 failed only on the same 4,096-node cap) with CATALOG2's charged-cone mechanism as an S10 adapter;
+  - the survival-identity law;
+  - paired CPU.
+
+  Heavy lanes: WFREE r10, TPLT2, RECV2 r7, GUARDX r4. CATALOG2's loki+ABORT3 verdict sweep is finishing in the background.
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
