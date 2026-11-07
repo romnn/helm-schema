@@ -10733,4 +10733,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
     - sim_assert_eq on the uncertainty text.
   - Open: the battery on 25 CRD charts; CAPPROBE (product) is running.
 
+- 07:00 (Nov 07) — **ORACLE1 LANDED on r3b/construction (d63dc03f, pushed, no force). GUARDX round 2 launched (fresh native) in the freed slot.**
+  - Landing d63dc03f: test-support oracle only. oracle1.patch sha d180124c, 6 files, +740/−6.
+  - Checks: tree byte-compared with the builder clone; fmt 0. Builder gates: lint 0, lint:fc 0, test-support units 6/6, helm_adjudication 44/44, test-support integration 117/119 (2 inherited).
+  - Review: REWORK (small), then all 7 items fixed. The new abstain test was not run red (by construction).
+  - Corrected preview-5 lists: FR 55, FA 98,149, undecided 45. The battery on 25 CRD charts is still open.
+  - GUARDX round 2 goals:
+    1. explain the allowance anomaly and add the budget-monotonicity law;
+    2. P1 per-key memoized allowance, finish once per node, import once;
+    3. the remaining reopenings;
+    4. measure.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
