@@ -10688,4 +10688,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Prefix proofs (record_prefix_abort :1731) are triggered only by the context bound (prune_root_prefixes :1710 via :1637; lost_concatenation :1763 via :1665).
   - Suggested direction: run the prefix proof as a function of the prefix when a root document closes, with its own allowance.
 
+- 06:00 (Nov 07) — **First-principles CPU review adopted as the R3b performance architecture (orchestrator decision); seams v3 P1–P5 appended to briefs/seams-v1.md.**
+  - Review: designs/challenge/first-principles-cpu-2026-11-07.md.
+  - Diagnosis: the 5–10× over main on falco, harbor, keda, arc and kubeshark is mostly accidental. Cost follows sites × Π(alternatives):
+    - helpers re-run per include with no summary;
+    - case-split calls;
+    - syntax-tree predicates re-canonicalized through fresh BDDs;
+    - whole-file layout context enumeration;
+    - export rows per site × alternative (keda 3,274 $defs against main's 422);
+    - input provenance re-walked.
+  - Meta-cause: shared, order-dependent budgets block every structural cache, which is why six rounds of local fixes gave only 5–10% each.
+  - Plan:
+    - P1 local, content-keyed budgets plus a budget-monotonicity law;
+    - P2 shared hash-consed BDD as the predicate representation;
+    - P3 helper summaries and inputs at construction;
+    - P4 YAML layout as a state dataflow with per-hole failure proofs (fixes R5-1, deletes the 32-context and 1,024-step machinery);
+    - P5 fact-keyed export.
+  - Projected ~105–125 s of the 145 s excess removed; corpus below main; per-chart bar likely except falco.
+  - Lanes: WFREE2 takes P2/P1/P3/P4 after round 7's unit work; GUARDX round 2 takes the per-key memoized allowance and finish once per node; LOCAL1 takes P5 after step 3.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
