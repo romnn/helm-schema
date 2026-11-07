@@ -10675,4 +10675,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   - Open: captured_header ×2 FA, zero_trip_ranges FA, carried_array_reads FR, and 21 not yet analysed.
   - Checkpoint patch: recv2-round2-checkpoint.patch, sha 0f9abd73.
 
+- 05:15 (Nov 07) — **WFREE round 5 final: 0 reopenings on both snapshots (p5 7,272/0/0, guard 7,228/0/0); units 22 new; CPU 1.125× main under load (milvus 31.8/9.2 got worse as more walks finish). A first-principles design review was launched on CPU and on budget-dependent correctness.**
+  - S11: SpellingKeys content-keyed spelling cache (hit is free). Full frozen-value hash-consing is impossible (fresh decision ids per include).
+  - R5-1 finding: YAML failure proofs (datadog commonLabels) appear only when the walk is forced to prune at its 32-context bound. Outputs depend on budgets, which is a design defect.
+  - Patch: wfree2.patch sha c6e36ae9. Gates: fmt, lint, lint:fc 0; dump/verify 0; replays 0.
+  - WFREE round 6: content-key the lexical and frozen-spelling caches; record the R5-1 bound-dependent proofs; the 22 unit IDs.
+  - First-principles review (native Opus, read-only): why R3b is 5–10× main on falco, harbor, keda, arc and kubeshark; cost proportional to distinct facts (helper summaries, factored layouts, compositional YAML validity); budget-independent semantics; a lane plan. Reason: six rounds of local CPU fixes each moved only 5–10%.
+
 Next: landing chain in seams-v1 order: WFREE2 (step 1) → CATALOG1 → GUARDX → LOCAL1-B → TPLT2/RECV2 → LOCAL1-C → ABORT2; stack each hand-back with stack.py on the previous prefix; SURFACE1, TESTPORT1 and the COLL1/FRCLASS harvest patches in parallel; DECODE1 queued until memory frees.
