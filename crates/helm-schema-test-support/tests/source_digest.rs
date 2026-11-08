@@ -107,12 +107,24 @@ fn this_build_was_compiled_from_the_current_tree() -> eyre::Result<()> {
 #[test]
 fn generation_crates_are_the_linked_workspace_crates() -> eyre::Result<()> {
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
+    // The digest needs only the declared path dependencies, so `--no-deps` skips resolving the
+    // graph, whose git-sourced crates an offline run cannot fetch on a cold cache.
     let output = std::process::Command::new(cargo)
-        .args(["metadata", "--format-version", "1", "--offline"])
+        .args([
+            "metadata",
+            "--format-version",
+            "1",
+            "--no-deps",
+            "--offline",
+        ])
         .current_dir(test_util::workspace_root())
         .output()
         .wrap_err("run cargo metadata")?;
-    eyre::ensure!(output.status.success(), "cargo metadata failed");
+    eyre::ensure!(
+        output.status.success(),
+        "cargo metadata failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let metadata: Value = serde_json::from_slice(&output.stdout)?;
     let packages = metadata["packages"].as_array().ok_or_eyre("no packages")?;
     let mut linked = BTreeSet::new();
