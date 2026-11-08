@@ -101,6 +101,8 @@ targets = [
 [workspace.metadata.cargo-fc.subcommands.lint]
 # The workspace's `lint` alias delegates to a clippy shim that preserves structured diagnostics.
 diagnostics_only = true
+# A warning on any target fails the lint run, while builds and tests keep warnings as warnings.
+pedantic = true
 
 [workspace.package]
 version = "0.0.7"
