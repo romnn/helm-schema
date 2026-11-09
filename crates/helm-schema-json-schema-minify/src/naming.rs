@@ -29,6 +29,7 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::ops::Bound;
+use std::rc::Rc;
 
 use ahash::{AHashMap, AHashSet};
 
@@ -266,6 +267,7 @@ fn source_names(
         }
     }
     let index = DefinitionIndex::new(definitions, anonymous);
+    let mut program = MeaningProgram::new(&index);
 
     let references = references_by_target(schema, definitions);
 
@@ -307,15 +309,16 @@ fn source_names(
         if let Some(name) = stable {
             names.insert(handle.to_string(), taken.unique(name));
         } else if let Some(body) = definitions.get(handle) {
-            let (meaning, ancestor) = if let Some(meaning) = meaning_name(body, &index) {
-                (meaning.clone(), meaning)
-            } else {
-                // Without constrained paths, the leaf is named by what it
-                // is, below the nearest stable path above it.
-                let ancestor = ancestor.unwrap_or_else(|| ROOT_DOCUMENT.to_string());
-                let leaf = leaf_name(body, &index, 0);
-                (cut_name(&format!("{ancestor}/{leaf}")), ancestor)
-            };
+            let (meaning, ancestor) =
+                if let Some(meaning) = meaning_name(handle, body, &mut program) {
+                    (meaning.clone(), meaning)
+                } else {
+                    // Without constrained paths, the leaf is named by what it
+                    // is, below the nearest stable path above it.
+                    let ancestor = ancestor.unwrap_or_else(|| ROOT_DOCUMENT.to_string());
+                    let leaf = leaf_name(body, &index, 0);
+                    (cut_name(&format!("{ancestor}/{leaf}")), ancestor)
+                };
             names.insert(handle.to_string(), meaning.clone());
             meanings.entry(meaning).or_default().push(handle);
             by_meaning.insert(handle, ancestor);
@@ -472,24 +475,29 @@ const MEANING_WALK_BUDGET: usize = 4_000;
 /// `enum`, `!=v` for a negated one, `:name` for a reference to a named
 /// definition, `?` for a key that is only required.
 /// References to anonymous definitions are followed.
-fn meaning_name<'a>(body: &'a Value, index: &DefinitionIndex<'a>) -> Option<String> {
-    let mut walker = MeaningWalker {
-        index,
-        visited: AHashSet::new(),
-        budget: MEANING_WALK_BUDGET,
-    };
+fn meaning_name(
+    handle: &str,
+    body: &Value,
+    program: &mut MeaningProgram<'_, '_>,
+) -> Option<String> {
+    let root = program.definition(handle);
+    let mut walk = MeaningWalk::new(program);
     if let Some(condition) = body.get("if") {
-        let mut name = format!("when/{}", walker.path_list(condition));
-        for branch in ["then", "else"] {
+        let [if_node, then_node, else_node] = root
+            .and_then(|root| walk.program.nodes.get(root))
+            .map(|node| node.branches)
+            .unwrap_or_default();
+        let mut name = format!("when/{}", walk.path_list(condition, if_node));
+        for (branch, node) in [("then", then_node), ("else", else_node)] {
             if let Some(schema) = body.get(branch) {
-                let paths = walker.path_list(schema);
+                let paths = walk.path_list(schema, node);
                 name = format!("{name}/{branch}/{paths}");
             }
         }
         return Some(cut_name(&name));
     }
-    let paths = walker.paths(body);
-    (!paths.is_empty()).then(|| cut_name(&format!("constrains/{}", render_path_list(&paths))))
+    let paths = walk.paths(root);
+    (!paths.is_empty()).then(|| cut_name(&format!("constrains/{}", paths.render())))
 }
 
 /// Words of a description kept in a leaf name.
@@ -557,7 +565,10 @@ fn leaf_name(schema: &Value, index: &DefinitionIndex<'_>, depth: usize) -> Strin
                 .iter()
                 .map(|member| leaf_name(member, index, depth))
                 .collect::<BTreeSet<_>>();
-            return format!("{keyword}/{}", render_path_list(&members));
+            return format!(
+                "{keyword}/{}",
+                render_path_list(members.iter().map(String::as_str))
+            );
         }
     }
     if let Some(value) = object.get("const") {
@@ -690,146 +701,481 @@ impl<'a> MeaningKeywords<'a> {
     }
 }
 
-struct MeaningWalker<'i, 'a> {
-    index: &'i DefinitionIndex<'a>,
-    visited: AHashSet<&'a str>,
-    budget: usize,
+/// A compiled schema object, by its position in [`MeaningProgram::nodes`].
+type NodeId = usize;
+
+/// An anonymous definition, by its position in [`MeaningProgram::roots`].
+type DefinitionId = usize;
+
+/// A values path, by its position in [`PathTable::texts`].
+type PathId = usize;
+
+/// A path segment or stated operator, by its position in
+/// [`PathTable::words`].
+type WordId = usize;
+
+/// The empty path: the root of the fragment a walk starts from.
+const ROOT_PATH: PathId = 0;
+
+/// What a schema's `$ref` contributes to a meaning walk.
+#[derive(Debug, Clone, Copy)]
+enum MeaningReference {
+    /// No reference to a root definition.
+    None,
+    /// A named definition, stated as `:name`.
+    Named(WordId),
+    /// An anonymous definition, whose body is walked in place.
+    Anonymous(DefinitionId),
 }
 
-impl<'a> MeaningWalker<'_, 'a> {
-    fn path_list(&mut self, schema: &'a Value) -> String {
-        if *schema == Value::Bool(false) {
-            return "fail".to_string();
-        }
-        let paths = self.paths(schema);
-        if paths.is_empty() {
-            "any".to_string()
-        } else {
-            render_path_list(&paths)
+/// One schema object as the meaning walk reads it, its children compiled in
+/// the order the walk visits them; non-object children, which the walk
+/// skips, are left out.
+#[derive(Debug)]
+struct MeaningNode {
+    reference: MeaningReference,
+    /// Operators stated at the node's path: `const`, `enum`, then a negated
+    /// `const` or `enum`.
+    stated: Box<[WordId]>,
+    /// A negation that states no value, walked at the node's path.
+    not: Option<NodeId>,
+    /// Properties in key order, with the object schema of each.
+    properties: Box<[(WordId, Option<NodeId>)]>,
+    required: Box<[WordId]>,
+    /// `allOf`, `anyOf` and `oneOf` arms, then `if`, `then` and `else`.
+    arms: Box<[NodeId]>,
+    /// The `if`, `then` and `else` schemas on their own.
+    branches: [Option<NodeId>; 3],
+    items: Box<[NodeId]>,
+    /// `additionalProperties`, then every `patternProperties` schema.
+    any_key: Box<[NodeId]>,
+}
+
+/// One step from a values path to a longer one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum PathStep {
+    /// `.key`, or `key` at the root.
+    Key(WordId),
+    /// An operator such as `=v`, `!=v` or `:name`.
+    Stated(WordId),
+    /// `@items`.
+    Items,
+    /// `@*`.
+    AnyKey,
+    /// `?`, a key that is only required.
+    Required,
+}
+
+/// Every values path the walks of one document spell, each text once.
+///
+/// A path is keyed by its parent and the step below it; two keys that spell
+/// the same text share one id, so a set of ids is a set of texts.
+#[derive(Debug)]
+struct PathTable {
+    texts: Vec<Rc<str>>,
+    by_text: AHashMap<Rc<str>, PathId>,
+    steps: AHashMap<(PathId, PathStep), PathId>,
+    words: Vec<String>,
+    word_ids: AHashMap<String, WordId>,
+}
+
+impl Default for PathTable {
+    fn default() -> Self {
+        let root: Rc<str> = Rc::from("");
+        Self {
+            texts: vec![Rc::clone(&root)],
+            by_text: AHashMap::from_iter([(root, ROOT_PATH)]),
+            steps: AHashMap::new(),
+            words: Vec::new(),
+            word_ids: AHashMap::new(),
         }
     }
+}
 
-    fn paths(&mut self, schema: &'a Value) -> BTreeSet<String> {
-        let mut paths = BTreeSet::new();
-        self.walk(schema, "", &mut paths);
-        paths
+impl PathTable {
+    fn word(&mut self, word: String) -> WordId {
+        if let Some(&id) = self.word_ids.get(&word) {
+            return id;
+        }
+        let id = self.words.len();
+        self.words.push(word.clone());
+        self.word_ids.insert(word, id);
+        id
     }
 
-    fn walk(&mut self, schema: &'a Value, path: &str, paths: &mut BTreeSet<String>) {
-        let Value::Object(object) = schema else {
-            return;
+    fn text(&self, path: PathId) -> &str {
+        self.texts.get(path).map_or("", |text| text)
+    }
+
+    fn child(&mut self, parent: PathId, step: PathStep) -> PathId {
+        if let Some(&path) = self.steps.get(&(parent, step)) {
+            return path;
+        }
+        let parent_text = self.text(parent);
+        let word = |word: WordId| self.words.get(word).map_or("", String::as_str);
+        let text = match step {
+            PathStep::Key(key) if parent_text.is_empty() => word(key).to_string(),
+            PathStep::Key(key) => format!("{parent_text}.{}", word(key)),
+            PathStep::Stated(operator) => format!("{parent_text}{}", word(operator)),
+            PathStep::Items => format!("{parent_text}@items"),
+            PathStep::AnyKey => format!("{parent_text}@*"),
+            PathStep::Required => format!("{parent_text}?"),
         };
-        if self.budget == 0 {
-            return;
+        let path = if let Some(&path) = self.by_text.get(text.as_str()) {
+            path
+        } else {
+            let path = self.texts.len();
+            let text: Rc<str> = Rc::from(text);
+            self.texts.push(Rc::clone(&text));
+            self.by_text.insert(text, path);
+            path
+        };
+        self.steps.insert((parent, step), path);
+        path
+    }
+}
+
+/// An anonymous definition's body until a walk first enters it, then its
+/// compiled root.
+#[derive(Debug, Clone, Copy)]
+enum DefinitionRoot<'a> {
+    Body(&'a Value),
+    Compiled(Option<NodeId>),
+}
+
+/// The anonymous definitions of one document compiled for the meaning walk,
+/// each once, and the values paths its walks spell.
+///
+/// Every entry is a function of its key alone: a compiled definition of the
+/// definition's body, a path of its parent and step. Walks from different
+/// definitions share them, so no walk re-reads a schema keyword or re-spells
+/// a path another walk already did.
+struct MeaningProgram<'i, 'a> {
+    index: &'i DefinitionIndex<'a>,
+    definition_ids: AHashMap<&'a str, DefinitionId>,
+    roots: Vec<DefinitionRoot<'a>>,
+    nodes: Vec<Rc<MeaningNode>>,
+    paths: PathTable,
+    /// The walk that last visited each definition.
+    visited_by: Vec<usize>,
+    /// The path set that last held each path.
+    held_by: Vec<usize>,
+    walks: usize,
+    path_sets: usize,
+}
+
+impl<'i, 'a> MeaningProgram<'i, 'a> {
+    fn new(index: &'i DefinitionIndex<'a>) -> Self {
+        Self {
+            index,
+            definition_ids: AHashMap::new(),
+            roots: Vec::new(),
+            nodes: Vec::new(),
+            paths: PathTable::default(),
+            visited_by: Vec::new(),
+            held_by: Vec::new(),
+            walks: 0,
+            path_sets: 0,
         }
-        self.budget -= 1;
+    }
+
+    /// The compiled root of the anonymous definition `handle`.
+    fn definition(&mut self, handle: &str) -> Option<NodeId> {
+        let &(handle, body) = self.index.bodies.get(handle)?;
+        let definition = self.definition_id(handle, body);
+        self.root(definition)
+    }
+
+    fn definition_id(&mut self, handle: &'a str, body: &'a Value) -> DefinitionId {
+        if let Some(&definition) = self.definition_ids.get(handle) {
+            return definition;
+        }
+        let definition = self.roots.len();
+        self.roots.push(DefinitionRoot::Body(body));
+        self.visited_by.push(0);
+        self.definition_ids.insert(handle, definition);
+        definition
+    }
+
+    fn root(&mut self, definition: DefinitionId) -> Option<NodeId> {
+        let body = match *self.roots.get(definition)? {
+            DefinitionRoot::Body(body) => body,
+            DefinitionRoot::Compiled(root) => return root,
+        };
+        let root = self.compile(body);
+        if let Some(slot) = self.roots.get_mut(definition) {
+            *slot = DefinitionRoot::Compiled(root);
+        }
+        root
+    }
+
+    fn compile(&mut self, schema: &'a Value) -> Option<NodeId> {
+        let Value::Object(object) = schema else {
+            return None;
+        };
         let keywords = MeaningKeywords::of(object);
-        if let Some(Value::String(reference)) = keywords.reference
-            && let Some((target, body)) = self.index.resolve(reference)
-        {
-            if !self.index.anonymous.contains(target) {
-                insert_stated(paths, path, &format!(":{}", encode_document(target)));
-            } else if self.visited.insert(target) {
-                self.walk(body, path, paths);
-            }
-        }
+        let reference = match keywords.reference {
+            Some(Value::String(reference)) => match self.index.resolve(reference) {
+                Some((target, body)) if self.index.anonymous.contains(target) => {
+                    MeaningReference::Anonymous(self.definition_id(target, body))
+                }
+                Some((target, _)) => MeaningReference::Named(
+                    self.paths.word(format!(":{}", encode_document(target))),
+                ),
+                None => MeaningReference::None,
+            },
+            _ => MeaningReference::None,
+        };
+        let mut stated = Vec::new();
         if let Some(value) = keywords.constant {
-            insert_stated(paths, path, &format!("={}", render_value(value)));
+            stated.push(self.paths.word(format!("={}", render_value(value))));
         }
         if let Some(Value::Array(values)) = keywords.enumeration {
-            insert_stated(paths, path, &format!("={}", render_values(values)));
+            stated.push(self.paths.word(format!("={}", render_values(values))));
         }
+        let mut not = None;
         if let Some(negated) = keywords.not {
             if let Some(value) = negated.get("const") {
-                insert_stated(paths, path, &format!("!={}", render_value(value)));
+                stated.push(self.paths.word(format!("!={}", render_value(value))));
             } else if let Some(Value::Array(values)) = negated.get("enum") {
-                insert_stated(paths, path, &format!("!={}", render_values(values)));
+                stated.push(self.paths.word(format!("!={}", render_values(values))));
             } else {
-                self.walk(negated, path, paths);
+                not = self.compile(negated);
             }
         }
-        if let Some(Value::Object(properties)) = keywords.properties {
-            let mut properties = properties.iter().collect::<Vec<_>>();
-            properties.sort_unstable_by_key(|(key, _)| *key);
-            for (key, child) in properties {
-                let child_path = join_property(path, key);
-                let before = paths.len();
-                self.walk(child, &child_path, paths);
-                if paths.len() == before {
-                    paths.insert(child_path);
-                }
+        let mut properties = Vec::new();
+        if let Some(Value::Object(schemas)) = keywords.properties {
+            let mut schemas = schemas.iter().collect::<Vec<_>>();
+            schemas.sort_unstable_by_key(|(key, _)| *key);
+            for (key, child) in schemas {
+                let key = self.paths.word(encode_key(key));
+                properties.push((key, self.compile(child)));
             }
         }
-        if let Some(Value::Array(required)) = keywords.required {
-            for key in required.iter().filter_map(Value::as_str) {
-                let child_path = join_property(path, key);
-                let constrained = paths
-                    .range::<str, _>((Bound::Included(child_path.as_str()), Bound::Unbounded))
-                    .next()
-                    .is_some_and(|existing| existing.starts_with(&child_path));
-                if !constrained {
-                    paths.insert(format!("{child_path}?"));
-                }
+        let mut required = Vec::new();
+        if let Some(Value::Array(keys)) = keywords.required {
+            for key in keys.iter().filter_map(Value::as_str) {
+                required.push(self.paths.word(encode_key(key)));
             }
         }
-        for arms in [keywords.all_of, keywords.any_of, keywords.one_of] {
-            if let Some(Value::Array(arms)) = arms {
-                for arm in arms {
-                    self.walk(arm, path, paths);
-                }
+        let mut arms = Vec::new();
+        for list in [keywords.all_of, keywords.any_of, keywords.one_of] {
+            if let Some(Value::Array(list)) = list {
+                arms.extend(list.iter().filter_map(|arm| self.compile(arm)));
             }
         }
-        for branch in [
+        let branches = [
             keywords.if_schema,
             keywords.then_schema,
             keywords.else_schema,
         ]
-        .into_iter()
-        .flatten()
-        {
-            self.walk(branch, path, paths);
-        }
-        match keywords.items {
+        .map(|branch| branch.and_then(|branch| self.compile(branch)));
+        arms.extend(branches.iter().flatten());
+        let items = match keywords.items {
             Some(Value::Array(items)) => {
-                for item in items {
-                    self.walk(item, &format!("{path}@items"), paths);
-                }
+                items.iter().filter_map(|item| self.compile(item)).collect()
             }
-            Some(items) => self.walk(items, &format!("{path}@items"), paths),
-            None => {}
-        }
+            Some(items) => self.compile(items).into_iter().collect(),
+            None => Vec::new(),
+        };
+        let mut any_key = Vec::new();
         if let Some(additional) = keywords.additional_properties {
-            self.walk(additional, &format!("{path}@*"), paths);
+            any_key.extend(self.compile(additional));
         }
         if let Some(Value::Object(patterns)) = keywords.pattern_properties {
-            for pattern in patterns.values() {
-                self.walk(pattern, &format!("{path}@*"), paths);
+            any_key.extend(
+                patterns
+                    .values()
+                    .filter_map(|pattern| self.compile(pattern)),
+            );
+        }
+        let node = self.nodes.len();
+        self.nodes.push(Rc::new(MeaningNode {
+            reference,
+            stated: stated.into(),
+            not,
+            properties: properties.into(),
+            required: required.into(),
+            arms: arms.into(),
+            branches,
+            items: items.into(),
+            any_key: any_key.into(),
+        }));
+        Some(node)
+    }
+}
+
+/// The values paths one walk reached, ordered by text.
+struct PathSet {
+    texts: BTreeSet<Rc<str>>,
+    /// This set's mark in [`MeaningProgram::held_by`].
+    mark: usize,
+}
+
+impl PathSet {
+    fn len(&self) -> usize {
+        self.texts.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.texts.is_empty()
+    }
+
+    /// Whether a held path starts with `prefix`.
+    fn has_prefix(&self, prefix: &str) -> bool {
+        self.texts
+            .range::<str, _>((Bound::Included(prefix), Bound::Unbounded))
+            .next()
+            .is_some_and(|text| text.starts_with(prefix))
+    }
+
+    fn render(&self) -> String {
+        render_path_list(self.texts.iter().map(|text| &**text))
+    }
+}
+
+/// One definition's meaning walk: up to [`MEANING_WALK_BUDGET`] schema
+/// objects in depth-first order, each anonymous definition entered once.
+struct MeaningWalk<'p, 'i, 'a> {
+    program: &'p mut MeaningProgram<'i, 'a>,
+    /// This walk's mark in [`MeaningProgram::visited_by`].
+    mark: usize,
+    budget: usize,
+}
+
+impl<'p, 'i, 'a> MeaningWalk<'p, 'i, 'a> {
+    fn new(program: &'p mut MeaningProgram<'i, 'a>) -> Self {
+        program.walks += 1;
+        let mark = program.walks;
+        Self {
+            program,
+            mark,
+            budget: MEANING_WALK_BUDGET,
+        }
+    }
+
+    fn path_list(&mut self, schema: &Value, node: Option<NodeId>) -> String {
+        if *schema == Value::Bool(false) {
+            return "fail".to_string();
+        }
+        let paths = self.paths(node);
+        if paths.is_empty() {
+            "any".to_string()
+        } else {
+            paths.render()
+        }
+    }
+
+    fn paths(&mut self, node: Option<NodeId>) -> PathSet {
+        self.program.path_sets += 1;
+        let mut paths = PathSet {
+            texts: BTreeSet::new(),
+            mark: self.program.path_sets,
+        };
+        if let Some(node) = node {
+            self.walk(node, ROOT_PATH, &mut paths);
+        }
+        paths
+    }
+
+    /// Whether `definition` is entered for the first time in this walk.
+    fn enter(&mut self, definition: DefinitionId) -> bool {
+        match self.program.visited_by.get_mut(definition) {
+            Some(visited_by) if *visited_by != self.mark => {
+                *visited_by = self.mark;
+                true
+            }
+            Some(_) | None => false,
+        }
+    }
+
+    fn insert(&mut self, paths: &mut PathSet, path: PathId) {
+        if self.program.held_by.len() <= path {
+            self.program.held_by.resize(path + 1, 0);
+        }
+        if let Some(held_by) = self.program.held_by.get_mut(path)
+            && *held_by != paths.mark
+        {
+            *held_by = paths.mark;
+            if let Some(text) = self.program.paths.texts.get(path) {
+                paths.texts.insert(Rc::clone(text));
             }
         }
     }
-}
 
-/// Records `path` with a stated operator; the fragment root is no values
-/// path, so what it states there is left to [`leaf_name`].
-fn insert_stated(paths: &mut BTreeSet<String>, path: &str, operator: &str) {
-    if !path.is_empty() {
-        paths.insert(format!("{path}{operator}"));
+    /// Records `path` with a stated operator; the fragment root is no values
+    /// path, so what it states there is left to [`leaf_name`].
+    fn insert_stated(&mut self, paths: &mut PathSet, path: PathId, operator: WordId) {
+        if path != ROOT_PATH {
+            let stated = self.program.paths.child(path, PathStep::Stated(operator));
+            self.insert(paths, stated);
+        }
     }
-}
 
-fn join_property(path: &str, key: &str) -> String {
-    let mut joined = String::with_capacity(path.len() + key.len() + 1);
-    if !path.is_empty() {
-        joined.push_str(path);
-        joined.push('.');
+    fn walk(&mut self, node: NodeId, path: PathId, paths: &mut PathSet) {
+        if self.budget == 0 {
+            return;
+        }
+        self.budget -= 1;
+        let Some(node) = self.program.nodes.get(node).map(Rc::clone) else {
+            return;
+        };
+        match node.reference {
+            MeaningReference::None => {}
+            MeaningReference::Named(operator) => self.insert_stated(paths, path, operator),
+            MeaningReference::Anonymous(definition) => {
+                if self.enter(definition)
+                    && let Some(root) = self.program.root(definition)
+                {
+                    self.walk(root, path, paths);
+                }
+            }
+        }
+        for &operator in &node.stated {
+            self.insert_stated(paths, path, operator);
+        }
+        if let Some(negated) = node.not {
+            self.walk(negated, path, paths);
+        }
+        for &(key, child) in &node.properties {
+            let child_path = self.program.paths.child(path, PathStep::Key(key));
+            let before = paths.len();
+            if let Some(child) = child {
+                self.walk(child, child_path, paths);
+            }
+            if paths.len() == before {
+                self.insert(paths, child_path);
+            }
+        }
+        for &key in &node.required {
+            let child_path = self.program.paths.child(path, PathStep::Key(key));
+            if !paths.has_prefix(self.program.paths.text(child_path)) {
+                let required = self.program.paths.child(child_path, PathStep::Required);
+                self.insert(paths, required);
+            }
+        }
+        for &arm in &node.arms {
+            self.walk(arm, path, paths);
+        }
+        if !node.items.is_empty() {
+            let items_path = self.program.paths.child(path, PathStep::Items);
+            for &item in &node.items {
+                self.walk(item, items_path, paths);
+            }
+        }
+        if !node.any_key.is_empty() {
+            let any_key_path = self.program.paths.child(path, PathStep::AnyKey);
+            for &schema in &node.any_key {
+                self.walk(schema, any_key_path, paths);
+            }
+        }
     }
-    push_encoded_key(&mut joined, key);
-    joined
 }
 
 /// Sorted paths joined by `+`, the tail past [`MEANING_LIST_CHARS`] counted
 /// as `+Nmore`.
-fn render_path_list(paths: &BTreeSet<String>) -> String {
+fn render_path_list<'p>(paths: impl ExactSizeIterator<Item = &'p str>) -> String {
+    let total = paths.len();
     let mut rendered = String::new();
     let mut listed = 0;
     for path in paths {
@@ -842,8 +1188,8 @@ fn render_path_list(paths: &BTreeSet<String>) -> String {
         rendered.push_str(path);
         listed += 1;
     }
-    if listed < paths.len() {
-        rendered = format!("{rendered}+{}more", paths.len() - listed);
+    if listed < total {
+        rendered = format!("{rendered}+{}more", total - listed);
     }
     rendered
 }

@@ -815,6 +815,65 @@ fn meaning_names_state_operators_and_count_long_lists() {
 }
 
 #[test]
+fn each_meaning_walk_enters_a_shared_definition_once_at_its_first_path() {
+    let shared = json!({ "properties": { "x": { "const": 1 } } });
+    let mut schema = json!({
+        "$defs": {
+            "1": shared,
+            "2": { "properties": { "a": { "$ref": "#/$defs/1" }, "b": { "$ref": "#/$defs/1" } } },
+            "3": { "properties": { "b": { "$ref": "#/$defs/1" } } },
+            "4": {
+                "if": { "properties": { "k": { "$ref": "#/$defs/1" } } },
+                "then": { "properties": { "m": { "$ref": "#/$defs/1" } } }
+            }
+        },
+        "anyOf": [{ "$ref": "#/$defs/2" }, { "$ref": "#/$defs/3" }, { "$ref": "#/$defs/4" }]
+    });
+    let anonymous = ["1", "2", "3", "4"]
+        .into_iter()
+        .map(|handle| (handle.to_string(), Vec::new()))
+        .collect::<BTreeMap<_, _>>();
+
+    name_definitions(&mut schema, &anonymous, DefinitionNames::Source);
+
+    // `b` adds nothing new once `1` was entered below `a`, so it stands as
+    // itself; another definition's walk enters `1` afresh; `then` shares the
+    // walk of `if`.
+    sim_assert_eq!(
+        have: definitions(&schema).into_keys().collect::<Vec<_>>(),
+        want: vec![
+            "constrains/a.x=1+b",
+            "constrains/b.x=1",
+            "constrains/x=1",
+            "when/k.x=1/then/m",
+        ]
+    );
+}
+
+#[test]
+fn a_meaning_walk_reads_at_most_its_budget_of_schema_objects() {
+    let arms = (0..5000)
+        .map(|index| json!({ "properties": { format!("p{index:04}"): { "const": 1 } } }))
+        .collect::<Vec<_>>();
+    let mut schema = json!({
+        "$defs": { "1": { "anyOf": arms } },
+        "anyOf": [{ "$ref": "#/$defs/1" }]
+    });
+    let anonymous = BTreeMap::from([("1".to_string(), Vec::new())]);
+
+    name_definitions(&mut schema, &anonymous, DefinitionNames::Source);
+
+    // The root and 1,999 arms with their property take 3,999 objects; the
+    // 2,000th arm is the last, its property path without the value.
+    sim_assert_eq!(
+        have: definitions(&schema).into_keys().collect::<Vec<_>>(),
+        want: vec![
+            "constrains/p0000=1+p0001=1+p0002=1+p0003=1+p0004=1+p0005=1+p0006=1+p0007=1+p0008=1+p0009=1+1990more",
+        ]
+    );
+}
+
+#[test]
 fn long_values_and_names_are_cut() -> eyre::Result<()> {
     let mut deep = json!({ "const": "x".repeat(50) });
     for level in 0..30 {
