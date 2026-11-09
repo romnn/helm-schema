@@ -14,10 +14,14 @@
 //!     helper) emit a value use for `X` even though `Values` is the
 //!     second selector segment, not the root.
 
+use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext, ValueKind};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+
+#[path = "../src/tests/guard_oracle.rs"]
+mod guard_oracle;
 
 fn generate(template: &str, helpers: &str) -> Vec<ContractUse> {
     let mut idx = DefineIndex::new();
@@ -53,6 +57,41 @@ fn not(p: &str) -> Guard {
     Guard::Not {
         path: helm_schema_core::ValuesPath::parse(p),
     }
+}
+
+/// Rendered rows only: pathless rows are read coverage, not placements.
+fn rendered<'a>(uses: &'a [ContractUse], path: &str) -> Vec<&'a ContractUse> {
+    let path = helm_schema_core::ValuesPath::parse(path);
+    uses.iter()
+        .filter(|use_| use_.source_expr == path && !use_.path.0.is_empty())
+        .collect()
+}
+
+/// A row's guard disjunction as one predicate.
+fn condition(use_: &ContractUse) -> helm_schema_core::Predicate {
+    guard_oracle::dnf_predicate(&use_.condition)
+}
+
+/// Whether the row executes only where `guard` holds.
+fn implies(use_: &ContractUse, guard: &Guard) -> bool {
+    condition(use_).exactly_implies(&helm_schema_core::Predicate::from(guard.clone()))
+}
+
+/// The rows together render exactly under `selection` on every document of the leaf product,
+/// and `selection` reproduces Helm's verdicts on the recorded documents.
+fn assert_covers(
+    rows: &[&ContractUse],
+    selection: &[Guard],
+    leaves: &[Option<serde_json::Value>],
+    helm: &[(serde_json::Value, bool)],
+) -> eyre::Result<()> {
+    let want = guard_oracle::conjunction(selection);
+    guard_oracle::assert_equivalent(
+        &helm_schema_core::Predicate::Or(rows.iter().map(|use_| condition(use_)).collect()),
+        &want,
+        leaves,
+    )?;
+    guard_oracle::assert_helm_verdicts(&want, helm)
 }
 
 #[test]
@@ -347,7 +386,7 @@ fn split_path_helper_resolves_key_selected_by_helper() {
 }
 
 #[test]
-fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
+fn else_branch_uses_inherit_negated_if_guard_without_leaking() -> eyre::Result<()> {
     let template = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -364,59 +403,74 @@ fn else_branch_uses_inherit_negated_if_guard_without_leaking() {
 
     let ir = generate(template, "");
 
-    let primary_uses: Vec<&ContractUse> = ir
-        .iter()
-        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("primary"))
-        .collect();
-    sim_assert_eq!(
-        have: primary_uses.len(),
-        want: 1,
-        "expected exactly one then-branch use; got {ir:#?}",
-    );
+    // Each branch's rendered rows execute under that branch's guard; the rows after the branch
+    // execute under neither.
+    let primary_uses = rendered(&ir, "primary");
     assert!(
-        primary_uses[0]
-            .single_guard_conjunction()
-            .contains(&truthy("enabled")),
-        "then-branch use should inherit Truthy(enabled); got {:?}",
-        primary_uses[0].single_guard_conjunction(),
+        !primary_uses.is_empty(),
+        "expected a then-branch use; got {ir:#?}"
     );
+    for use_ in &primary_uses {
+        sim_assert_eq!(have: use_.path.0, want: vec!["data".to_string(), "primary".to_string()]);
+        assert!(
+            implies(use_, &truthy("enabled")),
+            "then-branch use should inherit Truthy(enabled); got {:?}",
+            use_.condition,
+        );
+    }
 
-    let fallback_uses: Vec<&ContractUse> = ir
-        .iter()
-        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("fallback"))
-        .collect();
-    sim_assert_eq!(
-        have: fallback_uses.len(),
-        want: 1,
-        "expected exactly one else-branch use; got {ir:#?}",
-    );
+    let fallback_uses = rendered(&ir, "fallback");
     assert!(
-        fallback_uses[0]
-            .single_guard_conjunction()
-            .contains(&not("enabled")),
-        "else-branch use should inherit Not(enabled); got {:?}",
-        fallback_uses[0].single_guard_conjunction(),
+        !fallback_uses.is_empty(),
+        "expected an else-branch use; got {ir:#?}"
     );
+    for use_ in &fallback_uses {
+        sim_assert_eq!(have: use_.path.0, want: vec!["data".to_string(), "fallback".to_string()]);
+        assert!(
+            implies(use_, &not("enabled")),
+            "else-branch use should inherit Not(enabled); got {:?}",
+            use_.condition,
+        );
+    }
 
-    let after_uses: Vec<&ContractUse> = ir
-        .iter()
-        .filter(|use_| use_.source_expr == helm_schema_core::ValuesPath::parse("after"))
-        .collect();
-    sim_assert_eq!(
-        have: after_uses.len(),
-        want: 1,
-        "expected exactly one post-branch use; got {ir:#?}",
-    );
+    let after_uses = rendered(&ir, "after");
     assert!(
-        !after_uses[0]
-            .single_guard_conjunction()
-            .contains(&truthy("enabled"))
-            && !after_uses[0]
-                .single_guard_conjunction()
-                .contains(&not("enabled")),
-        "branch guards must not leak to following nodes; got {:?}",
-        after_uses[0].single_guard_conjunction(),
+        !after_uses.is_empty(),
+        "expected a post-branch use; got {ir:#?}"
     );
+    for use_ in &after_uses {
+        sim_assert_eq!(have: use_.path.0, want: vec!["data".to_string(), "after".to_string()]);
+        assert!(
+            !implies(use_, &truthy("enabled")) && !implies(use_, &not("enabled")),
+            "branch guards must not leak to following nodes; got {:?}",
+            use_.condition,
+        );
+    }
+    // Coverage: each branch's rows together render exactly under its guard, and the rows after the
+    // branch render always (transfer/probes/rw-coverage.txt `else-*`).
+    let leaves = guard_oracle::representatives(&[]);
+    let enabled =
+        serde_json::json!({"enabled": true, "primary": "p", "fallback": "f", "after": "a"});
+    let disabled =
+        serde_json::json!({"enabled": false, "primary": "p", "fallback": "f", "after": "a"});
+    assert_covers(
+        &primary_uses,
+        &[truthy("enabled")],
+        &leaves,
+        &[(enabled.clone(), true), (disabled.clone(), false)],
+    )?;
+    assert_covers(
+        &fallback_uses,
+        &[not("enabled")],
+        &leaves,
+        &[(enabled.clone(), false), (disabled.clone(), true)],
+    )?;
+    assert_covers(
+        &after_uses,
+        &[],
+        &leaves,
+        &[(enabled, true), (disabled, true)],
+    )
 }
 
 #[test]
@@ -428,28 +482,29 @@ fn local_storage_class_alias_emits_guarded_leaf_use() {
           resources:
             requests:
               storage: {{ .Values.persistence.size | quote }}
-          {{- $storageClass := (.Values.global).storageClass | default .Values.persistence.storageClass | default (.Values.global).defaultStorageClass | default "" -}}
-          {{- if $storageClass -}}
+          {{- $storageClass := (.Values.global).storageClass | default .Values.persistence.storageClass | default (.Values.global).defaultStorageClass | default "" }}
+          {{- if $storageClass }}
           storageClassName: {{ $storageClass }}
-          {{- end -}}
+          {{- end }}
     "#};
+    // The trims keep `storageClassName` on its own line. With the former `-}}` trims Helm joins it
+    // onto the storage scalar and fails to parse whenever the alias is truthy
+    // (transfer/probes/t3-storage-class-trim.txt), so no placement could exist.
 
     let ir = generate(template, "");
-    let matching_uses: Vec<&ContractUse> = ir
-        .iter()
-        .filter(|use_| {
-            use_.source_expr == helm_schema_core::ValuesPath::parse("global.storageClass")
-        })
-        .collect();
+    let marker = Guard::Default {
+        path: helm_schema_core::ValuesPath::parse("global.storageClass"),
+    };
     assert!(
-        matching_uses.iter().any(|use_| {
+        rendered(&ir, "global.storageClass").iter().any(|use_| {
             use_.path.0 == ["spec".to_string(), "storageClassName".to_string()]
+                && implies(use_, &truthy("global.storageClass"))
+                && !use_.condition.guard_conjunctions().is_empty()
                 && use_
-                    .single_guard_conjunction()
-                    .contains(&truthy("global.storageClass"))
-                && use_.single_guard_conjunction().contains(&Guard::Default {
-                    path: helm_schema_core::ValuesPath::parse("global.storageClass"),
-                })
+                    .condition
+                    .guard_conjunctions()
+                    .iter()
+                    .all(|conjunction| conjunction.contains(&marker))
         }),
         "expected a rendered `storageClassName` use for global.storageClass carrying both Truthy and Default guards; got {ir:#?}",
     );
@@ -485,20 +540,33 @@ fn helper_context_chain_dot_context_values_path_surfaces_as_use() {
         .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("deeplyNested.fieldName"))
         .collect();
     // Read coverage and rendered scalar alternatives retain the same source.
-    let lanes: Vec<_> = target_uses
+    let mut lanes: Vec<_> = target_uses
         .iter()
         .map(|use_| (use_.kind, use_.path.0.clone()))
         .collect();
+    // The lanes form a multiset; their emission order carries no meaning.
+    lanes.sort();
+    let mut want = vec![
+        (ValueKind::Serialized, Vec::<String>::new()),
+        (ValueKind::WidenedDependency, Vec::<String>::new()),
+        (ValueKind::WidenedRegion, Vec::<String>::new()),
+        (
+            ValueKind::Scalar,
+            vec!["data".to_string(), "field".to_string()],
+        ),
+        (
+            ValueKind::GoFormattedMap,
+            vec!["data".to_string(), "field".to_string()],
+        ),
+        (
+            ValueKind::GoFormattedSequence,
+            vec!["data".to_string(), "field".to_string()],
+        ),
+    ];
+    want.sort();
     sim_assert_eq!(
         have: lanes,
-        want: vec![
-            (ValueKind::Serialized, Vec::<String>::new()),
-            (ValueKind::WidenedDependency, Vec::<String>::new()),
-            (ValueKind::WidenedRegion, Vec::<String>::new()),
-            (ValueKind::Scalar, vec!["data".to_string(), "field".to_string()]),
-            (ValueKind::GoFormattedMap, vec!["data".to_string(), "field".to_string()]),
-            (ValueKind::GoFormattedSequence, vec!["data".to_string(), "field".to_string()]),
-        ],
+        want: want,
         "helper-context source coverage and all rendered alternatives: {ir:#?}",
     );
 
@@ -534,25 +602,24 @@ fn quoted_yaml_key_keeps_concrete_leaf_path() {
 
     let ir = generate(template, "");
 
-    let namespace_uses: Vec<&ContractUse> = ir
-        .iter()
-        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("namespace"))
-        .collect();
-    sim_assert_eq!(
-        have: namespace_uses.len(),
-        want: 1,
-        "expected exactly one `namespace` use; got: {ir:#?}",
-    );
-    let path = &namespace_uses[0].path.0;
+    // Every rendered `namespace` row lands at the one concrete leaf; pathless rows are coverage.
+    let namespace_uses = rendered(&ir, "namespace");
     assert!(
-        path.contains(&"namespaceSelector".to_string()),
-        "quoted YAML key path should still descend through namespaceSelector; got: {path:?}",
+        !namespace_uses.is_empty(),
+        "expected a rendered `namespace` use; got: {ir:#?}",
     );
-    sim_assert_eq!(
-        have: path.last().map(String::as_str),
-        want: Some("kubernetes.io/metadata.name"),
-        "quoted YAML key should become the concrete leaf path segment; got: {path:?}",
-    );
+    for use_ in namespace_uses {
+        let path = &use_.path.0;
+        assert!(
+            path.contains(&"namespaceSelector".to_string()),
+            "quoted YAML key path should still descend through namespaceSelector; got: {path:?}",
+        );
+        sim_assert_eq!(
+            have: path.last().map(String::as_str),
+            want: Some("kubernetes.io/metadata.name"),
+            "quoted YAML key should become the concrete leaf path segment; got: {path:?}",
+        );
+    }
 }
 
 #[test]
@@ -1052,7 +1119,7 @@ fn with_bound_inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_
 }
 
 #[test]
-fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
+fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() -> eyre::Result<()> {
     // The reviewer's original example: `eq .Values.X ".Values.fake"`.
     // Old regex would have extracted both `X` and `fake` from the
     // condition text, fallen past the `eq` branch in parse_condition,
@@ -1095,32 +1162,56 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
     // Tighten beyond "contains the Eq": there must be no `Truthy(mode)`
     // or `Truthy(fake)` either, which is what the OLD regex pipeline
     // would have emitted from the contamination fall-through.
-    let payload_uses: Vec<&ContractUse> = ir
-        .iter()
-        .filter(|u| u.source_expr == helm_schema_core::ValuesPath::parse("payload"))
-        .collect();
-    sim_assert_eq!(
-        have: payload_uses.len(),
-        want: 1,
-        "expected exactly one `payload` use inside the if-body; got: {ir:#?}",
-    );
-    let payload_guards = payload_uses[0].single_guard_conjunction();
+    let payload_uses = rendered(&ir, "payload");
+    // Coverage over the comparison's defined domain: Helm's `eq` aborts on a non-string mode
+    // (transfer/probes/rw-coverage.txt `eq-int`), so only nil, absent and strings compare.
+    let comparable = guard_oracle::representatives(&[".Values.fake"])
+        .into_iter()
+        .filter(|leaf| {
+            leaf.as_ref()
+                .is_none_or(|leaf| leaf.is_null() || leaf.is_string())
+        })
+        .collect::<Vec<_>>();
+    assert_covers(
+        &payload_uses,
+        &[eq("mode", ".Values.fake")],
+        &comparable,
+        &[
+            (
+                serde_json::json!({"mode": ".Values.fake", "payload": "x"}),
+                true,
+            ),
+            (serde_json::json!({"mode": "other", "payload": "x"}), false),
+        ],
+    )?;
     assert!(
-        payload_guards.contains(&eq("mode", ".Values.fake")),
-        "expected `payload` body use guarded by Eq(mode, \".Values.fake\"); \
-         got: {payload_guards:?}",
+        !payload_uses.is_empty(),
+        "expected a rendered `payload` use inside the if-body; got: {ir:#?}",
     );
-    assert!(
-        !payload_guards.contains(&truthy("mode")),
-        "`payload` use must NOT carry Truthy(mode) — that would mean the \
-         eq classification fell through and the old contamination shape \
-         re-emerged; got: {payload_guards:?}",
-    );
-    assert!(
-        !payload_guards.contains(&truthy("fake")),
-        "`payload` use must NOT carry Truthy(fake) — `fake` is a string \
-         payload, not a real Values reference; got: {payload_guards:?}",
-    );
+    for use_ in payload_uses {
+        let payload_guards = &use_.condition;
+        assert!(
+            implies(use_, &eq("mode", ".Values.fake")),
+            "expected `payload` body use guarded by Eq(mode, \".Values.fake\"); \
+             got: {payload_guards:?}",
+        );
+        assert!(
+            use_.condition
+                .guard_conjunctions()
+                .iter()
+                .all(|conjunction| !conjunction.contains(&truthy("mode"))),
+            "`payload` use must NOT carry Truthy(mode) — that would mean the \
+             eq classification fell through and the old contamination shape \
+             re-emerged; got: {payload_guards:?}",
+        );
+        assert!(
+            !condition(use_)
+                .value_paths()
+                .contains(&helm_schema_core::ValuesPath::parse("fake")),
+            "`payload` use must NOT carry Truthy(fake) — `fake` is a string \
+             payload, not a real Values reference; got: {payload_guards:?}",
+        );
+    }
 
     // `mode` must surface as a use (referenced by the condition).
     assert!(
@@ -1128,4 +1219,5 @@ fn eq_condition_with_string_literal_containing_dot_values_does_not_phantom() {
             .any(|u| u.source_expr == helm_schema_core::ValuesPath::parse("mode")),
         "`.Values.mode` did not surface as an IR use; got: {ir:#?}",
     );
+    Ok(())
 }

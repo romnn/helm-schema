@@ -31,6 +31,7 @@ mod fragment_expr_eval;
 mod fragment_golden;
 mod fragment_scope_eval;
 mod function_semantics;
+pub(crate) mod guard_oracle;
 mod ip_item_pattern;
 mod observed_facts;
 mod range_modes;
@@ -587,8 +588,17 @@ fn document_branch_guard_survives_local_helper_reassignment() {
     );
 }
 
+/// Each candidate renders exactly when it is the first truthy one and a string: `b64enc` aborts on
+/// every non-string (transfer/probes/t2-coalesce.txt). The rendered rows are compared by their
+/// decisions, not their normal form. Only the primary has a substitute when it is empty, so only it
+/// keeps the `default` null-tolerance marker: a null primary renders the fallback
+/// (`coalesce-primary-null`), while nothing replaces a null last candidate (`coalesce-both-absent`
+/// aborts in `b64enc`).
 #[test]
-fn document_local_coalesce_preserves_ordered_candidate_selection() {
+fn document_local_coalesce_preserves_ordered_candidate_selection() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{
+        assert_equivalent, assert_helm_verdicts, dnf_predicate, representatives,
+    };
     let src = indoc! {r"
         {{- $selected := coalesce .Values.primary .Values.fallback -}}
         apiVersion: v1
@@ -599,43 +609,71 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() {
     let ir = SymbolicIrContext::new(&DefineIndex::new())
         .generate_contract_ir(src)
         .finalize();
-
-    let primary = ir
-        .uses()
-        .iter()
-        .find(|use_| use_.source_expr == conditional_path("primary") && !use_.path.0.is_empty())
-        .unwrap_or_else(|| panic!("expected rendered primary use: {ir:#?}"));
-    sim_assert_eq!(
-        have: primary.condition.guard_conjunctions(),
-        want: vec![vec![
-            Guard::Truthy {
-                path: helm_schema_core::ValuesPath::parse("primary"),
-            },
-            Guard::Default {
-                path: helm_schema_core::ValuesPath::parse("primary"),
-            },
-        ]]
-    );
-
-    let fallback = ir
-        .uses()
-        .iter()
-        .find(|use_| use_.source_expr == conditional_path("fallback") && !use_.path.0.is_empty())
-        .unwrap_or_else(|| panic!("expected rendered fallback use: {ir:#?}"));
-    sim_assert_eq!(
-        have: fallback.condition.guard_conjunctions(),
-        want: vec![vec![
-            Guard::Truthy {
-                path: helm_schema_core::ValuesPath::parse("fallback"),
-            },
-            Guard::Not {
-                path: helm_schema_core::ValuesPath::parse("primary"),
-            },
-            Guard::Default {
-                path: helm_schema_core::ValuesPath::parse("fallback"),
-            },
-        ]]
-    );
+    let string = |path: &str| {
+        Predicate::from(Guard::TypeIs {
+            path: helm_schema_core::ValuesPath::parse(path),
+            schema_type: "string".to_owned(),
+        })
+    };
+    let candidates = [
+        (
+            "primary",
+            Predicate::all(vec![Predicate::truthy_path("primary"), string("primary")]),
+            [true, false, false, false, false, false],
+            true,
+        ),
+        (
+            "fallback",
+            Predicate::all(vec![
+                Predicate::truthy_path("fallback"),
+                Predicate::truthy_path("primary").negated(),
+                string("fallback"),
+            ]),
+            [false, false, false, true, true, true],
+            false,
+        ),
+    ];
+    let documents = [
+        serde_json::json!({"primary": "p", "fallback": "f"}),
+        serde_json::json!({"primary": 5, "fallback": "f"}),
+        serde_json::json!({"primary": {"a": 1}, "fallback": "f"}),
+        serde_json::json!({"primary": null, "fallback": "f"}),
+        serde_json::json!({"primary": "", "fallback": "f"}),
+        serde_json::json!({"primary": false, "fallback": "f"}),
+    ];
+    for (name, want, verdicts, substituted) in candidates {
+        let rows = ir
+            .uses()
+            .iter()
+            .filter(|use_| use_.source_expr == conditional_path(name))
+            .collect::<Vec<_>>();
+        // The rendered rows together cover exactly the candidate's selection.
+        let rendered = rows
+            .iter()
+            .filter(|use_| !use_.path.0.is_empty())
+            .map(|use_| dnf_predicate(&use_.condition))
+            .collect::<Vec<_>>();
+        eyre::ensure!(!rendered.is_empty(), "expected a rendered {name} use");
+        assert_equivalent(&Predicate::Or(rendered), &want, &representatives(&[]))?;
+        assert_helm_verdicts(
+            &want,
+            &documents.iter().cloned().zip(verdicts).collect::<Vec<_>>(),
+        )?;
+        let marker = Guard::Default {
+            path: helm_schema_core::ValuesPath::parse(name),
+        };
+        let carries_marker = rows.iter().any(|use_| {
+            use_.condition
+                .guard_conjunctions()
+                .iter()
+                .any(|conjunction| conjunction.contains(&marker))
+        });
+        eyre::ensure!(
+            carries_marker == substituted,
+            "{name} must carry the default null-tolerance marker exactly when a later candidate \
+             substitutes for it: {rows:#?}"
+        );
+    }
     let db = crate::analysis_db::IrAnalysisDb::new(&DefineIndex::new());
     support::with_execution(src, None, &db, |execution| {
         support::assert_string_consumption(execution, "primary", Predicate::truthy_path("primary"));
@@ -648,6 +686,7 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() {
             ]),
         );
     });
+    Ok(())
 }
 
 #[test]

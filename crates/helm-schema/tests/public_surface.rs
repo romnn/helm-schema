@@ -49,6 +49,9 @@ fn generate_values_schema_for_chart(
         .map(|generated| generated.schema)
 }
 
+#[path = "../../helm-schema-ir/src/tests/guard_oracle.rs"]
+mod guard_oracle;
+
 #[test]
 fn emission_selection_resolves_checked_public_policy_once() -> eyre::Result<()> {
     let selection = EmissionSelection::Preset {
@@ -956,47 +959,91 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
 
     sim_assert_eq!(have: explanation.path, want: "kid.enabled");
     assert!(!explanation.exact_uses.is_empty(), "expected exact uses");
-    assert!(
-        explanation
-            .exact_uses
-            .iter()
-            .any(
-                |use_| use_.condition.guard_conjunctions().iter().any(|guards| {
-                    guards.as_slice()
-                        == [Guard::Truthy {
-                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
-                        }]
-                        .as_slice()
-                })
+    // Helm 4.2.3 activates the dependency by the first condition that holds a bool; a non-bool or
+    // missing condition only warns and falls through, then the tags decide, and the default is
+    // enabled (pkg/chart/v2/util/dependencies.go:50-56, 79-87). With this chart's `, ` spelling the
+    // second condition is never consulted (transfer/probes/t3-dependency-condition.txt).
+    // A user null is null-deleted to absent, so null never reaches the coalesced document; an
+    // absent kid.enabled falls through like a non-bool (`first-null-second-false` renders,
+    // `first-null-tag-false` does not).
+    let leaves = guard_oracle::representatives(&[])
+        .into_iter()
+        .filter(|leaf| leaf.as_ref().is_none_or(|leaf| !leaf.is_null()))
+        .collect::<Vec<_>>();
+    let path = helm_schema_core::ValuesPath::parse;
+    let activation = helm_schema_core::Predicate::Or(vec![
+        guard_oracle::conjunction(&[Guard::Eq {
+            path: path("kid.enabled"),
+            value: helm_schema_core::GuardValue::Bool(true),
+        }]),
+        guard_oracle::conjunction(&[
+            Guard::NotTypeIs {
+                path: path("kid.enabled"),
+                schema_type: "boolean".to_owned(),
+            },
+            Guard::AnyOf {
+                alternatives: vec![
+                    vec![Guard::Eq {
+                        path: path("tags.observability"),
+                        value: helm_schema_core::GuardValue::Bool(true),
+                    }],
+                    vec![Guard::NotTypeIs {
+                        path: path("tags.observability"),
+                        schema_type: "boolean".to_owned(),
+                    }],
+                ],
+            },
+        ]),
+    ]);
+    guard_oracle::assert_helm_verdicts(
+        &activation,
+        &[
+            (json!({"kid": {"enabled": true}}), true),
+            (json!({"global": {"kidEnabled": false}}), true),
+            (json!({"tags": {"observability": false}}), false),
+            (json!({"kid": {"enabled": false}}), false),
+            (json!({"kid": {"enabled": "yes"}}), true),
+            (
+                json!({"kid": {"enabled": "yes"}, "global": {"kidEnabled": false}}),
+                true,
             ),
-        "expected first condition activation branch in explanation: {explanation:#?}"
-    );
-    assert!(
-        explanation
-            .exact_uses
-            .iter()
-            .any(
-                |use_| use_.condition.guard_conjunctions().iter().any(|guards| {
-                    guards.as_slice()
-                        == [
-                            Guard::Truthy {
-                                path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
-                            },
-                            Guard::Absent {
-                                path: helm_schema_core::ValuesPath::parse("kid.enabled"),
-                            },
-                        ]
-                        .as_slice()
-                })
+            (
+                json!({"kid": {"enabled": 1}, "global": {"kidEnabled": true}}),
+                true,
             ),
-        "expected second condition branch guarded by first-condition absence: {explanation:#?}"
-    );
+            (
+                json!({"kid": {"enabled": "yes"}, "global": {"kidEnabled": "no"}, "tags": {"observability": false}}),
+                false,
+            ),
+            (
+                json!({"kid": {"enabled": false}, "global": {"kidEnabled": true}}),
+                false,
+            ),
+            (
+                json!({"kid": {"enabled": "yes"}, "tags": {"observability": "x"}}),
+                true,
+            ),
+        ],
+    )?;
+    let rendered = explanation
+        .exact_uses
+        .iter()
+        .filter(|use_| !use_.path.0.is_empty())
+        .map(|use_| guard_oracle::dnf_predicate(&use_.condition))
+        .collect::<Vec<_>>();
+    eyre::ensure!(!rendered.is_empty(), "expected a rendered kid.enabled use");
+    guard_oracle::assert_equivalent(
+        &helm_schema_core::Predicate::Or(rendered),
+        &activation,
+        &leaves,
+    )?;
+    // The activation paths accept every kind, so no boolean authoring hint applies.
     assert!(
-        explanation
+        !explanation
             .type_hints
             .iter()
             .any(|hint| hint == &json!({ "type": "boolean" })),
-        "expected boolean activation type hint: {explanation:#?}"
+        "unexpected boolean activation type hint: {explanation:#?}"
     );
     assert!(
         explanation.exact_uses.iter().any(|use_site| {

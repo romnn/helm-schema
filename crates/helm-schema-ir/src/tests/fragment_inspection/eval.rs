@@ -294,29 +294,37 @@ impl Projection<'_> {
             for KeyArm { condition, key } in self.keys(key) {
                 let mut value = value.clone();
                 value.guard_all(&condition, self.db.predicate_memo());
-                if !value.is_empty() {
-                    if let Some(existing) = mapping.entries.iter_mut().find(|entry| {
-                        entry.key == key
-                            && value.arms.iter().all(|(condition, _)| {
-                                entry.value.arms.iter().all(|(other, _)| {
-                                    self.db.predicate_memo().normalize(Predicate::all(vec![
-                                        condition.clone(),
-                                        other.clone(),
-                                    ])) == Predicate::False
-                                })
-                            })
-                    }) {
-                        existing.value.extend(value);
-                    } else {
-                        mapping.entries.push(MappingEntry { key, value });
-                    }
-                }
+                self.push_entry(&mut mapping, key, value);
             }
         }
         if mapping.entries.is_empty() {
             Guarded::empty()
         } else {
             Guarded::unconditional(AbstractFragment::Mapping(mapping))
+        }
+    }
+
+    /// Adds one key arm: exclusive arms of an existing key merge into it, and a key without a
+    /// rendered value stays as a YAML null member (it still renders).
+    fn push_entry(&self, mapping: &mut Mapping, key: EntryKey, value: Guarded<AbstractFragment>) {
+        if value.is_empty() {
+            if !mapping.entries.iter().any(|entry| entry.key == key) {
+                mapping.entries.push(MappingEntry { key, value });
+            }
+        } else if let Some(existing) = mapping.entries.iter_mut().find(|entry| {
+            entry.key == key
+                && value.arms.iter().all(|(condition, _)| {
+                    entry.value.arms.iter().all(|(other, _)| {
+                        self.db
+                            .predicate_memo()
+                            .normalize(Predicate::all(vec![condition.clone(), other.clone()]))
+                            == Predicate::False
+                    })
+                })
+        }) {
+            existing.value.extend(value);
+        } else {
+            mapping.entries.push(MappingEntry { key, value });
         }
     }
 

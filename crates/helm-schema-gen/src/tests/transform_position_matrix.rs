@@ -203,7 +203,13 @@ fn transforms_keep_their_position_specific_facts_and_schemas() -> eyre::Result<(
                             && !use_.path.0.is_empty()
                     })
                     .ok_or_eyre("identity case must produce a placed use")?;
-                sim_assert_eq!(have: placed.stringified, want: stringified);
+                // Go template output renders both the raw value and `toString` through the
+                // value's `%v` spelling (transfer/probes/t1-identity-stringified.txt: `map[a:1]`,
+                // `[1 2]`, `7` alike), so both placed rows observe text; the kind keeps them apart.
+                assert!(
+                    placed.stringified,
+                    "identity output renders the %v spelling"
+                );
                 let expected_kind = if stringified {
                     ValueKind::Serialized
                 } else {

@@ -13,9 +13,16 @@
 //! controls whether resource lookup can run.
 
 use helm_schema_ast::DefineIndex;
+use std::collections::BTreeSet;
+
+use color_eyre::eyre;
+
 use helm_schema_ir::{ContractUse, FinalizedContract, SymbolicIrContext};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+
+#[path = "../src/tests/guard_oracle.rs"]
+mod guard_oracle;
 
 fn generate(template: &str) -> FinalizedContract {
     let idx = DefineIndex::new();
@@ -28,6 +35,52 @@ fn resource_of(use_: &ContractUse) -> Option<(String, String)> {
     use_.resource
         .as_ref()
         .map(|resource| (resource.api_version.clone(), resource.kind.clone()))
+}
+
+/// Every rendered row of `path` with its resource identity. ADR 0009 keeps apiVersion
+/// alternatives as typed per-arm rows, not as one primary with a candidate list.
+fn resource_rows<'a>(
+    ir: &'a FinalizedContract,
+    path: &str,
+) -> Vec<(&'a ContractUse, (String, String))> {
+    ir.uses()
+        .iter()
+        .filter(|use_| {
+            use_.source_expr == helm_schema_core::ValuesPath::parse(path) && !use_.path.0.is_empty()
+        })
+        .filter_map(|use_| resource_of(use_).map(|resource| (use_, resource)))
+        .collect()
+}
+
+fn resource_set(rows: &[(&ContractUse, (String, String))]) -> BTreeSet<(String, String)> {
+    rows.iter().map(|(_, resource)| resource.clone()).collect()
+}
+
+/// The rows of one apiVersion arm together render exactly under the arm's guard (an empty or
+/// never-rendering arm fails), and the guard reproduces Helm's verdicts on the recorded documents.
+fn assert_arm_guard(
+    rows: &[(&ContractUse, (String, String))],
+    api_version: &str,
+    guard: &helm_schema_core::Guard,
+    helm: &[(serde_json::Value, bool)],
+) -> eyre::Result<()> {
+    let arm = rows
+        .iter()
+        .filter(|(_, (version, _))| version == api_version)
+        .map(|(use_, _)| guard_oracle::dnf_predicate(&use_.condition))
+        .collect::<Vec<_>>();
+    eyre::ensure!(!arm.is_empty(), "missing the {api_version} arm: {rows:#?}");
+    let want = guard_oracle::conjunction(std::slice::from_ref(guard));
+    guard_oracle::assert_equivalent(
+        &helm_schema_core::Predicate::Or(arm),
+        &want,
+        &guard_oracle::representatives(&[]),
+    )?;
+    guard_oracle::assert_helm_verdicts(&want, helm)
+}
+
+fn pair(api_version: &str, kind: &str) -> (String, String) {
+    (api_version.to_owned(), kind.to_owned())
 }
 
 // Baseline: the conventional `apiVersion` THEN `kind` ordering must
@@ -201,29 +254,13 @@ fn detector_collects_api_version_inside_if_after_kind() {
           minAvailable: "{{ .Values.minAvailable }}"
     "#};
     let ir = generate(template);
-    let u = ir
-        .uses()
-        .iter()
-        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("minAvailable"))
-        .expect("expected a use for `minAvailable`");
-    let r = u.resource.as_ref().expect("resource on use");
-    sim_assert_eq!(have: r.kind, want: "PodDisruptionBudget");
-    // The detector must collect AT LEAST one of the two branches; both
-    // valid. The preferred-stability rank puts `policy/v1` first.
+    // Both capability arms keep their own row, each with the complete identity.
     sim_assert_eq!(
-        have: r.api_version,
-        want: "policy/v1",
-        "preferred apiVersion must be the stable branch; got {:?} (candidates={:?})",
-        r.api_version,
-        r.api_version_candidates
-    );
-    // The other branch should be in the candidate list.
-    assert!(
-        r.api_version_candidates
-            .iter()
-            .any(|v| v == "policy/v1beta1"),
-        "policy/v1beta1 must be in candidates from the if/else; got {:?}",
-        r.api_version_candidates
+        have: resource_set(&resource_rows(&ir, "minAvailable")),
+        want: BTreeSet::from([
+            pair("policy/v1", "PodDisruptionBudget"),
+            pair("policy/v1beta1", "PodDisruptionBudget"),
+        ]),
     );
 }
 
@@ -296,7 +333,7 @@ fn detector_handles_loop_wrapped_manifest() {
 // then re-collect both header fields in the second doc, even when an
 // `{{- if … }}` separates them.
 #[test]
-fn detector_multi_document_with_template_actions_between_header_lines() {
+fn detector_multi_document_with_template_actions_between_header_lines() -> eyre::Result<()> {
     let template = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -330,24 +367,39 @@ fn detector_multi_document_with_template_actions_between_header_lines() {
         "doc 1 must resolve to ConfigMap"
     );
 
-    let app = ir
-        .uses()
-        .iter()
-        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("app"))
-        .expect("app use missing");
-    let r = app.resource.as_ref().expect("resource");
+    // Doc 2 captures kind=NetworkPolicy regardless of header ordering and template actions, and
+    // each apiVersion arm keeps its own row under its branch guard.
+    let app = resource_rows(&ir, "app");
     sim_assert_eq!(
-        have: r.kind,
-        want: "NetworkPolicy",
-        "doc 2 must capture kind=NetworkPolicy regardless of header ordering and template actions"
+        have: resource_set(&app),
+        want: BTreeSet::from([
+            pair("networking.k8s.io/v1", "NetworkPolicy"),
+            pair("extensions/v1beta1", "NetworkPolicy"),
+        ]),
     );
-    sim_assert_eq!(
-        have: r.api_version,
-        want: "networking.k8s.io/v1",
-        "doc 2 must capture the stable apiVersion (preferred over extensions/v1beta1); got {:?} (candidates={:?})",
-        r.api_version,
-        r.api_version_candidates,
-    );
+    let modern = helm_schema_core::ValuesPath::parse("modern");
+    assert_arm_guard(
+        &app,
+        "networking.k8s.io/v1",
+        &helm_schema_core::Guard::Truthy {
+            path: modern.clone(),
+        },
+        &[
+            (serde_json::json!({"modern": true, "app": "a"}), true),
+            (serde_json::json!({"modern": false, "app": "a"}), false),
+        ],
+    )?;
+    assert_arm_guard(
+        &app,
+        "extensions/v1beta1",
+        &helm_schema_core::Guard::Not { path: modern },
+        &[
+            (serde_json::json!({"modern": true, "app": "a"}), false),
+            (serde_json::json!({"modern": false, "app": "a"}), true),
+        ],
+    )?;
+    // Helm: transfer/probes/rw-coverage.txt `np-*` / `pdb-*`.
+    Ok(())
 }
 
 // Helper-returned apiVersion. This is the
@@ -514,13 +566,12 @@ fn detector_primary_is_source_order_not_stability_rank() {
     );
 }
 
-// Multi-branch source-order primary.
-// When both `policy/v1` and `policy/v1beta1` appear, the FIRST seen
-// is primary (preserves authorial intent), the other is a candidate.
-// Old detector picked `policy/v1` regardless of source order via
-// generic "stable beats beta" ranking.
+// Multi-branch arms (ADR 0009).
+// When both `policy/v1` and `policy/v1beta1` appear, each branch keeps its own
+// typed row (preserving authorial intent per arm); no generic "stable beats
+// beta" ranking replaces what the template wrote.
 #[test]
-fn detector_multi_branch_primary_is_first_seen_in_source() {
+fn detector_multi_branch_primary_is_first_seen_in_source() -> eyre::Result<()> {
     let template = indoc! {r"
         kind: PodDisruptionBudget
         {{- if not .Values.modern }}
@@ -532,22 +583,48 @@ fn detector_multi_branch_primary_is_first_seen_in_source() {
           minAvailable: {{ .Values.minAvailable }}
     "};
     let ir = generate(template);
-    let u = ir
-        .uses()
-        .iter()
-        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("minAvailable"))
-        .expect("use missing");
-    let r = u.resource.as_ref().expect("resource");
+    // Neither arm is ranked over the other: each keeps the apiVersion the author wrote in its
+    // branch, under that branch's guard.
+    let rows = resource_rows(&ir, "minAvailable");
     sim_assert_eq!(
-        have: r.api_version,
-        want: "policy/v1beta1",
-        "first-seen-in-source must win; the template author put v1beta1 first"
+        have: resource_set(&rows),
+        want: BTreeSet::from([
+            pair("policy/v1beta1", "PodDisruptionBudget"),
+            pair("policy/v1", "PodDisruptionBudget"),
+        ]),
     );
-    assert!(
-        r.api_version_candidates.iter().any(|v| v == "policy/v1"),
-        "policy/v1 must be a candidate; got {:?}",
-        r.api_version_candidates
-    );
+    let modern = helm_schema_core::ValuesPath::parse("modern");
+    assert_arm_guard(
+        &rows,
+        "policy/v1beta1",
+        &helm_schema_core::Guard::Not {
+            path: modern.clone(),
+        },
+        &[
+            (
+                serde_json::json!({"modern": true, "minAvailable": 1}),
+                false,
+            ),
+            (
+                serde_json::json!({"modern": false, "minAvailable": 1}),
+                true,
+            ),
+        ],
+    )?;
+    assert_arm_guard(
+        &rows,
+        "policy/v1",
+        &helm_schema_core::Guard::Truthy { path: modern },
+        &[
+            (serde_json::json!({"modern": true, "minAvailable": 1}), true),
+            (
+                serde_json::json!({"modern": false, "minAvailable": 1}),
+                false,
+            ),
+        ],
+    )?;
+    // Helm: transfer/probes/rw-coverage.txt `np-*` / `pdb-*`.
+    Ok(())
 }
 
 // Comment lines (`#`) and other non-header

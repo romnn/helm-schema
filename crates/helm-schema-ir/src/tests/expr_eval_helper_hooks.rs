@@ -65,8 +65,9 @@ fn pipeline_merge_requires_decoding_nested_helper_text() {
     );
 }
 
+// Helm 4.2.3 p10-index-mixed-items: the indexed value is item 0, not every item.
 #[test]
-fn integer_index_on_values_path_uses_array_item_wildcard_with_helper_context() -> eyre::Result<()> {
+fn integer_index_on_values_path_stays_positional_with_helper_context() -> eyre::Result<()> {
     let execution =
         execute(r#"dict "value" (index .Values.items 0) "name" (include "common.name" .)"#);
     let site = execution
@@ -85,7 +86,7 @@ fn integer_index_on_values_path_uses_array_item_wildcard_with_helper_context() -
         .present()
         .ok_or_eyre("missing value field")?;
     sim_assert_eq!(have: name.inputs(), want: BTreeSet::from([ValuesPath::parse("nameOverride")]));
-    sim_assert_eq!(have: value.identity(), want: Some(&ValuesPath::parse("items.*")));
+    sim_assert_eq!(have: value.identity(), want: None);
     Ok(())
 }
 

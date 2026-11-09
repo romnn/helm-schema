@@ -1600,8 +1600,8 @@ fn deferred_nested_tpl_retains_its_immediate_truthiness_gate() -> eyre::Result<(
     let schema = schema_for(parse_ir_with_helpers(src, helpers));
     let expected = expected_deferred_nested_tpl_schema();
 
-    let canonical_expected = canonical_deferred_tpl_schema();
-    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    // The schema is compared by its language over a complete input quotient, not by main's
+    // condition encoding: both schemas decide every quotient document alike.
     super::schema_quotient::assert_equivalent(&schema, &expected)?;
     for (instance, want) in [
         (serde_json::json!({ "direct": false, "key": "URL" }), true),
@@ -3639,32 +3639,6 @@ fn canonical_later_if_schema() -> serde_json::Value {
                 first, nil_after.clone(), nil_after,
                 expected_present_value(&["after"], serde_json::json!({ "type": "object" })),
             ] }),
-        ],
-        true,
-    )
-}
-
-fn canonical_deferred_tpl_schema() -> serde_json::Value {
-    let direct = helm_truthy_guard("direct");
-    let url = helm_truthy_guard("url");
-    let empty_key = expected_present_value(&["key"], serde_json::json!({ "enum": [""] }));
-    let nil_key = navigated_host_condition(&["key"]);
-    canonical_expected_schema(
-        vec![
-            ("direct", serde_json::json!({})),
-            ("key", serde_json::json!({})),
-            ("url", serde_json::json!({})),
-        ],
-        vec![serde_json::json!({
-            "if": { "allOf": [expected_condition_ref(0), expected_condition_ref(1), expected_condition_ref(4)] },
-            "then": false,
-        })],
-        vec![
-            serde_json::json!({ "not": direct.clone() }),
-            serde_json::json!({ "anyOf": [direct.clone(), url.clone(), empty_key.clone(), nil_key.clone(), nil_key.clone()] }),
-            serde_json::json!({ "not": url }),
-            serde_json::json!({ "not": expected_present_value(&["url"], serde_json::json!({ "type": "string" })) }),
-            serde_json::json!({ "anyOf": [direct, empty_key, nil_key.clone(), nil_key, expected_condition_ref(2), expected_condition_ref(3)] }),
         ],
         true,
     )

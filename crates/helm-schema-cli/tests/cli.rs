@@ -367,33 +367,28 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> eyre::Resul
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    assert!(
-        schema_accepts_type(
-            actual
-                .pointer("/properties/kid/properties/enabled")
-                .ok_or_eyre("missing kid.enabled schema")?,
-            "boolean"
-        ),
-        "expected kid.enabled to be boolean: {actual}"
-    );
-    assert!(
-        schema_accepts_type(
-            actual
-                .pointer("/properties/global/properties/kidEnabled")
-                .ok_or_eyre("missing global.kidEnabled schema")?,
-            "boolean"
-        ),
-        "expected global.kidEnabled to be boolean: {actual}"
-    );
-    assert!(
-        schema_accepts_type(
-            actual
-                .pointer("/properties/tags/properties/observability")
-                .ok_or_eyre("missing tags.observability schema")?,
-            "boolean"
-        ),
-        "expected tags.observability to be boolean: {actual}"
-    );
+    // Helm 4.2.3 only warns on a non-bool condition or tag and falls through
+    // (pkg/chart/v2/util/dependencies.go:50-56, 79-87; transfer/probes/t3-dependency-condition.txt),
+    // so every activation path accepts every kind.
+    for value in [
+        serde_json::json!(true),
+        serde_json::json!(false),
+        serde_json::json!("yes"),
+        serde_json::json!(1),
+        serde_json::json!({}),
+        serde_json::json!([]),
+    ] {
+        for instance in [
+            serde_json::json!({ "kid": { "enabled": value } }),
+            serde_json::json!({ "global": { "kidEnabled": value } }),
+            serde_json::json!({ "tags": { "observability": value } }),
+        ] {
+            assert!(
+                schema_validates_instance(&actual, &instance)?,
+                "activation path rejects {instance}: {actual}"
+            );
+        }
+    }
 
     Ok(())
 }

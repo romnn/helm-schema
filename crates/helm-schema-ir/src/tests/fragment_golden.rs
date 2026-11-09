@@ -3,6 +3,11 @@
 //! scalars, and opaque taint. Each expected dump is a reviewed semantic
 //! statement, not a regenerated snapshot; update it only with a reasoned
 //! change.
+//!
+//! Reads are the set of `.Values` reads (condition, assignment and rendered
+//! alike), each under the guards that execute it: Helm evaluates an `if`
+//! condition whether or not it holds, so a condition read never carries its
+//! own truthiness.
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::fragment_eval::dump_document;
@@ -59,8 +64,8 @@ fn branchy_mapping_merges_guarded_entry_arms() {
                           when always:
                             scalar [text{"\"true\""}]
         reads:
-          commonAnnotations [truthy(commonAnnotations)]
-          legacyAnnotations [truthy(legacyAnnotations), not(commonAnnotations)]
+          commonAnnotations []
+          legacyAnnotations [not(commonAnnotations)]
     "#};
     assert_fragment_dump(source, "", expected);
 }
@@ -106,8 +111,13 @@ fn embedded_control_preserves_before_inside_after_order() {
                     when always:
                       splice after scalar
         reads:
-          outer [truthy(outer)]
-          inner [truthy(inner), truthy(outer)]
+          after []
+          before []
+          branchAfter [truthy(outer)]
+          branchBefore [truthy(outer)]
+          inner [truthy(outer)]
+          inside [truthy(inner), truthy(outer)]
+          outer []
     "#};
     assert_fragment_dump(source, "", expected);
 }
@@ -129,8 +139,9 @@ fn nested_embedded_controls_conjoin_their_conditions() {
               when (truthy(inner) && truthy(outer)):
                 splice value scalar
         reads:
-          outer [truthy(outer)]
-          inner [truthy(inner), truthy(outer)]
+          inner [truthy(outer)]
+          outer []
+          value [truthy(inner), truthy(outer)]
     "};
     assert_fragment_dump(source, "", expected);
 }
@@ -493,7 +504,7 @@ fn later_arm_child_uses_an_earlier_open_sibling_shell() {
                             scalar [text{"fixed"}]
                   key "first":
         reads:
-          a [truthy(a)]
+          a []
     "#};
     assert_fragment_dump(source, "", expected);
 }
@@ -887,7 +898,7 @@ fn adjacent_embedded_controls_use_independent_crossing_sets() -> eyre::Result<()
                 mapping:
     "#}
     .to_string();
-    let mut reads = "reads:\n".to_string();
+    let mut reads = std::collections::BTreeSet::new();
     for index in 0..64 {
         write!(
             source,
@@ -897,9 +908,12 @@ fn adjacent_embedded_controls_use_independent_crossing_sets() -> eyre::Result<()
             expected,
             "          key \"item{index}\":\n            when truthy(g{index}):\n              mapping:\n                key \"leaf{index}\":\n                  when always:\n                    scalar [text{{\"fixed\"}}]\n"
         )?;
-        writeln!(reads, "  g{index} [truthy(g{index})]")?;
+        reads.insert(format!("  g{index} []\n"));
     }
-    expected.push_str(&reads);
+    expected.push_str("reads:\n");
+    for read in reads {
+        expected.push_str(&read);
+    }
 
     assert_fragment_dump(&source, "", &expected);
     Ok(())
@@ -1071,7 +1085,8 @@ fn opaque_taint_and_inline_region_arms() {
                     when !(truthy(experimental)):
                       scalar [text{"Stable"}]
         reads:
-          experimental [truthy(experimental)]
+          experimental []
+          nameOverride []
     "#};
     assert_fragment_dump(source, "", expected);
 }

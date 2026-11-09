@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use crate::contract::{ContractIr, ContractUse};
 use crate::{Guard, GuardValue, ResourceRef, SymbolicIrContext, ValueKind, YamlPath};
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{ConditionalGuard, ContractSchemaSignals, MetadataFieldKind};
+use helm_schema_core::{ConditionalGuard, ContractSchemaSignals, MetadataFieldKind, Predicate};
 use test_util::prelude::sim_assert_eq;
 
 fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
@@ -225,21 +225,82 @@ fn sibling_adoption_uses_the_target_branch_window() -> eyre::Result<()> {
     let evidence = signals
         .evidence_for(&conditional_path("inner"))
         .ok_or_eyre("inner evidence")?;
-    sim_assert_eq!(
-        have: &evidence
-            .conditional_overlays
-            .iter()
-            .map(|overlay| overlay.guards.clone())
-            .collect::<Vec<_>>(),
-        want: &vec![vec![
-                ConditionalGuard::Truthy {
-                    path: conditional_path("b"),
-                },
-                ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
-                    path: conditional_path("a"),
-                })),
-            ]],
+    // Every overlay sits in the `else if .Values.b` window; beyond that window it may only test
+    // `inner` itself (its `required` abort and the slot's kind arms), never another branch.
+    let window = [
+        ConditionalGuard::Truthy {
+            path: conditional_path("b"),
+        },
+        ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
+            path: conditional_path("a"),
+        })),
+    ];
+    eyre::ensure!(
+        !evidence.conditional_overlays.is_empty(),
+        "inner keeps its overlay"
     );
+    // Together the overlays cover exactly the window where `required` passes (inner neither empty,
+    // nil nor absent); the kind arms of the slot partition that domain.
+    let required = |path: &str| {
+        Predicate::Or(vec![
+            Predicate::from(helm_schema_core::Guard::Eq {
+                path: conditional_path(path),
+                value: GuardValue::string(""),
+            }),
+            Predicate::from(helm_schema_core::Guard::Eq {
+                path: conditional_path(path),
+                value: helm_schema_core::GuardValue::Null,
+            }),
+            Predicate::from(helm_schema_core::Guard::Absent {
+                path: conditional_path(path),
+            }),
+        ])
+        .negated()
+    };
+    crate::tests::guard_oracle::assert_equivalent(
+        &Predicate::Or(
+            evidence
+                .conditional_overlays
+                .iter()
+                .map(|overlay| {
+                    Predicate::all(
+                        overlay
+                            .guards
+                            .iter()
+                            .map(ConditionalGuard::predicate)
+                            .collect(),
+                    )
+                })
+                .collect(),
+        ),
+        &Predicate::all(vec![
+            Predicate::truthy_path("b"),
+            Predicate::truthy_path("a").negated(),
+            required("inner"),
+        ]),
+        &crate::tests::guard_oracle::representatives(&[]),
+    )?;
+    for overlay in &evidence.conditional_overlays {
+        for guard in &window {
+            eyre::ensure!(
+                overlay.guards.contains(guard),
+                "overlay outside the target window: {:?}",
+                overlay.guards
+            );
+        }
+        for guard in overlay
+            .guards
+            .iter()
+            .filter(|guard| !window.contains(guard))
+        {
+            eyre::ensure!(
+                guard.value_paths()
+                    == std::collections::BTreeSet::from([conditional_path("inner")]),
+                "overlay borrows another branch's guard {guard:?}: {:?}",
+                overlay.guards
+            );
+        }
+    }
     Ok(())
 }
 

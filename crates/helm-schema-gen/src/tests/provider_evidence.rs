@@ -86,7 +86,7 @@ fn provider_resolution_distinguishes_stringified_scalar_uses() {
     clippy::too_many_lines,
     reason = "the complete schema equality fixture pins every projected and omitted helper member together"
 )]
-fn helper_range_keeps_omitted_members_out_of_provider_projection() {
+fn helper_range_keeps_omitted_members_out_of_provider_projection() -> eyre::Result<()> {
     #[derive(Debug)]
     struct ConfigMapDataProvider;
 
@@ -276,7 +276,10 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() {
         "type": "object",
     });
 
-    sim_assert_eq!(have: schema, want: expected);
+    // The emitted schema may drop constraints implied by `params: {type: object}`; it is compared
+    // by its language over a complete input quotient, not by main's redundant encoding.
+    super::schema_quotient::assert_equivalent(&schema, &expected)?;
+    Ok(())
 }
 
 #[test]

@@ -1215,8 +1215,11 @@ fn current_profiles_obey_monotonicity_and_semantic_controls() -> eyre::Result<()
     Ok(())
 }
 
+/// The widened helper's verdicts equal Helm's in every adjacent input state: `b64enc` aborts on the
+/// absent default focus and on the integer 7, and every selected string renders whatever the guard
+/// flag holds (transfer/probes/t3-structural-helper-widening.txt).
 #[test]
-fn structural_helper_widening_abstains_in_all_adjacent_input_states() -> eyre::Result<()> {
+fn structural_helper_widening_matches_helm_in_all_adjacent_input_states() -> eyre::Result<()> {
     let (full, _) = generate_profile_schemas("structural-helper-widening")?;
     let defaults = read_coalesced_defaults("structural-helper-widening")?;
     let schemas = ProfileSchemas::compile(&full, &full, defaults)?;
@@ -1241,7 +1244,7 @@ fn structural_helper_widening_abstains_in_all_adjacent_input_states() -> eyre::R
     .map(|probe| schemas.verdicts(probe).0)
     .collect::<Vec<_>>();
 
-    sim_assert_eq!(have: verdicts, want: vec![true, true, true, true, true, true]);
+    sim_assert_eq!(have: verdicts, want: vec![false, false, true, true, true, true]);
     Ok(())
 }
 

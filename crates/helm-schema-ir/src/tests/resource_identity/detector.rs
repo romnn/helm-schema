@@ -263,7 +263,17 @@ fn detects_resources_inside_template_control_bodies_after_preamble() {
     let spans = collect_spans(source, &analysis_db);
 
     sim_assert_eq!(have: spans.len(), want: 2);
-    sim_assert_eq!(have: spans[0].start, want: 0);
+    // The span starts at the executed body of its control, never inside the preamble: only
+    // whitespace separates its start from the resource's first header line.
+    let body = &source[spans[0].start..];
+    assert!(
+        spans[0].start >= source.find("{{- if .Values.create }}").unwrap_or_default()
+            && body
+                .trim_start()
+                .starts_with("apiVersion: v1\nkind: Secret"),
+        "span {:?} must start at the Secret's executed body",
+        spans[0]
+    );
     sim_assert_eq!(have: spans[0].resource.kind.as_str(), want: "Secret");
     sim_assert_eq!(have: spans[1].resource.kind.as_str(), want: "ConfigMap");
 }
@@ -362,14 +372,18 @@ fn preserves_semver_gated_api_version_branches() {
     .expect("resource");
 
     sim_assert_eq!(have: resource.kind, want: "Ingress");
-    sim_assert_eq!(have: resource.api_version, want: "networking.k8s.io/v1");
+    // Every arm survives; ADR 0009 ranks none of them as a primary over its candidates.
     sim_assert_eq!(
-        have: resource.api_version_candidates,
-        want: vec![
+        have: std::iter::once(resource.api_version.clone())
+            .chain(resource.api_version_candidates.iter().cloned())
+            .collect::<std::collections::BTreeSet<_>>(),
+        want: std::collections::BTreeSet::from([
+            "networking.k8s.io/v1".to_string(),
             "networking.k8s.io/v1beta1".to_string(),
             "extensions/v1beta1".to_string(),
-        ]
+        ])
     );
+    sim_assert_eq!(have: resource.api_version_candidates.len(), want: 2);
 }
 
 #[test]
@@ -377,17 +391,29 @@ fn preserves_zalando_ingress_api_version_branches_with_later_ranges() {
     let source = include_str!(
         "../../../../../testdata/charts/zalando-postgres-operator-ui/templates/ingress.yaml"
     );
-    let resource = detect(source, &DefineIndex::new()).expect("resource");
+    // The chart's own helpers: an undefined include aborts in Helm, which would leave no arm.
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "templates/_helpers.tpl",
+        include_str!(
+            "../../../../../testdata/charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
+        ),
+    );
+    let resource = detect(source, &defines).expect("resource");
 
     sim_assert_eq!(have: resource.kind, want: "Ingress");
-    sim_assert_eq!(have: resource.api_version, want: "networking.k8s.io/v1");
+    // Every arm survives; ADR 0009 ranks none of them as a primary over its candidates.
     sim_assert_eq!(
-        have: resource.api_version_candidates,
-        want: vec![
+        have: std::iter::once(resource.api_version.clone())
+            .chain(resource.api_version_candidates.iter().cloned())
+            .collect::<std::collections::BTreeSet<_>>(),
+        want: std::collections::BTreeSet::from([
+            "networking.k8s.io/v1".to_string(),
             "networking.k8s.io/v1beta1".to_string(),
             "extensions/v1beta1".to_string(),
-        ]
+        ])
     );
+    sim_assert_eq!(have: resource.api_version_candidates.len(), want: 2);
 }
 
 #[test]

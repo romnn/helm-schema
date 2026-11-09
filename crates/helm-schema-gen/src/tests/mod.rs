@@ -111,10 +111,15 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
     parse_ir_with_helpers_and_kubernetes_version(src, helpers, None)
 }
 
+/// Helm executes only `templates/` as templates; every other chart file is static `.Files` data.
 fn parse_ir_with_files(src: &str, files: &[(&str, &str)]) -> ContractIr {
     let mut index = DefineIndex::new();
     for (path, source) in files {
-        index.add_file_source(path, source);
+        if path.starts_with("templates/") {
+            index.add_file_source(path, source);
+        } else {
+            index.add_files_get_source(path, source);
+        }
     }
     SymbolicIrContext::new(&index).generate_contract_ir(src)
 }

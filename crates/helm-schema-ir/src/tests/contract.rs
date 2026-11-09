@@ -4,7 +4,7 @@ use crate::{
 };
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
-use helm_schema_core::{MergeLayer, MergeLayerTransform, MergeLayersUse};
+use helm_schema_core::{MergeLayer, MergeLayerTransform, MergeLayersUse, Predicate};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -582,7 +582,7 @@ fn dependency_global_projection_keeps_whole_global_range_modes() {
 }
 
 #[test]
-fn with_header_candidates_do_not_inherit_the_body_sink() {
+fn with_header_candidates_do_not_inherit_the_body_sink() -> eyre::Result<()> {
     let defines = DefineIndex::new();
     let finalized = SymbolicIrContext::new(&defines)
         .generate_contract_ir(indoc! {"
@@ -599,50 +599,67 @@ fn with_header_candidates_do_not_inherit_the_body_sink() {
         "})
         .finalize();
 
+    // The header read stays pathless; every row at the body sink carries the body's selection
+    // (fallback chosen: truthy fallback, falsy primary). Rows are compared by what their guards
+    // imply, not by one normal form: the body rows also carry the slot's spelling arms.
     let fallback_uses = finalized
         .uses()
         .iter()
         .filter(|contract_use| contract_use.source_expr == conditional_path("fallback"))
-        .map(|contract_use| {
-            (
-                contract_use.path.clone(),
-                contract_use.resource.is_some(),
-                contract_use.single_guard_conjunction(),
-            )
-        })
         .collect::<Vec<_>>();
-    sim_assert_eq!(
-        have: fallback_uses,
-        want: vec![
-            (
-                YamlPath(Vec::new()),
-                false,
-                vec![Guard::Or {
+    let body = YamlPath(vec![
+        "spec".to_string(),
+        "template".to_string(),
+        "spec".to_string(),
+        "priorityClassName".to_string(),
+    ]);
+    let selected = Predicate::all(vec![
+        Predicate::truthy_path("fallback"),
+        Predicate::truthy_path("primary").negated(),
+    ]);
+    assert!(
+        fallback_uses.iter().any(|use_| use_.path.0.is_empty()
+            && use_.resource.is_none()
+            && use_.single_guard_conjunction()
+                == vec![Guard::Or {
                     paths: vec![
                         helm_schema_core::ValuesPath::parse("fallback"),
                         helm_schema_core::ValuesPath::parse("primary"),
                     ],
-                }],
-            ),
-            (
-                YamlPath(vec![
-                    "spec".to_string(),
-                    "template".to_string(),
-                    "spec".to_string(),
-                    "priorityClassName".to_string(),
-                ]),
-                true,
-                vec![
-                    Guard::Truthy {
-                        path: helm_schema_core::ValuesPath::parse("fallback"),
-                    },
-                    Guard::Not {
-                        path: helm_schema_core::ValuesPath::parse("primary"),
-                    },
-                ],
-            ),
-        ]
+                }]),
+        "the header read stays pathless under its own disjunction: {fallback_uses:#?}"
     );
+    let rendered = fallback_uses
+        .iter()
+        .filter(|use_| !use_.path.0.is_empty())
+        .collect::<Vec<_>>();
+    assert!(
+        !rendered.is_empty(),
+        "the body renders fallback: {fallback_uses:#?}"
+    );
+    // Together the body rows cover exactly the fallback selection.
+    crate::tests::guard_oracle::assert_equivalent(
+        &Predicate::Or(
+            rendered
+                .iter()
+                .map(|use_| crate::tests::guard_oracle::dnf_predicate(&use_.condition))
+                .collect(),
+        ),
+        &selected,
+        &crate::tests::guard_oracle::representatives(&[]),
+    )?;
+    for use_ in rendered {
+        sim_assert_eq!(have: &use_.path, want: &body);
+        assert!(
+            use_.resource.is_some(),
+            "body rows keep the Deployment: {use_:#?}"
+        );
+        assert!(
+            crate::tests::guard_oracle::dnf_predicate(&use_.condition).exactly_implies(&selected),
+            "body rows carry the fallback selection: {use_:#?}"
+        );
+    }
+    Ok(())
 }
 
 #[test]

@@ -45,31 +45,9 @@ fn helper_range_break_scopes_later_provider_candidates() {
           securityContexts:
             pod: {}
     "};
+    // The member-host domain is checked on the schema language (the host instances below), not
+    // on main's internal implication view (transfer/probes/t1-helper-range-break.txt).
     let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
-    let security_contexts =
-        signals
-            .schema_evidence_by_value_path()
-            .get(&helm_schema_core::ValuesPath::parse(
-                "worker.securityContexts",
-            ));
-    assert!(
-        security_contexts.is_some_and(|evidence| {
-            evidence.requirement_implications.iter().any(|implication| {
-                implication.outer_guards
-                    == [helm_schema_core::ConditionalGuard::Not(
-                        std::sync::Arc::new(helm_schema_core::ConditionalGuard::Absent {
-                            path: helm_schema_core::ValuesPath::parse("worker.securityContexts"),
-                        }),
-                    )]
-                    && matches!(
-                        implication.requirements.as_slice(),
-                        [helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(schema_type)]
-                            if schema_type == "object"
-                    )
-            })
-        }),
-        "the exact helper iteration must own its member-host domain: {security_contexts:#?}"
-    );
     let schema = schema_for_values_yaml(signals, Some(values_yaml));
 
     assert!(
@@ -117,6 +95,29 @@ fn helper_range_break_scopes_later_provider_candidates() {
          host={:#?}",
         schema.pointer("/properties/worker/properties/securityContexts")
     );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "worker": { "securityContext": { "runAsUser": 50000 } } })
+        ),
+        "an absent securityContexts host is skipped by its hasKey test: {schema}"
+    );
+    // The present host must be an object: `hasKey` aborts on a list or a number, while a null
+    // host is accepted (transfer/probes/t1-helper-range-break.txt `hrb-*-host`).
+    for (host, want) in [
+        (serde_json::json!(["x"]), false),
+        (serde_json::json!(7), false),
+        (serde_json::Value::Null, true),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(
+                &schema,
+                &serde_json::json!({ "worker": { "securityContexts": host } })
+            ),
+            want: want,
+            "securityContexts host {host}: {schema}"
+        );
+    }
 }
 
 #[test]

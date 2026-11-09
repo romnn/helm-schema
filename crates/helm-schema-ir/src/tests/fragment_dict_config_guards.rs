@@ -117,7 +117,12 @@ fn literal_dotted_index_and_get_keys_stay_single_path_segments() {
           direct: {{ index .Values "foo.bar" }}
           selected: {{ (get .Values "foo.bar").baz }}
     "#};
+    // `(get .Values "foo.bar").baz` aborts unless the root's literal `foo.bar` member is a map
+    // (transfer/probes/t1-literal-dotted.txt: absent, null and nested-only documents are rejected),
+    // so the dump's `valid:` domain must state that; its plain-scalar spelling language awaits the
+    // plain-scalar language derivation, so this golden stays red until then.
     let expected = indoc! {r#"
+        valid: typeIs(foo\.bar: object)
         when always:
           mapping:
             key "data":
@@ -129,6 +134,10 @@ fn literal_dotted_index_and_get_keys_stay_single_path_segments() {
                   key "selected":
                     when always:
                       splice foo\.bar.baz scalar
+        reads:
+           []
+          foo\.bar []
+          foo\.bar.baz [hasKey(: foo.bar)]
     "#};
 
     assert_fragment_dump(source, "", expected);

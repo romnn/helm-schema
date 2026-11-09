@@ -509,34 +509,16 @@ fn unconstrained_object_fragment_keeps_nested_maps_open() {
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    // Undeclared members of a spliced fragment are passthrough: typing them
-    // as the merge of declared property schemas rejected legitimate keys
-    // whose shape differs from the declared ones (`requests: {cpu: "1",
-    // "nvidia.com/gpu": 2}` renders fine).
+    // Helm renders every kind of `resources` on this unknown CRD, declared shape or not
+    // (transfer/probes/t3-serialized-fragment-shape.txt); per the orchestrator's ADR 0043 decision
+    // the declared default asserts no shape on this fragment, so it stays unconstrained.
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "additionalProperties": false,
         "properties": {
             "global": {},
-            "resources": {
-                "type": "object",
-                "additionalProperties": {},
-                "properties": {
-                    "requests": {
-                        "type": "object",
-                        "additionalProperties": {},
-                        "properties": {
-                            "cpu": {
-                                "type": "string"
-                            },
-                            "memory": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
+            "resources": {}
         }
     });
     sim_assert_eq!(have: schema, want: expected);

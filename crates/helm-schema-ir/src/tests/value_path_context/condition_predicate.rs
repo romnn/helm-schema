@@ -443,23 +443,49 @@ fn or_with_equality_preserves_typed_alternative() {
     );
 }
 
+/// The conjunctive alternative survives as a conjunction: the condition is compared by its
+/// decisions, not its normal form, and must reproduce Helm's verdicts
+/// (transfer/probes/t2-predicates.txt `or-and-*`).
 #[test]
-fn or_with_nested_and_preserves_conjunctive_alternative() {
-    sim_assert_eq!(
-        have: parse_condition(r#"or (and .Values.a .Values.b) (eq .Values.mode "prod")"#),
-        want: vec![Guard::AnyOf {
-            alternatives: vec![
-                vec![
-                    Guard::Truthy { path: helm_schema_core::ValuesPath::parse("a") },
-                    Guard::Truthy { path: helm_schema_core::ValuesPath::parse("b") },
-                ],
-                vec![Guard::Eq {
-                    path: helm_schema_core::ValuesPath::parse("mode"),
-                    value: GuardValue::string("prod"),
-                }],
+fn or_with_nested_and_preserves_conjunctive_alternative() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{
+        assert_equivalent, assert_helm_verdicts, conjunction, representatives,
+    };
+    let wrapped = r#"{{ or (and .Values.a .Values.b) (eq .Values.mode "prod") }}"#;
+    let expression = parse_action_expressions(wrapped)
+        .into_iter()
+        .next()
+        .ok_or_eyre("condition expression")?;
+    let have = condition_context(HashMap::new()).condition_predicate_expr(&expression);
+    let want = conjunction(&[Guard::AnyOf {
+        alternatives: vec![
+            vec![
+                Guard::Truthy {
+                    path: helm_schema_core::ValuesPath::parse("a"),
+                },
+                Guard::Truthy {
+                    path: helm_schema_core::ValuesPath::parse("b"),
+                },
             ],
-        }],
-    );
+            vec![Guard::Eq {
+                path: helm_schema_core::ValuesPath::parse("mode"),
+                value: GuardValue::string("prod"),
+            }],
+        ],
+    }]);
+    assert_equivalent(&have, &want, &representatives(&["prod"]))?;
+    assert_helm_verdicts(
+        &want,
+        &[
+            (serde_json::json!({"a": true, "b": 1}), true),
+            (serde_json::json!({"a": true}), false),
+            (serde_json::json!({"mode": "prod"}), true),
+            (serde_json::json!({"a": true, "mode": "prod"}), true),
+            (serde_json::json!({"a": true, "mode": "dev"}), false),
+            (serde_json::json!({"a": true, "b": true, "mode": 1}), true),
+        ],
+    )?;
+    Ok(())
 }
 
 #[test]
@@ -603,24 +629,56 @@ fn and_preserves_nested_not_guard() {
     );
 }
 
+/// The nested `or` stays a disjunction under the conjunction: the guards are compared by
+/// their decisions, not their normal form, and must reproduce Helm's verdicts
+/// (transfer/probes/t2-predicates.txt `and-or-*`).
 #[test]
-fn and_preserves_nested_or_guard() {
-    sim_assert_eq!(
-        have: parse_condition(
-            "and .Values.ldap.enabled (or .Values.ldap.bind_password .Values.ldap.bindpw)"
-        ),
-        want: vec![
-            Guard::Truthy {
-                path: helm_schema_core::ValuesPath::parse("ldap.enabled")
-            },
-            Guard::Or {
-                paths: vec![
-                    helm_schema_core::ValuesPath::parse("ldap.bind_password"),
-                    helm_schema_core::ValuesPath::parse("ldap.bindpw"),
-                ]
-            },
-        ],
+fn and_preserves_nested_or_guard() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{
+        assert_equivalent, assert_helm_verdicts, conjunction, representatives,
+    };
+    let have = parse_condition(
+        "and .Values.ldap.enabled (or .Values.ldap.bind_password .Values.ldap.bindpw)",
     );
+    eyre::ensure!(!have.is_empty(), "the condition must lower to guards");
+    let want = conjunction(&[
+        Guard::Truthy {
+            path: helm_schema_core::ValuesPath::parse("ldap.enabled"),
+        },
+        Guard::Or {
+            paths: vec![
+                helm_schema_core::ValuesPath::parse("ldap.bind_password"),
+                helm_schema_core::ValuesPath::parse("ldap.bindpw"),
+            ],
+        },
+    ]);
+    assert_equivalent(&conjunction(&have), &want, &representatives(&[]))?;
+    assert_helm_verdicts(
+        &want,
+        &[
+            (
+                serde_json::json!({"ldap": {"enabled": true, "bind_password": "p"}}),
+                true,
+            ),
+            (
+                serde_json::json!({"ldap": {"enabled": true, "bindpw": "p"}}),
+                true,
+            ),
+            (
+                serde_json::json!({"ldap": {"enabled": true, "bind_password": "p", "bindpw": "q"}}),
+                true,
+            ),
+            (
+                serde_json::json!({"ldap": {"enabled": true, "bind_password": ""}}),
+                false,
+            ),
+            (
+                serde_json::json!({"ldap": {"enabled": false, "bind_password": "p"}}),
+                false,
+            ),
+        ],
+    )?;
+    Ok(())
 }
 
 #[test]
@@ -800,7 +858,8 @@ fn output_meta_comparison_preserves_typed_predicates() -> eyre::Result<()> {
 /// deleted `renderMode` selects the default arm, not the invalid-mode
 /// `fail`).
 #[test]
-fn defaulted_binding_comparison_carries_the_fallback_arm() {
+fn defaulted_binding_comparison_carries_the_fallback_arm() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{assert_equivalent, assert_helm_verdicts, representatives};
     let path = "serviceMonitor.renderMode";
     let context = || {
         condition_context(HashMap::from([(
@@ -808,18 +867,46 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
             format!(r#"(default "skipIfMissing" .Values.{path})"#),
         )]))
     };
-    let parse = |text: &str| {
+    let parse = |text: &str| -> eyre::Result<TemplateExpr> {
         let wrapped = format!("{{{{ {text} }}}}");
         parse_action_expressions(&wrapped)
             .into_iter()
             .next()
-            .expect("condition expression")
+            .ok_or_eyre("condition expression")
+    };
+    // `default` replaces every falsy value with the literal; a truthy non-string reaches `eq`/`ne`,
+    // which abort on incompatible kinds in Helm (t2-predicates.txt `mode-*-true`), so the
+    // condition is defined only on falsy values and strings.
+    let leaves = representatives(&["skipIfMissing", "alwaysRender"])
+        .into_iter()
+        .filter(|leaf| {
+            !crate::tests::guard_oracle::truthy(leaf.as_ref())
+                || leaf.as_ref().is_some_and(serde_json::Value::is_string)
+        })
+        .collect::<Vec<_>>();
+    // Each condition is compared by its decisions, not its normal form, and the expected
+    // predicate must reproduce Helm's verdicts (transfer/probes/t2-predicates.txt `mode-*`).
+    let check = |text: &str, want: Predicate, verdicts: [bool; 6]| -> eyre::Result<()> {
+        let have = context().condition_predicate_expr(&parse(text)?);
+        assert_equivalent(&have, &want, &leaves)?;
+        let documents = [
+            serde_json::json!({"serviceMonitor": {}}),
+            serde_json::json!({"serviceMonitor": {"renderMode": null}}),
+            serde_json::json!({"serviceMonitor": {"renderMode": ""}}),
+            serde_json::json!({"serviceMonitor": {"renderMode": "skipIfMissing"}}),
+            serde_json::json!({"serviceMonitor": {"renderMode": "alwaysRender"}}),
+            serde_json::json!({"serviceMonitor": {"renderMode": "other"}}),
+        ];
+        assert_helm_verdicts(
+            &want,
+            &documents.into_iter().zip(verdicts).collect::<Vec<_>>(),
+        )
     };
     let truthy = Predicate::truthy_path(path.to_string());
 
-    sim_assert_eq!(
-        have: context().condition_predicate_expr(&parse(r#"eq $mode "skipIfMissing""#)),
-        want: Predicate::Or(vec![
+    check(
+        r#"eq $mode "skipIfMissing""#,
+        Predicate::Or(vec![
             Predicate::And(vec![
                 truthy.clone(),
                 Predicate::from(Guard::Eq {
@@ -829,22 +916,24 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
             ]),
             truthy.negated(),
         ]),
-    );
+        [true, true, true, true, false, false],
+    )?;
 
-    sim_assert_eq!(
-        have: context().condition_predicate_expr(&parse(r#"eq $mode "alwaysRender""#)),
-        want: Predicate::And(vec![
+    check(
+        r#"eq $mode "alwaysRender""#,
+        Predicate::And(vec![
             truthy.clone(),
             Predicate::from(Guard::Eq {
                 path: helm_schema_core::ValuesPath::parse(path),
                 value: GuardValue::string("alwaysRender"),
             }),
         ]),
-    );
+        [false, false, false, false, true, false],
+    )?;
 
-    sim_assert_eq!(
-        have: context().condition_predicate_expr(&parse(r#"ne $mode "alwaysRender""#)),
-        want: Predicate::Or(vec![
+    check(
+        r#"ne $mode "alwaysRender""#,
+        Predicate::Or(vec![
             Predicate::And(vec![
                 truthy.clone(),
                 Predicate::from(Guard::NotEq {
@@ -854,18 +943,21 @@ fn defaulted_binding_comparison_carries_the_fallback_arm() {
             ]),
             truthy.negated(),
         ]),
-    );
+        [true, true, true, true, false, true],
+    )?;
 
-    sim_assert_eq!(
-        have: context().condition_predicate_expr(&parse(r#"ne $mode "skipIfMissing""#)),
-        want: Predicate::And(vec![
+    check(
+        r#"ne $mode "skipIfMissing""#,
+        Predicate::And(vec![
             truthy.clone(),
             Predicate::from(Guard::NotEq {
                 path: helm_schema_core::ValuesPath::parse(path),
                 value: GuardValue::string("skipIfMissing"),
             }),
         ]),
-    );
+        [false, false, false, false, true, true],
+    )?;
+    Ok(())
 }
 
 #[test]

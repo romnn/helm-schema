@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{Conjunction, Guard, GuardValue, Predicate, ValuesPath};
 use helm_schema_syntax::Span;
@@ -674,15 +674,17 @@ fn local_fragment_variable_effects_include_shallow_source_paths() {
     sim_assert_eq!(have: observe(prefix, "$nodeSelector").paths(), want: paths(&["global.nodeSelector", "nodeSelector"]));
 }
 
+// Helm 4.2.3 p10-index-mixed-items (`l: [3, "bad"]` renders `replicas: 3`) and p10-index-second:
+// `index l 0` reads item 0 alone, so it never stands for every item.
 #[test]
-fn integer_index_on_values_path_descends_array_item_wildcard() {
+fn integer_index_on_values_path_stays_positional() {
     assert_selected(
         &observe(
             "",
             "index .Values.sentinel.externalAccess.service.loadBalancerIP 0",
         ),
         "sentinel.externalAccess.service.loadBalancerIP.*",
-        Predicate::True,
+        Predicate::False,
     );
 }
 
@@ -691,17 +693,35 @@ fn integer_index_on_known_list_stays_positional() {
     sim_assert_eq!(have: observe("", r#"index (list "root" "scope" "pod") 1"#).literals(), want: BTreeSet::from([GuardValue::string("scope")]));
 }
 
+// Helm 4.2.3 p10-get-positional-mixed (`contexts: [{creds: "c"}, 3]` renders `t: c`): `index l 0`
+// reads item 0 alone, so `get` on it never demands that every item of `contexts` is an object.
+// p10-get-positional-scalar-first (`contexts: [3, {creds: "c"}]`) aborts: item 0 itself must be an
+// object, so some member-access abort condition holds exactly on that document.
 #[test]
-fn get_requires_its_values_backed_host_to_be_an_object() {
+fn get_on_a_positional_item_demands_nothing_of_every_item() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::predicate_holds;
     let result = observe(
         "{{ $context := index (.Values.contexts | toJson | fromJsonArray) 0 }}",
         r#"get $context "creds""#,
     );
-    assert!(
-        result
-            .member_conditions()
-            .contains(&vec![typed("contexts.*", "object").negated()].into())
-    );
+    assert!(result.member_conditions().iter().all(|conditions| {
+        !conditions.as_slice().iter().any(|condition| {
+            condition
+                .value_paths()
+                .contains(&ValuesPath::parse("contexts.*"))
+        })
+    }));
+    let aborts = |document: &serde_json::Value| -> eyre::Result<bool> {
+        for conditions in result.member_conditions() {
+            if predicate_holds(&Predicate::all(conditions.as_slice().to_vec()), document)? {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    };
+    sim_assert_eq!(have: aborts(&serde_json::json!({"contexts": [{"creds": "c"}, 3]}))?, want: false);
+    sim_assert_eq!(have: aborts(&serde_json::json!({"contexts": [3, {"creds": "c"}]}))?, want: true);
+    Ok(())
 }
 
 #[test]
@@ -1096,8 +1116,13 @@ fn quoted_default_primary_never_selects_its_fallback() {
     sim_assert_eq!(have: result.paths(), want: paths(&["alpha"]));
 }
 
+/// `printf "%s"` renders the empty text only for the empty string (nil renders `%!s(<nil>)`), so
+/// the final fallback is selected exactly when alpha is `""` and beta is falsy. The selection is
+/// compared by its decisions, not its normal form, and the expected predicate reproduces Helm's
+/// verdicts (transfer/probes/t2-predicates.txt `chain-*`).
 #[test]
-fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
+fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{assert_equivalent, assert_helm_verdicts, representatives};
     let result = observe(
         "",
         r#"printf "%s" .Values.alpha | default .Values.beta | default .Values.omega"#,
@@ -1107,11 +1132,28 @@ fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() {
         pattern: "^$".to_owned(),
         templated: false,
     });
-    assert_selected(
-        &result,
-        "omega",
-        Predicate::all(vec![empty, truthy("beta").negated()]),
-    );
+    let want = Predicate::all(vec![empty, truthy("beta").negated()]);
+    let have = result
+        .raw_conditions("omega")
+        .ok_or_eyre("omega must be selected")?;
+    assert_equivalent(&have, &want, &representatives(&[]))?;
+    assert_helm_verdicts(
+        &want,
+        &[
+            (serde_json::json!({"alpha": "", "omega": "O"}), true),
+            (serde_json::json!({"omega": "O"}), false),
+            (serde_json::json!({"alpha": null, "omega": "O"}), false),
+            (
+                serde_json::json!({"alpha": "", "beta": "B", "omega": "O"}),
+                false,
+            ),
+            (serde_json::json!({"alpha": "A", "omega": "O"}), false),
+            (serde_json::json!({"alpha": 0, "omega": "O"}), false),
+            (serde_json::json!({"alpha": false, "omega": "O"}), false),
+            (serde_json::json!({"alpha": [], "omega": "O"}), false),
+        ],
+    )?;
+    Ok(())
 }
 
 #[test]
@@ -1275,13 +1317,15 @@ fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
     sim_assert_eq!(have: observe("{{ $x := .Values.absent }}", r#"unset $x "k""#).kinds(), want: object_kinds("absent", false, false));
 }
 
+// Helm 4.2.3 p10-index-member: `plugins: [{hostPath: "/a"}, {other: 1}]` renders T, so the truth
+// belongs to item 0 alone and no predicate over `plugins.*.hostPath` states it.
 #[test]
-fn local_selector_truth_comes_from_the_selected_value() {
+fn local_selector_truth_of_a_positional_item_stays_unknown() {
     let result = observe(
         "{{ $plugin := index .Values.plugins 0 }}",
         "$plugin.hostPath",
     );
-    sim_assert_eq!(have: result.truth(), want: Some(truthy("plugins.*.hostPath")));
+    sim_assert_eq!(have: result.truth(), want: None);
 }
 
 #[test]

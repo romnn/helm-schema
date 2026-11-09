@@ -64,22 +64,62 @@ fn starrocks() -> eyre::Result<Case> {
     })
 }
 
+/// Copies a CRD catalog without the groups in `omitted`.
+fn copy_catalog_without(source: &Path, target: &Path, omitted: &[&str]) -> eyre::Result<()> {
+    fs::create_dir_all(target)?;
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let name = entry.file_name();
+        if omitted.iter().any(|group| name == *group) {
+            continue;
+        }
+        let destination = target.join(&name);
+        if entry.file_type()?.is_dir() {
+            copy_catalog_without(&entry.path(), &destination, omitted)?;
+        } else {
+            fs::copy(entry.path(), destination)?;
+        }
+    }
+    Ok(())
+}
+
 #[test]
 fn starrocks_defaults_become_decidable_from_recorded_native_evidence() -> eyre::Result<()> {
     let case = starrocks()?;
     let bundle = root().join("testdata/provider-bundle");
+    // The bundle has pinned the StarRocks CRD schema since f61320f2, so the premise (a catalog
+    // without that schema cannot decide the resource) is rebuilt from the same bundle minus the pin.
+    let scratch = ScratchDir::new("chart-crds-without-starrocks")?;
+    let unpinned = scratch.path().join("crds-catalog-cache");
+    copy_catalog_without(
+        &bundle.join("crds-catalog-cache"),
+        &unpinned,
+        &["starrocks.com"],
+    )?;
     let previous = OfflineKubernetesValidator::with_crd_catalog(
         &bundle.join("kubernetes-json-schema-cache"),
-        &bundle.join("crds-catalog-cache"),
+        &unpinned,
         KUBERNETES_RELEASE,
     )?;
     assert!(matches!(
         previous.validate_documents(std::slice::from_ref(&case.resource)),
         KubernetesVerdict::Uncertain(_)
     ));
+    // The pinned schema agrees with the recorded native acceptance.
+    let pinned = OfflineKubernetesValidator::with_crd_catalog(
+        &bundle.join("kubernetes-json-schema-cache"),
+        &bundle.join("crds-catalog-cache"),
+        KUBERNETES_RELEASE,
+    )?;
+    assert!(matches!(
+        pinned.validate_documents(std::slice::from_ref(&case.resource)),
+        KubernetesVerdict::Valid
+    ));
     // Replay has no executable path: accepting this case cannot depend on Go being installed.
     let checker = Checker::replay(&root().join("testdata/crdcheck"));
-    sim_assert_eq!(have:case.installation.decide(&checker,&case.resource,Some(&bundle.join("crds-catalog-cache")),&case.identity,&[]),want:Decision::Accepted);
+    sim_assert_eq!(have:case.installation.decide(&checker,&case.resource,Some(&unpinned),&case.identity,&[]),want:Decision::Accepted);
+    // With the pin present the catalog keeps its authority over the recorded evidence.
+    sim_assert_eq!(have:case.installation.decide(&checker,&case.resource,Some(&bundle.join("crds-catalog-cache")),&case.identity,&[]),want:Decision::Catalog);
     Ok(())
 }
 
