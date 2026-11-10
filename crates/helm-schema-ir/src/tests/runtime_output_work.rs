@@ -223,7 +223,7 @@ fn repeated_output_overflow_releases_unreachable_frozen_heap_snapshots() -> eyre
             initial
         };
         state.output.restrict_budget(
-            &state.heap.arena.runtime_path(&state.active),
+            &state.heap.arena.path_guard(&state.active),
             &state.heap.arena,
         );
         let map = state.heap.map(Remainder::Closed);

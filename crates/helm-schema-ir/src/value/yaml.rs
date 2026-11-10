@@ -757,12 +757,15 @@ impl FilePlacement {
         let mut failures = Vec::new();
         let mut survivors = Vec::new();
         for exit in exits {
-            let condition = exit.state.path_predicate();
+            // Placements are claimed under the exported path; which documents abort depends
+            // on every survived check before the abort too.
+            let claim = exit.state.path_predicate();
+            let condition = exit.state.whole_path_predicate();
             let memo = &exit.state.heap.arena.predicate_memo;
             let placement = if matches!(exit.flow, Flow::Normal(_)) {
                 OutputPlacement::new(
                     &Rc::new(exit.state.output.clone()),
-                    &condition,
+                    &claim,
                     memo,
                     output,
                     &mut syntax,

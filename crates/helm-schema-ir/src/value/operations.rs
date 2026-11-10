@@ -214,7 +214,7 @@ fn transfer_dig(input: TransferInput<'_>, state: &mut State) -> Result<Value, Tr
                 match state
                     .heap
                     .arena
-                    .runtime_path(&state.active)
+                    .path_guard(&state.active)
                     .implies_test(&decision)
                 {
                     Some(true) => {}
@@ -242,7 +242,7 @@ fn transfer_dig(input: TransferInput<'_>, state: &mut State) -> Result<Value, Tr
             state
                 .heap
                 .arena
-                .runtime_path(&state.active)
+                .path_guard(&state.active)
                 .implies_test(&decision)
         }) {
             Some(true) => value = state.field(&value, key),
@@ -770,7 +770,7 @@ fn transfer_serialize(
         ));
     }
     let frozen = state.heap.freeze(&first);
-    let guard = state.heap.arena.runtime_path(&state.active);
+    let guard = state.heap.arena.path_guard(&state.active);
     let mut remaining = 4096;
     let mut query = super::output::JsonQuery {
         preserve_nil_collections: false,

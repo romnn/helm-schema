@@ -25,6 +25,7 @@ mod lexical;
 mod namespace;
 mod operations;
 mod ordering;
+pub(crate) mod path;
 pub(crate) mod output;
 mod query;
 mod quoted;
@@ -403,7 +404,6 @@ struct Arena {
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
     requirement_scope: RefCell<String>,
     requirement_identity: consumption::RequirementScope,
-    exported_paths: RefCell<AHashMap<*const Vec<DecisionEdge>, query::PathPredicateCache>>,
 }
 
 #[derive(Clone, Debug)]
@@ -534,7 +534,7 @@ mod frozen_test_helpers;
 pub(crate) struct State {
     heap: Heap,
     frames: Vec<Rc<Frame>>,
-    active: Rc<Vec<DecisionEdge>>,
+    active: path::Path,
     output: TextBuffer,
     output_widened: bool,
     observation_count: output::BranchCounts,

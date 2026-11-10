@@ -111,7 +111,7 @@ fn joined_outputs_charge_only_the_selected_branch_and_keep_suffixes() -> eyre::R
         let mut joined = State::join_branches(
             &ContinuationJoin {
                 decision: Rc::clone(&decision),
-                active: Vec::new(),
+                active: crate::value::path::Path::default(),
                 taken: true,
             },
             &yes,
@@ -146,7 +146,7 @@ fn complementary_output_choices_do_not_add_impossible_branch_costs() -> eyre::Re
             .decision(condition.clone(), condition.negated(), Coverage::Exact);
     let plan = ContinuationJoin {
         decision: Rc::clone(&decision),
-        active: Vec::new(),
+        active: crate::value::path::Path::default(),
         taken: true,
     };
     let mut yes = initial.fork(Rc::clone(&decision), true);
@@ -194,7 +194,7 @@ fn observation_union_keeps_full_branch_order_and_reserves_suffix_per_branch() ->
     let mut joined = State::join_branches(
         &ContinuationJoin {
             decision: Rc::clone(&decision),
-            active: Vec::new(),
+            active: crate::value::path::Path::default(),
             taken: true,
         },
         &yes,
@@ -270,7 +270,7 @@ fn invocation_union_admits_a_suffix_only_on_branches_with_capacity() -> eyre::Re
     let mut joined = State::join_branches(
         &ContinuationJoin {
             decision: Rc::clone(&decision),
-            active: Vec::new(),
+            active: crate::value::path::Path::default(),
             taken: true,
         },
         &yes,
@@ -317,7 +317,7 @@ fn restricting_a_join_keeps_the_under_budget_output_and_observations_exact() -> 
     let mut joined = State::join_branches(
         &ContinuationJoin {
             decision: Rc::clone(&decision),
-            active: Vec::new(),
+            active: crate::value::path::Path::default(),
             taken: true,
         },
         &yes,

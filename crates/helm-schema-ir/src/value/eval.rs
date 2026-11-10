@@ -262,7 +262,7 @@ impl Executor<'_> {
                 || state
                     .heap
                     .arena
-                    .runtime_path(&state.active)
+                    .path_guard(&state.active)
                     .implies_test(&decision)
                     == Some(false)
             {

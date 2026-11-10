@@ -203,7 +203,7 @@ pub(super) fn validate_type_predicate(
 
 fn finish_parameter_plan(state: super::State, plan: ParameterPlan) -> Vec<super::Exit> {
     let ParameterPlan { value, success } = plan;
-    let known = state.heap.arena.runtime_path(&state.active);
+    let known = state.heap.arena.path_guard(&state.active);
     let outcome = success
         .constant_outcome()
         .or_else(|| known.implies_test(&success));
@@ -216,7 +216,11 @@ fn finish_parameter_plan(state: super::State, plan: ParameterPlan) -> Vec<super:
         None => {
             let mut exits = Vec::new();
             for taken in [true, false] {
-                let branch = state.fork(std::rc::Rc::clone(&success), taken);
+                let branch = if taken {
+                    state.survive(std::rc::Rc::clone(&success), taken)
+                } else {
+                    state.fork(std::rc::Rc::clone(&success), taken)
+                };
                 if branch.path_is_infeasible() {
                     continue;
                 }
@@ -391,7 +395,7 @@ fn validate_selected_parameter(
     let depth = state.active.len();
     let mut plans = Vec::new();
     for taken in [true, false] {
-        std::rc::Rc::make_mut(&mut state.active).push(super::DecisionEdge {
+        state.active.push_branch(super::DecisionEdge {
             test: Rc::clone(decision),
             taken,
         });
@@ -406,7 +410,7 @@ fn validate_selected_parameter(
                 remaining,
             )
         };
-        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
+        state.active.truncate(depth);
         plans.push(plan);
     }
     let mut plans = plans.into_iter();
@@ -536,7 +540,11 @@ pub(super) fn required_subject(state: super::State, subject: super::Value) -> Ve
         .decision(empty.clone(), empty.negated(), Coverage::Exact);
     let mut exits = Vec::new();
     for taken in [true, false] {
-        let branch = state.fork(Rc::clone(&decision), taken);
+        let branch = if taken {
+            state.fork(Rc::clone(&decision), taken)
+        } else {
+            state.survive(Rc::clone(&decision), taken)
+        };
         if !branch.path_is_infeasible() {
             exits.push(Exit {
                 state: branch,

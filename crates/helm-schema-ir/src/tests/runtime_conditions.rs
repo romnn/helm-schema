@@ -13,11 +13,11 @@ impl From<Predicate> for RuntimeCondition {
         let state = State::new(Value::nil());
         let arena = Rc::clone(&state.heap.arena);
         let decision = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
-        let ambient = Rc::new(vec![DecisionEdge {
+        let ambient = crate::value::path::Path::from(vec![DecisionEdge {
             test: decision,
             taken: true,
         }]);
-        let domain = arena.runtime_path(&ambient);
+        let domain = arena.path_guard(&ambient);
         Self {
             arena,
             admitted: domain,
@@ -45,11 +45,11 @@ fn reservation_carries_raw_threshold_without_ambient_support() -> eyre::Result<(
     );
     for index in 0..32 {
         let ambient = Predicate::truthy_path(format!("ambient{index}"));
-        std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
+        state.active.push_branch(DecisionEdge {
             test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
             taken: true,
         });
-        let domain = arena.runtime_path(&state.active);
+        let domain = arena.path_guard(&state.active);
         let restricted = counts.restrict(&domain, &arena);
         let (slots, rejected) = state
             .reserve_count(&restricted, index)
@@ -71,24 +71,24 @@ fn retained_ambient_edges_survive_later_state_mutation() {
             .heap
             .arena
             .decision(predicate.clone(), predicate.negated(), Coverage::Exact);
-    Rc::make_mut(&mut state.active).push(DecisionEdge {
+    state.active.push_branch(DecisionEdge {
         test: decision,
         taken: true,
     });
     let condition = RuntimeCondition {
         arena: Rc::clone(&state.heap.arena),
-        admitted: state.heap.arena.runtime_path(&state.active),
-        ambient: Rc::clone(&state.active),
+        admitted: state.heap.arena.path_guard(&state.active),
+        ambient: state.active.clone(),
         admission: Admission::All,
     };
-    sim_assert_eq!(have: Rc::ptr_eq(&condition.ambient, &state.active), want: true);
-    Rc::make_mut(&mut state.active).clear();
+    sim_assert_eq!(have: condition.ambient.ptr_eq(&state.active), want: true);
+    state.active.clear();
     sim_assert_eq!(have: condition.predicate(), want: predicate);
     sim_assert_eq!(have: state.path_predicate(), want: Predicate::True);
 
     let first = Predicate::truthy_path("cached-first");
     let second = Predicate::truthy_path("cached-second");
-    state.active = Rc::new(vec![
+    state.active = crate::value::path::Path::from(vec![
         DecisionEdge {
             test: state
                 .heap
@@ -107,8 +107,8 @@ fn retained_ambient_edges_survive_later_state_mutation() {
     let cached = state.path_predicate();
     let cached_condition = RuntimeCondition {
         arena: Rc::clone(&state.heap.arena),
-        admitted: state.heap.arena.runtime_path(&state.active),
-        ambient: Rc::clone(&state.active),
+        admitted: state.heap.arena.path_guard(&state.active),
+        ambient: state.active.clone(),
         admission: Admission::All,
     };
     let shared = cached_condition.predicate();
@@ -117,9 +117,7 @@ fn retained_ambient_edges_survive_later_state_mutation() {
         matches!((cached.kind(), shared.kind()), (PredicateKind::And(left), PredicateKind::And(right)) if std::ptr::eq(left, right))
     );
     drop(cached_condition);
-    let old_active = Rc::downgrade(&state.active);
-    Rc::make_mut(&mut state.active).truncate(1);
-    assert!(old_active.upgrade().is_none());
+    state.active.truncate(1);
     sim_assert_eq!(have: state.path_predicate(), want: first);
 }
 
@@ -136,21 +134,21 @@ fn equal_joint_domains_preserve_distinct_partial_ambient_envelopes() {
     let input_domain = arena.runtime_path(&[edge(Rc::clone(&exact), true)]);
     let first = arena.union_runtime_guards(&positive, &input_domain);
     let second = arena.union_runtime_guards(&negative, &input_domain);
-    state.active = Rc::new(vec![
+    state.active = crate::value::path::Path::from(vec![
         edge(arena.budget_test(first.clone()), true),
         edge(arena.budget_test(second.clone()), true),
     ]);
     let envelope = state.path_predicate();
     let partial = RuntimeCondition {
         arena: Rc::clone(&arena),
-        admitted: arena.runtime_path(&state.active),
-        ambient: Rc::clone(&state.active),
+        admitted: arena.path_guard(&state.active),
+        ambient: state.active.clone(),
         admission: Admission::All,
     };
     let exact_condition = RuntimeCondition {
         arena: Rc::clone(&arena),
         admitted: input_domain,
-        ambient: Rc::new(vec![edge(exact, true)]),
+        ambient: crate::value::path::Path::from(vec![edge(exact, true)]),
         admission: Admission::All,
     };
     sim_assert_eq!(have: partial.admitted.clone(), want: exact_condition.admitted.clone());
@@ -162,7 +160,7 @@ fn equal_joint_domains_preserve_distinct_partial_ambient_envelopes() {
     let restricted = RuntimeCondition {
         arena: Rc::clone(&arena),
         admitted: arena.intersect_runtime_guards(&first, &second),
-        ambient: Rc::new(vec![edge(arena.budget_test(first), true)]),
+        ambient: crate::value::path::Path::from(vec![edge(arena.budget_test(first), true)]),
         admission: Admission::Restricted(second),
     };
     // Joint admission resolves the shared opaque choice before exporting either polarity.
@@ -181,11 +179,11 @@ fn reservation_retains_joint_admission_across_repeated_materialization() -> eyre
         taken: true,
     }]);
     let ambient = Predicate::truthy_path("ambient");
-    Rc::make_mut(&mut state.active).push(DecisionEdge {
+    state.active.push_branch(DecisionEdge {
         test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
         taken: true,
     });
-    let domain = arena.runtime_path(&state.active);
+    let domain = arena.path_guard(&state.active);
     let counts = BranchCounts::selected(
         &choice,
         &BranchCounts::constant_on(127, RuntimeGuard::True),

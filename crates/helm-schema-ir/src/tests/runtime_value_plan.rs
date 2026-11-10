@@ -10,7 +10,7 @@ use crate::value::{AbortReason, Coverage, DecisionEdge, Flow, State, Value};
 fn constant_value_plan_outcomes_do_not_force_an_active_guard() {
     for succeeds in [true, false] {
         let mut state = State::new(Value::nil());
-        state.active = Rc::new(
+        state.active = crate::value::path::Path::from(
             (0..64)
                 .map(|index| {
                     let predicate = Predicate::truthy_path(format!("active{index}"));
@@ -23,7 +23,7 @@ fn constant_value_plan_outcomes_do_not_force_an_active_guard() {
                         taken: true,
                     }
                 })
-                .collect(),
+                .collect::<Vec<_>>(),
         );
         let normal = super::constant_value_test(&state, succeeds);
         sim_assert_eq!(have: normal.constant_outcome(), want: Some(succeeds));

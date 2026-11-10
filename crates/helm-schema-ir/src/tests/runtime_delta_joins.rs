@@ -22,7 +22,7 @@ fn join(yes: &State, no: &State, decision: &Rc<FrozenTest>) -> eyre::Result<Stat
     State::join_branches(
         &ContinuationJoin {
             decision: Rc::clone(decision),
-            active: Vec::new(),
+            active: crate::value::path::Path::default(),
             taken: true,
         },
         yes,

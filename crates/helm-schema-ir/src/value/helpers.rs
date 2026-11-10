@@ -81,7 +81,13 @@ impl Executor<'_> {
         let mut exits = super::ExitBuffer::default();
         let mut wrappers = Vec::new();
         for branch in branches {
-            exits.extend(self.execute_helper_branch(branch, &argument, &arguments, &mut wrappers));
+            exits.extend(self.execute_helper_branch(
+                &function,
+                branch,
+                &argument,
+                &arguments,
+                &mut wrappers,
+            ));
         }
         let wrapper = wrappers.first().cloned().flatten().filter(|first| {
             wrappers
@@ -159,6 +165,7 @@ impl Executor<'_> {
 
     fn execute_helper_branch(
         &self,
+        function: &str,
         branch: HelperBranch,
         argument: &Value,
         arguments: &[Value],
@@ -213,7 +220,16 @@ impl Executor<'_> {
                     }),
                     HelperTarget::Abort(_) | HelperTarget::Unknown => false,
                 };
-                if !read_only_inputs {
+                let program = matches!(target, HelperTarget::Unknown)
+                    .then(|| arguments.first())
+                    .flatten()
+                    .filter(|_| function == "tpl");
+                if let Some(program) = program {
+                    // An unknown program is analyzed under the assumption that it writes
+                    // nothing: no template action, so facts below are claimed only there
+                    // (ADR 0072 §2, §5).
+                    state.assume_action_free(program);
+                } else if !read_only_inputs {
                     super::operations::invalidate(&mut state);
                 }
                 let value = unknown_helper_text(influences);

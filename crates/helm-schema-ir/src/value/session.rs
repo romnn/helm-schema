@@ -167,6 +167,14 @@ fn execute_file(
             Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => None,
         })
         .collect();
+    // Later files need no condition that every surviving continuation took.
+    let mut paths = states
+        .iter_mut()
+        .map(|state| &mut state.active)
+        .collect::<Vec<_>>();
+    if std::env::var_os("S3_NO_FILE_SETTLE").is_none() {
+        super::path::settle_survival(&super::path::Path::default(), &mut paths);
+    }
     // Sealing needs completeness and recorded evidence, not execution counters.
     for exit in &mut exits {
         let state = &mut exit.state;

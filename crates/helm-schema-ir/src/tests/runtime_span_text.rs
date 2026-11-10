@@ -83,7 +83,7 @@ fn mutually_exclusive_pieces_at_one_span_are_never_concatenated() -> eyre::Resul
     let state = State::join_branches(
         &crate::value::state::ContinuationJoin {
             decision,
-            active: Vec::new(),
+            active: crate::value::path::Path::default(),
             taken: true,
         },
         &yes,

@@ -246,15 +246,15 @@ fn fully_admitted_domain_preserves_the_exact_ambient_guard() -> eyre::Result<()>
                     path: ValuesPath::parse(&format!("choice{index}")),
                 })
             })
-            .collect(),
+            .collect::<Vec<_>>(),
     );
     let decision = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
     let counts = conditional_cost(&BranchCounts::default(), &decision, 1, 128, &arena);
-    std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
+    state.active.push_branch(DecisionEdge {
         test: Rc::clone(&decision),
         taken: true,
     });
-    let active = arena.runtime_path(&state.active);
+    let active = arena.path_guard(&state.active);
     let admitted = counts.restrict(&active, &arena);
     let (slots, rejected) = precise(state.reserve_count(&admitted, 17))?;
 
@@ -272,7 +272,7 @@ fn fully_admitted_domain_preserves_the_exact_ambient_guard() -> eyre::Result<()>
         taken: false,
     }]
     .into();
-    let active = arena.runtime_path(&state.active);
+    let active = arena.path_guard(&state.active);
     let full = counts.restrict(&active, &arena);
     let (slots, rejected) = precise(state.reserve_count(&full, 18))?;
     sim_assert_eq!(have: slots.len(), want: 0);
@@ -516,12 +516,12 @@ fn reservations_freeze_admission_under_irrelevant_domain_extensions() -> eyre::R
     let room = Predicate::truthy_path("room");
     let decision = arena.decision(room.clone(), room.negated(), Coverage::Exact);
     let ambient = Predicate::truthy_path("unrelated");
-    std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
+    state.active.push_branch(DecisionEdge {
         test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
         taken: true,
     });
     let counts = conditional_cost(&BranchCounts::default(), &decision, 127, 128, &arena);
-    let domain = arena.runtime_path(&state.active);
+    let domain = arena.path_guard(&state.active);
     let counts = counts.restrict(&domain, &arena);
     let (slots, rejected) = precise(state.reserve_count(&counts, 3))?;
     assert!(rejected);
@@ -531,7 +531,7 @@ fn reservations_freeze_admission_under_irrelevant_domain_extensions() -> eyre::R
         precise(state.reserve_count(&BranchCounts::default().restrict(&domain, &arena), 4))?;
     assert!(!rejected);
     let all = all.first().ok_or_eyre("missing ambient reservation")?;
-    std::rc::Rc::make_mut(&mut state.active).clear();
+    state.active.clear();
     sim_assert_eq!(have: all.condition.predicate(), want: ambient);
     sim_assert_eq!(have: state.path_predicate(), want: Predicate::True);
     Ok(())
@@ -553,7 +553,7 @@ fn admission_keeps_correlations_between_partial_domain_and_threshold() -> eyre::
         taken: true,
     }]);
     let domain = arena.union_runtime_guards(&opaque_guard, &input_guard);
-    std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
+    state.active.push_branch(DecisionEdge {
         test: arena.budget_test(domain.clone()),
         taken: true,
     });
@@ -581,11 +581,11 @@ fn reservations_preserve_joined_127_128_129_boundaries() -> eyre::Result<()> {
     let branch = Predicate::truthy_path("branch");
     let choice = arena.decision(branch.clone(), branch.negated(), Coverage::Exact);
     let ambient = Predicate::truthy_path("ambient");
-    std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
+    state.active.push_branch(DecisionEdge {
         test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
         taken: true,
     });
-    let domain = arena.runtime_path(&state.active);
+    let domain = arena.path_guard(&state.active);
     for yes in [127, 128, 129] {
         for no in [127, 128, 129] {
             let counts = BranchCounts::selected(
@@ -633,16 +633,16 @@ fn bounded_partial_projection_keeps_the_ambient_restriction() -> eyre::Result<()
     let large = Predicate::all(
         (0..5000)
             .map(|index| Predicate::truthy_path(format!("part{index}")))
-            .collect(),
+            .collect::<Vec<_>>(),
     );
     let choice = arena.decision(large.clone(), large.negated(), Coverage::Exact);
     let ambient = Predicate::truthy_path("ambient");
-    std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
+    state.active.push_branch(DecisionEdge {
         test: arena.decision(ambient.clone(), ambient.negated(), Coverage::Exact),
         taken: true,
     });
     let counts = conditional_cost(&BranchCounts::default(), &choice, 127, 128, &arena)
-        .restrict(&arena.runtime_path(&state.active), &arena);
+        .restrict(&arena.path_guard(&state.active), &arena);
     let (slots, _) = precise(state.reserve_count(&counts, 20))?;
     let slot = slots.first().ok_or_eyre("bounded reservation missing")?;
     assert!(!slot.condition.exact());
@@ -685,7 +685,7 @@ impl BranchCounts {
 #[test]
 fn exhausted_counts_do_not_force_the_active_runtime_guard() {
     let mut state = State::new(Value::nil());
-    state.active = Rc::new(
+    state.active = crate::value::path::Path::from(
         (0..64)
             .map(|index| {
                 let predicate = Predicate::truthy_path(format!("active{index}"));
@@ -698,7 +698,7 @@ fn exhausted_counts_do_not_force_the_active_runtime_guard() {
                     taken: true,
                 }
             })
-            .collect(),
+            .collect::<Vec<_>>(),
     );
     state.observation_count.exhaust();
     state.invocation_count.exhaust();

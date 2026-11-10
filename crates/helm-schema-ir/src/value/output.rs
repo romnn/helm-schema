@@ -1193,7 +1193,7 @@ pub(super) struct RuntimeCondition {
     arena: std::rc::Rc<super::Arena>,
     // Retain the admitted joint so its existing projection entries remain reachable.
     admitted: super::guard::RuntimeGuard,
-    ambient: std::rc::Rc<Vec<super::DecisionEdge>>,
+    ambient: super::path::Path,
     admission: Admission,
 }
 
@@ -1225,7 +1225,7 @@ impl RuntimeCondition {
         Self {
             arena: std::rc::Rc::clone(&state.heap.arena),
             admitted: super::guard::RuntimeGuard::True,
-            ambient: std::rc::Rc::clone(&state.active),
+            ambient: state.active.clone(),
             admission: Admission::All,
         }
     }
@@ -1238,19 +1238,24 @@ impl RuntimeCondition {
         if live.contains_approximation() {
             return None;
         }
-        let mut active = self.ambient.as_ref().clone();
-        active.extend_from_slice(selected);
-        if live != &Predicate::True {
-            active.push(super::DecisionEdge {
-                test: self.arena.decision(
-                    live.clone(),
-                    live.clone().negated(),
-                    super::Coverage::Exact,
-                ),
-                taken: true,
-            });
+        let mut active = self.ambient.clone();
+        for edge in selected {
+            active.push(edge.clone(), super::path::LinkKind::Branch);
         }
-        let guard = self.arena.runtime_path(&active);
+        if live != &Predicate::True {
+            active.push(
+                super::DecisionEdge {
+                    test: self.arena.decision(
+                        live.clone(),
+                        live.clone().negated(),
+                        super::Coverage::Exact,
+                    ),
+                    taken: true,
+                },
+                super::path::LinkKind::Branch,
+            );
+        }
+        let guard = self.arena.exported_path_guard(&active);
         Some(self.arena.intersect_runtime_guards(&guard, &self.admitted))
     }
 
@@ -1262,8 +1267,8 @@ impl RuntimeCondition {
         self.arena.requirement_scope.borrow().clone()
     }
 
-    pub(super) fn shares_ambient(&self, active: &std::rc::Rc<Vec<super::DecisionEdge>>) -> bool {
-        std::rc::Rc::ptr_eq(&self.ambient, active)
+    pub(super) fn shares_ambient(&self, active: &super::path::Path) -> bool {
+        self.ambient.ptr_eq(active)
     }
 
     fn restricted_test(&self) -> Option<std::rc::Rc<super::FrozenTest>> {
@@ -1320,7 +1325,7 @@ impl super::State {
                     arena: std::rc::Rc::clone(&self.heap.arena),
                     // Unrestricted records need the frozen ambient path, not a counter snapshot.
                     admitted: super::guard::RuntimeGuard::True,
-                    ambient: std::rc::Rc::clone(&self.active),
+                    ambient: self.active.clone(),
                     admission: Admission::All,
                 },
                 ordinal,
@@ -1360,7 +1365,7 @@ impl super::State {
                 condition: RuntimeCondition {
                     arena: std::rc::Rc::clone(&self.heap.arena),
                     admitted,
-                    ambient: std::rc::Rc::clone(&self.active),
+                    ambient: self.active.clone(),
                     admission: Admission::Restricted(admission),
                 },
                 ordinal,
@@ -1374,7 +1379,7 @@ impl super::State {
             return Vec::new();
         }
         self.observation_count = self.observation_count.restrict(
-            &self.heap.arena.runtime_path(&self.active),
+            &self.heap.arena.path_guard(&self.active),
             &self.heap.arena,
         );
         let Ok((slots, rejected)) = self.reserve_count(
@@ -1393,7 +1398,7 @@ impl super::State {
         self.invocation_records_complete
             && !self.invocation_count.is_exhausted()
             && !self.invocation_count.overflow_under(
-                &self.heap.arena.runtime_path(&self.active),
+                &self.heap.arena.path_guard(&self.active),
                 &self.heap.arena,
             )
     }
@@ -1404,7 +1409,7 @@ impl super::State {
             return Vec::new();
         }
         self.invocation_count = self.invocation_count.restrict(
-            &self.heap.arena.runtime_path(&self.active),
+            &self.heap.arena.path_guard(&self.active),
             &self.heap.arena,
         );
         let Ok((slots, _)) = self.reserve_count(&self.invocation_count, self.invocations.len())
@@ -1476,7 +1481,7 @@ impl super::State {
         });
         if !self.output_widened
             && self.output.is_widened_under(
-                &self.heap.arena.runtime_path(&self.active),
+                &self.heap.arena.path_guard(&self.active),
                 &self.heap.arena,
             )
         {
@@ -1486,10 +1491,7 @@ impl super::State {
             self.text_sites.push(ExecutedText {
                 program: self.program,
                 rendered_unchanged: true,
-                coverage_exact: self
-                    .active
-                    .iter()
-                    .all(|edge| edge.test.coverage == super::Coverage::Exact),
+                coverage_exact: self.active.exported_coverage_exact(),
                 ordinal: slot.ordinal,
                 bytes: bytes.to_owned(),
                 span,
@@ -1530,7 +1532,7 @@ impl super::State {
         }
         if !self.output_widened
             && self.output.is_widened_under(
-                &self.heap.arena.runtime_path(&self.active),
+                &self.heap.arena.path_guard(&self.active),
                 &self.heap.arena,
             )
         {
@@ -1540,10 +1542,7 @@ impl super::State {
             self.sites.push(ExecutedSite {
                 program: self.program,
                 rendered_unchanged: true,
-                coverage_exact: self
-                    .active
-                    .iter()
-                    .all(|edge| edge.test.coverage == super::Coverage::Exact),
+                coverage_exact: self.active.exported_coverage_exact(),
                 ordinal: slot.ordinal,
                 span,
                 source_path: source_path.map(str::to_owned),
@@ -1981,11 +1980,8 @@ pub(super) fn exit_may_continue(exit: &Exit) -> bool {
     flow_may_continue(&exit.flow, &exit.state.active)
 }
 
-pub(super) fn flow_may_continue(flow: &Flow, active: &[super::DecisionEdge]) -> bool {
-    !matches!(flow, Flow::Abort(_))
-        || active
-            .iter()
-            .any(|edge| edge.test.coverage != super::Coverage::Exact)
+pub(super) fn flow_may_continue(flow: &Flow, active: &super::path::Path) -> bool {
+    !matches!(flow, Flow::Abort(_)) || !active.coverage_exact()
 }
 
 impl FrozenValue {

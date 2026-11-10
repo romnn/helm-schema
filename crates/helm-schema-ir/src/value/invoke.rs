@@ -754,7 +754,7 @@ fn lift_value_choice(
 ) -> ValuePlan {
     let depth = state.active.len();
     let [yes, no] = [true, false].map(|taken| {
-        std::rc::Rc::make_mut(&mut state.active).push(super::DecisionEdge {
+        state.active.push_branch(super::DecisionEdge {
             test: Rc::clone(decision),
             taken,
         });
@@ -772,7 +772,7 @@ fn lift_value_choice(
             }
             transfer_values(&invocation, state, remaining, queries)
         };
-        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
+        state.active.truncate(depth);
         plan
     });
     join_value_plans(state, decision, yes, no)
@@ -838,7 +838,7 @@ fn finish_value_plan(plan: ValuePlan, state: State) -> Vec<Exit> {
     let outcome = |test: &super::FrozenTest| {
         test.constant_outcome().or_else(|| {
             known
-                .get_or_init(|| state.heap.arena.runtime_path(&state.active))
+                .get_or_init(|| state.heap.arena.path_guard(&state.active))
                 .implies_test(test)
         })
     };
@@ -856,7 +856,7 @@ fn finish_value_plan(plan: ValuePlan, state: State) -> Vec<Exit> {
     }
     let mut exits = Vec::new();
     if success.constant_outcome() != Some(false) {
-        let branch = state.fork(success, true);
+        let branch = state.survive(success, true);
         if !branch.path_is_infeasible() {
             exits.extend(normal(branch, value));
         }
@@ -882,12 +882,12 @@ struct ComparisonBudget {
 }
 
 struct ComparisonCase {
-    active: Rc<Vec<super::DecisionEdge>>,
+    active: super::path::Path,
     first: Value,
 }
 
 struct ComparisonExit {
-    active: Rc<Vec<super::DecisionEdge>>,
+    active: super::path::Path,
     flow: Flow,
 }
 
@@ -1134,7 +1134,7 @@ fn comparison_success_explored(
     for exit in exits {
         if super::output::flow_may_continue(&exit.flow, &exit.active) {
             state.active = exit.active;
-            success.push(state.path_predicate());
+            success.push(state.whole_path_predicate());
         }
     }
     Some(Predicate::Or(success).normalize_boolean())
@@ -1168,7 +1168,7 @@ fn first_comparison_cases(
                     budget,
                 ));
             }
-            std::rc::Rc::make_mut(&mut state.active).truncate(depth);
+            state.active.truncate(depth);
         }
         return cases;
     }
@@ -1188,7 +1188,7 @@ fn first_comparison_cases(
             );
             let mut active = state.active.clone();
             if decision.constant_outcome() != Some(true) {
-                Rc::make_mut(&mut active).push(super::DecisionEdge {
+                active.push_branch(super::DecisionEdge {
                     test: decision,
                     taken: true,
                 });
@@ -1249,7 +1249,7 @@ fn comparison_walk(
                                 next.push(state.active.clone());
                             }
                         }
-                        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
+                        state.active.truncate(depth);
                     }
                 }
             }
@@ -1274,7 +1274,7 @@ fn comparison_walk(
 
 fn comparison_push(state: &mut State, test: Rc<super::FrozenTest>, taken: bool) {
     if test.constant_outcome() != Some(taken) {
-        std::rc::Rc::make_mut(&mut state.active).push(super::DecisionEdge { test, taken });
+        state.active.push_branch(super::DecisionEdge { test, taken });
     }
 }
 
@@ -1294,13 +1294,13 @@ fn comparison_reconverge(state: &State, exits: Vec<ComparisonExit>) -> Vec<Compa
 
 impl super::control::Reconvergent for ComparisonExit {
     type Context = State;
-    type Joined = Vec<super::DecisionEdge>;
+    type Joined = super::path::Path;
     type Key = ();
 
     fn state<'a>(&'a self, context: &'a State) -> &'a State {
         context
     }
-    fn active<'a>(&'a self, _context: &'a State) -> &'a [super::DecisionEdge] {
+    fn active<'a>(&'a self, _context: &'a State) -> &'a super::path::Path {
         &self.active
     }
     fn key(&self, _context: &State) -> Option<Self::Key> {
@@ -1340,7 +1340,7 @@ impl super::control::Reconvergent for ComparisonExit {
             &mut widened,
         );
         Self {
-            active: active.into(),
+            active,
             flow: Flow::Normal(Normal { value }),
         }
     }
@@ -1436,7 +1436,7 @@ fn compare_pair_inner(
                     budget,
                 ));
             }
-            std::rc::Rc::make_mut(&mut state.active).truncate(depth);
+            state.active.truncate(depth);
         }
         return comparison_reconverge(state, exits);
     }
@@ -1457,7 +1457,7 @@ fn compare_pair_inner(
         state
             .heap
             .arena
-            .runtime_path(&state.active)
+            .path_guard(&state.active)
             .implies_test(&decision)
     });
     let mut exits = Vec::new();
@@ -1481,7 +1481,7 @@ fn compare_pair_inner(
                 },
             });
         }
-        std::rc::Rc::make_mut(&mut state.active).truncate(depth);
+        state.active.truncate(depth);
     }
     exits
 }

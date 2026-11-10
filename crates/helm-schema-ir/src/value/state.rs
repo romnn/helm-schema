@@ -5,7 +5,7 @@ use super::{DecisionEdge, Frame, FrameBoundary, FrozenTest, Heap, LoopId, State,
 
 pub(super) struct ContinuationJoin {
     pub(super) decision: Rc<FrozenTest>,
-    pub(super) active: Vec<DecisionEdge>,
+    pub(super) active: super::path::Path,
     pub(super) taken: bool,
 }
 
@@ -42,7 +42,7 @@ impl State {
         Self {
             heap,
             frames: vec![frame],
-            active: Rc::default(),
+            active: super::path::Path::default(),
             output: super::TextBuffer::default(),
             output_widened: false,
             observation_count: super::output::BranchCounts::default(),
@@ -233,15 +233,51 @@ impl State {
             })
     }
 
-    #[tracing::instrument(skip_all)]
+    /// Claims the facts below only where `program` holds no template action, so running it
+    /// writes nothing.
+    pub(super) fn assume_action_free(&mut self, program: &Value) {
+        let mut remaining = 512;
+        let action_free = super::text_actions::action_free(
+            &self.heap.freeze(program),
+            &self.heap.arena.input_objects.borrow(),
+            &self.heap.arena.predicate_memo,
+            &mut remaining,
+        );
+        let negated = action_free.negated();
+        let test = self
+            .heap
+            .arena
+            .decision(action_free, negated, super::Coverage::Exact);
+        if test.constant_outcome() != Some(true) {
+            self.active.push(
+                DecisionEdge { test, taken: true },
+                super::path::LinkKind::Assume,
+            );
+        }
+    }
+
+    /// The continuation that took one outcome of a template branch.
     pub(super) fn fork(&self, test: Rc<FrozenTest>, taken: bool) -> Self {
+        self.fork_as(test, taken, super::path::LinkKind::Branch)
+    }
+
+    /// The continuation that passed a check whose other outcome aborts the render.
+    pub(super) fn survive(&self, test: Rc<FrozenTest>, taken: bool) -> Self {
+        if std::env::var_os("S3_NO_SURVIVE").is_some() {
+            return self.fork(test, taken);
+        }
+        self.fork_as(test, taken, super::path::LinkKind::Survival)
+    }
+
+    #[tracing::instrument(skip_all, name = "fork")]
+    fn fork_as(&self, test: Rc<FrozenTest>, taken: bool, kind: super::path::LinkKind) -> Self {
         let mut active = self.active.clone();
         let forced = test.constant_outcome() == Some(taken);
         if !forced {
-            Rc::make_mut(&mut active).push(DecisionEdge { test, taken });
+            active.push(DecisionEdge { test, taken }, kind);
         }
         let mut output = self.output.clone();
-        let runtime = self.heap.arena.runtime_path(&active);
+        let runtime = self.heap.arena.path_guard(&active);
         output.restrict_budget(&runtime, &self.heap.arena);
         let output_widened = self.output_widened
             && (output.is_widened_under(&runtime, &self.heap.arena)
@@ -324,7 +360,7 @@ impl State {
 
     fn join_guarded(
         decision: &Rc<FrozenTest>,
-        active: Vec<DecisionEdge>,
+        active: super::path::Path,
         yes: &Self,
         no: &Self,
     ) -> Option<Self> {
@@ -398,7 +434,7 @@ impl State {
         let mut joined = State {
             heap,
             frames,
-            active: active.into(),
+            active,
             output: super::TextBuffer::default(),
             output_widened: false,
             observation_count: super::output::BranchCounts::default(),

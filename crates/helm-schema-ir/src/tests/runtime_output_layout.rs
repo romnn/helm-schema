@@ -285,7 +285,7 @@ fn partial_control_does_not_hide_output_failure_or_a_possible_survivor() {
             .heap
             .arena
             .decision(Predicate::False, Predicate::False, Coverage::Partial);
-    Rc::make_mut(&mut fixture.state.active).push(DecisionEdge {
+    fixture.state.active.push_branch(DecisionEdge {
         test: decision,
         taken: true,
     });

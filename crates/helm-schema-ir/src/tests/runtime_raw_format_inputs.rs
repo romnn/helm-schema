@@ -129,7 +129,7 @@ fn conditional_and_unknown_writers_never_keep_original_input_proofs() -> eyre::R
     let joined = State::join_branches(
         &crate::value::state::ContinuationJoin {
             decision,
-            active: Vec::new(),
+            active: crate::value::path::Path::default(),
             taken: true,
         },
         &yes,

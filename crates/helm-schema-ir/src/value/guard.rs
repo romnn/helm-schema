@@ -5,6 +5,7 @@ use std::rc::{Rc, Weak};
 use ahash::{AHashMap, AHashSet};
 use helm_schema_core::{Conjunction, Predicate, PredicateKind};
 
+use super::path::{Divergence, Link, LinkKind, Path};
 use super::{Arena, Coverage, DecisionEdge, FrozenTest};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -159,11 +160,6 @@ impl std::fmt::Debug for GuardQueries {
     }
 }
 
-struct GuardedUnion {
-    decision: Rc<FrozenTest>,
-    taken: bool,
-    survival: RuntimeGuard,
-}
 
 #[derive(Debug)]
 pub(super) enum CachedGuard {
@@ -1410,27 +1406,28 @@ fn fold_conjunction_constants(predicate: Predicate) -> Predicate {
 }
 
 impl Arena {
+    /// Joins two continuations' paths at their fork point (ADR 0072 §2).
+    ///
+    /// Reachability returns to the fork point when the two tails cover it; otherwise the
+    /// disjunction of their branches is the joined branch. Validity joins as
+    /// `(reach_left ∧ valid_left) ∨ (reach_right ∧ valid_right)` and is never dropped. The
+    /// disjunction of the whole tails is the joined survival, which refines feasibility only.
     #[tracing::instrument(skip_all)]
-    pub(super) fn join_paths(
-        &self,
-        left: &[DecisionEdge],
-        right: &[DecisionEdge],
-    ) -> super::state::ContinuationJoin {
-        let common = left
-            .iter()
-            .zip(right)
-            .take_while(|(left, right)| left.test == right.test && left.taken == right.taken)
-            .count();
-        let mut active = left.iter().take(common).cloned().collect::<Vec<_>>();
-        let left_tail = left.get(common..).unwrap_or_default();
-        let right_tail = right.get(common..).unwrap_or_default();
+    pub(super) fn join_paths(&self, left: &Path, right: &Path) -> super::state::ContinuationJoin {
+        let Divergence {
+            common,
+            left: left_tail,
+            right: right_tail,
+        } = left.diverge(right);
         let mut store = self.guards.borrow_mut();
         let mut work = GuardWorkBudget::new(MAX_PROJECTION_WORK);
-        let left_guard = store.conjunction(left_tail, &self.next_decision);
-        let right_guard = store.conjunction(right_tail, &self.next_decision);
-        let opposite = left_tail
+        let left_edges = tail_edges(&left_tail, |_| true);
+        let right_edges = tail_edges(&right_tail, |_| true);
+        let left_guard = store.conjunction(&left_edges, &self.next_decision);
+        let right_guard = store.conjunction(&right_edges, &self.next_decision);
+        let opposite = left_edges
             .first()
-            .zip(right_tail.first())
+            .zip(right_edges.first())
             .filter(|(left, right)| left.test == right.test && left.taken != right.taken);
         let source = if let Some((left, _)) = opposite {
             Some(DecisionEdge {
@@ -1454,11 +1451,83 @@ impl Arena {
         } else {
             None
         };
-        let union = if let Some(DecisionEdge {
-            test: decision,
-            taken,
-        }) = source
-        {
+        let (decision, taken) = if let Some(DecisionEdge { test, taken }) = source {
+            (test, taken)
+        } else {
+            // Overlapping abstract paths can carry different outcomes for the same input.
+            // Keep both using an independent runtime choice, gated by each source path.
+            (
+                self.decision(Predicate::False, Predicate::False, Coverage::Partial),
+                true,
+            )
+        };
+        let mut active = common;
+        let reach_left = store.conjunction(
+            &tail_edges(&left_tail, |kind| kind == LinkKind::Branch),
+            &self.next_decision,
+        );
+        let reach_right = store.conjunction(
+            &tail_edges(&right_tail, |kind| kind == LinkKind::Branch),
+            &self.next_decision,
+        );
+        let reach = store.apply(
+            Operation::Or,
+            &reach_left,
+            &reach_right,
+            &self.next_decision,
+            &mut work,
+        );
+        let known = self.path_guard_in(&mut store, &active);
+        let reach = self.guard_test(&mut store, reach);
+        if reach.constant_outcome() != Some(true) && known.implies_test(&reach) != Some(true) {
+            active.push(
+                DecisionEdge {
+                    test: reach,
+                    taken: true,
+                },
+                LinkKind::Branch,
+            );
+        }
+        let assumes = |tail: &[&Link]| tail.iter().any(|link| link.kind() == LinkKind::Assume);
+        if assumes(&left_tail) || assumes(&right_tail) {
+            let mut valid = Vec::with_capacity(2);
+            for (reach, tail) in [(&reach_left, &left_tail), (&reach_right, &right_tail)] {
+                let assumed = store.conjunction(
+                    &tail_edges(tail, |kind| kind == LinkKind::Assume),
+                    &self.next_decision,
+                );
+                valid.push(store.apply(
+                    Operation::And,
+                    reach,
+                    &assumed,
+                    &self.next_decision,
+                    &mut work,
+                ));
+            }
+            let [valid_left, valid_right] = <[RuntimeGuard; 2]>::try_from(valid)
+                .unwrap_or([RuntimeGuard::False, RuntimeGuard::False]);
+            let valid = store.apply(
+                Operation::Or,
+                &valid_left,
+                &valid_right,
+                &self.next_decision,
+                &mut work,
+            );
+            let exported = self.exported_path_guard_in(&mut store, &active);
+            let valid = self.guard_test(&mut store, valid);
+            if valid.constant_outcome() != Some(true) && exported.implies_test(&valid) != Some(true)
+            {
+                active.push(
+                    DecisionEdge {
+                        test: valid,
+                        taken: true,
+                    },
+                    LinkKind::Assume,
+                );
+            }
+        }
+        let survives = |tail: &[&Link]| tail.iter().any(|link| link.kind() == LinkKind::Survival);
+        if survives(&left_tail) || survives(&right_tail) {
             let survival = store.apply(
                 Operation::Or,
                 &left_guard,
@@ -1466,48 +1535,19 @@ impl Arena {
                 &self.next_decision,
                 &mut work,
             );
-            GuardedUnion {
-                decision,
-                taken,
-                survival,
+            let known = self.path_guard_in(&mut store, &active);
+            let survival = self.guard_test(&mut store, survival);
+            if survival.constant_outcome() != Some(true)
+                && known.implies_test(&survival) != Some(true)
+            {
+                active.push(
+                    DecisionEdge {
+                        test: survival,
+                        taken: true,
+                    },
+                    LinkKind::Survival,
+                );
             }
-        } else {
-            // Overlapping abstract paths can carry different outcomes for the same input.
-            // Keep both using an independent runtime choice, gated by each source path.
-            let decision = self.decision(Predicate::False, Predicate::False, Coverage::Partial);
-            let choice = store.edge(
-                &DecisionEdge {
-                    test: Rc::clone(&decision),
-                    taken: true,
-                },
-                &self.next_decision,
-                &mut work,
-            );
-            let survival = store.choice(
-                &choice,
-                &left_guard,
-                &right_guard,
-                &self.next_decision,
-                &mut work,
-            );
-            GuardedUnion {
-                decision,
-                taken: true,
-                survival,
-            }
-        };
-        let GuardedUnion {
-            decision,
-            taken,
-            survival,
-        } = union;
-        let known = store.conjunction(&active, &self.next_decision);
-        let success = self.guard_test(&mut store, survival);
-        if success.constant_outcome() != Some(true) && known.implies_test(&success) != Some(true) {
-            active.push(DecisionEdge {
-                test: success,
-                taken: true,
-            });
         }
         super::state::ContinuationJoin {
             decision,
@@ -1602,7 +1642,31 @@ impl Arena {
     }
 }
 
+fn tail_edges(tail: &[&Link], kept: impl Fn(LinkKind) -> bool) -> Vec<DecisionEdge> {
+    tail.iter()
+        .filter(|link| kept(link.kind()))
+        .map(|link| link.edge().clone())
+        .collect()
+}
+
 impl Arena {
+    /// Conjoins one edge to a guard, under its own allowance (ADR 0072 §10).
+    pub(super) fn conjoin_edge(&self, guard: &RuntimeGuard, edge: &DecisionEdge) -> RuntimeGuard {
+        let mut store = self.guards.borrow_mut();
+        Self::conjoin_edge_in(&mut store, guard, edge, &self.next_decision)
+    }
+
+    pub(super) fn conjoin_edge_in(
+        store: &mut DecisionStore,
+        guard: &RuntimeGuard,
+        edge: &DecisionEdge,
+        next_decision: &Cell<u64>,
+    ) -> RuntimeGuard {
+        let mut work = GuardWorkBudget::new(MAX_PROJECTION_WORK);
+        let next = store.edge(edge, next_decision, &mut work);
+        store.apply(Operation::And, guard, &next, next_decision, &mut work)
+    }
+
     pub(super) fn complement_runtime_guard(&self, guard: &RuntimeGuard) -> RuntimeGuard {
         self.guards.borrow_mut().negate(
             guard,

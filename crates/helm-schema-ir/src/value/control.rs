@@ -258,6 +258,7 @@ impl Executor<'_> {
         if kind == ControlKind::Range {
             return self.range(program, opener, &boundaries, state);
         }
+        let entry = state.active.clone();
         state.enter_scope(None);
         let mut pending = vec![state];
         let mut results = super::ExitBuffer::default();
@@ -333,7 +334,11 @@ impl Executor<'_> {
         for exit in &mut results {
             exit.state.leave_scope();
         }
-        reconverge(results)
+        let mut exits = reconverge(results);
+        if std::env::var_os("S3_NO_REGION_SETTLE").is_none() {
+            settle_exits(&entry, &mut exits);
+        }
+        exits
     }
     #[tracing::instrument(skip_all)]
     fn range(
@@ -1074,7 +1079,8 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 Predicate::False,
                 Coverage::Partial,
             );
-            representative.state.active = vec![super::DecisionEdge { test, taken: true }].into();
+            representative.state.active =
+                super::path::Path::from_edges([super::DecisionEdge { test, taken: true }]);
             representative.state.sites.clear();
             representative.state.text_sites.clear();
             representative.state.observation_count = super::output::BranchCounts::default();
@@ -1092,6 +1098,16 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
         })
         .collect()
 }
+/// Re-kinds as survival the branch links a region's continuations all took (ADR 0072 §2).
+pub(super) fn settle_exits(entry: &super::path::Path, exits: &mut [Exit]) {
+    let mut paths = exits
+        .iter_mut()
+        .filter(|exit| super::output::exit_may_continue(exit))
+        .map(|exit| &mut exit.state.active)
+        .collect::<Vec<_>>();
+    super::path::settle_survival(entry, &mut paths);
+}
+
 fn same_flow(left: &Flow, right: &Flow) -> bool {
     match (left, right) {
         (Flow::Normal(_), Flow::Normal(_)) | (Flow::Abort(_), Flow::Abort(_)) => true,
@@ -1147,7 +1163,7 @@ pub(super) trait Reconvergent: Sized {
     type Joined;
     type Key: Ord;
     fn state<'a>(&'a self, context: &'a Self::Context) -> &'a State;
-    fn active<'a>(&'a self, context: &'a Self::Context) -> &'a [super::DecisionEdge] {
+    fn active<'a>(&'a self, context: &'a Self::Context) -> &'a super::path::Path {
         &self.state(context).active
     }
     fn prepare_join(

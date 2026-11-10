@@ -37,7 +37,7 @@ const CONFIG_MAP: &str = indoc! {"
 ///
 /// Declared defaults only annotate, so every verdict comes from template and
 /// Helm semantics rather than authoring policy (ADR 0043).
-fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
+fn law_session(files: &[(&str, &str)]) -> eyre::Result<crate::AnalysisSession> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     for (path, source) in files {
         test_util::write(&chart_dir.join(path)?, source)?;
@@ -60,6 +60,11 @@ fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
             ..Default::default()
         },
     });
+    Ok(session)
+}
+
+fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
+    let session = law_session(files)?;
     Ok(session.emit(crate::output::EmitRequest {
         reference_policy: crate::output::ReferencePolicy::SelfContained,
         output: crate::output::OutputPipelineOptions {
@@ -848,4 +853,22 @@ fn helper_calls_in_different_namespaces_are_not_merged() -> eyre::Result<()> {
         &[("i3: the tpl-local helper consumes w", json!({ "w": 7 }))],
         false,
     )
+}
+
+#[test]
+fn zz_probe() -> eyre::Result<()> {
+    let template = [
+        "{{- if .Values.enabled }}{{ tpl .Values.program $ }}{{ end }}\n",
+        CONFIG_MAP,
+        "data:\n  after: {{ upper .Values.after | quote }}\n",
+    ]
+    .concat();
+    let session = law_session(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "enabled: false\nprogram: \"\"\nafter: \"x\"\n"),
+        ("templates/cm.yaml", template.as_str()),
+    ])?;
+    println!("{:#?}", session.explain("after")?);
+    println!("{}", session.explain_generation("after", crate::explain::ExplainFormat::Text)?);
+    Ok(())
 }

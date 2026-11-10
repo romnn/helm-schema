@@ -6,49 +6,7 @@ use super::{
 use ahash::AHashSet;
 use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use std::collections::{BTreeMap, BTreeSet};
-use std::rc::{Rc, Weak};
-
-#[derive(Clone, Debug)]
-pub(super) struct PathPredicateCache {
-    active: Weak<Vec<super::DecisionEdge>>,
-    predicate: Predicate,
-}
-
-const EXPORTED_PATH_CACHE_CAPACITY: usize = 4096;
-
-impl super::Arena {
-    pub(super) fn exported_path_predicate(
-        &self,
-        active: &Rc<Vec<super::DecisionEdge>>,
-    ) -> Predicate {
-        let key = Rc::as_ptr(active);
-        if let Some(PathPredicateCache { active, predicate }) =
-            self.exported_paths.borrow().get(&key)
-            && std::ptr::eq(active.as_ptr(), key)
-        {
-            return predicate.clone();
-        }
-        let predicate = Predicate::all(
-            active
-                .iter()
-                .map(|edge| edge.test.possible_predicate(edge.taken))
-                .collect(),
-        );
-        let mut cache = self.exported_paths.borrow_mut();
-        if cache.len() >= EXPORTED_PATH_CACHE_CAPACITY {
-            cache.clear();
-        }
-        // Weak keys preserve allocation identity without retaining execution handles.
-        cache.insert(
-            key,
-            PathPredicateCache {
-                active: Rc::downgrade(active),
-                predicate: predicate.clone(),
-            },
-        );
-        predicate
-    }
-}
+use std::rc::Rc;
 
 #[derive(Clone, Copy)]
 pub(super) enum RequirementKind {
@@ -575,23 +533,32 @@ impl State {
     /// Whether [`Self::path_predicate`] normalizes to `false`, decided through the analysis-wide
     /// predicate memo.
     pub(super) fn path_is_infeasible(&self) -> bool {
-        !self
-            .heap
-            .arena
-            .predicate_memo
-            .may_be_true(self.path_predicate())
+        self.heap.arena.path_guard(&self.active).is_impossible()
+            || !self
+                .heap
+                .arena
+                .predicate_memo
+                .may_be_true(self.heap.arena.feasible_path_predicate(&self.active))
     }
 
     #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::read_work")]
     pub(super) fn path_predicate(&self) -> Predicate {
-        if self.heap.arena.runtime_path(&self.active).is_impossible() {
+        if self.heap.arena.path_guard(&self.active).is_impossible() {
             return Predicate::False;
         }
         self.heap.arena.exported_path_predicate(&self.active)
     }
+
+    /// Where the analysis claims this point is reached: every branch, survival and assumption.
+    pub(super) fn whole_path_predicate(&self) -> Predicate {
+        if self.heap.arena.path_guard(&self.active).is_impossible() {
+            return Predicate::False;
+        }
+        self.heap.arena.whole_path_predicate(&self.active)
+    }
     pub(super) fn consumed(&self, value: &Value) -> Value {
         let value = self.heap.version.consume(value);
-        let guard = self.heap.arena.runtime_path(&self.active);
+        let guard = self.heap.arena.path_guard(&self.active);
         let value = value.under_runtime(&guard);
         let value = self.input_backing_view(&value);
         value.under_runtime(&guard)
@@ -837,10 +804,7 @@ impl State {
             | RequirementKind::OpaqueBlockText
             | RequirementKind::ComparisonFailure => return,
         };
-        let exact = self
-            .active
-            .iter()
-            .all(|edge| edge.test.coverage == Coverage::Exact);
+        let exact = self.active.exported_coverage_exact();
         if (!exact && matches!(operation, RequirementKind::MapArgument { .. }))
             || selected
                 .iter()
@@ -2375,7 +2339,7 @@ fn field_inputs_with_budget(
 
 impl State {
     pub(super) fn consumed_field(&self, field: &Field) -> Field {
-        specialize_field(field, &self.heap.arena.runtime_path(&self.active))
+        specialize_field(field, &self.heap.arena.path_guard(&self.active))
     }
 
     pub(super) fn map_length(&self, value: &Value) -> Option<Value> {

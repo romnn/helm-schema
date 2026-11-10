@@ -159,7 +159,7 @@ impl DocumentExecution {
         // Query the observed heap before later control decisions restrict the value.
         let mut state = exit.state.clone();
         state.heap.version = Rc::clone(&site.value.heap);
-        std::rc::Rc::make_mut(&mut state.active).clear();
+        state.active.clear();
         let test = state.test(&site.value.value);
         (test.coverage == super::Coverage::Exact
             && !test.when_true.contains_approximation()

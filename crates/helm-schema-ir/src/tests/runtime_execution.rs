@@ -2320,6 +2320,7 @@ mod partial_survivor_review_laws {
         assert!(
             joined
                 .active
+                .edges()
                 .iter()
                 .any(|edge| edge.test.coverage == Coverage::Partial)
         );
@@ -2348,7 +2349,8 @@ mod partial_survivor_review_laws {
         sim_assert_eq!(have: joined.path_predicate().normalize_boolean(), want: Predicate::True);
         let markers = joined
             .active
-            .iter()
+            .edges()
+            .into_iter()
             .filter(|edge| edge.test.coverage == Coverage::Partial)
             .collect::<Vec<_>>();
         assert!(
@@ -2399,6 +2401,7 @@ mod partial_survivor_review_laws {
         .ok_or_eyre("partial alias join declined")?;
         let marker_ids = joined
             .active
+            .edges()
             .iter()
             .filter(|edge| edge.test.coverage == Coverage::Partial)
             .map(|edge| edge.test.id)
@@ -2881,7 +2884,7 @@ mod runtime_reachability_laws {
             sim_assert_eq!(have: selected.implies_test(&joined), want: Some(expected));
             let mut state = initial.clone();
             state.active = edges.into();
-            std::rc::Rc::make_mut(&mut state.active).push(DecisionEdge {
+            state.active.push_branch(DecisionEdge {
                 test: Rc::clone(&joined),
                 taken: true,
             });
@@ -2989,6 +2992,7 @@ mod window_buffer_review_laws {
                 active: exit
                     .state
                     .active
+                    .edges()
                     .iter()
                     .map(|edge| (edge.test.id, edge.taken, edge.test.coverage))
                     .collect(),

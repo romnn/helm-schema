@@ -58,7 +58,7 @@ impl crate::value::DocumentExecution {
                     let condition = &site.condition;
                     let ambient = condition
                         .arena
-                        .budget_test(condition.arena.runtime_path(&condition.ambient));
+                        .budget_test(condition.arena.path_guard(&condition.ambient));
                     Predicate::all(vec![
                         ambient.when_true.clone(),
                         condition
@@ -78,12 +78,13 @@ impl crate::value::DocumentExecution {
             .all(|exit| {
                 !exit.state.path_predicate().contains_approximation()
                     && !exit.state.observation_count.overflow_under(
-                        &exit.state.heap.arena.runtime_path(&exit.state.active),
+                        &exit.state.heap.arena.path_guard(&exit.state.active),
                         &exit.state.heap.arena,
                     )
                     && exit
                         .state
                         .active
+                        .edges()
                         .iter()
                         .all(|edge| edge.test.coverage == Coverage::Exact)
             })

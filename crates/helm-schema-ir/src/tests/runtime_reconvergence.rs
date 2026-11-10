@@ -138,7 +138,7 @@ fn three_surviving_paths_reconverge_in_every_order_without_losing_correlation() 
         };
         for assignment in 0_u8..8 {
             let mut selected = exit.state.clone();
-            Rc::make_mut(&mut selected.active).extend(atoms.iter().enumerate().map(
+            selected.active.extend(atoms.iter().enumerate().map(
                 |(index, test)| DecisionEdge {
                     test: Rc::clone(test),
                     taken: assignment & (1 << index) != 0,
@@ -190,7 +190,7 @@ fn overlapping_paths_preserve_both_outcomes_only_in_their_original_domains() -> 
     };
     for assignment in 0_u8..4 {
         let mut selected = exit.state.clone();
-        Rc::make_mut(&mut selected.active).extend(atoms.iter().enumerate().map(|(index, test)| {
+        selected.active.extend(atoms.iter().enumerate().map(|(index, test)| {
             DecisionEdge {
                 test: Rc::clone(test),
                 taken: assignment & (1 << index) != 0,
