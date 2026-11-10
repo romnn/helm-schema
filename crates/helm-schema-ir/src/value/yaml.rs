@@ -2500,8 +2500,13 @@ struct BufferContext {
 }
 
 struct LexicalTransfers<'a> {
-    values: AHashMap<(*const super::HeapVersion, *const ValueNode, LexicalState), States>,
-    buffers: AHashMap<BufferContext, States>,
+    /// Address-keyed, so each entry holds its key alive: a key never names a reused address
+    /// (layouts build and drop temporary choice buffers while this cache lives).
+    values: AHashMap<
+        (*const super::HeapVersion, *const ValueNode, LexicalState),
+        (FrozenValue, States),
+    >,
+    buffers: AHashMap<BufferContext, (Rc<TextBuffer>, States)>,
     remaining: usize,
     input_paths: &'a super::input_paths::InputPaths,
     input_objects: &'a BTreeMap<ValuesPath, super::InputBacking>,
@@ -2529,7 +2534,7 @@ impl<'a> LexicalTransfers<'a> {
             value: super::Value { node },
         } = value;
         let key = (Rc::as_ptr(heap), Rc::as_ptr(node), state);
-        if let Some(result) = self.values.get(&key) {
+        if let Some((_, result)) = self.values.get(&key) {
             return result.clone();
         }
         if self.remaining == 0 && !state.is_absorbing() {
@@ -2600,7 +2605,7 @@ impl<'a> LexicalTransfers<'a> {
                 }) => States::new(),
             }
         };
-        self.values.insert(key, result.clone());
+        self.values.insert(key, (value.clone(), result.clone()));
         result
     }
 
@@ -3080,23 +3085,28 @@ impl<'a> LexicalTransfers<'a> {
         )
     }
 
-    fn buffer(&mut self, buffer: &TextBuffer, state: LexicalState, memo: &PredicateMemo) -> States {
+    fn buffer(
+        &mut self,
+        buffer: &Rc<TextBuffer>,
+        state: LexicalState,
+        memo: &PredicateMemo,
+    ) -> States {
         self.transfer_buffer(buffer, state, &[], memo)
     }
 
     fn transfer_buffer(
         &mut self,
-        buffer: &TextBuffer,
+        buffer: &Rc<TextBuffer>,
         state: LexicalState,
         transforms: &[super::relationship::TextTransform],
         memo: &PredicateMemo,
     ) -> States {
         let key = BufferContext {
-            graph: std::ptr::from_ref(buffer),
+            graph: Rc::as_ptr(buffer),
             state,
             transforms: transforms.to_vec(),
         };
-        if let Some(result) = self.buffers.get(&key) {
+        if let Some((_, result)) = self.buffers.get(&key) {
             return result.clone();
         }
         let mut states = BTreeMap::from([(state, Predicate::True)]);
@@ -3113,7 +3123,8 @@ impl<'a> LexicalTransfers<'a> {
             );
         }
         if self.remaining > 0 {
-            self.buffers.insert(key, states.clone());
+            self.buffers
+                .insert(key, (Rc::clone(buffer), states.clone()));
         }
         states
     }

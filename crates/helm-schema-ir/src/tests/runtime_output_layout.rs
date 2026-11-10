@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use color_eyre::eyre;
 
@@ -8,7 +8,9 @@ use helm_schema_core::{PlainScalarPlacement, Predicate, PredicateMemo, ValuesPat
 use helm_schema_syntax::Span;
 use test_util::prelude::sim_assert_eq;
 
-use super::OutputPlacement;
+use super::{LexicalTransfers, OutputPlacement};
+use crate::value::input_paths::InputPaths;
+use crate::value::quoted::LexicalState;
 use crate::value::{Coverage, Value};
 use crate::value::{ExecutedSite, ObservationId, OutputNode, State, TextBuffer, TextPart};
 
@@ -670,4 +672,50 @@ impl super::FilePlacement {
             .iter()
             .flat_map(super::OutputPlacement::placed_documents)
     }
+}
+
+#[test]
+fn lexical_transfers_keep_every_cached_key_alive() -> eyre::Result<()> {
+    use color_eyre::eyre::OptionExt as _;
+
+    let memo = PredicateMemo::default();
+    let input_paths = InputPaths::default();
+    let input_objects = BTreeMap::new();
+    let text = |bytes: &str| {
+        let mut buffer = TextBuffer::default();
+        buffer.bytes(bytes);
+        Rc::new(buffer)
+    };
+    let mut lexical = LexicalTransfers::new(&input_paths, &input_objects);
+
+    let mut state = State::new(Value::nil());
+    let value = state.heap.freeze(&Value::input(ValuesPath::parse("value")));
+    let node_owners = Rc::strong_count(&value.value.node);
+    lexical.value(&value, LexicalState::PlainStart, &memo);
+    sim_assert_eq!(have: Rc::strong_count(&value.value.node), want: node_owners + 1);
+
+    let opened = text("\"open");
+    let opened_states = lexical.buffer(&opened, LexicalState::PlainStart, &memo);
+    sim_assert_eq!(have: Rc::strong_count(&opened), want: 2);
+    let address = Rc::as_ptr(&opened);
+    drop(opened);
+
+    // A buffer the allocator places at the dropped buffer's address must not see its states.
+    let candidates = (0..64).map(|_| text("plain")).collect::<Vec<_>>();
+    let plain = candidates
+        .iter()
+        .find(|candidate| Rc::as_ptr(candidate) == address)
+        .or(candidates.first())
+        .ok_or_eyre("no candidate buffer")?;
+    let fresh = LexicalTransfers::new(&input_paths, &input_objects).buffer(
+        plain,
+        LexicalState::PlainStart,
+        &memo,
+    );
+    sim_assert_eq!(have: opened_states == fresh, want: false);
+    sim_assert_eq!(
+        have: lexical.buffer(plain, LexicalState::PlainStart, &memo),
+        want: fresh
+    );
+    Ok(())
 }
