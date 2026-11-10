@@ -1,6 +1,7 @@
 # 0069. The value algebra is the interpreter's single semantic model
 
 Status: Accepted (2026-10-23, user decisions D1–D4 of plan/value-algebra-r0.md §7: D1 no, D2 yes, D3 B, D4 yes)
+Amended by [0072](0072-r3b-target-architecture.md) (2026-11-10): values become hash-consed terms over the inputs; the state, snapshot and memoization obligations above stand.
 Date: 2026-10-22 (R0 design closure; plan of 2026-10-21, user decision to rearchitect W1)
 
 ## Context

@@ -1,6 +1,7 @@
 # 0017. Render conditions are preserved as a guard DNF
 
 Status: Accepted
+Amended by [0072](0072-r3b-target-architecture.md) (2026-11-10): guards become prefix links into one shared condition DAG; reachability, abort survival and analysis validity are separate.
 Date: 2026-07-11 (`8ab60379`, "preserve render conditions as guard dnf")
 
 ## Context

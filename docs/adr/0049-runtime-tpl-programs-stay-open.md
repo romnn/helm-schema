@@ -1,6 +1,7 @@
 # 0049. Runtime `tpl` programs stay open; no allowlists or regex template parsers
 
 Status: Accepted
+Amended by [0072](0072-r3b-target-architecture.md) (2026-11-10): an unknown program is a guarded heap effect (`Phi(write_free, heap, havoc_reachable)`), not a forked world; the language boundary stands.
 Date: 2026-08-02 (fifty-seventh corpus round, 9fb00bad)
 
 ## Context

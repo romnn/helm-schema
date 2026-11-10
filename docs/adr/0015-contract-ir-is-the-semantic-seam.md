@@ -1,6 +1,7 @@
 # 0015. `ContractIr` is the semantic seam between analysis and emission
 
 Status: Accepted
+Amended by [0072](0072-r3b-target-architecture.md) (2026-11-10): the seam carries one fact type, guarded demand rows, plus use evidence; no flag carries two meanings.
 Date: 2026-06-13 (`9a807b30`, "introduce contract ir accumulator")
 
 ## Context

@@ -103,3 +103,5 @@ strategies live in their surviving decisions.
 | [0069](0069-value-algebra-is-the-interpreter-semantic-model.md) | The value algebra is the interpreter's single semantic model | Accepted | 2026-10-23 |
 | [0070](0070-one-symbolic-interpreter-is-the-only-source-of-constraints.md) | One symbolic interpreter, built as an executor, is the only source of constraints | Accepted | 2026-10-29 |
 | [0071](0071-rearchitectures-prove-corpus-parity-before-deleting.md) | A rearchitecture proves corpus-wide parity with main before it deletes the old path | Accepted | 2026-10-29 |
+| [0072](0072-r3b-target-architecture.md) | R3b target architecture: values as terms, three kinds of condition, one owner per operation, one render | Accepted | 2026-11-10 |
+| [0073](0073-r3b-migration-proves-each-step-against-main.md) | R3b migrates in eight steps, each proven against pinned main | Accepted | 2026-11-10 |
