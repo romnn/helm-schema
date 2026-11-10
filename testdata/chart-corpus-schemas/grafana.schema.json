@@ -1,23 +1,420 @@
 {
   "$defs": {
+    "constrains/fullnameOverride": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride+fullnameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@7"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+nameOverride": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
+    },
+    "constrains/fullnameOverride+nameOverride@2": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      }
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      }
+    },
+    "constrains/fullnameOverride:t@3": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride@2": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@3": {
+      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/fullnameOverride@4": {
+      "$ref": "#/$defs/constrains~1fullnameOverride"
+    },
+    "constrains/fullnameOverride@5": {
+      "$ref": "#/$defs/constrains~1fullnameOverride@2"
+    },
+    "constrains/fullnameOverride@6": {
+      "$ref": "#/$defs/constrains~1fullnameOverride@3"
+    },
+    "constrains/fullnameOverride@7": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    },
+    "constrains/nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@3"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@3": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
+    },
+    "constrains/nameOverride@3": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.enabled:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      }
+    },
+    "constrains/persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+        },
+        {
+          "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+        }
+      ]
+    },
+    "constrains/persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+        },
+        {
+          "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+        }
+      ]
+    },
+    "constrains/persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.existingClaim:t"
+        }
+      ]
+    },
+    "constrains/persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1persistence.existingClaim:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+        }
+      ]
+    },
+    "constrains/persistence.enabled:t+useStatefulSet:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+        }
+      ]
+    },
+    "constrains/persistence.enabled:t+useStatefulSet:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+        }
+      ]
+    },
+    "constrains/persistence.enabled:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      }
+    },
+    "constrains/persistence.enabled:t@3": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.existingClaim:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      }
+    },
+    "constrains/persistence.existingClaim:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      }
+    },
+    "constrains/persistence.existingClaim:t@3": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "existingClaim": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "existingClaim"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.type=StatefulSet": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "type": {
+              "enum": [
+                "StatefulSet"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.type=statefulset": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "type": {
+              "enum": [
+                "statefulset"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.type=sts": {
+      "$ref": "#/$defs/when~1persistence.type=sts~1then~1any~1else~1fail"
+    },
+    "constrains/persistence.type=sts@2": {
+      "$ref": "#/$defs/when~1persistence.type=sts~1then~1any~1else~1fail"
+    },
+    "constrains/persistence.type=sts@3": {
+      "$ref": "#/$defs/when~1persistence.type=sts~1then~1any~1else~1fail"
+    },
+    "constrains/persistence.type=sts@4": {
+      "$ref": "#/$defs/when~1persistence.type=sts~1then~1any~1else~1fail"
+    },
+    "constrains/persistence.type=sts@5": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "type": {
+              "enum": [
+                "sts"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
     "constrains/useStatefulSet:t": {
-      "$ref": "#/$defs/constrains~1useStatefulSet:t@3"
+      "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1fail"
     },
     "constrains/useStatefulSet:t@2": {
-      "$ref": "#/$defs/constrains~1useStatefulSet:t@3"
+      "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1fail"
     },
     "constrains/useStatefulSet:t@3": {
+      "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1fail"
+    },
+    "constrains/useStatefulSet:t@4": {
+      "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1fail"
+    },
+    "constrains/useStatefulSet:t@5": {
       "not": {
-        "properties": {
-          "useStatefulSet": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "useStatefulSet"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
       }
+    },
+    "constrains/useStatefulSet:t@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      }
+    },
+    "constrains/useStatefulSet:t@7": {
+      "properties": {
+        "useStatefulSet": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "useStatefulSet"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -43,6 +440,870 @@
           "const": true
         }
       ]
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/fullnameOverride/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+persistence.enabled:t+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more~1else~1any@2"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+persistence.enabled:t+5more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more~1else~1any"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t+persistence.enabled:t+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+persistence.enabled:t+persistence.existingClaim:t+4more~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any@2"
+      }
+    },
+    "when/nameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@3"
+      },
+      "then": true
+    },
+    "when/nameOverride/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride@3"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/fullnameOverride+nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1fullnameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1fullnameOverride+nameOverride+persistence.existingClaim:t+4more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1fullnameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1fullnameOverride+nameOverride+persistence.existingClaim:t+4more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+persistence.enabled:t+persistence.existingClaim:t+4more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1fullnameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1nameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+persistence.enabled:t+persistence.existingClaim:t+4more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1nameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any@2"
+      }
+    },
+    "when/nameOverride:t/then/persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any@3"
+      }
+    },
+    "when/persistence.enabled:t/then/fullnameOverride+nameOverride+persistence.existingClaim:t+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride+nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1fullnameOverride+nameOverride+useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      }
+    },
+    "when/persistence.enabled:t/then/fullnameOverride+nameOverride+persistence.existingClaim:t+4more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride+nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1fullnameOverride+nameOverride+useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      }
+    },
+    "when/persistence.enabled:t/then/fullnameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1fullnameOverride+useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      }
+    },
+    "when/persistence.enabled:t/then/fullnameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1fullnameOverride+useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      }
+    },
+    "when/persistence.enabled:t/then/fullnameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1fullnameOverride+useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3"
+      }
+    },
+    "when/persistence.enabled:t/then/nameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1nameOverride+useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      }
+    },
+    "when/persistence.enabled:t/then/nameOverride+persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1nameOverride+useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      }
+    },
+    "when/persistence.enabled:t/then/persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      }
+    },
+    "when/persistence.enabled:t/then/persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      }
+    },
+    "when/persistence.enabled:t/then/persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3"
+      }
+    },
+    "when/persistence.enabled:t/then/persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1persistence.existingClaim:t~1then~1useStatefulSet:t~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@4"
+      }
+    },
+    "when/persistence.existingClaim:t/then/fullnameOverride+nameOverride+useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride+nameOverride~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride+nameOverride~1else~1fail"
+      }
+    },
+    "when/persistence.existingClaim:t/then/fullnameOverride+nameOverride+useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride+nameOverride~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride+nameOverride~1else~1fail@2"
+      }
+    },
+    "when/persistence.existingClaim:t/then/fullnameOverride+useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1fail"
+      }
+    },
+    "when/persistence.existingClaim:t/then/fullnameOverride+useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1fail@2"
+      }
+    },
+    "when/persistence.existingClaim:t/then/fullnameOverride+useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1fullnameOverride~1else~1fail@3"
+      }
+    },
+    "when/persistence.existingClaim:t/then/nameOverride+useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1nameOverride~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1nameOverride~1else~1fail"
+      }
+    },
+    "when/persistence.existingClaim:t/then/nameOverride+useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1nameOverride~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1nameOverride~1else~1fail@2"
+      }
+    },
+    "when/persistence.existingClaim:t/then/useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@2"
+      }
+    },
+    "when/persistence.existingClaim:t/then/useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t"
+      }
+    },
+    "when/persistence.existingClaim:t/then/useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@3"
+      }
+    },
+    "when/persistence.existingClaim:t/then/useStatefulSet:t/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@4": {
+      "else": {
+        "$ref": "#/$defs/when~1useStatefulSet:t~1then~1any~1else~1persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.existingClaim:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@4"
+      }
+    },
+    "when/persistence.type=StatefulSet/then/any/else/persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1any~1else~1persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": true
+    },
+    "when/persistence.type=StatefulSet/then/any/else/persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1any~1else~1persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": true
+    },
+    "when/persistence.type=StatefulSet/then/any/else/persistence.type=statefulset+persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1any~1else~1persistence.type=sts@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": true
+    },
+    "when/persistence.type=StatefulSet/then/any/else/persistence.type=statefulset+persistence.type=sts@4": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1any~1else~1persistence.type=sts@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": true
+    },
+    "when/persistence.type=StatefulSet/then/fullnameOverride+nameOverride/else/persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1fullnameOverride+nameOverride~1else~1persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride"
+      }
+    },
+    "when/persistence.type=StatefulSet/then/fullnameOverride+nameOverride/else/persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1fullnameOverride+nameOverride~1else~1persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride@2"
+      }
+    },
+    "when/persistence.type=StatefulSet/then/fullnameOverride/else/persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1fullnameOverride~1else~1persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
+    },
+    "when/persistence.type=StatefulSet/then/fullnameOverride/else/persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1fullnameOverride~1else~1persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@5"
+      }
+    },
+    "when/persistence.type=StatefulSet/then/fullnameOverride/else/persistence.type=statefulset+persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1fullnameOverride~1else~1persistence.type=sts@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      }
+    },
+    "when/persistence.type=StatefulSet/then/nameOverride/else/persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1nameOverride~1else~1persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/persistence.type=StatefulSet/then/nameOverride/else/persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=statefulset~1then~1nameOverride~1else~1persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/persistence.type=statefulset/then/any/else/persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": true
+    },
+    "when/persistence.type=statefulset/then/any/else/persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": true
+    },
+    "when/persistence.type=statefulset/then/any/else/persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": true
+    },
+    "when/persistence.type=statefulset/then/any/else/persistence.type=sts@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": true
+    },
+    "when/persistence.type=statefulset/then/fullnameOverride+nameOverride/else/persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=sts~1then~1fullnameOverride+nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride"
+      }
+    },
+    "when/persistence.type=statefulset/then/fullnameOverride+nameOverride/else/persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=sts~1then~1fullnameOverride+nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride@2"
+      }
+    },
+    "when/persistence.type=statefulset/then/fullnameOverride/else/persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=sts~1then~1fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
+    },
+    "when/persistence.type=statefulset/then/fullnameOverride/else/persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=sts~1then~1fullnameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@5"
+      }
+    },
+    "when/persistence.type=statefulset/then/fullnameOverride/else/persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=sts~1then~1fullnameOverride~1else~1fail@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      }
+    },
+    "when/persistence.type=statefulset/then/nameOverride/else/persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=sts~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/persistence.type=statefulset/then/nameOverride/else/persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=sts~1then~1nameOverride~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=statefulset"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/persistence.type=sts/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": true
+    },
+    "when/persistence.type=sts/then/fullnameOverride+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride"
+      }
+    },
+    "when/persistence.type=sts/then/fullnameOverride+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride@2"
+      }
+    },
+    "when/persistence.type=sts/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
+    },
+    "when/persistence.type=sts/then/fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@5"
+      }
+    },
+    "when/persistence.type=sts/then/fullnameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      }
+    },
+    "when/persistence.type=sts/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/persistence.type=sts/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1persistence.type=sts@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/useStatefulSet:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": true
+    },
+    "when/useStatefulSet:t/then/any/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1any~1else~1persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": true
+    },
+    "when/useStatefulSet:t/then/any/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1any~1else~1persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": true
+    },
+    "when/useStatefulSet:t/then/any/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1any~1else~1persistence.type=statefulset+persistence.type=sts@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": true
+    },
+    "when/useStatefulSet:t/then/any/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@4": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1any~1else~1persistence.type=statefulset+persistence.type=sts@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": true
+    },
+    "when/useStatefulSet:t/then/fullnameOverride+nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride+nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride@2"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride+nameOverride/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1fullnameOverride+nameOverride~1else~1persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride+nameOverride/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1fullnameOverride+nameOverride~1else~1persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride@2"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@5"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1fullnameOverride~1else~1persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1fullnameOverride~1else~1persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@5"
+      }
+    },
+    "when/useStatefulSet:t/then/fullnameOverride/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@3": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1fullnameOverride~1else~1persistence.type=statefulset+persistence.type=sts@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+      }
+    },
+    "when/useStatefulSet:t/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/useStatefulSet:t/then/nameOverride/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
+    },
+    "when/useStatefulSet:t/then/nameOverride/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1nameOverride~1else~1persistence.type=statefulset+persistence.type=sts"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/useStatefulSet:t/then/nameOverride/else/persistence.type=StatefulSet+persistence.type=statefulset+persistence.type=sts@2": {
+      "else": {
+        "$ref": "#/$defs/when~1persistence.type=StatefulSet~1then~1nameOverride~1else~1persistence.type=statefulset+persistence.type=sts@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@7"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -50,7 +1311,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1useStatefulSet:t"
+        "$ref": "#/$defs/constrains~1useStatefulSet:t@5"
       },
       "then": {
         "additionalProperties": {},
@@ -66,7 +1327,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1useStatefulSet:t@2"
+            "$ref": "#/$defs/constrains~1useStatefulSet:t@6"
           },
           {
             "anyOf": [
@@ -99,6 +1360,267 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+persistence.enabled:t+5more~1else~1any"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "tag": {}
+                      },
+                      "required": [
+                        "tag"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "tag": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+useStatefulSet:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t+persistence.enabled:t+5more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+persistence.enabled:t+5more~1else~1any@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "description": "Overrides the Grafana image tag whose default is the chart appVersion",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "createConfigmap": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "createConfigmap"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+useStatefulSet:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more"
+          },
+          {
+            "properties": {
+              "assertNoLeakedSecrets": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "assertNoLeakedSecrets"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "image": {
+                "properties": {
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tag"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "grafana.ini": {
+            "description": "Grafana's primary configuration\nNOTE: values in map will be converted to ini format\nref: http://docs.grafana.org/installation/configuration/",
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+useStatefulSet:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "type": "object"
+          }
+        }
+      }
     }
   ],
   "properties": {
@@ -114,6 +1636,7 @@
     "alerting": {
       "description": "Configure grafana alerting (can be templated)\nref: https://docs.grafana.com/alerting/set-up/provision-alerting-resources/file-provisioning/\npolicies.yaml:\napiVersion: 1\npolicies:\n- orgId: 1\nreceiver: first_uid\nrules.yaml:\napiVersion: 1\ngroups:\n- orgId: 1\nname: '{{ .Chart.Name }}_my_rule_group'\nfolder: my_first_folder\ninterval: 60s\nrules:\n- uid: my_id_1\ntitle: my_first_rule\ncondition: A\ndata:\n- refId: A\ndatasourceUid: '-100'\nmodel:\nconditions:\n- evaluator:\nparams:\n- 3\ntype: gt\noperator:\ntype: and\nquery:\nparams:\n- A\nreducer:\ntype: last\ntype: query\ndatasource:\ntype: __expr__\nuid: '-100'\nexpression: 1==0\nintervalMs: 1000\nmaxDataPoints: 43200\nrefId: A\ntype: math\ndashboardUid: my_dashboard\npanelId: 123\nnoDataState: Alerting\nfor: 60s\nannotations:\nsome_key: some_value\nlabels:\nteam: sre_team_1\ncontactpoints.yaml:\nsecret:\napiVersion: 1\ncontactPoints:\n- orgId: 1\nname: cp_1\nreceivers:\n- uid: first_uid\ntype: pagerduty\nsettings:\nintegrationKey: XXX\nseverity: critical\nclass: ping failure\ncomponent: Grafana\ngroup: app-stack\nsummary: |\n{{ `{{ include \"default.message\" . }}` }}\ntemplates.yaml:\napiVersion: 1\ntemplates:\n- orgId: 1\nname: my_first_template\ntemplate: |\n{{ `\n{{ define \"my_first_template\" }}\nCustom notification message\n{{ end }}\n` }}\nmutetimes.yaml\napiVersion: 1\nmuteTimes:\n- orgId: 1\nname: mti_1\nrefer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0\ntime_intervals: {}"
     },
+    "annotations": {},
     "assertNoLeakedSecrets": {
       "description": "assertNoLeakedSecrets is a helper function defined in _helpers.tpl that checks if secret\nvalues are not exposed in the rendered grafana.ini configmap. It is enabled by default.\nTo pass values into grafana.ini without exposing them in a configmap, use variable expansion:\nhttps://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion\nAlternatively, if you wish to allow secret values to be exposed in the rendered grafana.ini configmap,\nyou can disable this check by setting assertNoLeakedSecrets to false."
     },
@@ -123,6 +1646,7 @@
     "autoscaling": {
       "description": "Create HorizontalPodAutoscaler object for deployment type"
     },
+    "configMapAnnotations": {},
     "containerSecurityContext": {},
     "createConfigmap": {
       "description": "Enable creating the grafana configmap"
@@ -208,12 +1732,24 @@
     "extraVolumes": {
       "description": "Additional Grafana server volumes\n- name: extra-volume-0\nexistingClaim: volume-claim\n- name: extra-volume-1\nhostPath:\npath: /usr/shared/\ntype: \"\"\n- name: grafana-secrets\ncsi:\ndriver: secrets-store.csi.k8s.io\nreadOnly: true\nvolumeAttributes:\nsecretProviderClass: \"grafana-env-spc\""
     },
+    "fullnameOverride": {},
     "global": {},
     "gossipPortName": {
       "description": "Deployment annotations\nannotations: {}"
     },
     "grafana.ini": {
-      "description": "Grafana's primary configuration\nNOTE: values in map will be converted to ini format\nref: http://docs.grafana.org/installation/configuration/"
+      "additionalProperties": {},
+      "description": "Grafana's primary configuration\nNOTE: values in map will be converted to ini format\nref: http://docs.grafana.org/installation/configuration/",
+      "properties": {
+        "database": {
+          "additionalProperties": {},
+          "properties": {
+            "password": {}
+          }
+        },
+        "password": {},
+        "smtp": {}
+      }
     },
     "headlessService": {
       "description": "Create a headless service for the deployment"
@@ -222,7 +1758,14 @@
       "description": "overrides pod.spec.hostAliases in the grafana deployment's pods\n- ip: \"1.2.3.4\"\nhostnames:\n- \"my.host.com\""
     },
     "hostUsers": {},
-    "image": {},
+    "image": {
+      "additionalProperties": {},
+      "properties": {
+        "tag": {
+          "description": "Overrides the Grafana image tag whose default is the chart appVersion"
+        }
+      }
+    },
     "imageRenderer": {
       "description": "Add a seperate remote image renderer deployment/service"
     },
@@ -235,6 +1778,7 @@
       "description": "Container Lifecycle Hooks. Execute a specific bash command or make an HTTP request\npostStart:\nexec:\ncommand: []"
     },
     "livenessProbe": {},
+    "nameOverride": {},
     "namespaceOverride": {
       "description": "Override the deployment namespace"
     },
@@ -260,6 +1804,7 @@
     "podDisruptionBudget": {
       "description": "See `kubectl explain poddisruptionbudget.spec` for more\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/\napiVersion: \"\"\nminAvailable: 1\nmaxUnavailable: 1\nunhealthyPodEvictionPolicy: IfHealthyBudget"
     },
+    "podLabels": {},
     "podPortName": {},
     "rbac": {},
     "readinessProbe": {},

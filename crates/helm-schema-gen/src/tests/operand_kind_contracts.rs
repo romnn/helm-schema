@@ -1137,7 +1137,6 @@ fn replace_chain_exempts_stripped_sentinels_from_the_parser_domain() {
 /// so a digest-suffixed tag is exempt from the parser's lexical domain
 /// while an untouched raw string still must parse.
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): split prefix member exempts digest suffixes from the parser domain; tracked in plan/value-algebra-r3b.md follow-ups"]
 fn split_prefix_member_exempts_digest_suffixes_from_the_parser_domain() {
     let src = indoc! {r#"
         {{- $version := (split "@" .Values.image.tag)._0 -}}
@@ -2589,7 +2588,6 @@ fn numeric_type_is_spelling_does_not_claim_transport_provenance() {
 /// `tpl .Values.config.webserver.base_url` behind
 /// `semverCompare "<3.0.0" .Values.airflowVersion`).
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): semver guarded string contract binds conditionally; tracked in plan/value-algebra-r3b.md follow-ups"]
 fn semver_guarded_string_contract_binds_conditionally() {
     let src = indoc! {r#"
         {{- if and .Values.webserver.enabled (semverCompare "<3.0.0" .Values.airflowVersion) }}

@@ -3156,7 +3156,6 @@ fn root_set_literal_chains_decode_as_value_dispatch_guards() {
 /// grafana dashboard document gates; helm-verified with
 /// `--kube-version` / `kubeTargetVersionOverride` probes).
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): capabilities defaulted semver gates decode against the policy version; tracked in plan/value-algebra-r3b.md follow-ups"]
 fn capabilities_defaulted_semver_gates_decode_against_the_policy_version() {
     let src = indoc! {r#"
         {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.versionOverride }}

@@ -21,8 +21,10 @@ mod input_writes;
 mod invoke;
 mod json_query;
 pub(crate) mod kinds;
+mod lexical;
 mod namespace;
 mod operations;
+mod ordering;
 pub(crate) mod output;
 mod query;
 mod quoted;
@@ -322,6 +324,8 @@ enum MapType {
     ApiVersions,
     Capabilities,
     KubeVersion,
+    /// A parsed `*semver.Version`, whose `Major`/`Minor`/`Patch` methods read as fields.
+    Semver,
     Interface,
     String,
     Values,

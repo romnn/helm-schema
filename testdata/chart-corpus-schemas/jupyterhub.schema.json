@@ -11,6 +11,46 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
+    },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
     "constrains/scheduling+scheduling=null": {
       "anyOf": [
         {
@@ -38,6 +78,60 @@
           }
         }
       ]
+    },
+    "constrains/scheduling.userScheduler.enabled:t": {
+      "properties": {
+        "scheduling": {
+          "properties": {
+            "userScheduler": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "userScheduler"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "scheduling"
+      ],
+      "type": "object"
+    },
+    "constrains/scheduling.userScheduler.serviceAccount.create:t": {
+      "properties": {
+        "scheduling": {
+          "properties": {
+            "userScheduler": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "create": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "userScheduler"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "scheduling"
+      ],
+      "type": "object"
     },
     "constrains/userScheduler": {
       "properties": {
@@ -85,6 +179,40 @@
           "const": true
         }
       ]
+    },
+    "when/fullnameOverride/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      },
+      "then": false
+    },
+    "when/nameOverride:t/then/fullnameOverride+scheduling.userScheduler.enabled:t+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1scheduling.userScheduler.enabled:t~1then~1fullnameOverride+scheduling.userScheduler.serviceAccount.create:t~1else~1fail"
+      }
+    },
+    "when/scheduling.userScheduler.enabled:t/then/fullnameOverride+scheduling.userScheduler.serviceAccount.create:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1scheduling.userScheduler.serviceAccount.create:t~1then~1fullnameOverride~1else~1fail"
+      }
+    },
+    "when/scheduling.userScheduler.serviceAccount.create:t/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1fail~1else~1any"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -92,23 +220,7 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "scheduling": {
-            "properties": {
-              "userScheduler": {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              }
-            },
-            "required": [
-              "userScheduler"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "scheduling"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -135,6 +247,36 @@
         "$ref": "#/$defs/constrains~1scheduling+scheduling=null"
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+scheduling.userScheduler.enabled:t+1more~1else~1fail"
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "nameOverride": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -169,6 +311,28 @@
           },
           {
             "$ref": "#/$defs/constrains~1scheduling+scheduling=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1nameOverride:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
           }
         ]
       },

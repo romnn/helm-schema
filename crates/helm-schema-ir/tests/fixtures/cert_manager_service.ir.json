@@ -209,6 +209,56 @@
       "condition": [
         [
           {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
+          },
+          {
+            "path": "creator",
+            "type": "not_eq",
+            "value": "helm"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ],
+        []
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 96,
+            "start": 36
+          },
+          "template_path": "charts/cert-manager/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "v1",
+        "kind": "Service"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "prometheus.enabled",
             "type": "truthy"
           },

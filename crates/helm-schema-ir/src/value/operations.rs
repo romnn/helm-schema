@@ -40,13 +40,15 @@ pub(super) fn transfer(
     transfer_known(input, state)
 }
 
-fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, TransferDemand> {
-    let function = input.function;
+/// Records what a call demands of its operands before it executes: catalog parsers abort outside
+/// their grammar, and printing and serialization need a known operand.
+fn record_operand_demands(function: &str, arguments: &[Value], state: &mut State) {
+    record_parser_failures(function, arguments, state);
     if matches!(
         function,
         "quote" | "squote" | "toString" | "toYaml" | "toJson" | "toPrettyJson" | "toRawJson"
     ) {
-        for argument in input.arguments {
+        for argument in arguments {
             state.record_requirement(
                 argument,
                 &super::Predicate::True,
@@ -54,6 +56,11 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
             );
         }
     }
+}
+
+fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, TransferDemand> {
+    let function = input.function;
+    record_operand_demands(function, input.arguments, state);
     match crate::function_semantics::function_semantics(function).behavior {
         crate::function_semantics::OutputBehavior::Encoded(alphabet) => {
             return Ok(Value::frozen_text(
@@ -72,8 +79,11 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
         | crate::function_semantics::OutputBehavior::Arithmetic => {}
     }
     match function {
-        "semverCompare" => Ok(transfer_semver_compare(input)),
+        "semverCompare" => Ok(transfer_semver_compare(input, state)),
         "contains" => Ok(transfer_contains(input, state)),
+        "regexMatch" | "mustRegexMatch" | "hasPrefix" | "hasSuffix" => {
+            Ok(transfer_string_match(input, state))
+        }
         "dict" => Ok(transfer_dictionary(input, state)),
         "list" | "tuple" => Ok(transfer_sequence(input)),
         "set" | "unset" => transfer_write_map(input, state),
@@ -124,19 +134,29 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
         "print" | "println" => Ok(transfer_print(input, state)),
         "printf" => Ok(transfer_printf(input, state)),
         "trunc" | "trimSuffix" | "trimPrefix" | "replace" => Ok(transfer_text_edit(input, state)),
+        "regexReplaceAll"
+        | "regexReplaceAllLiteral"
+        | "mustRegexReplaceAll"
+        | "mustRegexReplaceAllLiteral" => Ok(transfer_regex_replace(input, state)),
         "indent" | "nindent" => Ok(transfer_indent(input, state)),
-        _ => {
-            match crate::function_semantics::function_semantics(input.function).heap_effect {
-                crate::function_semantics::HeapEffect::ReadOnly => {}
-                crate::function_semantics::HeapEffect::Operands => {
-                    widen_operands(input.arguments, state);
-                }
-                crate::function_semantics::HeapEffect::Unknown => invalidate(state),
-            }
-            Ok(Value::influenced(input.influences.clone()))
-        }
+        "repeat" => Ok(transfer_repeat(input, state)),
+        "semver" => transfer_semver(&input, state),
+        _ => Ok(transfer_fallback(input, state)),
     }
     .map_err(TransferDemand::Abort)
+}
+
+/// A call without an executed transfer: its catalog heap effect, and a result influenced by its
+/// operands.
+fn transfer_fallback(input: TransferInput<'_>, state: &mut State) -> Value {
+    match crate::function_semantics::function_semantics(input.function).heap_effect {
+        crate::function_semantics::HeapEffect::ReadOnly => {}
+        crate::function_semantics::HeapEffect::Operands => {
+            widen_operands(input.arguments, state);
+        }
+        crate::function_semantics::HeapEffect::Unknown => invalidate(state),
+    }
+    Value::influenced(input.influences)
 }
 struct TransferInput<'a> {
     function: &'a str,
@@ -249,7 +269,65 @@ fn transfer_sequence(input: TransferInput<'_>) -> Value {
     }
 }
 
-fn transfer_semver_compare(input: TransferInput<'_>) -> Value {
+/// Records the abort of every strict parser operand outside its grammar (catalog grammar column).
+///
+/// No abort exit is built here: the failure is recorded as its proved input preimage, and the
+/// continuing state keeps the inputs the grammar admits.
+fn record_parser_failures(function: &str, arguments: &[Value], state: &mut State) {
+    use helm_schema_core::ValuePattern;
+
+    let semantics = crate::function_semantics::function_semantics(function);
+    let mut demands = Vec::new();
+    if let Some((index, grammar)) =
+        crate::function_semantics::strict_parser_operand_pattern(semantics, arguments.len())
+    {
+        demands.push((
+            index,
+            ValuePattern::String {
+                pattern: grammar.to_owned(),
+            },
+        ));
+    }
+    for index in 0..arguments.len() {
+        if let Some(grammar) =
+            crate::function_semantics::strict_collection_item_pattern(semantics, index)
+        {
+            demands.push((
+                index,
+                ValuePattern::Array {
+                    prefix: Vec::new(),
+                    items: Some(Box::new(ValuePattern::String {
+                        pattern: grammar.to_owned(),
+                    })),
+                },
+            ));
+        }
+    }
+    for (index, pattern) in demands {
+        let Some(operand) = arguments.get(index) else {
+            continue;
+        };
+        if let Some(preimage) = lexical_preimage(state, operand, &pattern) {
+            state.record_failure(&preimage.unmatched);
+        }
+    }
+}
+
+pub(super) fn lexical_preimage(
+    state: &State,
+    value: &Value,
+    pattern: &helm_schema_core::ValuePattern,
+) -> Option<super::relationship::LexicalPreimage> {
+    let frozen = state.heap.freeze(value);
+    let inputs = state.heap.arena.input_objects.borrow();
+    let mut query = super::relationship::RelationshipQuery::new(&inputs, 512);
+    query.lexical_preimage(&frozen, pattern)
+}
+
+/// Compares through the constraint's exact version language, lifted to the version's inputs.
+fn transfer_semver_compare(input: TransferInput<'_>, state: &State) -> Value {
+    use helm_schema_core::ValuePattern;
+
     let TransferInput {
         function: _,
         arguments,
@@ -258,19 +336,37 @@ fn transfer_semver_compare(input: TransferInput<'_>) -> Value {
         last: _,
     } = input;
 
-    let (Some(GuardValue::String(constraint)), Some(GuardValue::String(version))) =
-        (first.constant(), arguments.get(1).and_then(Value::constant))
-    else {
+    let Some(GuardValue::String(constraint)) = first.constant() else {
         return Value::influenced(influences);
     };
-    let result = helm_schema_ast::semver_constraint_matches_version(constraint, version);
-    Value::with_influences(
-        result.map_or_else(
-            || Value::scalar(super::ScalarType::Bool, None),
-            |result| Value::literal(GuardValue::Bool(result)),
-        ),
-        influences,
-    )
+    let Some(version) = arguments.get(1) else {
+        return Value::influenced(influences);
+    };
+    if let Some(GuardValue::String(version)) = version.constant() {
+        let result = helm_schema_ast::semver_constraint_matches_version(constraint, version);
+        return Value::with_influences(
+            result.map_or_else(
+                || Value::scalar(super::ScalarType::Bool, None),
+                |result| Value::literal(GuardValue::Bool(result)),
+            ),
+            influences,
+        );
+    }
+    // Spellings outside the parser's grammar abort through the recorded parse failure, so on
+    // every live path the constraint's language alone decides the comparison.
+    let Some(accepted) = helm_schema_ast::semver_constraint_match_pattern(constraint) else {
+        return Value::with_influences(Value::scalar(super::ScalarType::Bool, None), influences);
+    };
+    let satisfied = ValuePattern::String { pattern: accepted };
+    let Some(preimage) = lexical_preimage(state, version, &satisfied) else {
+        return Value::with_influences(Value::scalar(super::ScalarType::Bool, None), influences);
+    };
+    let super::relationship::LexicalPreimage {
+        matched,
+        unmatched,
+        exact,
+    } = preimage;
+    super::ordering::certified_truth(state, matched, unmatched, exact, influences)
 }
 
 fn transfer_dictionary(input: TransferInput<'_>, state: &mut State) -> Value {
@@ -738,7 +834,61 @@ fn transfer_contains(input: TransferInput<'_>, state: &State) -> Value {
     if needle.is_empty() {
         return Value::literal(GuardValue::Bool(true));
     }
-    super::text_actions::contains(&last, needle, state)
+    super::text_actions::contains_with(&last, needle, state, false)
+        .or_else(|| {
+            string_language_truth(
+                state,
+                &last,
+                helm_schema_core::escape_regex_literal(needle),
+                influences.clone(),
+            )
+        })
+        .unwrap_or_else(|| super::text_actions::contains(&last, needle, state))
+}
+
+/// `regexMatch`, `hasPrefix` and `hasSuffix`: membership of the string subject (the last operand)
+/// in the language the literal first operand names, lifted to the subject's inputs through its
+/// executed text transforms. Every other subject kind aborts the call before it decides.
+fn transfer_string_match(input: TransferInput<'_>, state: &mut State) -> Value {
+    let (Some(GuardValue::String(operand)), [_, subject]) =
+        (input.first.constant(), input.arguments)
+    else {
+        return transfer_fallback(input, state);
+    };
+    let pattern = match input.function {
+        "hasPrefix" => format!("^{}", helm_schema_core::escape_regex_literal(operand)),
+        "hasSuffix" => format!("{}$", helm_schema_core::escape_regex_literal(operand)),
+        _ => operand.clone(),
+    };
+    string_language_truth(state, subject, pattern, input.influences.clone())
+        .unwrap_or_else(|| transfer_fallback(input, state))
+}
+
+/// The truth of a string subject's membership in a regex language, when its lift decides any
+/// input.
+pub(super) fn string_language_truth(
+    state: &State,
+    subject: &Value,
+    pattern: String,
+    influences: BTreeSet<helm_schema_core::ValuesPath>,
+) -> Option<Value> {
+    // A pattern this dialect cannot parse could disagree with Go's RE2 verdict.
+    regex::Regex::new(&pattern).ok()?;
+    let super::relationship::LexicalPreimage {
+        matched,
+        unmatched,
+        exact,
+    } = lexical_preimage(
+        state,
+        subject,
+        &helm_schema_core::ValuePattern::String { pattern },
+    )?;
+    if !exact && matched == super::Predicate::False && unmatched == super::Predicate::False {
+        return None;
+    }
+    Some(super::ordering::certified_truth(
+        state, matched, unmatched, exact, influences,
+    ))
 }
 
 fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
@@ -1241,6 +1391,102 @@ fn transfer_text_edit(input: TransferInput<'_>, state: &State) -> Value {
         |text| Value::string(&text),
     );
     value.derived(frozen, ValueOperation::Text(transform))
+}
+
+/// `semver VERSION`: a parsed `*semver.Version` whose accessor methods read as fields.
+fn transfer_semver(input: &TransferInput<'_>, state: &mut State) -> Result<Value, AbortReason> {
+    let parsed = match input.first.constant() {
+        Some(GuardValue::String(text)) => Some((
+            helm_schema_ast::parse_semver_version(text).ok_or(AbortReason::Type)?,
+            text.clone(),
+        )),
+        Some(
+            GuardValue::Null | GuardValue::Bool(_) | GuardValue::Int(_) | GuardValue::Float(_),
+        ) => return Err(AbortReason::Type),
+        None => None,
+    };
+    let scalar = |kind, content: Option<GuardValue>| {
+        Value::scalar(
+            kind,
+            content.map(super::scalar_value::ScalarContent::Literal),
+        )
+        .with_influences(input.influences.clone())
+    };
+    let mut fields = Vec::new();
+    for (index, name) in ["Major", "Minor", "Patch"].into_iter().enumerate() {
+        let component = parsed
+            .as_ref()
+            .and_then(|(parsed, _)| parsed.core.get(index))
+            .and_then(|component| i64::try_from(*component).ok())
+            .map(GuardValue::Int);
+        fields.push((name, scalar(super::ScalarType::Uint64, component)));
+    }
+    for (name, text) in [
+        (
+            "Prerelease",
+            parsed.as_ref().map(|(parsed, _)| parsed.prerelease.clone()),
+        ),
+        (
+            "Metadata",
+            parsed.as_ref().map(|(parsed, _)| parsed.metadata.clone()),
+        ),
+        (
+            "Original",
+            parsed.as_ref().map(|(_, original)| original.clone()),
+        ),
+    ] {
+        fields.push((
+            name,
+            scalar(super::ScalarType::String, text.map(GuardValue::String)),
+        ));
+    }
+    let value = state.heap.map(Remainder::Closed);
+    if let Some(target) = state.map_target(&value) {
+        for (name, field) in fields {
+            state.heap.write(&target, name, Field::Present(field));
+        }
+    }
+    Ok(super::hosts::typed_map(value, MapType::Semver))
+}
+
+/// `strings.Repeat` over literal operands; a negative count panics and aborts the call.
+fn transfer_repeat(input: TransferInput<'_>, state: &mut State) -> Value {
+    if let (Some(GuardValue::Int(count)), Some(GuardValue::String(text))) =
+        (input.first.constant(), input.last.constant())
+        && let Ok(count) = usize::try_from(*count)
+        && text.len().saturating_mul(count) <= 64 * 1024
+    {
+        return Value::string(&text.repeat(count));
+    }
+    transfer_fallback(input, state)
+}
+
+/// `regexReplaceAll REGEX text REPLACEMENT`: the subject is the middle operand.
+fn transfer_regex_replace(input: TransferInput<'_>, state: &State) -> Value {
+    use super::relationship::{TextTransform, ValueOperation};
+
+    let (Some(GuardValue::String(pattern)), Some(subject), Some(GuardValue::String(replacement))) = (
+        input.first.constant(),
+        input.arguments.get(1),
+        input.last.constant(),
+    ) else {
+        return Value::influenced(input.influences);
+    };
+    // The literal variants never expand `$` references, so they replace with the text itself.
+    let replacement = if input.function.ends_with("Literal") {
+        replacement.replace('$', "$$")
+    } else {
+        replacement.clone()
+    };
+    Value::scalar(super::ScalarType::String, None)
+        .with_influences(input.influences)
+        .derived(
+            state.heap.freeze(subject),
+            ValueOperation::Text(TextTransform::RegexReplace {
+                pattern: pattern.clone(),
+                replacement,
+            }),
+        )
 }
 
 fn transfer_indent(input: TransferInput<'_>, state: &State) -> Value {
@@ -1869,7 +2115,7 @@ fn map_fields(value: &Value, state: &State) -> Option<MapFields> {
     }
 }
 
-fn sequence_items(value: &Value, state: &State) -> Option<Vec<Value>> {
+pub(super) fn sequence_items(value: &Value, state: &State) -> Option<Vec<Value>> {
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
             datum: Datum::Sequence(sequence),
@@ -2745,6 +2991,29 @@ fn split_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
         return string_map(
             BTreeMap::from([("_0".to_owned(), Field::Present(text.clone()))]),
             Remainder::Closed,
+            influences,
+            state,
+        );
+    }
+    if let (Some(separator), None, Some(subject)) = (
+        separator.filter(|separator| !separator.is_empty()),
+        text,
+        text_value,
+    ) {
+        // Every split of a string by a nonempty separator has a first part: the text before it.
+        let first = Value::scalar(super::ScalarType::String, None)
+            .with_influences(influences.clone())
+            .derived(
+                state.heap.freeze(subject),
+                super::relationship::ValueOperation::Text(super::relationship::TextTransform::Cut(
+                    separator.to_owned(),
+                )),
+            );
+        return string_map(
+            BTreeMap::from([("_0".to_owned(), Field::Present(first))]),
+            Remainder::Unknown {
+                inputs: Rc::new(influences.clone()),
+            },
             influences,
             state,
         );

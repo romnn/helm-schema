@@ -161,7 +161,18 @@
       "description": "Mount Service Account token in pod"
     },
     "autoscaling": {
-      "description": "Autoscaling configuration\nref: https://kubernetes.io/docs/concepts/workloads/autoscaling/"
+      "additionalProperties": {},
+      "description": "Autoscaling configuration\nref: https://kubernetes.io/docs/concepts/workloads/autoscaling/",
+      "properties": {
+        "vpa": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "Enable VPA for InfluxDB(TM) Core"
+            }
+          }
+        }
+      }
     },
     "azure": {
       "description": "Microsoft Azure configuration (ignored unless `objectStore` is set to `azure`)\nMicrosoft Azure credentials"
@@ -236,7 +247,8 @@
     "global": {
       "additionalProperties": {},
       "properties": {
-        "apiVersions": {}
+        "apiVersions": {},
+        "kubeVersion": {}
       }
     },
     "google": {

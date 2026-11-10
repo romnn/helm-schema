@@ -31,7 +31,7 @@ pub(super) fn method(receiver: &Value, name: &str) -> Method {
                 MapType::Files => MethodReceiver::Files,
                 MapType::ApiVersions => MethodReceiver::ApiVersions,
                 MapType::KubeVersion => MethodReceiver::KubeVersion,
-                MapType::Interface | MapType::String | MapType::Capabilities => {
+                MapType::Interface | MapType::String | MapType::Capabilities | MapType::Semver => {
                     MethodReceiver::Other
                 }
             },
@@ -233,7 +233,7 @@ fn readonly_unknown(types: TypeCoverage) -> Value {
     }))
 }
 
-fn typed_map(mut value: Value, view: MapType) -> Value {
+pub(super) fn typed_map(mut value: Value, view: MapType) -> Value {
     match Rc::make_mut(&mut value.node) {
         ValueNode::Leaf(Leaf {
             datum:
@@ -588,6 +588,8 @@ pub(super) fn go_type(view: MapType) -> super::kinds::GoType {
             super::kinds::GoType::Map
         }
         MapType::ApiVersions => super::kinds::GoType::Slice,
-        MapType::Capabilities | MapType::KubeVersion => super::kinds::GoType::Unknown,
+        MapType::Capabilities | MapType::KubeVersion | MapType::Semver => {
+            super::kinds::GoType::Unknown
+        }
     }
 }

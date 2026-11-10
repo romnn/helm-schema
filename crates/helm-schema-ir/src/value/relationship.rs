@@ -53,7 +53,17 @@ pub(super) enum TextTransform {
     TrimSuffix(String),
     Upper,
     Lower,
-    Replace { from: String, to: String },
+    Replace {
+        from: String,
+        to: String,
+    },
+    /// The text before the first occurrence of a separator (`(split SEP text)._0`).
+    Cut(String),
+    /// `regexReplaceAll PATTERN text REPLACEMENT`, with `$` expansion in the replacement.
+    RegexReplace {
+        pattern: String,
+        replacement: String,
+    },
 }
 
 impl TextTransform {
@@ -64,7 +74,12 @@ impl TextTransform {
             Self::Truncate(_)
             | Self::TrimPrefix(_)
             | Self::TrimSuffix(_)
-            | Self::Replace { from: _, to: _ } => return None,
+            | Self::Replace { from: _, to: _ }
+            | Self::Cut(_)
+            | Self::RegexReplace {
+                pattern: _,
+                replacement: _,
+            } => return None,
         }
         let mut relation = helm_schema_core::TextPreimage::default();
         for byte in 0..=127 {
@@ -81,7 +96,13 @@ impl TextTransform {
         let output = match self {
             Self::Upper if text.is_ascii() && text.len() <= limit => text.to_uppercase(),
             Self::Lower if text.is_ascii() && text.len() <= limit => text.to_lowercase(),
-            Self::Upper | Self::Lower => return None,
+            // Unbounded or non-ASCII case mapping and Go's regexp classes and expansion are not executed here.
+            Self::Upper
+            | Self::Lower
+            | Self::RegexReplace {
+                pattern: _,
+                replacement: _,
+            } => return None,
             Self::Truncate(length) => {
                 let width = usize::try_from(length.unsigned_abs()).ok()?;
                 if *length < 0 {
@@ -94,6 +115,8 @@ impl TextTransform {
             Self::TrimPrefix(prefix) => text.strip_prefix(prefix).unwrap_or(text).to_owned(),
             Self::TrimSuffix(suffix) => text.strip_suffix(suffix).unwrap_or(text).to_owned(),
             Self::Replace { from, to } => super::text::bounded_replace(text, from, to, limit)?,
+            Self::Cut(separator) if separator.is_empty() => return None,
+            Self::Cut(separator) => text.split(separator.as_str()).next()?.to_owned(),
         };
         (output.len() <= limit).then_some(output)
     }
@@ -2015,5 +2038,524 @@ fn operation_member_presence(operation: &ValueOperation) -> MemberPresence {
         | ValueOperation::Pick(_)
         | ValueOperation::Decode(_)
         | ValueOperation::Merge { overwrite: _ } => MemberPresence::unknown(),
+    }
+}
+/// A value's membership in a pattern, lifted to its inputs.
+///
+/// `matched` implies membership and `unmatched` implies non-membership; `exact` marks results that
+/// are complements, so every input is decided.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) struct LexicalPreimage {
+    pub(super) matched: Predicate,
+    pub(super) unmatched: Predicate,
+    pub(super) exact: bool,
+}
+
+impl LexicalPreimage {
+    fn undecided() -> Self {
+        Self {
+            matched: Predicate::False,
+            unmatched: Predicate::False,
+            exact: false,
+        }
+    }
+}
+
+/// The patterns one value must be tested against, as lifted so far.
+#[derive(Clone)]
+struct LexicalQuery {
+    matched: helm_schema_core::ValuePattern,
+    unmatched: helm_schema_core::ValuePattern,
+    /// Non-string operands that match, carried from a printing step to its operand (nil as Null).
+    scalars: Vec<GuardValue>,
+    complementary: bool,
+}
+
+impl<'a> RelationshipQuery<'a, '_> {
+    /// Lifts membership in `pattern` through selections, executed text transforms and printing.
+    pub(super) fn lexical_preimage(
+        &mut self,
+        frozen: &'a FrozenValue,
+        pattern: &helm_schema_core::ValuePattern,
+    ) -> Option<LexicalPreimage> {
+        let query = LexicalQuery {
+            matched: pattern.clone(),
+            unmatched: helm_schema_core::ValuePattern::Not(Box::new(pattern.clone())),
+            scalars: Vec::new(),
+            complementary: true,
+        };
+        let preimage = self.lexical_value(&frozen.value, &frozen.heap, &query, 0);
+        (self.remaining > 0).then_some(preimage)
+    }
+
+    fn lexical_value(
+        &mut self,
+        value: &'a Value,
+        current: &'a HeapVersion,
+        query: &LexicalQuery,
+        depth: usize,
+    ) -> LexicalPreimage {
+        if depth >= 128 || !self.charge(1) {
+            return LexicalPreimage::undecided();
+        }
+        let (datum, origin) = match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => {
+                return self.lexical_choice(decision, [yes, no], current, query, depth);
+            }
+            ValueNode::Leaf(Leaf { datum, origin }) => (datum, origin),
+        };
+        if let Some(constant) = constant_json(datum) {
+            let (Some(matched), Some(unmatched)) = (
+                query.matched.matches(&constant),
+                query.unmatched.matches(&constant),
+            ) else {
+                return LexicalPreimage::undecided();
+            };
+            let printed = printed_scalar(&constant, &query.scalars);
+            let (matched, unmatched) = (
+                matched || printed,
+                unmatched || query.complementary && !printed && !constant.is_string(),
+            );
+            let truth = |holds| {
+                if holds {
+                    Predicate::True
+                } else {
+                    Predicate::False
+                }
+            };
+            return LexicalPreimage {
+                matched: truth(matched),
+                unmatched: truth(unmatched),
+                exact: query.complementary,
+            };
+        }
+        if let Datum::Scalar {
+            go_type: _,
+            content: Some(ScalarContent::StringDomain { pattern, .. }),
+        } = datum
+        {
+            return lexical_domain(pattern, query);
+        }
+        if let Some(path) = self.direct_input_path(datum, origin) {
+            let mut alternatives = Vec::new();
+            for scalar in &query.scalars {
+                alternatives.push(match scalar {
+                    GuardValue::Null => super::kinds::input_nil_predicate(&path),
+                    scalar => Predicate::from(Guard::Eq {
+                        path: path.clone(),
+                        value: scalar.clone(),
+                    }),
+                });
+            }
+            alternatives.push(pattern_predicate(&path, &query.matched));
+            let matched = Predicate::Or(alternatives).normalize_boolean();
+            let unmatched = if query.complementary {
+                matched.clone().negated()
+            } else {
+                pattern_predicate(&path, &query.unmatched)
+            };
+            return LexicalPreimage {
+                matched,
+                unmatched,
+                exact: query.complementary,
+            };
+        }
+        if let Datum::Text(text) = datum {
+            return self.lexical_text(text.term(), query, depth);
+        }
+        let Some(derivation) = origin.derivation.as_deref() else {
+            return LexicalPreimage::undecided();
+        };
+        let lifted = match &derivation.operation {
+            ValueOperation::Text(transform) => (
+                super::lexical::text_preimage(transform, &query.matched),
+                super::lexical::text_preimage(transform, &query.unmatched),
+            ),
+            ValueOperation::Format(TextFormat::Value) => {
+                return self.lexical_printed(query, &derivation.source, Some("<nil>"), depth);
+            }
+            // `%s` spells other kinds with a diagnostic, so only the string identity lifts.
+            ValueOperation::Format(TextFormat::String) => (
+                super::lexical::printed_preimage(&query.matched),
+                super::lexical::printed_preimage(&query.unmatched),
+            ),
+            ValueOperation::Capability {
+                guard: _,
+                decision: _,
+            }
+            | ValueOperation::Decode(_)
+            | ValueOperation::Trim
+            | ValueOperation::Numeric(_)
+            | ValueOperation::Descriptor { kind_only: _ }
+            | ValueOperation::Member(_)
+            | ValueOperation::Copy
+            | ValueOperation::Omit(_)
+            | ValueOperation::Pick(_)
+            | ValueOperation::Merge { overwrite: _ } => return LexicalPreimage::undecided(),
+        };
+        // A text transform's operand is a string: no other kind reaches its output.
+        self.lexical_source(query, lifted, Vec::new(), &derivation.source, depth)
+    }
+
+    /// An exact choice selects its arms' answers; certified subsets add what holds on either
+    /// arm; an unresolved choice keeps only what both arms agree on.
+    fn lexical_choice(
+        &mut self,
+        decision: &Rc<super::FrozenTest>,
+        [yes, no]: [&'a Value; 2],
+        current: &'a HeapVersion,
+        query: &LexicalQuery,
+        depth: usize,
+    ) -> LexicalPreimage {
+        let approximate = decision.when_true.contains_approximation()
+            || decision.when_false.contains_approximation();
+        let mut arms = Vec::with_capacity(2);
+        for (taken, value) in [(true, yes), (false, no)] {
+            match self.decisions.get(&decision.id) {
+                Some(selected) if *selected != taken => continue,
+                Some(_) => return self.lexical_value(value, current, query, depth + 1),
+                None => {}
+            }
+            self.decisions.insert(decision.id, taken);
+            arms.push((taken, self.lexical_value(value, current, query, depth + 1)));
+            self.decisions.remove(&decision.id);
+        }
+        let [(_, on_true), (_, on_false)] = match arms.as_slice() {
+            [(true, on_true), (false, on_false)] => [(true, on_true), (false, on_false)],
+            _ => return LexicalPreimage::undecided(),
+        };
+        let both =
+            |left: &Predicate, right: &Predicate| Predicate::all(vec![left.clone(), right.clone()]);
+        let mut matched = vec![both(&on_true.matched, &on_false.matched)];
+        let mut unmatched = vec![both(&on_true.unmatched, &on_false.unmatched)];
+        let exact = match decision.coverage {
+            _ if approximate => false,
+            Coverage::Exact | Coverage::CertifiedPartial => {
+                matched.push(both(&decision.when_true, &on_true.matched));
+                matched.push(both(&decision.when_false, &on_false.matched));
+                unmatched.push(both(&decision.when_true, &on_true.unmatched));
+                unmatched.push(both(&decision.when_false, &on_false.unmatched));
+                decision.coverage == Coverage::Exact && on_true.exact && on_false.exact
+            }
+            Coverage::Partial => false,
+        };
+        LexicalPreimage {
+            matched: self.predicates.normalize(Predicate::Or(matched)),
+            unmatched: self.predicates.normalize(Predicate::Or(unmatched)),
+            exact,
+        }
+    }
+
+    /// Follows printed helper output whose only significant part is one value.
+    fn lexical_text(
+        &mut self,
+        term: &'a super::text::TextTerm,
+        query: &LexicalQuery,
+        depth: usize,
+    ) -> LexicalPreimage {
+        let graph = match term {
+            super::text::TextTerm::Capture {
+                graph,
+                strip_marker: _,
+            } => graph,
+            super::text::TextTerm::Quote { value } => {
+                return self.lexical_quote(query, value, depth);
+            }
+            _ => return LexicalPreimage::undecided(),
+        };
+        let mut printed = None;
+        for part in &graph.parts {
+            match part.content() {
+                super::TextPart::Bytes(bytes) if bytes.is_empty() => {}
+                super::TextPart::Frozen(value) if printed.is_none() => printed = Some(value),
+                super::TextPart::Bytes(_)
+                | super::TextPart::Frozen(_)
+                | super::TextPart::Select {
+                    decision: _,
+                    yes: _,
+                    no: _,
+                }
+                | super::TextPart::Unknown(_) => return LexicalPreimage::undecided(),
+            }
+        }
+        let Some(value) = printed else {
+            return LexicalPreimage::undecided();
+        };
+        // A template action prints nil as `<no value>`; Helm erases that only in the final file.
+        self.lexical_printed(query, value, Some("<no value>"), depth)
+    }
+
+    /// Lifts through Go's `%v` printing: the identity on strings, and for a finite output
+    /// language also the non-string operands spelled inside it.
+    fn lexical_printed(
+        &mut self,
+        query: &LexicalQuery,
+        source: &'a FrozenValue,
+        nil_spelling: Option<&str>,
+        depth: usize,
+    ) -> LexicalPreimage {
+        let strings = (
+            super::lexical::printed_preimage(&query.matched),
+            super::lexical::printed_preimage(&query.unmatched),
+        );
+        let scalars = query.complementary.then(|| {
+            let mut words = super::lexical::finite_words(&query.matched)?;
+            let nil = nil_spelling.is_some_and(|spelling| words.remove(spelling));
+            let mut scalars = super::lexical::printed_scalars(&words)?;
+            if nil {
+                scalars.push(GuardValue::Null);
+            }
+            Some(scalars)
+        });
+        let Some(Some(scalars)) = scalars else {
+            return self.lexical_source(query, strings, Vec::new(), source, depth);
+        };
+        let (Some(matched), Some(unmatched)) = strings else {
+            return LexicalPreimage::undecided();
+        };
+        let exact = |lexical: super::lexical::Lexical| super::lexical::Lexical {
+            exact: true,
+            ..lexical
+        };
+        self.lexical_source(
+            query,
+            (Some(exact(matched)), Some(exact(unmatched))),
+            scalars,
+            source,
+            depth,
+        )
+    }
+
+    /// Lifts through Sprig `quote`: nil quotes to the empty string and anything else to the
+    /// Go-quoted `%v` spelling, so a finite language of quoted words lifts exactly.
+    fn lexical_quote(
+        &mut self,
+        query: &LexicalQuery,
+        source: &'a FrozenValue,
+        depth: usize,
+    ) -> LexicalPreimage {
+        let Some(mut words) = super::lexical::finite_words(&query.matched) else {
+            return LexicalPreimage::undecided();
+        };
+        let nil = words.remove("");
+        let mut printed = std::collections::BTreeSet::new();
+        for word in &words {
+            let Some(content) = super::lexical::unquoted(word) else {
+                // A word with escapes or without quotes: only unrepresented spellings remain.
+                if word.starts_with('"') {
+                    return LexicalPreimage::undecided();
+                }
+                continue;
+            };
+            printed.insert(content.to_owned());
+        }
+        let printed_query = LexicalQuery {
+            matched: super::lexical::word_language(&printed),
+            unmatched: helm_schema_core::ValuePattern::Not(Box::new(
+                super::lexical::word_language(&printed),
+            )),
+            scalars: Vec::new(),
+            complementary: query.complementary,
+        };
+        // Sprig `quote` drops nil (it quotes to the empty string), so no quoted word spells it.
+        let mut lifted = self.lexical_printed(&printed_query, source, None, depth);
+        if nil {
+            let nil_matched = self.lexical_nil(source, depth);
+            lifted.matched = Predicate::Or(vec![lifted.matched, nil_matched.clone()]);
+            lifted.unmatched = Predicate::all(vec![lifted.unmatched, nil_matched.negated()]);
+        }
+        lifted
+    }
+
+    /// The inputs on which a value is nil, decided only for a direct input.
+    fn lexical_nil(&mut self, source: &'a FrozenValue, depth: usize) -> Predicate {
+        let query = LexicalQuery {
+            matched: helm_schema_core::ValuePattern::AnyOf(Vec::new()),
+            unmatched: helm_schema_core::ValuePattern::Any,
+            scalars: vec![GuardValue::Null],
+            complementary: true,
+        };
+        let nil = self.lexical_value(&source.value, &source.heap, &query, depth + 1);
+        if nil.exact {
+            nil.matched
+        } else {
+            Predicate::False
+        }
+    }
+
+    fn lexical_source(
+        &mut self,
+        query: &LexicalQuery,
+        (matched, unmatched): (
+            Option<super::lexical::Lexical>,
+            Option<super::lexical::Lexical>,
+        ),
+        scalars: Vec<GuardValue>,
+        source: &'a FrozenValue,
+        depth: usize,
+    ) -> LexicalPreimage {
+        let nothing = || super::lexical::Lexical {
+            pattern: helm_schema_core::ValuePattern::AnyOf(Vec::new()),
+            exact: false,
+        };
+        let matched = matched.unwrap_or_else(nothing);
+        let unmatched = unmatched.unwrap_or_else(nothing);
+        let lifted = LexicalQuery {
+            complementary: query.complementary && matched.exact && unmatched.exact,
+            matched: matched.pattern,
+            unmatched: unmatched.pattern,
+            scalars,
+        };
+        self.lexical_value(&source.value, &source.heap, &lifted, depth + 1)
+    }
+}
+
+/// The JSON spelling of an immutable scalar operand.
+fn constant_json(datum: &Datum) -> Option<serde_json::Value> {
+    let constant = match datum {
+        Datum::Scalar {
+            go_type: _,
+            content: Some(ScalarContent::Literal(value)),
+        } => value,
+        Datum::Text(text) => return text.exact_text().map(serde_json::Value::String),
+        Datum::Scalar {
+            go_type: _,
+            content: _,
+        }
+        | Datum::Map { view: _, target: _ }
+        | Datum::Sequence(_)
+        | Datum::Strings(_)
+        | Datum::Slot {
+            backing: _,
+            index: _,
+        }
+        | Datum::Unknown(_) => return None,
+    };
+    Some(match constant {
+        GuardValue::Null => serde_json::Value::Null,
+        GuardValue::Bool(value) => serde_json::Value::Bool(*value),
+        GuardValue::Int(value) => serde_json::Value::from(*value),
+        GuardValue::Float(value) => serde_json::Value::from(value.parse::<f64>().ok()?),
+        GuardValue::String(value) => serde_json::Value::String(value.clone()),
+    })
+}
+
+/// The guard for an input's membership in a value pattern, in its canonical atom when one exists:
+/// a string language is `MatchesPattern`, and the strings outside one are `NotMatchesPattern`.
+fn pattern_predicate(path: &ValuesPath, pattern: &helm_schema_core::ValuePattern) -> Predicate {
+    use helm_schema_core::ValuePattern;
+    fn string(part: &ValuePattern) -> Option<&str> {
+        match part {
+            ValuePattern::String { pattern } => Some(pattern.as_str()),
+            _ => None,
+        }
+    }
+    let mut parts = Vec::new();
+    let mut pending = vec![pattern];
+    while let Some(part) = pending.pop() {
+        match part {
+            ValuePattern::AllOf(inner) => pending.extend(inner.iter().rev()),
+            other => parts.push(other),
+        }
+    }
+    // Every Go string matches the empty pattern; it only restricts kinds.
+    let strings = parts.iter().filter(|part| string(part).is_some()).count();
+    let languages = parts
+        .iter()
+        .filter(|part| string(part).is_some_and(|pattern| !pattern.is_empty()))
+        .count();
+    let complements = parts
+        .iter()
+        .filter_map(|part| match part {
+            ValuePattern::Not(inner) => string(inner).filter(|pattern| !pattern.is_empty()),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    if parts
+        .iter()
+        .any(|part| matches!(part, ValuePattern::AnyOf(patterns) if patterns.is_empty()))
+    {
+        return Predicate::False;
+    }
+    let canonical = match (parts.as_slice(), languages, complements.as_slice()) {
+        _ if strings + complements.len() != parts.len() => None,
+        (_, 1, []) => parts
+            .iter()
+            .find_map(|part| string(part).filter(|pattern| !pattern.is_empty()))
+            .map(|pattern| {
+                // A one-word language is string equality.
+                let language = ValuePattern::String {
+                    pattern: pattern.to_owned(),
+                };
+                match super::lexical::finite_words(&language)
+                    .map(|words| words.into_iter().collect::<Vec<_>>())
+                    .as_deref()
+                {
+                    Some([word]) => Guard::Eq {
+                        path: path.clone(),
+                        value: GuardValue::String(word.clone()),
+                    },
+                    _ => Guard::MatchesPattern {
+                        path: path.clone(),
+                        pattern: pattern.to_owned(),
+                        templated: false,
+                    },
+                }
+            }),
+        (_, 0, [pattern]) if strings > 0 => Some(Guard::NotMatchesPattern {
+            path: path.clone(),
+            pattern: (*pattern).to_owned(),
+        }),
+        _ => None,
+    };
+    Predicate::from(canonical.unwrap_or_else(|| Guard::MatchesValue {
+        path: path.clone(),
+        pattern: pattern.clone(),
+    }))
+}
+
+/// Whether a non-string constant is one of the printed scalars.
+fn printed_scalar(constant: &serde_json::Value, scalars: &[GuardValue]) -> bool {
+    scalars.iter().any(|scalar| match (scalar, constant) {
+        (GuardValue::Null, serde_json::Value::Null) => true,
+        (GuardValue::Bool(left), serde_json::Value::Bool(right)) => left == right,
+        (GuardValue::Int(left), serde_json::Value::Number(right)) => {
+            i32::try_from(*left).is_ok_and(|left| right.as_f64() == Some(f64::from(left)))
+        }
+        _ => false,
+    })
+}
+
+/// A string of a finite domain matches when every word does and fails when none does.
+fn lexical_domain(pattern: &str, query: &LexicalQuery) -> LexicalPreimage {
+    let domain = helm_schema_core::ValuePattern::String {
+        pattern: pattern.to_owned(),
+    };
+    let Some(words) = super::lexical::finite_words(&domain) else {
+        return LexicalPreimage::undecided();
+    };
+    let mut verdicts = Vec::with_capacity(words.len());
+    for word in words {
+        let word = serde_json::Value::String(word);
+        let (Some(matched), Some(unmatched)) =
+            (query.matched.matches(&word), query.unmatched.matches(&word))
+        else {
+            return LexicalPreimage::undecided();
+        };
+        verdicts.push((matched, unmatched));
+    }
+    let truth = |holds: bool| {
+        if holds {
+            Predicate::True
+        } else {
+            Predicate::False
+        }
+    };
+    let all_matched = verdicts.iter().all(|(matched, _)| *matched);
+    let all_unmatched = verdicts.iter().all(|(_, unmatched)| *unmatched);
+    LexicalPreimage {
+        matched: truth(all_matched),
+        unmatched: truth(all_unmatched),
+        exact: query.complementary && (all_matched || all_unmatched),
     }
 }

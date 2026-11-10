@@ -759,6 +759,103 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "configTarget",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "type": "absent"
+                }
+              ],
+              [
+                {
+                  "path": "configTarget",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 76,
+            "start": 0
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
         []
       ],
       "kind": "WidenedDependency",

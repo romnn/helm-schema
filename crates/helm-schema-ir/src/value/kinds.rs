@@ -553,6 +553,62 @@ pub(super) fn required_subject(state: super::State, subject: super::Value) -> Ve
     exits
 }
 
+/// The descriptor of a values input, selected by its JSON kind. Values decode numbers as
+/// float64 from files and int64 from `--set`, so a number's descriptor is one of those two.
+fn input_descriptor(
+    state: &super::State,
+    value: &super::Value,
+    kind_only: bool,
+) -> Option<super::Value> {
+    use super::Value;
+    let path = value.identity()?;
+    let typed = |schema_type: &str| {
+        Predicate::from(helm_schema_core::Guard::TypeIs {
+            path: path.clone(),
+            schema_type: schema_type.to_owned(),
+        })
+    };
+    let number = Value::scalar(
+        super::ScalarType::String,
+        Some(super::scalar_value::ScalarContent::StringDomain {
+            pattern: "^(?:float64|int64)$",
+            min_bytes: 5,
+            max_bytes: 7,
+        }),
+    )
+    .with_influences(value.inputs());
+    let arms = [
+        (typed("string"), "string"),
+        (
+            input_nil_predicate(path),
+            if kind_only { "invalid" } else { "<nil>" },
+        ),
+        (typed("boolean"), "bool"),
+        (
+            typed("object"),
+            if kind_only {
+                "map"
+            } else {
+                "map[string]interface {}"
+            },
+        ),
+        (
+            typed("array"),
+            if kind_only { "slice" } else { "[]interface {}" },
+        ),
+    ];
+    let mut result = number;
+    for (predicate, name) in arms.into_iter().rev() {
+        let decision = state.heap.arena.decision(
+            predicate.clone(),
+            predicate.negated(),
+            super::Coverage::Exact,
+        );
+        result = Value::select(decision, Value::string(name), result);
+    }
+    Some(result)
+}
+
 pub(super) fn descriptor(
     state: &super::State,
     function: &str,
@@ -567,10 +623,11 @@ pub(super) fn descriptor(
     let name = descriptor_name(value, kind_only);
     if matches!(function, "kindOf" | "typeOf") {
         return name
-            .map_or_else(
-                || refined_parameter(&Value::influenced(value.inputs()), GoType::String),
-                Value::string,
-            )
+            .map(Value::string)
+            .or_else(|| input_descriptor(state, value, kind_only))
+            .unwrap_or_else(|| {
+                refined_parameter(&Value::influenced(value.inputs()), GoType::String)
+            })
             .derived(
                 state.heap.freeze(value),
                 super::relationship::ValueOperation::Descriptor { kind_only },
@@ -678,7 +735,7 @@ fn descriptor_name(value: &super::Value, kind_only: bool) -> Option<&'static str
                 ScalarType::Complex128 => "complex128",
             }),
             Datum::Map { view, target: _ } => Some(match (view, kind_only) {
-                (MapType::Capabilities, true) => "ptr",
+                (MapType::Capabilities | MapType::Semver, true) => "ptr",
                 (MapType::KubeVersion, true) => "struct",
                 (MapType::ApiVersions, true) => "slice",
                 (MapType::Interface | MapType::String | MapType::Values | MapType::Files, true) => {
@@ -689,6 +746,7 @@ fn descriptor_name(value: &super::Value, kind_only: bool) -> Option<&'static str
                 (MapType::Values, false) => "common.Values",
                 (MapType::Files, false) => "engine.files",
                 (MapType::Capabilities, false) => "*common.Capabilities",
+                (MapType::Semver, false) => "*semver.Version",
                 (MapType::KubeVersion, false) => "common.KubeVersion",
                 (MapType::ApiVersions, false) => "common.VersionSet",
             }),

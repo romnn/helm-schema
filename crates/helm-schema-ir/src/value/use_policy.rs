@@ -119,7 +119,17 @@ impl<'a> Transfer<'a> {
             }
             ValueOperation::Text(transform) => {
                 self.result.stringified = true;
-                self.compose_text(transform.preimage()?)?;
+                // A transform without a character-wise preimage (trunc, trimPrefix, trimSuffix,
+                // multi-character replace) still places text derived from the source; only the
+                // spelling relation is lost, so the row stays with opaque text.
+                if transform
+                    .preimage()
+                    .and_then(|inner| self.compose_text(inner))
+                    .is_none()
+                {
+                    self.opaque_text();
+                    self.result.kind = crate::ValueKind::Serialized;
+                }
             }
             ValueOperation::Trim => self.trim = true,
             ValueOperation::Capability {

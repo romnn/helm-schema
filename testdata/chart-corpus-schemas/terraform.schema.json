@@ -1,6 +1,9 @@
 {
   "$defs": {
     "constrains/CACerts+CACerts=null": {
+      "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1any"
+    },
+    "constrains/CACerts+CACerts=null@2": {
       "anyOf": [
         {
           "not": {
@@ -41,6 +44,17 @@
       ],
       "type": "object"
     },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
       "properties": {
         "fullnameOverride": {
@@ -52,6 +66,28 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/global.enabled:t": {
+      "properties": {
+        "global": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride:t": {
       "properties": {
         "nameOverride": {
@@ -60,6 +96,38 @@
       },
       "required": [
         "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/syncWorkspace.enabled:t": {
+      "properties": {
+        "syncWorkspace": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "syncWorkspace"
+      ],
+      "type": "object"
+    },
+    "constrains/syncWorkspace.enabled=-": {
+      "properties": {
+        "syncWorkspace": {
+          "properties": {
+            "enabled": {
+              "enum": [
+                "-"
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "syncWorkspace"
       ],
       "type": "object"
     },
@@ -91,16 +159,16 @@
     "when/CACerts+CACerts=null/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
     "when/CACerts+CACerts=null/then/fail/else/any@2": {
       "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1any"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
@@ -109,7 +177,7 @@
         "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
@@ -118,7 +186,16 @@
         "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
+      },
+      "then": false
+    },
+    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride+nameOverride+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1CACerts+CACerts=null~1else~1fullnameOverride+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
@@ -127,7 +204,16 @@
         "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+nameOverride"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
+      },
+      "then": false
+    },
+    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1CACerts+CACerts=null~1else~1fullnameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
@@ -136,7 +222,7 @@
         "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
@@ -145,7 +231,16 @@
         "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
+      },
+      "then": false
+    },
+    "when/CACerts+CACerts=null/then/fail/else/nameOverride+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1CACerts+CACerts=null~1else~1nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
@@ -154,11 +249,11 @@
         "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
       },
       "then": false
     },
-    "when/CACerts:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+fullnameOverride:t+nameOverride+1more/else/fail": {
+    "when/CACerts:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+fullnameOverride:t+5more/else/fail": {
       "else": false,
       "if": {
         "properties": {
@@ -172,7 +267,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+nameOverride:t~1else~1any"
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+global.enabled:t+nameOverride+3more~1else~1any"
       }
     },
     "when/CACerts=''/then/fail/else/CACerts+CACerts=null": {
@@ -202,6 +297,24 @@
       },
       "then": false
     },
+    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+fullnameOverride+nameOverride+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+nameOverride+syncWorkspace.enabled=-"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1CACerts=''"
+      },
+      "then": false
+    },
+    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+fullnameOverride+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+syncWorkspace.enabled=-"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1CACerts=''"
+      },
+      "then": false
+    },
     "when/CACerts=''/then/fail/else/CACerts+CACerts=null+nameOverride": {
       "else": {
         "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride@2"
@@ -211,7 +324,23 @@
       },
       "then": false
     },
+    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+nameOverride+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride+syncWorkspace.enabled=-"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1CACerts=''"
+      },
+      "then": false
+    },
     "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/any/else/fail@2": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1fullnameOverride"
@@ -227,23 +356,84 @@
         "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
       }
     },
-    "when/fullnameOverride:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+nameOverride:t/else/any": {
+    "when/fullnameOverride:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+global.enabled:t+nameOverride+3more/else/any": {
       "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride~1else~1any"
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride+nameOverride:t~1else~1syncWorkspace+syncWorkspace.enabled=-"
       },
       "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+nameOverride:t~1else~1syncWorkspace+syncWorkspace.enabled=-"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+global.enabled:t+nameOverride:t+syncWorkspace.enabled=-/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1nameOverride:t+syncWorkspace.enabled=-~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1fullnameOverride+nameOverride:t+syncWorkspace.enabled=-~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/global.enabled:t+syncWorkspace.enabled=-/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
+      }
+    },
+    "when/global.enabled:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+nameOverride:t/else/syncWorkspace+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+2more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled:t"
       },
       "then": {
         "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride~1else~1any"
+      }
+    },
+    "when/global.enabled:t/then/CACerts+CACerts=''+CACerts=null+nameOverride+nameOverride:t/else/syncWorkspace+syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride+syncWorkspace.enabled:t+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride~1else~1any"
+      }
+    },
+    "when/global.enabled:t/then/fullnameOverride+nameOverride:t+syncWorkspace.enabled=-/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+syncWorkspace.enabled=-~1else~1fail"
+      }
+    },
+    "when/global.enabled:t/then/nameOverride:t+syncWorkspace.enabled=-/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1syncWorkspace.enabled=-~1else~1fail"
+      }
+    },
+    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
       }
     },
     "when/nameOverride/then/any/else/fail": {
@@ -261,6 +451,17 @@
       },
       "then": true
     },
+    "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+2more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride~1else~1syncWorkspace.enabled=-"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride~1else~1syncWorkspace.enabled=-"
+      }
+    },
     "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride/else/any": {
       "else": {
         "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride"
@@ -270,6 +471,17 @@
       },
       "then": {
         "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+nameOverride"
+      }
+    },
+    "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+nameOverride+syncWorkspace.enabled:t+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride~1else~1syncWorkspace.enabled=-"
       }
     },
     "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+nameOverride/else/any": {
@@ -282,6 +494,113 @@
       "then": {
         "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+nameOverride"
       }
+    },
+    "when/nameOverride:t/then/fullnameOverride+syncWorkspace.enabled=-/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1fullnameOverride~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/syncWorkspace.enabled=-/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail@2"
+      }
+    },
+    "when/syncWorkspace.enabled:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride/else/syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+nameOverride+syncWorkspace.enabled=-"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+nameOverride"
+      }
+    },
+    "when/syncWorkspace.enabled:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride/else/syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+syncWorkspace.enabled=-"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride"
+      }
+    },
+    "when/syncWorkspace.enabled:t/then/CACerts+CACerts=''+CACerts=null+nameOverride/else/syncWorkspace.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+nameOverride+syncWorkspace.enabled=-"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+nameOverride"
+      }
+    },
+    "when/syncWorkspace.enabled=-/then/CACerts+CACerts=null/else/fullnameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+      }
+    },
+    "when/syncWorkspace.enabled=-/then/CACerts+CACerts=null/else/fullnameOverride+nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+      }
+    },
+    "when/syncWorkspace.enabled=-/then/CACerts+CACerts=null/else/nameOverride": {
+      "else": {
+        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+      }
+    },
+    "when/syncWorkspace.enabled=-/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+      },
+      "then": true
+    },
+    "when/syncWorkspace.enabled=-/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+      },
+      "then": true
+    },
+    "when/syncWorkspace.enabled=-/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -289,13 +608,26 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/when~1CACerts:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+fullnameOverride:t+nameOverride+1more~1else~1fail"
+        "$ref": "#/$defs/when~1CACerts:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+fullnameOverride:t+5more~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "CACerts": {
             "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1global.enabled:t+syncWorkspace.enabled=-~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
             "type": "string"
           }
         }
@@ -331,6 +663,19 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.enabled:t+nameOverride:t+syncWorkspace.enabled=-~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "properties": {

@@ -37,7 +37,10 @@ fn transfers_values(invocation: &Invocation) -> bool {
                 == crate::function_semantics::HeapEffect::ReadOnly;
         }
     };
-    if matches!(function.as_str(), "eq" | "ne") {
+    if matches!(
+        function.as_str(),
+        "eq" | "ne" | "lt" | "le" | "gt" | "ge" | "has" | "mustHas"
+    ) {
         return false;
     }
     let semantics = function_semantics(function);
@@ -531,6 +534,10 @@ impl Executor<'_> {
                 arguments.get(1).cloned().unwrap_or_else(Value::unknown),
             ),
             "eq" | "ne" => comparison_invocation(state, &arguments, function == "ne"),
+            "has" | "mustHas" => membership_invocation(state, function, &arguments),
+            "lt" | "le" | "gt" | "ge" => {
+                super::ordering::ordering_invocation(state, function, &arguments)
+            }
             _ => match super::operations::transfer(invocation, &mut state) {
                 Ok(value) => {
                     let value = match function_semantics(function).success {
@@ -577,7 +584,12 @@ fn value_leaf(
         "kindIs" | "typeIs" | "typeIsLike" | "kindOf" | "typeOf" => {
             super::kinds::descriptor(state, function, &arguments)
         }
-        "fail" => return Err(TransferDemand::Abort(AbortReason::Fail)),
+        "fail" => {
+            // Adapter for ABORT3's S5 `Exit::aborted`: a `fail` under a certified partial guard
+            // is a proved failure on its sufficient path, which placement alone drops.
+            state.record_failure(&Predicate::True);
+            return Err(TransferDemand::Abort(AbortReason::Fail));
+        }
         "not" | "empty" => Value::select(
             state.test_with_unknown(&first, queries.entry(0).or_default()),
             Value::literal(GuardValue::Bool(false)),
@@ -877,6 +889,134 @@ struct ComparisonCase {
 struct ComparisonExit {
     active: Rc<Vec<super::DecisionEdge>>,
     flow: Flow,
+}
+
+/// Sprig `has`/`mustHas`: `reflect.DeepEqual` membership of the needle in a slice haystack.
+///
+/// A nil haystack follows the catalog's nil behavior, and any other haystack aborts. Template
+/// integer literals never equal a loaded number, and float literals depend on the values
+/// transport, so those members stay unknown rather than become equality atoms.
+fn membership_invocation(state: State, function: &str, arguments: &[Value]) -> Vec<Exit> {
+    use crate::function_semantics::NilBehavior;
+    let [needle, haystack] = arguments else {
+        return vec![Exit {
+            state,
+            flow: Flow::Abort(AbortReason::Arity),
+        }];
+    };
+    let needle = state.consumed(needle);
+    let haystack = state.consumed(haystack);
+    let unknown = || {
+        stamp_success(
+            Value::influenced(super::operations::inputs(
+                &[needle.clone(), haystack.clone()],
+                &state,
+            )),
+            GoType::Bool,
+        )
+    };
+    match state.heap.freeze(&haystack).go_type() {
+        GoType::Nil => match function_semantics(function).nil_behavior {
+            NilBehavior::Tolerates => normal(state, Value::literal(GuardValue::Bool(false))),
+            NilBehavior::AlwaysAborts | NilBehavior::DirectAccessAborts => vec![Exit {
+                state,
+                flow: Flow::Abort(AbortReason::Type),
+            }],
+        },
+        GoType::Slice => {
+            let value = super::operations::sequence_items(&haystack, &state).map_or_else(
+                unknown,
+                |items| {
+                    let mut result = Value::literal(GuardValue::Bool(false));
+                    for item in &items {
+                        let member = deep_equal(&state, &needle, item)
+                            .unwrap_or_else(|| unknown_comparison(&state, &needle, item));
+                        let decision = state.test(&result);
+                        result =
+                            Value::select(decision, Value::literal(GuardValue::Bool(true)), member);
+                    }
+                    result
+                },
+            );
+            normal(state, value)
+        }
+        GoType::Bool
+        | GoType::String
+        | GoType::Int
+        | GoType::Int64
+        | GoType::Uint64
+        | GoType::Float64
+        | GoType::Map => vec![Exit {
+            state,
+            flow: Flow::Abort(AbortReason::Type),
+        }],
+        GoType::Unknown => {
+            let value = unknown();
+            let Some(path) = haystack.identity() else {
+                return normal(state, value);
+            };
+            let accepted = Predicate::Or(vec![
+                super::kinds::input_nil_predicate(path),
+                Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "array".to_owned(),
+                }),
+            ])
+            .normalize_boolean();
+            super::kinds::validate_type_predicate(state, value, accepted)
+        }
+    }
+}
+
+/// `reflect.DeepEqual` of a needle and one constant member, when it is exact in every transport.
+///
+/// A string member equals exactly the string needles spelling it, so a needle derived through
+/// executed text transforms (quoting, printing, trimming) lifts that one-word language to its
+/// inputs.
+fn deep_equal(state: &State, needle: &Value, item: &Value) -> Option<Value> {
+    let frozen = state.heap.freeze(item);
+    let item_type = frozen.go_type();
+    let literal = &match item.constant() {
+        Some(literal) => literal.clone(),
+        None => GuardValue::String(frozen.exact_text()?),
+    };
+    if let Some(constant) = needle.constant() {
+        let needle_type = state.heap.freeze(needle).go_type();
+        let equal = needle_type == item_type
+            && match (constant, literal) {
+                (GuardValue::Float(left), GuardValue::Float(right)) => {
+                    // `reflect.DeepEqual` compares float64 with `==`: NaN differs, -0 equals 0.
+                    left.parse::<f64>()
+                        .ok()?
+                        .partial_cmp(&right.parse::<f64>().ok()?)
+                        == Some(std::cmp::Ordering::Equal)
+                }
+                (left, right) => left == right,
+            };
+        return Some(Value::literal(GuardValue::Bool(equal)));
+    }
+    let Some(path) = needle.identity() else {
+        return match (item_type, literal) {
+            (GoType::String, GuardValue::String(_)) => text_equality(state, needle, item, false),
+            _ => None,
+        };
+    };
+    if state.heap.freeze(needle).go_type() != GoType::Unknown {
+        return None;
+    }
+    let predicate = match (item_type, literal) {
+        (GoType::Nil, _) | (_, GuardValue::Null) => super::kinds::input_nil_predicate(path),
+        (GoType::String | GoType::Bool, GuardValue::String(_) | GuardValue::Bool(_)) => {
+            Predicate::from(Guard::Eq {
+                path: path.clone(),
+                value: literal.clone(),
+            })
+        }
+        // Loaded numbers are float64 or int64, never a template's int.
+        (GoType::Int, GuardValue::Int(_)) => Predicate::False,
+        _ => return None,
+    };
+    Some(equality_predicate(state, predicate, false))
 }
 
 fn comparison_invocation(mut state: State, arguments: &[Value], negated: bool) -> Vec<Exit> {
@@ -1584,6 +1724,26 @@ fn scalar_equality(state: &State, left: &Value, right: &Value, negated: bool) ->
         .identity()
         .zip(right.constant())
         .or_else(|| right.identity().zip(left.constant()));
+    let order = if negated {
+        super::ordering::Order::NotEqual
+    } else {
+        super::ordering::Order::Equal
+    };
+    if let Some(GuardValue::Int(bound)) = right.constant()
+        && let Some(value) = super::ordering::integer_comparison(state, left, order, *bound)
+    {
+        return value;
+    }
+    if let Some(GuardValue::Int(bound)) = left.constant()
+        && let Some(value) = super::ordering::integer_comparison(state, right, order, *bound)
+    {
+        return value;
+    }
+    if pair.is_none()
+        && let Some(value) = text_equality(state, left, right, negated)
+    {
+        return value;
+    }
     if let Some((path, literal)) = pair {
         let predicate = if *literal == GuardValue::Null {
             super::kinds::input_nil_predicate(path)
@@ -1597,6 +1757,36 @@ fn scalar_equality(state: &State, left: &Value, right: &Value, negated: bool) ->
     } else {
         unknown_comparison(state, left, right)
     }
+}
+
+/// Equality with a string literal is membership in the one-word language, lifted through the
+/// other operand's executed text transforms.
+fn text_equality(state: &State, left: &Value, right: &Value, negated: bool) -> Option<Value> {
+    let (value, text) = match (left.constant(), right.constant()) {
+        (None, Some(GuardValue::String(text))) => (left, text),
+        (Some(GuardValue::String(text)), None) => (right, text),
+        _ => return None,
+    };
+    let pattern = helm_schema_core::ValuePattern::String {
+        pattern: format!("^{}$", helm_schema_core::escape_regex_literal(text)),
+    };
+    let super::relationship::LexicalPreimage {
+        matched,
+        unmatched,
+        exact,
+    } = super::operations::lexical_preimage(state, value, &pattern)?;
+    if !exact && matched == Predicate::False && unmatched == Predicate::False {
+        return None;
+    }
+    let (holds, fails) = if negated {
+        (unmatched, matched)
+    } else {
+        (matched, unmatched)
+    };
+    let influences = super::operations::inputs(std::slice::from_ref(value), state);
+    Some(super::ordering::certified_truth(
+        state, holds, fails, exact, influences,
+    ))
 }
 
 fn argument_form(expression: &TemplateExpr) -> ArgumentForm {

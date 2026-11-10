@@ -1539,6 +1539,9 @@
       },
       "type": "object"
     },
+    "values/nameOverride": {
+      "description": "String to partially override common.names.fullname"
+    },
     "when/fullnameOverride!=null+nameOverride!=null+namespaceOverride!=null+3more/then/fail": {
       "if": {
         "allOf": [
@@ -3321,7 +3324,7 @@
       "description": "Prometheus Exporter / Metrics"
     },
     "nameOverride": {
-      "description": "String to partially override common.names.fullname"
+      "$ref": "#/$defs/values~1nameOverride"
     },
     "namespaceOverride": {},
     "nodeSelector": {
@@ -3634,13 +3637,52 @@
         "common": {
           "$ref": "#/$defs/values~1common"
         },
+        "commonLabels": {
+          "description": "Labels to add to all deployed objects"
+        },
         "enabled": {
           "description": "Whether to deploy a Valkey server to satisfy the applications database requirements"
+        },
+        "fullnameOverride": {
+          "description": "String to fully override common.names.fullname"
         },
         "global": {
           "additionalProperties": {},
           "properties": {
             "apiVersions": {}
+          }
+        },
+        "nameOverride": {
+          "$ref": "#/$defs/values~1nameOverride"
+        },
+        "namespaceOverride": {
+          "description": "String to fully override common.names.namespace"
+        },
+        "replica": {
+          "additionalProperties": {},
+          "properties": {
+            "autoscaling": {
+              "additionalProperties": {},
+              "description": "ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/",
+              "properties": {
+                "vpa": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "description": "Enable VPA"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "sentinel": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "Use Valkey Sentinel on Valkey pods.\nIMPORTANT: this will disable the primary and replicas services and\ncreate a single Valkey service exposing both the Valkey and Sentinel ports\nBitnami Valkey Sentinel image version\nref: https://hub.docker.com/r/bitnami/valkey-sentinel/tags/"
+            }
           }
         }
       }

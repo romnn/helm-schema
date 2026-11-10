@@ -32,13 +32,13 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -51,10 +51,10 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
           "type": "object"
@@ -76,13 +76,13 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -101,10 +101,10 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -126,7 +126,16 @@
     "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more@2"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride:t+2more"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null@3"
@@ -135,16 +144,7 @@
           "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride:t+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride:t+2more"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more@2"
         }
       ]
     },
@@ -157,16 +157,16 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -179,13 +179,13 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -204,13 +204,13 @@
     "constrains/architecture+architecture=null@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
+          "$ref": "#/$defs/constrains~1architecture"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         }
       ]
     },
@@ -701,6 +701,43 @@
       "not": {
         "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null"
       }
+    },
+    "constrains/workers": {
+      "$ref": "#/$defs/when~1workers~1then~1any~1else~1fail"
+    },
+    "constrains/workers+workers=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "workers": {}
+            },
+            "required": [
+              "workers"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "workers": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "workers"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/workers@2": {
+      "$ref": "#/$defs/when~1workers~1then~1any~1else~1fail"
+    },
+    "constrains/workers@3": {
+      "$ref": "#/$defs/when~1workers~1then~1any~1else~1fail"
     },
     "t": {
       "anyOf": [
@@ -1210,11 +1247,176 @@
       "then": {
         "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+3more~1else~1fail"
       }
+    },
+    "when/workers+workers=null/then/any/else/workers": {
+      "else": {
+        "$ref": "#/$defs/constrains~1workers"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1workers+workers=null"
+      },
+      "then": true
+    },
+    "when/workers+workers=null/then/any/else/workers@2": {
+      "else": {
+        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1workers+workers=null"
+      },
+      "then": true
+    },
+    "when/workers+workers=null/then/any/else/workers@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1workers@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1workers+workers=null"
+      },
+      "then": true
+    },
+    "when/workers+workers=null/then/any/else/workers@4": {
+      "else": {
+        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1workers+workers=null"
+      },
+      "then": true
+    },
+    "when/workers+workers=null/then/any/else/workers@5": {
+      "else": {
+        "$ref": "#/$defs/constrains~1workers@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1workers+workers=null"
+      },
+      "then": true
+    },
+    "when/workers+workers=null/then/any/else/workers@6": {
+      "else": {
+        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@5"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1workers+workers=null"
+      },
+      "then": true
+    },
+    "when/workers.celery.enableDefault:t/then/fail/else/workers+workers.celery.sets:t+workers=null": {
+      "else": {
+        "$ref": "#/$defs/when~1workers.celery.sets:t~1then~1workers+workers=null~1else~1fail"
+      },
+      "if": {
+        "properties": {
+          "workers": {
+            "properties": {
+              "celery": {
+                "properties": {
+                  "enableDefault": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enableDefault"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "celery"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "workers"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    "when/workers.celery.sets:t/then/workers+workers=null/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "workers": {
+            "properties": {
+              "celery": {
+                "properties": {
+                  "sets": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "sets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "celery"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "workers"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@4"
+      }
+    },
+    "when/workers/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "workers": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "workers"
+        ],
+        "type": "object"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "$ref": "#/$defs/when~1workers.celery.enableDefault:t~1then~1fail~1else~1workers+workers.celery.sets:t+workers=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "workers": {
+            "additionalProperties": {},
+            "description": "Airflow Worker Config",
+            "properties": {
+              "celery": {
+                "additionalProperties": {},
+                "properties": {
+                  "sets": {
+                    "description": "List of worker sets. Each item can overwrite values from the parent `workers` and `workers.celery`\nsection.\nsets:\n- name: highcpu\nreplicas: 2\nqueue: \"highcpu\"\nresources:\nrequests:\nmemory: \"2Gi\"\ncpu: \"4000m\"\nlimits:\nmemory: \"4Gi\"\ncpu: \"8000m\"\n- name: highmem\nreplicas: 2\nqueue: \"highmem\"\nresources:\nrequests:\nmemory: \"4Gi\"\ncpu: \"2000m\"\nlimits:\nmemory: \"8Gi\"\ncpu: \"4000m\"",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "additionalProperties": {},
       "properties": {
@@ -1231,10 +1433,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
+            "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
           },
           {
-            "$ref": "#/$defs/constrains~1postgresql.enabled:t"
+            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
           }
         ]
       },
@@ -1295,49 +1497,43 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "workers": {
+            "additionalProperties": {},
+            "description": "Airflow Worker Config",
+            "properties": {
+              "celery": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1workers+workers=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
+            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
+            "$ref": "#/$defs/constrains~1postgresql.enabled:t"
           }
         ]
       },
       "then": {
         "$ref": "#/$defs/when~1postgresql!=null~1then~1fail"
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "workers": {}
-              },
-              "required": [
-                "workers"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "workers": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "workers"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -1493,6 +1689,60 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@6"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "workers": {
+                    "properties": {
+                      "celery": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "celery"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "workers"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "workers": {
+                      "properties": {
+                        "celery": {}
+                      },
+                      "required": [
+                        "celery"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "workers"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -1679,17 +1929,6 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/when~1enabled:t~1then~1architecture+architecture=null~1else~1enabled+enabled=null"
-          },
-          "then": {
-            "if": {
-              "$ref": "#/$defs/constrains~1architecture!=null"
-            },
-            "then": false
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more@3"
@@ -1704,6 +1943,17 @@
           },
           "then": {
             "$ref": "#/$defs/when~1architecture!=null+fullnameOverride!=null+nameOverride!=null~1then~1fail"
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/when~1enabled:t~1then~1architecture+architecture=null~1else~1enabled+enabled=null"
+          },
+          "then": {
+            "if": {
+              "$ref": "#/$defs/constrains~1architecture!=null"
+            },
+            "then": false
           }
         }
       ],

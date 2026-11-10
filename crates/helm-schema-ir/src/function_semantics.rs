@@ -52,7 +52,6 @@ pub(crate) enum PredicateSemantics {
     TypeDescriptor,
 }
 
-#[cfg(test)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ParserSemantics {
     None,
@@ -61,7 +60,6 @@ enum ParserSemantics {
     Url,
 }
 
-#[cfg(test)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CollectionItemSemantics {
     None,
@@ -95,9 +93,7 @@ pub(crate) struct FunctionSemantics {
     pub(crate) collection: CollectionShape,
     pub(crate) provenance: ProvenanceBehavior,
     pub(crate) predicate: PredicateSemantics,
-    #[cfg(test)]
     parser: ParserSemantics,
-    #[cfg(test)]
     collection_items: CollectionItemSemantics,
 }
 
@@ -113,9 +109,7 @@ const UNKNOWN: FunctionSemantics = FunctionSemantics {
     collection: CollectionShape::None,
     provenance: ProvenanceBehavior::Discard,
     predicate: PredicateSemantics::None,
-    #[cfg(test)]
     parser: ParserSemantics::None,
-    #[cfg(test)]
     collection_items: CollectionItemSemantics::None,
 };
 
@@ -177,7 +171,6 @@ const PRESERVING: FunctionSemantics = FunctionSemantics {
 };
 
 const IP_CERTIFICATE: FunctionSemantics = FunctionSemantics {
-    #[cfg(test)]
     collection_items: CollectionItemSemantics::CertificateIpList,
     ..KNOWN
 };
@@ -214,7 +207,6 @@ const MAP_MERGE: FunctionSemantics = FunctionSemantics {
 
 const DURATION_PARSER: FunctionSemantics = FunctionSemantics {
     predicate: StringPredicate,
-    #[cfg(test)]
     parser: ParserSemantics::Duration,
     ..KNOWN
 };
@@ -239,7 +231,11 @@ const REGEX_SPLIT: FunctionSemantics = FunctionSemantics {
 
 const SEMVER_PARSER: FunctionSemantics = FunctionSemantics {
     predicate: StringPredicate,
-    #[cfg(test)]
+    parser: ParserSemantics::Semver,
+    ..KNOWN
+};
+
+const SEMVER_VALUE: FunctionSemantics = FunctionSemantics {
     parser: ParserSemantics::Semver,
     ..KNOWN
 };
@@ -256,7 +252,6 @@ const LIMITED_SPLIT: FunctionSemantics = FunctionSemantics {
 
 const URL_PARSER: FunctionSemantics = FunctionSemantics {
     predicate: StringPredicate,
-    #[cfg(test)]
     parser: ParserSemantics::Url,
     ..KNOWN
 };
@@ -361,6 +356,9 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "empty" | "not" => UNKNOWN.fixed(&[Unknown], Bool),
         "eq" => UNKNOWN.variadic(&[Unknown], Unknown, Bool),
         "fail" => UNKNOWN.fixed(&[Text], Text),
+        "has" | "mustHas" => KNOWN
+            .fixed(&[Unknown, Unknown], Bool)
+            .reading(InputRead::Contents),
         "first" | "last" => STRICT.selected(&[Unknown], None),
         "float64" => NUMERIC_CAST.fixed(&[Unknown], Float64),
         "fromJson" | "fromToml" => UNKNOWN.fixed(&[Text], Map),
@@ -389,7 +387,8 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "max" | "min" | "mul" => ARITHMETIC.variadic(&[Unknown], Unknown, Int64),
         "maxf" | "minf" | "mulf" | "subf" => ARITHMETIC.variadic(&[Unknown], Unknown, Float64),
         "mustDateModify" => DURATION_PARSER.selected(&[Text, Unknown], None),
-        "mustFromJson" | "semver" => UNKNOWN.selected(&[Text], None),
+        "mustFromJson" => UNKNOWN.selected(&[Text], None),
+        "semver" => SEMVER_VALUE.selected(&[Text], None),
         "mustRegexFindAll" | "mustRegexSplit" | "regexFindAll" => {
             UNKNOWN.fixed(&[Text, Text, Int], Slice)
         }
@@ -400,7 +399,7 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         | "replace" => TRANSFORM.fixed(&[Text, Text, Text], Text),
         "mustToJson" | "mustToRawJson" | "mustToPrettyJson" | "toJson" | "toRawJson"
         | "toPrettyJson" => UNKNOWN.fixed(&[Unknown], Text).reading(InputRead::Contents),
-        "mustUniq" | "uniq" => PRESERVING_STRICT.fixed(&[Unknown], Slice),
+        "mustUniq" | "uniq" => PRESERVING_STRICT.fixed(&[Slice], Slice),
         "now" => UNKNOWN.fixed(&[], Unknown),
         "plural" => UNKNOWN.fixed(&[Text, Text, Int], Text),
         "print" | "println" => UNKNOWN
@@ -601,8 +600,9 @@ impl Method {
     }
 }
 
+mod parser_grammar;
+pub(crate) use parser_grammar::{strict_collection_item_pattern, strict_parser_operand_pattern};
+
 #[cfg(test)]
 #[path = "tests/host_patterns.rs"]
 mod test_patterns;
-#[cfg(test)]
-pub(crate) use test_patterns::{strict_collection_item_pattern, strict_parser_operand_pattern};

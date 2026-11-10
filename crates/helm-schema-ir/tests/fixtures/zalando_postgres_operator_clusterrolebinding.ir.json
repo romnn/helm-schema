@@ -355,6 +355,89 @@
       "condition": [
         [
           {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "rbac.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "serviceAccount.name",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "rbac.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "serviceAccount.name",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 82,
+            "start": 0
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "rbac.create",
             "type": "truthy"
           },
@@ -958,6 +1041,667 @@
       "path": [],
       "resource": null,
       "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "rbac.create",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "rbac.create",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "rbac.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "rbac.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "rbac.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "rbac.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "serviceAccount.name",
+                  "type": "truthy"
+                },
+                {
+                  "path": "serviceAccount.name",
+                  "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+                  "templated": false,
+                  "type": "matches_pattern"
+                }
+              ],
+              [
+                {
+                  "path": "serviceAccount.name",
+                  "type": "truthy"
+                },
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "type": "eq",
+                        "value": false
+                      }
+                    ],
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "type": "eq",
+                        "value": true
+                      }
+                    ],
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+                        "templated": false,
+                        "type": "matches_pattern"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "pattern": {
+                          "object": {
+                            "keys": {
+                              "string": {
+                                "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                              }
+                            },
+                            "values": {
+                              "any_of": [
+                                {
+                                  "string": {
+                                    "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$"
+                                  }
+                                },
+                                "scalar"
+                              ]
+                            }
+                          }
+                        },
+                        "type": "matches_value"
+                      },
+                      {
+                        "path": "serviceAccount.name",
+                        "type": "at_most_one_member"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "pattern": {
+                          "object": {
+                            "keys": {
+                              "string": {
+                                "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                              }
+                            },
+                            "values": {
+                              "any_of": [
+                                {
+                                  "string": {
+                                    "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                  }
+                                },
+                                "scalar",
+                                {
+                                  "array": {
+                                    "items": {
+                                      "any_of": [
+                                        {
+                                          "string": {
+                                            "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                          }
+                                        },
+                                        "scalar",
+                                        {
+                                          "array": {
+                                            "items": {
+                                              "any_of": [
+                                                {
+                                                  "string": {
+                                                    "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                  }
+                                                },
+                                                "scalar",
+                                                {
+                                                  "array": {
+                                                    "items": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    },
+                                                    "prefix": []
+                                                  }
+                                                },
+                                                {
+                                                  "object": {
+                                                    "keys": {
+                                                      "string": {
+                                                        "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                                                      }
+                                                    },
+                                                    "values": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            "prefix": []
+                                          }
+                                        },
+                                        {
+                                          "object": {
+                                            "keys": {
+                                              "string": {
+                                                "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                                              }
+                                            },
+                                            "values": {
+                                              "any_of": [
+                                                {
+                                                  "string": {
+                                                    "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                  }
+                                                },
+                                                "scalar",
+                                                {
+                                                  "array": {
+                                                    "items": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    },
+                                                    "prefix": []
+                                                  }
+                                                },
+                                                {
+                                                  "object": {
+                                                    "keys": {
+                                                      "string": {
+                                                        "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                                                      }
+                                                    },
+                                                    "values": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    "prefix": []
+                                  }
+                                },
+                                {
+                                  "object": {
+                                    "keys": {
+                                      "string": {
+                                        "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                                      }
+                                    },
+                                    "values": {
+                                      "any_of": [
+                                        {
+                                          "string": {
+                                            "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                          }
+                                        },
+                                        "scalar",
+                                        {
+                                          "array": {
+                                            "items": {
+                                              "any_of": [
+                                                {
+                                                  "string": {
+                                                    "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                  }
+                                                },
+                                                "scalar",
+                                                {
+                                                  "array": {
+                                                    "items": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    },
+                                                    "prefix": []
+                                                  }
+                                                },
+                                                {
+                                                  "object": {
+                                                    "keys": {
+                                                      "string": {
+                                                        "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                                                      }
+                                                    },
+                                                    "values": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            "prefix": []
+                                          }
+                                        },
+                                        {
+                                          "object": {
+                                            "keys": {
+                                              "string": {
+                                                "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                                              }
+                                            },
+                                            "values": {
+                                              "any_of": [
+                                                {
+                                                  "string": {
+                                                    "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                  }
+                                                },
+                                                "scalar",
+                                                {
+                                                  "array": {
+                                                    "items": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    },
+                                                    "prefix": []
+                                                  }
+                                                },
+                                                {
+                                                  "object": {
+                                                    "keys": {
+                                                      "string": {
+                                                        "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$"
+                                                      }
+                                                    },
+                                                    "values": {
+                                                      "any_of": [
+                                                        {
+                                                          "string": {
+                                                            "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$"
+                                                          }
+                                                        },
+                                                        "scalar"
+                                                      ]
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "type": "matches_value"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "schema_type": "number",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                }
+              ],
+              [
+                {
+                  "path": "serviceAccount.name",
+                  "type": "truthy"
+                },
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "type": "absent"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "pattern": "^(?:(?:[\\x20])*)$",
+                        "templated": false,
+                        "type": "matches_pattern"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "serviceAccount.name",
+                        "schema_type": "null",
+                        "type": "type_is"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                }
+              ],
+              [
+                {
+                  "path": "rbac.create",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "rbac.create",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "rbac.create",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 76,
+            "start": 0
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRoleBinding"
+      },
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [

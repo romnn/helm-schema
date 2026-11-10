@@ -1,6 +1,3 @@
-#[path = "semver_patterns.rs"]
-mod semver_patterns;
-
 use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -1427,23 +1424,33 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
         context,
         &mut seen,
     );
-    let below = |constraint| {
-        semver_patterns::semver_constraint_match_pattern(constraint).map(|pattern| {
-            Predicate::all(vec![
-                Predicate::truthy_path("kubeVersion"),
-                Predicate::from(Guard::MatchesPattern {
-                    path: helm_schema_core::ValuesPath::parse("kubeVersion"),
-                    pattern,
-                    templated: false,
-                }),
-            ])
-        })
+    // Versions below 1.14.0-0 and 1.19.0-0 (Masterminds: any prerelease of a lower core; the
+    // `-0` floor admits no prerelease of the bound's own core), pinned as literal languages.
+    let prerelease_and_build =
+        r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?";
+    let below = |minor: char| {
+        let alternatives = [
+            r"v?0*(?:0)".to_owned(),
+            r"v?0*(?:0)\.\d+".to_owned(),
+            r"v?0*(?:0)\.\d+\.\d+".to_owned(),
+            r"v?0*1".to_owned(),
+            format!(r"v?0*1\.0*(?:0|[1-9]|1[0-{minor}])"),
+            format!(r"v?0*1\.0*(?:0|[1-9]|1[0-{minor}])\.\d+"),
+        ]
+        .map(|core| format!("{core}{prerelease_and_build}"));
+        Predicate::all(vec![
+            Predicate::truthy_path("kubeVersion"),
+            Predicate::from(Guard::MatchesPattern {
+                path: helm_schema_core::ValuesPath::parse("kubeVersion"),
+                pattern: format!("^(?:{})$", alternatives.join("|")),
+                templated: false,
+            }),
+        ])
     };
-    let want = below("<1.14-0")
-        .zip(below("<1.19-0"))
-        .map(|(below_114, below_119)| {
-            Predicate::And(vec![below_114.negated(), below_119.negated()])
-        });
+    let want = Some(Predicate::And(vec![
+        below('3').negated(),
+        below('8').negated(),
+    ]));
 
     sim_assert_eq!(
         have: result.exact_truth(),

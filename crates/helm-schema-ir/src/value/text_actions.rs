@@ -54,6 +54,16 @@ fn truth(value: bool) -> TruthCondition {
 }
 
 pub(super) fn contains(value: &Value, needle: &str, state: &State) -> Value {
+    contains_with(value, needle, state, true).unwrap_or_else(Value::unknown)
+}
+
+/// `contains`; with `undecided` unset, `None` when no structural fact decides any input.
+pub(super) fn contains_with(
+    value: &Value,
+    needle: &str,
+    state: &State,
+    undecided: bool,
+) -> Option<Value> {
     let inputs = state.heap.arena.input_objects.borrow();
     let mut query = Query {
         inputs: &inputs,
@@ -67,12 +77,15 @@ pub(super) fn contains(value: &Value, needle: &str, state: &State) -> Value {
     } else {
         query.substring(&frozen, needle, 0)
     };
+    if condition == TruthCondition::Unknown && !undecided {
+        return None;
+    }
     let decision = condition_test(&condition, state);
-    Value::select(
+    Some(Value::select(
         decision,
         Value::literal(helm_schema_core::GuardValue::Bool(true)),
         Value::literal(helm_schema_core::GuardValue::Bool(false)),
-    )
+    ))
 }
 
 pub(super) fn truth_test(value: &Value, state: &State) -> Option<Rc<super::FrozenTest>> {
@@ -186,7 +199,7 @@ impl Query<'_> {
         if let Some(path) = value.identity() {
             return TruthCondition::Exact(Predicate::from(Guard::MatchesPattern {
                 path: path.clone(),
-                pattern: regex::escape(needle),
+                pattern: helm_schema_core::escape_regex_literal(needle),
                 templated: false,
             }));
         }
@@ -589,7 +602,11 @@ impl Query<'_> {
                 source.empty = TruthCondition::Unknown;
                 source
             }
-            TextTransform::Replace { from: _, to: _ } => TextShape::unknown(),
+            TextTransform::Replace { from: _, to: _ }
+            | TextTransform::RegexReplace {
+                pattern: _,
+                replacement: _,
+            } => TextShape::unknown(),
             TextTransform::Upper | TextTransform::Lower => source,
             TextTransform::TrimPrefix(prefix) if !prefix.contains('{') => {
                 source.starts = self.only_false(&source.brace);
@@ -618,7 +635,8 @@ impl Query<'_> {
             }
             TextTransform::Truncate(_)
             | TextTransform::TrimPrefix(_)
-            | TextTransform::TrimSuffix(_) => {
+            | TextTransform::TrimSuffix(_)
+            | TextTransform::Cut(_) => {
                 // Taking a contiguous substring can destroy an opener, but cannot create one.
                 // In particular, byte truncation may split UTF-8 or cut between the two braces.
                 // Keep only the proven false domain instead of calling its complement exact.

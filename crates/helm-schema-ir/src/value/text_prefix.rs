@@ -75,6 +75,20 @@ impl Prefix {
                     let pending = pending_suffix(&self.text, from);
                     self.text.truncate(self.text.len() - pending);
                 }
+                TextTransform::Cut(separator) => {
+                    if let Some(end) = self.text.find(separator.as_str()) {
+                        self.text.truncate(end);
+                        self.complete = true;
+                    } else {
+                        let pending = pending_suffix(&self.text, separator);
+                        self.text.truncate(self.text.len() - pending);
+                    }
+                    return self;
+                }
+                TextTransform::RegexReplace {
+                    pattern: _,
+                    replacement: _,
+                } => return Self::unknown(),
                 TextTransform::Upper
                 | TextTransform::Lower
                 | TextTransform::TrimPrefix(_)

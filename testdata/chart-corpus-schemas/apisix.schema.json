@@ -396,56 +396,22 @@
       ],
       "type": "object"
     },
-    "constrains/auth.token.enabled!=null": {
-      "properties": {
-        "auth": {
-          "properties": {
-            "token": {
-              "properties": {
-                "enabled": {
-                  "not": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "token"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
     "constrains/auth.token.enabled+auth.token.enabled=null": {
       "allOf": [
         {
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null@2"
-        }
-      ]
-    },
-    "constrains/auth.token.enabled+auth.token.enabled=null@2": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1auth.token.enabled"
-          }
-        },
-        {
-          "$ref": "#/$defs/constrains~1auth.token.enabled=null"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1auth.token.enabled"
+              }
+            },
+            {
+              "$ref": "#/$defs/constrains~1auth.token.enabled=null"
+            }
+          ]
         }
       ]
     },
@@ -961,37 +927,6 @@
       ],
       "type": "object"
     },
-    "constrains/auth.token.type!=null": {
-      "properties": {
-        "auth": {
-          "properties": {
-            "token": {
-              "properties": {
-                "type": {
-                  "not": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "token"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
     "constrains/auth.token.type+auth.token.type=null": {
       "allOf": [
         {
@@ -1155,16 +1090,6 @@
       "type": "object"
     },
     "constrains/enabled+enabled=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/enabled+enabled=null@2": {
       "anyOf": [
         {
           "not": {
@@ -1553,7 +1478,14 @@
     "constrains/etcd.enabled+etcd.enabled=null": {
       "properties": {
         "etcd": {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null"
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1enabled+enabled=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
         }
       },
       "required": [
@@ -1655,13 +1587,13 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1service.labelsOverride:t@3"
@@ -1680,19 +1612,19 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name@2"
@@ -1732,16 +1664,16 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name@6"
@@ -1775,13 +1707,13 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
           "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1service.labelsOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t@3"
@@ -1797,19 +1729,19 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name"
         },
         {
           "$ref": "#/$defs/constrains~1service.labelsOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name@2"
@@ -1846,16 +1778,16 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1service.labelsOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1service.labelsOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name@6"
@@ -1886,16 +1818,16 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name@2"
@@ -1932,13 +1864,13 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name@6"
@@ -1969,10 +1901,10 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name:t@3"
@@ -2034,10 +1966,10 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name"
@@ -2080,10 +2012,10 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
@@ -2210,10 +2142,10 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@7"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name"
@@ -2253,10 +2185,10 @@
           "$ref": "#/$defs/constrains~1serviceAccount.name"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
         },
         {
           "$ref": "#/$defs/constrains~1serviceAccount.name@6"
@@ -2449,7 +2381,14 @@
     "constrains/ingress-controller.enabled+ingress-controller.enabled=null": {
       "properties": {
         "ingress-controller": {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null"
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1enabled+enabled=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
         }
       },
       "required": [
@@ -3748,7 +3687,35 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1auth.token.enabled!=null"
+            "properties": {
+              "auth": {
+                "properties": {
+                  "token": {
+                    "properties": {
+                      "enabled": {
+                        "not": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -3772,7 +3739,35 @@
             "$ref": "#/$defs/constrains~1fullnameOverride!=null"
           },
           {
-            "$ref": "#/$defs/constrains~1auth.token.type!=null"
+            "properties": {
+              "auth": {
+                "properties": {
+                  "token": {
+                    "properties": {
+                      "type": {
+                        "not": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -3816,249 +3811,6 @@
         ]
       },
       "then": false
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/auth.token+auth.token.type+auth.token.type=null/else/auth.token.enabled": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1auth.token.enabled~1else~1auth.token.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1fail~1else~1auth.token.type"
-      }
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/auth.token+auth.token.type+auth.token.type=null/else/auth.token.enabled@2": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1auth.token+auth.token.enabled+auth.token.enabled=null~1else~1auth.token.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1fail~1else~1auth.token.type@2"
-      }
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/auth.token+auth.token.type+auth.token.type=null/else/auth.token.enabled@3": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1auth.token.enabled+enabled+enabled=null~1else~1auth.token.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1fail~1else~1auth.token.type+enabled+enabled=null"
-      }
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/auth.token+auth.token.type+auth.token.type=null/else/auth.token.enabled@4": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1auth.token+auth.token.enabled+auth.token.enabled=null~1else~1auth.token.type@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1fail~1else~1auth.token.type+enabled+enabled=null@2"
-      }
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/fail/else/auth.token.enabled": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null"
-      },
-      "then": false
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/fail/else/auth.token.enabled@2": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1fail~1else~1auth.token.enabled"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null@2"
-      },
-      "then": false
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/fail/else/auth.token.enabled@3": {
-      "else": {
-        "$ref": "#/$defs/when~1enabled+enabled=null~1then~1auth.token.enabled~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null"
-      },
-      "then": false
-    },
-    "when/auth.token.enabled+auth.token.enabled=null/then/fail/else/auth.token.enabled@4": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1fail~1else~1auth.token.enabled@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled+auth.token.enabled=null@2"
-      },
-      "then": false
-    },
-    "when/auth.token.enabled/then/auth.token.type/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.type~1then~1fail~1else~1any"
-      }
-    },
-    "when/auth.token.enabled/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled@2"
-      },
-      "then": false
-    },
-    "when/auth.token.enabled=true/then/auth+auth.token+auth.token.enabled+auth.token.enabled=null+auth.token.type+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1fail~1else~1auth.token.enabled@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1auth.token+auth.token.type+auth.token.type=null~1else~1auth.token.enabled@2"
-      }
-    },
-    "when/auth.token.enabled=true/then/auth+auth.token+auth.token.enabled+auth.token.enabled=null+auth.token.type+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1fail~1else~1auth.token.enabled@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.enabled=true@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1auth.token+auth.token.type+auth.token.type=null~1else~1auth.token.enabled@4"
-      }
-    },
-    "when/auth.token.type+auth.token.type=null/then/auth.token+auth.token.enabled+auth.token.enabled=null/else/auth.token.type": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1auth.token+auth.token.type+auth.token.type=null~1else~1auth.token.enabled"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1fail~1else~1auth.token.enabled"
-      }
-    },
-    "when/auth.token.type+auth.token.type=null/then/auth.token+auth.token.enabled+auth.token.enabled=null/else/auth.token.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1auth.token+auth.token.type+auth.token.type=null~1else~1auth.token.enabled@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled+auth.token.enabled=null~1then~1fail~1else~1auth.token.enabled@3"
-      }
-    },
-    "when/auth.token.type+auth.token.type=null/then/auth.token.enabled+enabled+enabled=null/else/auth.token.type": {
-      "else": {
-        "$ref": "#/$defs/when~1enabled+enabled=null~1then~1auth.token.enabled+auth.token.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1enabled+enabled=null~1then~1auth.token.enabled~1else~1fail"
-      }
-    },
-    "when/auth.token.type+auth.token.type=null/then/auth.token.enabled/else/auth.token.type": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled~1then~1auth.token.type~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled~1then~1fail~1else~1any"
-      }
-    },
-    "when/auth.token.type+auth.token.type=null/then/fail/else/auth.token.type": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.type~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null"
-      },
-      "then": false
-    },
-    "when/auth.token.type+auth.token.type=null/then/fail/else/auth.token.type+enabled+enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1enabled+enabled=null~1then~1auth.token.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null"
-      },
-      "then": false
-    },
-    "when/auth.token.type+auth.token.type=null/then/fail/else/auth.token.type+enabled+enabled=null@2": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1fail~1else~1auth.token.type+enabled+enabled=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null@2"
-      },
-      "then": false
-    },
-    "when/auth.token.type+auth.token.type=null/then/fail/else/auth.token.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.type+auth.token.type=null~1then~1fail~1else~1auth.token.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type+auth.token.type=null@2"
-      },
-      "then": false
-    },
-    "when/auth.token.type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1auth.token.type"
-      },
-      "then": false
-    },
-    "when/enabled+enabled=null/then/auth.token.enabled+auth.token.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1enabled+enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled~1then~1auth.token.type~1else~1any"
-      }
-    },
-    "when/enabled+enabled=null/then/auth.token.enabled/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1enabled+enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled~1then~1fail~1else~1any"
-      }
-    },
-    "when/enabled+enabled=null/then/auth.token.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1enabled+enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.type~1then~1fail~1else~1any"
-      }
-    },
-    "when/enabled:t/then/auth+auth.token+auth.token.enabled+auth.token.enabled=null+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1auth.token.enabled=true~1then~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+auth.token.type+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1auth.token.enabled=true~1then~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+auth.token.type+1more~1else~1any"
-      }
     },
     "when/etcd!=null/then/fail": {
       "if": {
@@ -5072,73 +4824,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+3more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount.create:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+3more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service.labelsOverride:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t+serviceAccount.name:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.create:t+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.create:t+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service.labelsOverride:t+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service.labelsOverride:t+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service.labelsOverride:t+4more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service.labelsOverride:t+4more"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
           },
           {
@@ -5387,6 +5072,73 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service.labelsOverride:t+4more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t+serviceAccount.name:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service.labelsOverride:t+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service.labelsOverride:t+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service.labelsOverride:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service.labelsOverride:t+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount+3more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.create:t+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount+serviceAccount.create:t+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+serviceAccount.create:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+serviceAccount.create:t+1more"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "ingress-controller": {
@@ -5552,24 +5304,6 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/when~1enabled:t~1then~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+3more~1else~1any"
-          },
-          "then": {
-            "if": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1auth.token.enabled!=null"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1auth.token.type!=null"
-                }
-              ]
-            },
-            "then": false
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more@4"
@@ -5596,7 +5330,7 @@
                 "$ref": "#/$defs/constrains~1auth+auth.token+auth.token.enabled+auth.token.enabled=null+11more@5"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null"
               },
               {
                 "type": "object"
@@ -5751,7 +5485,7 @@
                 "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+labelsOverride:t+nameOverride+nameOverride:t+1more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null"
               },
               {
                 "type": "object"

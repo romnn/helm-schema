@@ -49,7 +49,6 @@ fn holes_and_assignments_retain_type_only_scalar_transport() {
 }
 
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): semver selector holes keep the unsigned go type; tracked in plan/value-algebra-r3b.md follow-ups"]
 fn semver_selector_holes_keep_the_unsigned_go_type() -> eyre::Result<()> {
     let source = r#"{{ (semver "1.2.3").Major }}"#;
     let defines = DefineIndex::new();

@@ -52,7 +52,7 @@ mod value_runtime;
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{DYNAMIC_MAPPING_VALUE_SEGMENT, Predicate};
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 
 use helm_schema_ast::DefineIndex;
 use test_util::prelude::sim_assert_eq;
@@ -934,6 +934,43 @@ fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() -
         "a customLabels branch should not keep nameOverride=false after common.names.name is projected: {name_override_uses:#?}"
     );
     Ok(())
+}
+
+/// `trunc`/`trimSuffix` text has no character-wise spelling relation to its source, so the placed
+/// row stays with opaque text: Helm renders a 70-character override with a dash at 63 as a valid
+/// 62-character name (transfer/probes/g14-helm-4.2.3.txt), so no slot demand may reach the source.
+#[test]
+fn text_edit_placement_keeps_the_row_with_opaque_text() {
+    for transform in [
+        r#"trunc 63 | trimSuffix "-""#,
+        r#"trimPrefix "release-""#,
+        r#"replace "__" "-""#,
+    ] {
+        let src = formatdoc! {r"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: {{{{ .Values.fullnameOverride | {transform} }}}}
+        "};
+        let ir = SymbolicIrContext::new(&DefineIndex::new())
+            .generate_contract_ir(&src)
+            .finalize();
+        let placed = ir
+            .uses()
+            .iter()
+            .filter(|use_| {
+                use_.source_expr == conditional_path("fullnameOverride")
+                    && use_.path == YamlPath(vec!["metadata".to_owned(), "name".to_owned()])
+            })
+            .map(|use_| (use_.kind, use_.stringified, use_.text_preimage.is_some()))
+            .collect::<Vec<_>>();
+        sim_assert_eq!(
+            have: placed,
+            want: vec![(ValueKind::Serialized, true, false)],
+            "{transform}: {:#?}",
+            ir.uses()
+        );
+    }
 }
 
 #[test]

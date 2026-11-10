@@ -291,6 +291,279 @@ fn semver_identifier(input: &str) -> nom::IResult<&str, &str> {
     take_while1(|character: char| character.is_ascii_alphanumeric() || character == '-')(input)
 }
 
+/// A version parsed as Masterminds' `NewVersion` parses it, through the grammar `semverCompare`
+/// uses: missing core components are 0.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SemverParts {
+    /// Major, minor and patch.
+    pub core: [u64; 3],
+    /// The prerelease identifiers, empty when absent.
+    pub prerelease: String,
+    /// The build metadata, empty when absent.
+    pub metadata: String,
+}
+
+/// Parses a version spelling, or `None` where Masterminds' `NewVersion` fails: outside the grammar,
+/// a core component beyond [`u64::MAX`], or a numeric prerelease identifier with a leading zero.
+#[must_use]
+pub fn parse_semver_version(text: &str) -> Option<SemverParts> {
+    let (_, version) = all_consuming(numeric_version).parse(text).ok()?;
+    let mut core = [0_u64; 3];
+    for (slot, part) in core.iter_mut().zip(version.core) {
+        *slot = part.parse().ok()?;
+    }
+    let prerelease = version.prerelease.unwrap_or_default();
+    if prerelease.split('.').any(|identifier| {
+        identifier.len() > 1
+            && identifier.starts_with('0')
+            && identifier.bytes().all(|byte| byte.is_ascii_digit())
+    }) {
+        return None;
+    }
+    Some(SemverParts {
+        core,
+        prerelease: prerelease.to_owned(),
+        metadata: version.build.unwrap_or_default().to_owned(),
+    })
+}
+
+/// The language of version spellings a supported constraint accepts, as an anchored regex.
+///
+/// It is the same [`NumericConstraint`] that decides concrete versions, encoded over the version
+/// grammar: on every grammatical spelling whose core fits `u64`, the pattern matches exactly where
+/// [`semver_constraint_matches_version`] returns `Some(true)`. Unsupported constraints have no
+/// pattern.
+#[must_use]
+pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
+    let alternatives = NumericConstraint::parse(constraint)?.pattern_alternatives();
+    Some(if alternatives.is_empty() {
+        "^[^\\s\\S]$".to_owned()
+    } else {
+        format!("^(?:{})$", alternatives.join("|"))
+    })
+}
+
+/// How one written version component relates to the bound's component.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Component {
+    Any,
+    Equal,
+    Greater,
+    Less,
+}
+
+const IDENTIFIERS: &str = r"[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*";
+
+impl NumericConstraint<'_> {
+    fn pattern_alternatives(&self) -> Vec<String> {
+        let build = format!(r"(?:\+{IDENTIFIERS})?");
+        let any_prerelease = format!(r"(?:-{IDENTIFIERS})?{build}");
+        let (bound, mut cores) = match self {
+            Self::Tilde { bound } => {
+                let zero = bound
+                    .core
+                    .iter()
+                    .all(|part| decimal_order(part, "0").is_eq());
+                let cores = if zero {
+                    vec![[Component::Any; 3]]
+                } else {
+                    [Component::Greater, Component::Equal]
+                        .map(|patch| [Component::Equal, Component::Equal, patch])
+                        .to_vec()
+                };
+                (
+                    bound,
+                    cores
+                        .into_iter()
+                        .map(|core| (core, build.clone()))
+                        .collect::<Vec<_>>(),
+                )
+            }
+            Self::Compare { op, bound } => {
+                let components = match op {
+                    ComparisonOp::Gt | ComparisonOp::Le => bound.written,
+                    ComparisonOp::Eq | ComparisonOp::Ne | ComparisonOp::Lt | ComparisonOp::Ge => 3,
+                };
+                let ordered = |relation| lexicographic(relation, components);
+                let mut cores = Vec::new();
+                match (bound.prerelease, op) {
+                    (Some(_), ComparisonOp::Ge) => {
+                        for core in
+                            [ordered(Component::Greater), ordered(Component::Equal)].concat()
+                        {
+                            cores.push((core, any_prerelease.clone()));
+                        }
+                    }
+                    (Some(pre), _) => {
+                        for core in ordered(Component::Less) {
+                            cores.push((core, any_prerelease.clone()));
+                        }
+                        if let Some(top) = pre
+                            .bytes()
+                            .next()
+                            .filter(|digit| *digit > b'0')
+                            .map(|digit| digit - 1)
+                        {
+                            let first =
+                                format!(r"-[0-{}](?:\.[0-9A-Za-z-]+)*{build}", char::from(top));
+                            for core in ordered(Component::Equal) {
+                                cores.push((core, first.clone()));
+                            }
+                        }
+                    }
+                    (None, _) => {
+                        let relations: &[Component] = match op {
+                            ComparisonOp::Eq => &[Component::Equal],
+                            ComparisonOp::Ne => &[Component::Less, Component::Greater],
+                            ComparisonOp::Lt => &[Component::Less],
+                            ComparisonOp::Le => &[Component::Less, Component::Equal],
+                            ComparisonOp::Gt => &[Component::Greater],
+                            ComparisonOp::Ge => &[Component::Greater, Component::Equal],
+                        };
+                        for relation in relations {
+                            for core in ordered(*relation) {
+                                cores.push((core, build.clone()));
+                            }
+                        }
+                    }
+                }
+                (bound, cores)
+            }
+        };
+        let mut alternatives = Vec::new();
+        for (core, suffix) in cores.drain(..) {
+            for written in 1..=3 {
+                if let Some(text) = written_core(core, written, bound) {
+                    alternatives.push(format!("v?{text}{suffix}"));
+                }
+            }
+        }
+        alternatives.sort();
+        alternatives.dedup();
+        alternatives
+    }
+}
+
+/// The component relations under which a core compares to the bound by `relation` over its first
+/// `components` components; later components are unconstrained.
+fn lexicographic(relation: Component, components: usize) -> Vec<[Component; 3]> {
+    let mut cores = Vec::new();
+    if relation == Component::Equal {
+        let mut core = [Component::Any; 3];
+        for slot in core.iter_mut().take(components) {
+            *slot = Component::Equal;
+        }
+        return vec![core];
+    }
+    for differing in 0..components {
+        let mut core = [Component::Any; 3];
+        for (index, slot) in core.iter_mut().enumerate().take(differing + 1) {
+            *slot = if index == differing {
+                relation
+            } else {
+                Component::Equal
+            };
+        }
+        cores.push(core);
+    }
+    cores
+}
+
+/// One version shape with `written` components; a missing component reads as 0.
+fn written_core(
+    core: [Component; 3],
+    written: usize,
+    bound: &NumericVersion<'_>,
+) -> Option<String> {
+    let mut parts = Vec::with_capacity(written);
+    for (index, (relation, part)) in core.iter().zip(bound.core).enumerate() {
+        let value: u64 = part.parse().ok()?;
+        if index >= written {
+            let holds = match relation {
+                Component::Any => true,
+                Component::Equal => value == 0,
+                Component::Greater => false,
+                Component::Less => value > 0,
+            };
+            if !holds {
+                return None;
+            }
+            continue;
+        }
+        parts.push(match relation {
+            Component::Any => r"\d+".to_owned(),
+            Component::Equal => equal_digits(value),
+            Component::Greater => greater_digits(value),
+            Component::Less => less_digits(value)?,
+        });
+    }
+    Some(parts.join(r"\."))
+}
+
+/// Exactly `count` digits.
+fn any_digits(count: usize) -> String {
+    match count {
+        0 => String::new(),
+        1 => r"\d".to_owned(),
+        _ => format!(r"\d{{{count}}}"),
+    }
+}
+
+/// Decimal spellings (leading zeros allowed) of exactly `value`.
+fn equal_digits(value: u64) -> String {
+    if value == 0 {
+        "0+".to_owned()
+    } else {
+        format!("0*{value}")
+    }
+}
+
+/// Decimal spellings (leading zeros allowed) of values above `value`.
+fn greater_digits(value: u64) -> String {
+    let digits = value.to_string();
+    let width = digits.len();
+    let mut alternatives = vec![format!(r"[1-9]\d{{{width},}}")];
+    for (index, digit) in digits.bytes().enumerate() {
+        if digit < b'9' {
+            alternatives.push(format!(
+                "{}[{}-9]{}",
+                &digits[..index],
+                char::from(digit + 1),
+                any_digits(width - index - 1)
+            ));
+        }
+    }
+    format!("0*(?:{})", alternatives.join("|"))
+}
+
+/// Decimal spellings (leading zeros allowed) of values below `value`, if any.
+fn less_digits(value: u64) -> Option<String> {
+    if value == 0 {
+        return None;
+    }
+    let digits = value.to_string();
+    let width = digits.len();
+    let mut alternatives = vec!["0".to_owned()];
+    match width {
+        0 | 1 => {}
+        2 => alternatives.push("[1-9]".to_owned()),
+        _ => alternatives.push(format!(r"[1-9]\d{{0,{}}}", width - 2)),
+    }
+    for (index, digit) in digits.bytes().enumerate() {
+        let low = if index == 0 { b'1' } else { b'0' };
+        if digit > low {
+            alternatives.push(format!(
+                "{}[{}-{}]{}",
+                &digits[..index],
+                char::from(low),
+                char::from(digit - 1),
+                any_digits(width - index - 1)
+            ));
+        }
+    }
+    Some(format!("0*(?:{})", alternatives.join("|")))
+}
+
 #[cfg(test)]
 #[path = "tests/semver_numeric.rs"]
 mod tests;

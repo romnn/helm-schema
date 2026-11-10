@@ -131,16 +131,16 @@
     "constrains/gateway.create:t+gateway.hostnames:t+gateway.parentRefs:t+ingress+ingress.host:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1gateway.create:t+gateway.hostnames:t+gateway.parentRefs:t+ingress+ingress.host:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1gateway.create:t+gateway.parentRefs:t+ingress"
+          "$ref": "#/$defs/constrains~1gateway.create:t+gateway.hostnames:t+ingress.host:t"
         },
         {
           "$ref": "#/$defs/constrains~1gateway.create:t+gateway.parentRefs:t"
         },
         {
-          "$ref": "#/$defs/constrains~1gateway.create:t+gateway.hostnames:t+ingress.host:t"
+          "$ref": "#/$defs/constrains~1gateway.create:t+gateway.hostnames:t+gateway.parentRefs:t+ingress+ingress.host:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1gateway.create:t+gateway.parentRefs:t+ingress"
         }
       ]
     },
@@ -1260,6 +1260,17 @@
       },
       "then": false
     },
+    "when/gateway.create:t/then/gateway.hostnames:t+gateway.parentRefs:t+ingress+ingress.host:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1gateway.hostnames:t~1then~1ingress.host:t~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.create:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.hostnames:t~1then~1gateway.parentRefs:t+ingress.create:t+ingress.host:t~1else~1any"
+      }
+    },
     "when/gateway.hostnames:t/then/fullnameOverride+ingress.host:t+nameOverride+nameOverride:t/else/any": {
       "else": {
         "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride~1else~1any"
@@ -1291,6 +1302,15 @@
       },
       "then": {
         "$ref": "#/$defs/when~1ingress.host:t~1then~1fail~1else~1fullnameOverride+nameOverride:t"
+      }
+    },
+    "when/gateway.hostnames:t/then/gateway.parentRefs:t+ingress.create:t+ingress.host:t/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.hostnames:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1gateway.parentRefs:t~1then~1ingress.create:t+ingress.host:t~1else~1any"
       }
     },
     "when/gateway.hostnames:t/then/ingress.host:t+nameOverride+nameOverride:t/else/any": {
@@ -1333,6 +1353,24 @@
       },
       "then": {
         "$ref": "#/$defs/when~1ingress.host:t~1then~1fail~1else~1any"
+      }
+    },
+    "when/gateway.hostnames:t/then/ingress.host:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.hostnames:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.host:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/gateway.parentRefs:t/then/ingress.create:t+ingress.host:t/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.parentRefs:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ingress.create:t~1then~1any~1else~1ingress.host:t"
       }
     },
     "when/image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null/then/fail": {
@@ -1393,6 +1431,22 @@
       "then": {
         "$ref": "#/$defs/when~1majorVersion:t~1then~1nameOverride+nameOverride:t+nodeGroup+nodeGroup=null~1else~1image.tag"
       }
+    },
+    "when/ingress.create:t/then/any/else/ingress.host:t": {
+      "else": {
+        "$ref": "#/$defs/when~1ingress.host:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.create:t@2"
+      },
+      "then": true
+    },
+    "when/ingress.host:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ingress.host:t"
+      },
+      "then": true
     },
     "when/ingress.host:t/then/fail/else/any": {
       "else": true,
@@ -2257,12 +2311,6 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1gateway.create:t+gateway.hostnames:t+gateway.parentRefs:t+ingress+ingress.host:t@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "$ref": "#/$defs/when~1opensearch.enabled:t~1then~1opensearch+opensearch.image.tag+opensearch.image.tag:t+opensearch.majorVersion:t+5more~1else~1opensearch+opensearch.enabled+opensearch.enabled=null"
       },
       "then": {
@@ -2320,6 +2368,44 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "fluentd": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "fluentd"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "fluentd": {}
+                  },
+                  "required": [
+                    "fluentd"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+gateway.create:t+gateway.hostnames:t+ingress.host:t+2more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "$ref": "#/$defs/when~1opensearch.enabled:t~1then~1opensearch.nameOverride:t~1else~1opensearch+opensearch.enabled+opensearch.enabled=null"
       },
       "then": {
@@ -2330,6 +2416,50 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1gateway.create:t~1then~1gateway.hostnames:t+gateway.parentRefs:t+ingress+ingress.host:t~1else~1any"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+gateway.create:t+gateway.hostnames:t+ingress.host:t+2more~1else~1any"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "ordinals": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ordinals"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "ordinals": {}
+                  },
+                  "required": [
+                    "ordinals"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -2391,68 +2521,30 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "fluentd": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "fluentd"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "fluentd": {}
-                  },
-                  "required": [
-                    "fluentd"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+gateway.create:t+gateway.hostnames:t+ingress.host:t+2more~1else~1any"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+gateway.create:t+gateway.hostnames:t+ingress.host:t+2more~1else~1any"
           },
           {
             "anyOf": [
               {
                 "properties": {
-                  "ordinals": {
+                  "jira": {
                     "enum": [
                       null
                     ]
                   }
                 },
                 "required": [
-                  "ordinals"
+                  "jira"
                 ],
                 "type": "object"
               },
               {
                 "not": {
                   "properties": {
-                    "ordinals": {}
+                    "jira": {}
                   },
                   "required": [
-                    "ordinals"
+                    "jira"
                   ],
                   "type": "object"
                 }
@@ -2502,6 +2594,12 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1gateway.create:t+gateway.hostnames:t+gateway.parentRefs:t+ingress+ingress.host:t@2"
+      },
+      "then": false
     },
     {
       "if": {
@@ -2833,44 +2931,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+gateway.create:t+gateway.hostnames:t+ingress.host:t+2more~1else~1any"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "jira": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "jira"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "jira": {}
-                  },
-                  "required": [
-                    "jira"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "$ref": "#/$defs/when~1opensearch.enabled:t~1then~1opensearch.image.tag:t+opensearch.majorVersion:t+opensearch.nameOverride+1more~1else~1opensearch+opensearch.enabled+opensearch.enabled=null"
       },
       "then": {
@@ -3031,14 +3091,6 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/when~1enabled:t~1then~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more~1else~1enabled+enabled=null"
-          },
-          "then": {
-            "$ref": "#/$defs/when~1image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null~1then~1fail"
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@4"
@@ -3053,6 +3105,14 @@
                 "type": "object"
               }
             ]
+          },
+          "then": {
+            "$ref": "#/$defs/when~1image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null~1then~1fail"
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/when~1enabled:t~1then~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more~1else~1enabled+enabled=null"
           },
           "then": {
             "$ref": "#/$defs/when~1image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null~1then~1fail"

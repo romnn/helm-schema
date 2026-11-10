@@ -2727,6 +2727,9 @@
     "values/postgresql-ha.nameOverride": {
       "description": "String to partially override common.names.fullname template (will maintain the release name)"
     },
+    "values/postgresql-ha.namespaceOverride": {
+      "description": "String to fully override common.names.namespace"
+    },
     "when/fullnameOverride!=null+nameOverride!=null+namespaceOverride!=null+3more/then/fail": {
       "if": {
         "allOf": [
@@ -5475,7 +5478,7 @@
           "$ref": "#/$defs/values~1postgresql-ha.nameOverride"
         },
         "namespaceOverride": {
-          "description": "String to fully override common.names.namespace"
+          "$ref": "#/$defs/values~1postgresql-ha.namespaceOverride"
         },
         "passwordUpdateJob": {
           "additionalProperties": {},
@@ -5524,7 +5527,7 @@
           "$ref": "#/$defs/values~1postgresql-ha.nameOverride"
         },
         "namespaceOverride": {
-          "description": "String to fully override common.names.namespace"
+          "$ref": "#/$defs/values~1postgresql-ha.namespaceOverride"
         },
         "witness": {
           "additionalProperties": {},
@@ -5600,13 +5603,52 @@
         "common": {
           "$ref": "#/$defs/values~1postgresql-ha.common"
         },
+        "commonLabels": {
+          "description": "Labels to add to all deployed objects"
+        },
         "enabled": {
           "description": "Enable valkey standalone or replicated"
+        },
+        "fullnameOverride": {
+          "description": "String to fully override common.names.fullname"
         },
         "global": {
           "additionalProperties": {},
           "properties": {
             "apiVersions": {}
+          }
+        },
+        "nameOverride": {
+          "description": "String to partially override common.names.fullname"
+        },
+        "namespaceOverride": {
+          "$ref": "#/$defs/values~1postgresql-ha.namespaceOverride"
+        },
+        "replica": {
+          "additionalProperties": {},
+          "properties": {
+            "autoscaling": {
+              "additionalProperties": {},
+              "description": "ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/",
+              "properties": {
+                "vpa": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "description": "Enable VPA"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "sentinel": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "Use Valkey Sentinel on Valkey pods.\nIMPORTANT: this will disable the primary and replicas services and\ncreate a single Valkey service exposing both the Valkey and Sentinel ports\nBitnami Valkey Sentinel image version\nref: https://hub.docker.com/r/bitnami/valkey-sentinel/tags/"
+            }
           }
         }
       }

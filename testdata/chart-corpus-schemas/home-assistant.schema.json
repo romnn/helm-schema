@@ -16,10 +16,10 @@
     "constrains/controller+controller.type+controller.type=Deployment+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@2"
@@ -35,16 +35,16 @@
     "constrains/controller+controller.type+controller.type=Deployment+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
         },
         {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
@@ -54,41 +54,41 @@
     "constrains/controller+controller.type+controller.type=Deployment+6more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride:t+nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@3"
         }
       ]
     },
     "constrains/controller+controller.type+controller.type=Deployment+6more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
         },
         {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
@@ -98,19 +98,19 @@
     "constrains/controller+controller.type+controller.type=Deployment+6more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@2"
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+4more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@5"
         },
         {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+5more"
         },
         {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+4more"
-        },
-        {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@5"
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@2"
         }
       ]
     },
@@ -146,6 +146,34 @@
         "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
       }
     },
+    "constrains/controller+controller=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "controller": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "controller"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "controller": {}
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/controller.type": {
       "not": {
         "properties": {
@@ -176,7 +204,9 @@
       ]
     },
     "constrains/controller.type=Deployment": {
-      "$ref": "#/$defs/constrains~1controller.type=Deployment@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1controller.type=Deployment@3"
+      }
     },
     "constrains/controller.type=Deployment+controller.type=StatefulSet": {
       "allOf": [
@@ -191,10 +221,10 @@
     "constrains/controller.type=Deployment+controller.type=StatefulSet@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+          "$ref": "#/$defs/constrains~1controller.type=Deployment@2"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment@2"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
         }
       ]
     },
@@ -209,30 +239,20 @@
       }
     },
     "constrains/controller.type=Deployment@2": {
-      "$ref": "#/$defs/constrains~1controller.type=Deployment@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1controller.type=Deployment@3"
+      }
     },
     "constrains/controller.type=Deployment@3": {
-      "not": {
-        "properties": {
-          "controller": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "controller"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "controller": {
+          "$ref": "#/$defs/constrains~1type=Deployment"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
     },
     "constrains/controller.type=StatefulSet": {
       "$ref": "#/$defs/constrains~1controller.type=StatefulSet@3"
@@ -240,16 +260,16 @@
     "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
@@ -259,10 +279,10 @@
     "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@4"
@@ -275,13 +295,13 @@
     "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@3"
@@ -291,10 +311,10 @@
     "constrains/controller.type=StatefulSet+fullnameOverride:t+nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
@@ -317,17 +337,7 @@
     "constrains/controller.type=StatefulSet@4": {
       "properties": {
         "controller": {
-          "properties": {
-            "type": {
-              "enum": [
-                "StatefulSet"
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1type=StatefulSet"
         }
       },
       "required": [
@@ -501,6 +511,32 @@
         }
       ]
     },
+    "constrains/type=Deployment": {
+      "properties": {
+        "type": {
+          "enum": [
+            "Deployment"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "constrains/type=StatefulSet": {
+      "properties": {
+        "type": {
+          "enum": [
+            "StatefulSet"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
     "constrains/type=null": {
       "properties": {
         "type": {
@@ -575,6 +611,24 @@
       },
       "then": true
     },
+    "when/controller.type+controller.type=null/then/fail/else/controller.type": {
+      "else": {
+        "$ref": "#/$defs/when~1controller.type~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
+      },
+      "then": false
+    },
+    "when/controller.type+controller.type=null/then/fail/else/controller.type@2": {
+      "else": {
+        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fail~1else~1controller.type"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
+      },
+      "then": false
+    },
     "when/controller.type+controller.type=null/then/fullnameOverride/else/controller.type": {
       "else": {
         "$ref": "#/$defs/when~1controller.type~1then~1fullnameOverride~1else~1fail"
@@ -611,6 +665,13 @@
       },
       "then": true
     },
+    "when/controller.type/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.type@2"
+      },
+      "then": false
+    },
     "when/controller.type/then/fullnameOverride/else/fail": {
       "else": false,
       "if": {
@@ -620,6 +681,17 @@
         "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
       }
     },
+    "when/controller.type=Deployment/then/controller+controller.type+controller.type=null/else/controller.type=StatefulSet": {
+      "else": {
+        "$ref": "#/$defs/when~1controller.type=StatefulSet~1then~1controller+controller.type+controller.type=null~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.type=Deployment@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fail~1else~1controller.type@2"
+      }
+    },
     "when/controller.type=StatefulSet/then/controller+controller.type+controller.type=null+fullnameOverride/else/fail": {
       "else": false,
       "if": {
@@ -627,6 +699,15 @@
       },
       "then": {
         "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fullnameOverride~1else~1controller.type@2"
+      }
+    },
+    "when/controller.type=StatefulSet/then/controller+controller.type+controller.type=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fail~1else~1controller.type@2"
       }
     },
     "when/controller.type=StatefulSet/then/controller+controller.type+controller.type=null/else/fail": {
@@ -716,6 +797,26 @@
         "$ref": "#/$defs/constrains~1type"
       },
       "then": false
+    },
+    "when/type=Deployment/then/type+type=null/else/type=StatefulSet": {
+      "else": {
+        "$ref": "#/$defs/when~1type=StatefulSet~1then~1type+type=null~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1type=Deployment"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1type+type=null~1then~1fail~1else~1type@2"
+      }
+    },
+    "when/type=StatefulSet/then/type+type=null/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1type=StatefulSet"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1type+type=null~1then~1fail~1else~1type@2"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -723,32 +824,7 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "controller": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "controller": {}
-              },
-              "required": [
-                "controller"
-              ],
-              "type": "object"
-            }
-          }
-        ]
+        "$ref": "#/$defs/constrains~1controller+controller=null"
       },
       "then": false
     },
@@ -784,10 +860,23 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@3"
+            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@4"
+            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1controller.type=Deployment~1then~1controller+controller.type+controller.type=null~1else~1controller.type=StatefulSet"
+          },
+          {
+            "$ref": "#/$defs/constrains~1controller+controller=null"
           }
         ]
       },
@@ -827,7 +916,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/when~1type+type=null~1then~1fail~1else~1type@2"
+            "$ref": "#/$defs/when~1type=Deployment~1then~1type+type=null~1else~1type=StatefulSet"
           },
           "then": false
         }

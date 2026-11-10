@@ -426,6 +426,243 @@
       "condition": [
         [
           {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "ingress.tls",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ],
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "ingress.tls",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "ingress.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 96,
+            "start": 36
+          },
+          "template_path": "charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "extensions/v1beta1",
+        "kind": "Ingress"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "ingress.annotations",
             "type": "truthy"
           },

@@ -540,7 +540,6 @@ fn pristine_root_values_selector_records_direct_hosts_in_both_binding_modes() {
 }
 
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): static semver fields fold through decimal printf; tracked in plan/value-algebra-r3b.md follow-ups"]
 fn static_semver_fields_fold_through_decimal_printf() {
     let prefix =
         r#"{{ $_ := set $ "Capabilities" (dict "KubeVersion" (dict "Version" "v1.35.0")) }}"#;
@@ -1536,7 +1535,6 @@ fn division_operand_is_not_arithmetic_erased() {
 }
 
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): finite selector program construction stays exact; tracked in plan/value-algebra-r3b.md follow-ups"]
 fn finite_selector_program_construction_stays_exact() {
     let result = observe(
         r#"{{ $dep := "telemetry.v2.stackdriver.disableOutbound" }}"#,

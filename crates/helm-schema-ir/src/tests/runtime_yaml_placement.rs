@@ -700,7 +700,22 @@ fn an_unknown_body_keeps_resource_diagnostics_without_inventing_placed_fields() 
             }]),
         }
     ]));
-    assert!(contract.uses().iter().all(|use_| use_.resource.is_none()));
+    // The truncated name is placed as opaque text (no slot demand reaches `name`); the unknown
+    // body after it invents no placed field.
+    let placed = contract
+        .uses()
+        .iter()
+        .filter(|use_| use_.resource.is_some())
+        .map(|use_| (use_.source_expr.encode(), use_.path.0.clone(), use_.kind))
+        .collect::<Vec<_>>();
+    sim_assert_eq!(
+        have: placed,
+        want: vec![(
+            "name".to_owned(),
+            vec!["metadata".to_owned(), "name".to_owned()],
+            crate::ValueKind::Serialized,
+        )]
+    );
     let dormant = format!("{{{{ if false }}}}{source}{{{{ end }}}}");
     let contract = crate::SymbolicIrContext::new(&defines)
         .generate_contract_ir(&dormant)

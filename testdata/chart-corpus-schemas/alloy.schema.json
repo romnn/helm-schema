@@ -123,7 +123,17 @@
     "constrains/controller.type=null": {
       "properties": {
         "controller": {
-          "$ref": "#/$defs/constrains~1type=null"
+          "properties": {
+            "type": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -180,7 +190,15 @@
     "constrains/controller.type@5": {
       "properties": {
         "controller": {
-          "$ref": "#/$defs/constrains~1type"
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -430,48 +448,6 @@
       },
       "required": [
         "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/type": {
-      "properties": {
-        "type": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "constrains/type+type=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "type": {}
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "$ref": "#/$defs/constrains~1type=null"
-        }
-      ]
-    },
-    "constrains/type=null": {
-      "properties": {
-        "type": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "type"
       ],
       "type": "object"
     },
@@ -902,31 +878,6 @@
       "then": {
         "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null~1else~1fail@2"
       }
-    },
-    "when/type+type=null/then/fail/else/type": {
-      "else": {
-        "$ref": "#/$defs/when~1type~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1type+type=null"
-      },
-      "then": false
-    },
-    "when/type+type=null/then/fail/else/type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1type+type=null~1then~1fail~1else~1type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1type+type=null"
-      },
-      "then": false
-    },
-    "when/type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1type"
-      },
-      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1663,14 +1614,6 @@
     },
     "controller": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/when~1type+type=null~1then~1fail~1else~1type@2"
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "autoscaling": {
           "additionalProperties": {},

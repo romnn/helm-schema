@@ -1,31 +1,335 @@
 {
   "$defs": {
-    "constrains/injector.externalVaultAddr:t": {
-      "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+    "constrains/enabled=-": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            "-"
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
     },
-    "constrains/injector.externalVaultAddr:t@2": {
-      "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            "true"
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
     },
-    "constrains/injector.externalVaultAddr:t@3": {
-      "not": {
-        "properties": {
-          "injector": {
+    "constrains/enabled=true@2": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/externalVaultAddr:t": {
+      "properties": {
+        "externalVaultAddr": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "externalVaultAddr"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/global+global=null": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "externalVaultAddr": {
-                "$ref": "#/$defs/t"
-              }
+              "global": {}
             },
             "required": [
-              "externalVaultAddr"
+              "global"
             ],
             "type": "object"
           }
         },
-        "required": [
-          "injector"
-        ],
-        "type": "object"
+        {
+          "properties": {
+            "global": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global.enabled=true": {
+      "properties": {
+        "global": {
+          "$ref": "#/$defs/constrains~1enabled=true"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.enabled=true@2": {
+      "properties": {
+        "global": {
+          "$ref": "#/$defs/constrains~1enabled=true@2"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.externalVaultAddr:t": {
+      "properties": {
+        "global": {
+          "$ref": "#/$defs/constrains~1externalVaultAddr:t"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/injector.externalVaultAddr:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
       }
+    },
+    "constrains/injector.externalVaultAddr:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      }
+    },
+    "constrains/injector.externalVaultAddr:t@3": {
+      "properties": {
+        "injector": {
+          "$ref": "#/$defs/constrains~1externalVaultAddr:t"
+        }
+      },
+      "required": [
+        "injector"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride+ui.annotations": {
+      "$ref": "#/$defs/when~1nameOverride~1then~1ui.annotations~1else~1fail"
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/server.dev.enabled=true": {
+      "properties": {
+        "server": {
+          "properties": {
+            "dev": {
+              "$ref": "#/$defs/constrains~1enabled=true"
+            }
+          },
+          "required": [
+            "dev"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "constrains/server.dev.enabled=true@2": {
+      "properties": {
+        "server": {
+          "properties": {
+            "dev": {
+              "$ref": "#/$defs/constrains~1enabled=true@2"
+            }
+          },
+          "required": [
+            "dev"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "constrains/server.enabled=-": {
+      "properties": {
+        "server": {
+          "$ref": "#/$defs/constrains~1enabled=-"
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "constrains/server.enabled=true": {
+      "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1fail"
+    },
+    "constrains/server.enabled=true@2": {
+      "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1fail"
+    },
+    "constrains/server.enabled=true@3": {
+      "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1fail"
+    },
+    "constrains/server.enabled=true@4": {
+      "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1fail"
+    },
+    "constrains/server.enabled=true@5": {
+      "properties": {
+        "server": {
+          "$ref": "#/$defs/constrains~1enabled=true"
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "constrains/server.enabled=true@6": {
+      "properties": {
+        "server": {
+          "$ref": "#/$defs/constrains~1enabled=true@2"
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "constrains/server.ha.enabled=true": {
+      "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1any"
+    },
+    "constrains/server.ha.enabled=true@2": {
+      "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1any"
+    },
+    "constrains/server.ha.enabled=true@3": {
+      "properties": {
+        "server": {
+          "properties": {
+            "ha": {
+              "$ref": "#/$defs/constrains~1enabled=true"
+            }
+          },
+          "required": [
+            "ha"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "constrains/ui.annotations": {
+      "$ref": "#/$defs/when~1ui.annotations~1then~1any~1else~1fail"
+    },
+    "constrains/ui.annotations:t": {
+      "properties": {
+        "ui": {
+          "properties": {
+            "annotations": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ui"
+      ],
+      "type": "object"
+    },
+    "constrains/ui.enabled=-": {
+      "properties": {
+        "ui": {
+          "$ref": "#/$defs/constrains~1enabled=-"
+        }
+      },
+      "required": [
+        "ui"
+      ],
+      "type": "object"
+    },
+    "constrains/ui.enabled=true": {
+      "properties": {
+        "ui": {
+          "$ref": "#/$defs/constrains~1enabled=true"
+        }
+      },
+      "required": [
+        "ui"
+      ],
+      "type": "object"
+    },
+    "constrains/ui.enabled=true@2": {
+      "properties": {
+        "ui": {
+          "$ref": "#/$defs/constrains~1enabled=true@2"
+        }
+      },
+      "required": [
+        "ui"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -51,11 +355,1809 @@
           "const": true
         }
       ]
+    },
+    "when/fullnameOverride/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      },
+      "then": true
+    },
+    "when/fullnameOverride/then/nameOverride+ui.annotations/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride+ui.annotations"
+      }
+    },
+    "when/fullnameOverride/then/ui.annotations/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1ui.annotations"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+global+global.enabled=true+global.externalVaultAddr:t+injector+5more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+nameOverride:t+server+server.enabled=-+ui+1more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1fullnameOverride+global+global.enabled=true+injector+nameOverride:t+server+3more"
+      }
+    },
+    "when/fullnameOverride:t/then/fullnameOverride+global+global.enabled=true+global.externalVaultAddr:t+injector+8more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+nameOverride+nameOverride:t+server+5more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1fullnameOverride+global+global.enabled=true+injector+nameOverride+nameOverride:t+6more"
+      }
+    },
+    "when/fullnameOverride:t/then/global+global.enabled=true+global.externalVaultAddr:t+injector+server+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.enabled=-+ui+ui.enabled=true"
+      }
+    },
+    "when/global.enabled=true/then/fullnameOverride+nameOverride+server+server.enabled=-+ui+ui.annotations+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/fullnameOverride+nameOverride+server+server.enabled=-+ui+ui.annotations+1more/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1fullnameOverride+nameOverride+server+server.enabled=-+ui+ui.annotations+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/fullnameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.annotations+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1fullnameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/fullnameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1fullnameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1fullnameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/fullnameOverride+server+server.enabled=-+ui+ui.enabled=true/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1fullnameOverride+ui+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/fullnameOverride+server+server.enabled=-+ui+ui.enabled=true/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1fullnameOverride+server+server.enabled=-+ui+ui.enabled=true~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1fullnameOverride+ui+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/nameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1nameOverride+ui+ui.annotations+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1nameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/nameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1nameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1nameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.ha"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-+server.ha"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.ha@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-+server.ha@2"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-+server.ha"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha/else/global@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-+server.ha@2"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-@2"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-"
+      }
+    },
+    "when/global.enabled=true/then/server+server.dev+server.dev.enabled=true+server.enabled=-/else/global@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.dev.enabled=true+server.enabled=-@2"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+server.enabled=true/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1any~1else~1server.enabled+server.enabled=true@2"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+server.enabled=true/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1any~1else~1server.enabled+server.enabled=true@4"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+server.enabled=true/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+server.enabled=true~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1any~1else~1server.enabled+server.enabled=true@2"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+server.enabled=true/else/global@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+server.enabled=true~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1any~1else~1server.enabled+server.enabled=true@4"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+ui+ui.annotations+ui.enabled=true/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.annotations+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+ui+ui.annotations+ui.enabled=true/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+ui+ui.annotations+ui.enabled=true~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1ui+ui.annotations+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+ui+ui.enabled=true/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1ui+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+ui+ui.enabled=true/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=true~1else~1server@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1ui+ui.enabled+ui.enabled=true~1else~1server@2"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+ui+ui.enabled=true/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+ui+ui.enabled=true~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1ui+ui.enabled+ui.enabled=true~1else~1server"
+      }
+    },
+    "when/global.enabled=true/then/server+server.enabled=-+ui+ui.enabled=true/else/global@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+ui+ui.enabled=true~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1ui+ui.enabled+ui.enabled=true~1else~1server@2"
+      }
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/fullnameOverride+global+global.enabled=true+injector+nameOverride+nameOverride:t+6more": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1fullnameOverride+global+global.enabled=true+nameOverride+nameOverride:t+server+5more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/fullnameOverride+global+global.enabled=true+injector+nameOverride:t+server+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1fullnameOverride+global+global.enabled=true+nameOverride:t+server+3more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+nameOverride+nameOverride:t+server+5more": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+nameOverride+nameOverride:t+server+server.enabled=-+4more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+nameOverride:t+server+server.enabled=-+ui+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+nameOverride:t+server+server.enabled=-+ui+1more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+server+server.dev+server.dev.enabled=true+1more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+1more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+server+server.dev+server.dev.enabled=true+1more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+server+server.dev+server.dev.enabled=true+2more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+server+server.dev+server.dev.enabled=true+2more@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+server+server.enabled=-+server.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+server+server.enabled=-+server.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+server+server.enabled=-+server.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+server+server.enabled=-+server.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/global.externalVaultAddr:t/then/fail/else/global+global.enabled=true+injector+server+server.enabled=-+ui+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+server+server.enabled=-+ui+ui.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.externalVaultAddr:t"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/fullnameOverride+global+global.enabled=true+nameOverride+nameOverride:t+server+5more": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+global+global.enabled=true+nameOverride+server+server.enabled=-+4more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/fullnameOverride+global+global.enabled=true+nameOverride:t+server+3more": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+global+global.enabled=true+server+server.enabled=-+ui+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+nameOverride+nameOverride:t+server+server.enabled=-+4more": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1global+global.enabled=true+nameOverride+server+server.enabled=-+ui+3more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+nameOverride:t+server+server.enabled=-+ui+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1global+global.enabled=true+server+server.enabled=-+ui+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+server+server.dev+server.dev.enabled=true+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-~1else~1global"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+server+server.dev+server.dev.enabled=true+1more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-~1else~1global@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+server+server.dev+server.dev.enabled=true+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha~1else~1global"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+server+server.dev+server.dev.enabled=true+2more@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.dev+server.dev.enabled=true+server.enabled=-+server.ha~1else~1global@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+server+server.enabled=-+server.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+server.enabled=true~1else~1global"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+server+server.enabled=-+server.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+server.enabled=true~1else~1global@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/fail/else/global+global.enabled=true+server+server.enabled=-+ui+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+ui+ui.enabled=true~1else~1global"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": false
+    },
+    "when/injector.externalVaultAddr:t/then/server.enabled+server.enabled=-+server.enabled=true/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1server.enabled+server.enabled=true~1else~1fail"
+      }
+    },
+    "when/injector.externalVaultAddr:t/then/server.enabled+server.enabled=-+server.enabled=true/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1server.enabled+server.enabled=true~1else~1fail@2"
+      }
+    },
+    "when/nameOverride/then/ui.annotations/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1ui.annotations"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+global+global.enabled=true+nameOverride+server+server.enabled=-+4more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.annotations:t~1then~1fullnameOverride+global+global.enabled=true+server+server.enabled=-+ui+2more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.annotations:t~1then~1fullnameOverride+global+global.enabled=true+nameOverride+server+server.enabled=-+3more~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/fullnameOverride+global+global.enabled=true+server+server.enabled=-+ui+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1fullnameOverride+server+server.enabled=-+ui+ui.enabled=true~1else~1global"
+      }
+    },
+    "when/nameOverride:t/then/global+global.enabled=true+nameOverride+server+server.enabled=-+ui+3more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.annotations:t~1then~1global+global.enabled=true+server+server.enabled=-+ui+ui.annotations+1more~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.annotations:t~1then~1global+global.enabled=true+nameOverride+server+server.enabled=-+ui+2more~1else~1fail"
+      }
+    },
+    "when/nameOverride:t/then/global+global.enabled=true+server+server.enabled=-+ui+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+ui+ui.enabled=true~1else~1global@2"
+      }
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true+server.enabled=-": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=-+server.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true+server.enabled=-+server.ha": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=-+server.ha+server.ha.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true+server.enabled=-+server.ha@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=-+server.ha+server.ha.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true+server.enabled=-@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=-+server.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true+server.ha": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=true+server.ha"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true+server.ha@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=true+server.ha@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.dev.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.dev.enabled=true~1then~1fail~1else~1server+server.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=-+server.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1any~1else~1server.enabled+server.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=-+server.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1any~1else~1server.enabled+server.enabled=true@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=-+server.ha+server.ha.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1server.ha.enabled+server.ha.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=-+server.ha+server.ha.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=-~1then~1server.ha.enabled+server.ha.enabled=true~1else~1server@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=true+server.ha": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1server.ha+server.ha.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=true+server.ha@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1server.ha+server.ha.enabled=true~1else~1server@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.dev.enabled=true/then/fail/else/server+server.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.dev.enabled=true@2"
+      },
+      "then": false
+    },
+    "when/server.enabled=-/then/any/else/server.enabled+server.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": true
+    },
+    "when/server.enabled=-/then/any/else/server.enabled+server.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": true
+    },
+    "when/server.enabled=-/then/any/else/server.enabled+server.enabled=true@3": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": true
+    },
+    "when/server.enabled=-/then/any/else/server.enabled+server.enabled=true@4": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1any~1else~1server.enabled=true@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": true
+    },
+    "when/server.enabled=-/then/fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride+nameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/fullnameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/fullnameOverride+ui+ui.enabled+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.enabled=-+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/nameOverride+ui+ui.annotations+ui.enabled+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1nameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/server.enabled+server.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fail~1else~1server.enabled=true@2"
+      }
+    },
+    "when/server.enabled=-/then/server.enabled+server.enabled=true/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fail~1else~1server.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/server.ha.enabled+server.ha.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1server.ha+server.ha.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1server.ha.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/server.ha.enabled+server.ha.enabled=true/else/server@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1server.ha+server.ha.enabled=true~1else~1server@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1server.ha.enabled=true@2"
+      }
+    },
+    "when/server.enabled=-/then/ui+ui.annotations+ui.enabled+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/ui+ui.enabled+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=-+ui.enabled=true~1else~1server"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1any~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=-/then/ui+ui.enabled+ui.enabled=true/else/server@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=-+ui.enabled=true~1else~1server@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1any~1else~1ui.enabled+ui.enabled=true@2"
+      }
+    },
+    "when/server.enabled=true/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": true
+    },
+    "when/server.enabled=true/then/any/else/server.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/constrains~1server.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": true
+    },
+    "when/server.enabled=true/then/any/else/server.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": true
+    },
+    "when/server.enabled=true/then/any/else/server.enabled=true@3": {
+      "else": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": true
+    },
+    "when/server.enabled=true/then/any/else/server.enabled=true@4": {
+      "else": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": true
+    },
+    "when/server.enabled=true/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": false
+    },
+    "when/server.enabled=true/then/fail/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": false
+    },
+    "when/server.enabled=true/then/fail/else/server.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": false
+    },
+    "when/server.enabled=true/then/fail/else/server.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fail~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": false
+    },
+    "when/server.enabled=true/then/fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride+nameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride+nameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+nameOverride+ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+nameOverride+ui+ui.annotations+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+nameOverride+ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.annotations+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.annotations+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.annotations+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.enabled=-+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.enabled=-+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.enabled=-+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1fullnameOverride~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/fullnameOverride+ui+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1fullnameOverride+ui+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1nameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1nameOverride+ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1nameOverride+ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/nameOverride+ui+ui.annotations+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1nameOverride+ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/nameOverride+ui+ui.annotations+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1nameOverride+ui+ui.annotations+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1nameOverride+ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/server.ha+server.ha.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1server.ha.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/server.ha+server.ha.enabled=true/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1server.ha.enabled=true@2"
+      }
+    },
+    "when/server.enabled=true/then/server.ha+server.ha.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1server.ha+server.ha.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1server.ha.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/server.ha+server.ha.enabled=true/else/server@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1server.ha+server.ha.enabled=true~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1server.ha.enabled=true~1then~1fail~1else~1server.ha.enabled=true@2"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.annotations+ui.enabled=-+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.annotations+ui.enabled=-+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1ui.annotations~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.annotations+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.annotations+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.annotations+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1ui.annotations~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=-+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1any~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=-+ui.enabled=true/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1any~1else~1ui.enabled+ui.enabled=true@2"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=-+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=-+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1any~1else~1ui.enabled+ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=-+ui.enabled=true/else/server@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=-+ui.enabled=true~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=-~1then~1any~1else~1ui.enabled+ui.enabled=true@2"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=true/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=true/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@6"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1ui.enabled=true@2"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=true/else/server": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=true~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1ui.enabled=true"
+      }
+    },
+    "when/server.enabled=true/then/ui+ui.enabled=true/else/server@2": {
+      "else": {
+        "$ref": "#/$defs/when~1server.enabled=true~1then~1ui+ui.enabled=true~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.enabled=true@5"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1ui.enabled=true@2"
+      }
+    },
+    "when/server.ha.enabled=true/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "properties": {
+          "server": {
+            "properties": {
+              "ha": {
+                "$ref": "#/$defs/constrains~1enabled=true@2"
+              }
+            },
+            "required": [
+              "ha"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "server"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    "when/server.ha.enabled=true/then/fail/else/server.ha.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/constrains~1server.ha.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.ha.enabled=true@3"
+      },
+      "then": false
+    },
+    "when/server.ha.enabled=true/then/fail/else/server.ha.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1server.ha.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1server.ha.enabled=true@3"
+      },
+      "then": false
+    },
+    "when/ui.annotations/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "ui": {
+            "properties": {
+              "annotations": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ui"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "when/ui.annotations:t/then/fullnameOverride+global+global.enabled=true+nameOverride+server+server.enabled=-+3more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.annotations:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1fullnameOverride+nameOverride+server+server.enabled=-+ui+ui.annotations+1more~1else~1global"
+      }
+    },
+    "when/ui.annotations:t/then/fullnameOverride+global+global.enabled=true+server+server.enabled=-+ui+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.annotations:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1fullnameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true~1else~1global"
+      }
+    },
+    "when/ui.annotations:t/then/global+global.enabled=true+nameOverride+server+server.enabled=-+ui+2more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.annotations:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1nameOverride+server+server.enabled=-+ui+ui.annotations+ui.enabled=true~1else~1global"
+      }
+    },
+    "when/ui.annotations:t/then/global+global.enabled=true+server+server.enabled=-+ui+ui.annotations+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.annotations:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.enabled=true~1then~1server+server.enabled=-+ui+ui.annotations+ui.enabled=true~1else~1global"
+      }
+    },
+    "when/ui.enabled=-/then/any/else/ui.enabled+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1ui.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=-"
+      },
+      "then": true
+    },
+    "when/ui.enabled=-/then/any/else/ui.enabled+ui.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1ui.enabled=true@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=-"
+      },
+      "then": true
+    },
+    "when/ui.enabled=-/then/fullnameOverride+nameOverride+ui.annotations/else/ui.enabled+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+nameOverride+ui.annotations~1else~1ui.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride+ui.annotations~1else~1fail"
+      }
+    },
+    "when/ui.enabled=-/then/fullnameOverride+ui.annotations/else/ui.enabled+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+ui.annotations~1else~1ui.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1ui.annotations~1else~1fail"
+      }
+    },
+    "when/ui.enabled=-/then/fullnameOverride/else/ui.enabled+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride~1else~1ui.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/ui.enabled=-/then/nameOverride+ui.annotations/else/ui.enabled+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1nameOverride+ui.annotations~1else~1ui.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride+ui.annotations"
+      }
+    },
+    "when/ui.enabled=-/then/ui.annotations/else/ui.enabled+ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1ui.annotations~1else~1ui.enabled=true"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=-"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1ui.annotations"
+      }
+    },
+    "when/ui.enabled=true/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true@2"
+      },
+      "then": true
+    },
+    "when/ui.enabled=true/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true@2"
+      },
+      "then": true
+    },
+    "when/ui.enabled=true/then/any/else/ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true"
+      },
+      "then": true
+    },
+    "when/ui.enabled=true/then/any/else/ui.enabled=true@2": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1any~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true"
+      },
+      "then": true
+    },
+    "when/ui.enabled=true/then/fullnameOverride+nameOverride+ui.annotations/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride+ui.annotations~1else~1fail"
+      }
+    },
+    "when/ui.enabled=true/then/fullnameOverride+nameOverride+ui.annotations/else/ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+nameOverride+ui.annotations~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride+ui.annotations~1else~1fail"
+      }
+    },
+    "when/ui.enabled=true/then/fullnameOverride+ui.annotations/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1ui.annotations~1else~1fail"
+      }
+    },
+    "when/ui.enabled=true/then/fullnameOverride+ui.annotations/else/ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride+ui.annotations~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1ui.annotations~1else~1fail"
+      }
+    },
+    "when/ui.enabled=true/then/fullnameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/ui.enabled=true/then/fullnameOverride/else/ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1fullnameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      }
+    },
+    "when/ui.enabled=true/then/nameOverride+ui.annotations/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride+ui.annotations"
+      }
+    },
+    "when/ui.enabled=true/then/nameOverride+ui.annotations/else/ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1nameOverride+ui.annotations~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride+ui.annotations"
+      }
+    },
+    "when/ui.enabled=true/then/ui.annotations/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1ui.annotations"
+      }
+    },
+    "when/ui.enabled=true/then/ui.annotations/else/ui.enabled=true": {
+      "else": {
+        "$ref": "#/$defs/when~1ui.enabled=true~1then~1ui.annotations~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1ui.enabled=true"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1ui.annotations"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.enabled=-+server.enabled=true"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ui": {
+                "description": "Vault UI",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "server": {
+                "additionalProperties": {},
+                "properties": {
+                  "dev": {
+                    "description": "Run Vault in \"dev\" mode. This requires no further setup, no state management,\nand no initialization. This is useful for experimenting with Vault without\nneeding to unseal, store keys, et. al. All data is lost on restart - do not\nuse dev mode for anything other than experimenting.\nSee https://developer.hashicorp.com/vault/docs/concepts/dev-server to know more",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "server": {
+                      "properties": {
+                        "dev": {}
+                      },
+                      "required": [
+                        "dev"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "server": {
+                    "properties": {
+                      "dev": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "dev"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.enabled=-+server.enabled=true@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global+global.enabled=true+global.externalVaultAddr:t+injector+5more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global+global.enabled=true+global.externalVaultAddr:t+injector+8more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ui": {
+            "additionalProperties": {},
+            "description": "Vault UI",
+            "properties": {
+              "annotations": {
+                "description": "Extra annotations to attach to the ui service\nThis can either be YAML or a YAML-formatted multi-line templated string map\nof the annotations to apply to the ui service",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "server": {
+                      "properties": {
+                        "ha": {}
+                      },
+                      "required": [
+                        "ha"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "server": {
+                    "properties": {
+                      "ha": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ha"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+1more"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1global+global.enabled=true+global.externalVaultAddr:t+injector+server+3more~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
     {
       "if": {
         "anyOf": [
@@ -89,34 +2191,41 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+1more@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "server": {
+            "additionalProperties": {},
+            "properties": {
+              "ha": {
+                "description": "Run Vault in \"HA\" mode. There are no storage requirements unless the audit log\npersistence is required.  In HA mode Vault will configure itself to use Consul\nfor its storage backend.  The default configuration provided will work the Consul\nHelm project by default.  It is possible to manually configure Vault to use a\ndifferent HA backend.",
                 "type": "object"
               }
-            ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global=null"
+          },
+          {
+            "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1server.enabled+server.enabled=-+server.enabled=true~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global=null"
           },
           {
             "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t@2"
@@ -127,7 +2236,14 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1injector.externalVaultAddr:t"
+          },
+          {
+            "$ref": "#/$defs/when~1injector.externalVaultAddr:t~1then~1server.enabled+server.enabled=-+server.enabled=true~1else~1any@2"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -137,6 +2253,117 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.enabled=-+server.enabled=true@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "ui": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ui"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "ui": {}
+                  },
+                  "required": [
+                    "ui"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+2more@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "server": {
+            "additionalProperties": {},
+            "properties": {
+              "standalone": {
+                "description": "Run Vault in \"standalone\" mode. This is the default mode that will deploy if\nno arguments are given to helm. This requires a PVC for data storage to use\nthe \"file\" backend.  This mode is not highly available and should not be scaled\npast a single replica.",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "server": {
+                      "properties": {
+                        "standalone": {}
+                      },
+                      "required": [
+                        "standalone"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "server": {
+                    "properties": {
+                      "standalone": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "standalone"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/when~1global.externalVaultAddr:t~1then~1fail~1else~1global+global.enabled=true+injector+server+server.dev+server.dev.enabled=true+2more"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {

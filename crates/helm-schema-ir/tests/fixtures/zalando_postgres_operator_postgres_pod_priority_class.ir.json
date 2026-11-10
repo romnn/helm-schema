@@ -569,6 +569,82 @@
     },
     {
       "condition": [
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "podPriorityClassName.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "podPriorityClassName.create",
+                  "type": "truthy"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                },
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 76,
+            "start": 0
+          },
+          "template_path": "charts/zalando-postgres-operator/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "scheduling.k8s.io/v1",
+        "kind": "PriorityClass"
+      },
+      "source_expr": "nameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
         []
       ],
       "kind": "WidenedDependency",

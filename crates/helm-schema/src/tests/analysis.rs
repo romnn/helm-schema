@@ -1169,9 +1169,16 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment() -> e
         evidence.is_referenced_value_path,
         "values root should still be resolved as an accepted values path; evidence={evidence:#?}",
     );
+    // The seed itself adds no conditional schema: a guarded overlay may only record that a
+    // descendant is referenced under its guards (webhook-rbac's exact namespace comparison).
     assert!(
-        evidence.conditional_overlays.is_empty(),
-        "values root seed should not gain conditional overlays; evidence={evidence:#?}",
+        evidence.conditional_overlays.iter().all(|overlay| {
+            overlay.evidence.facts.has_referenced_descendants
+                && overlay.evidence.provider_schema_uses.is_empty()
+                && overlay.evidence.type_hints.is_empty()
+                && !overlay.evidence.facts.accepted_values_root_fragment
+        }),
+        "values root seed should not gain typed conditional overlays; evidence={evidence:#?}",
     );
 
     let opts = crate::GenerateOptions {

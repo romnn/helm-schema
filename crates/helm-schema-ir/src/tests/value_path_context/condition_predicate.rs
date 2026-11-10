@@ -1071,27 +1071,42 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
 }
 
 /// `kindOf (default TAIL .Values.tag)` describes `tag` only where `tag` is
-/// truthy and the tail everywhere else. The path-keyed source map cannot
-/// spell a literal or a constructed tail, so the decode abstains instead of
-/// claiming `TypeIs(tag)` for the states that select the tail (Helm renders
-/// `tag: 0` with a string tail and aborts with a map tail; ground truth
-/// `round8-f69x-evidence/probe/helm-typeof.log`).
+/// truthy and the tail everywhere else, so the decode selects per arm: the
+/// input's kind where `tag` is truthy, the tail's constant descriptor
+/// elsewhere. Helm 4.2.3 (TRANSFER1 `transfer/probes/kindof-default-helm-4.2.3.txt`):
+/// with a string tail only a truthy non-string `tag` differs from "string";
+/// with a map tail every falsy `tag` does too.
 ///
 /// RED on 7c6a2f6e: `selection_chain_identity_paths` silently truncated
 /// the chain to `[tag]`, and the decode read `tag` as the terminal fallback.
 #[test]
-fn type_descriptor_over_a_truncated_selection_chain_abstains() -> eyre::Result<()> {
-    for tail in [r#""lit""#, r#"(dict "k" "v")"#] {
+fn type_descriptor_over_a_selection_chain_decodes_each_selected_arm() -> eyre::Result<()> {
+    let truthy = Predicate::truthy_path("tag");
+    let string = Predicate::from(Guard::TypeIs {
+        path: helm_schema_core::ValuesPath::parse("tag"),
+        schema_type: "string".to_owned(),
+    });
+    for (tail, want) in [
+        (
+            r#""lit""#,
+            Predicate::all(vec![truthy.clone(), string.clone().negated()]),
+        ),
+        (
+            r#"(dict "k" "v")"#,
+            Predicate::Or(vec![truthy.clone().negated(), string.clone().negated()]),
+        ),
+    ] {
         let text = format!(r#"{{{{ ne (kindOf (default {tail} .Values.tag)) "string" }}}}"#);
         let expr = parse_action_expressions(&text)
             .into_iter()
             .next()
             .ok_or_eyre("condition expression")?;
         let context = condition_context(HashMap::new());
-        assert!(
-            !context.condition_lowering_is_faithful(&expr),
-            "tail {tail}: {:#?}",
-            context.condition_predicate_expr(&expr),
+        assert!(context.condition_lowering_is_faithful(&expr), "tail {tail}");
+        sim_assert_eq!(
+            have: context.condition_predicate_expr(&expr).normalize_boolean(),
+            want: want.normalize_boolean(),
+            "tail {tail}"
         );
     }
     Ok(())

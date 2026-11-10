@@ -313,7 +313,7 @@
     "constrains/frr-k8s.nameOverride@2": {
       "properties": {
         "frr-k8s": {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
+          "$ref": "#/$defs/constrains~1nameOverride@7"
         }
       },
       "required": [
@@ -324,10 +324,10 @@
     "constrains/frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t+speaker.nodeSelector:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t+speaker.nodeSelector:t@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+speaker.frr.enabled:t"
@@ -352,10 +352,10 @@
     "constrains/frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t+speaker.nodeSelector:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t+speaker.nodeSelector:t@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+speaker.frr.enabled:t@2"
@@ -383,19 +383,41 @@
     "constrains/frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+5more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+4more"
+          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr.enabled:t"
+          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1frrk8s.enabled:t+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr"
         },
         {
           "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+5more"
         },
         {
-          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr.enabled:t+2more"
+          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+4more"
+        }
+      ]
+    },
+    "constrains/frrk8s+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1speaker.nodeSelector:t"
         },
         {
-          "$ref": "#/$defs/constrains~1frrk8s.enabled:t+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr"
+          "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+speaker.frr.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1frrk8s.enabled:t+frrk8s.external:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1frrk8s+speaker.frr.enabled:t"
         }
       ]
     },
@@ -415,28 +437,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1frrk8s.enabled:t@3"
-        }
-      ]
-    },
-    "constrains/frrk8s+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr.enabled:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1speaker.nodeSelector:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+speaker.frr.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1frrk8s.enabled:t+frrk8s.external:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1frrk8s+speaker.frr.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t"
         }
       ]
     },
@@ -555,7 +555,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
+          "$ref": "#/$defs/constrains~1nameOverride@7"
         },
         {
           "$ref": "#/$defs/constrains~1speaker.frr.enabled:t"
@@ -574,7 +574,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
+          "$ref": "#/$defs/constrains~1nameOverride@7"
         },
         {
           "$ref": "#/$defs/constrains~1frrk8s.enabled:t@3"
@@ -754,13 +754,13 @@
           "$ref": "#/$defs/constrains~1frrk8s+speaker.frr.enabled:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+speaker.frr.enabled:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+speaker.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t+speaker.nodeSelector:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+speaker.frr.enabled:t"
         }
       ]
     },
@@ -1007,7 +1007,7 @@
     "constrains/nameOverride+nameOverride:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
+          "$ref": "#/$defs/constrains~1nameOverride@7"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -1020,7 +1020,7 @@
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
+          "$ref": "#/$defs/constrains~1nameOverride@7"
         }
       ]
     },
@@ -1055,11 +1055,14 @@
       "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
     },
     "constrains/nameOverride@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      }
+      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
     },
     "constrains/nameOverride@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@7"
+      }
+    },
+    "constrains/nameOverride@7": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -1514,6 +1517,17 @@
         "$ref": "#/$defs/when~1frrk8s.external:t~1then~1fail~1else~1fullnameOverride:t+nameOverride+nameOverride:t+speaker.enabled:t+speaker.frr+2more"
       }
     },
+    "when/frrk8s.enabled:t/then/frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr+speaker.memberlist+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1frrk8s.external:t~1then~1nameOverride+nameOverride:t+speaker.frr.enabled:t+speaker.memberlist+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1frrk8s.enabled:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1frrk8s.external:t~1then~1nameOverride+nameOverride:t~1else~1speaker.frr.enabled:t+speaker.memberlist+speaker.nodeSelector:t"
+      }
+    },
     "when/frrk8s.external:t/then/fail/else/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more": {
       "else": {
         "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+speaker.enabled:t+speaker.frr+2more~1else~1any"
@@ -1554,6 +1568,28 @@
         "$ref": "#/$defs/when~1fullnameOverride:t~1then~1nameOverride+nameOverride:t+speaker.enabled:t+speaker.frr+speaker.memberlist+1more~1else~1fail"
       }
     },
+    "when/frrk8s.external:t/then/nameOverride+nameOverride:t+speaker.frr.enabled:t+speaker.memberlist+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+speaker.memberlist.enabled:t+speaker.nodeSelector:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1frrk8s.external:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+speaker.frr.enabled:t+speaker.memberlist+speaker.nodeSelector:t~1else~1any"
+      }
+    },
+    "when/frrk8s.external:t/then/nameOverride+nameOverride:t/else/speaker.frr.enabled:t+speaker.memberlist+speaker.nodeSelector:t": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+speaker.frr.enabled:t+speaker.memberlist+speaker.nodeSelector:t~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1frrk8s.external:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@2"
+      }
+    },
     "when/fullnameOverride/then/any/else/fail": {
       "else": false,
       "if": {
@@ -1567,7 +1603,7 @@
         "$ref": "#/$defs/constrains~1fullnameOverride@2"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
+        "$ref": "#/$defs/constrains~1nameOverride@5"
       }
     },
     "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+speaker.enabled:t+2more/else/any": {
@@ -1613,7 +1649,7 @@
     "when/nameOverride/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
+        "$ref": "#/$defs/constrains~1nameOverride@7"
       },
       "then": true
     },
@@ -1690,6 +1726,28 @@
         "$ref": "#/$defs/when~1speaker.enabled:t~1then~1nameOverride+speaker.memberlist+speaker.nodeSelector:t~1else~1fail"
       }
     },
+    "when/nameOverride:t/then/nameOverride+speaker.frr.enabled:t+speaker.memberlist+speaker.nodeSelector:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1speaker.frr.enabled:t~1then~1any~1else~1speaker.memberlist+speaker.nodeSelector:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1speaker.frr.enabled:t~1then~1nameOverride~1else~1speaker.memberlist+speaker.nodeSelector:t"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride+speaker.memberlist.enabled:t+speaker.nodeSelector:t/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1speaker.memberlist.enabled:t~1then~1fail~1else~1speaker.nodeSelector:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1speaker.memberlist.enabled:t~1then~1fail~1else~1nameOverride+speaker.nodeSelector:t"
+      }
+    },
     "when/nameOverride:t/then/nameOverride/else/any": {
       "else": true,
       "if": {
@@ -1706,6 +1764,15 @@
       },
       "then": {
         "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
+    "when/nameOverride:t/then/nameOverride/else/any@3": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@3"
       }
     },
     "when/speaker.enabled:t/then/fullnameOverride+nameOverride+speaker.frr+speaker.memberlist+1more/else/fail": {
@@ -1820,6 +1887,15 @@
         "$ref": "#/$defs/when~1speaker.memberlist.enabled:t~1then~1any~1else~1speaker.nodeSelector:t"
       }
     },
+    "when/speaker.frr.enabled:t/then/any/else/speaker.memberlist+speaker.nodeSelector:t": {
+      "else": {
+        "$ref": "#/$defs/when~1speaker.memberlist.enabled:t~1then~1fail~1else~1speaker.nodeSelector:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1speaker.frr.enabled:t@5"
+      },
+      "then": true
+    },
     "when/speaker.frr.enabled:t/then/fail/else/fullnameOverride+nameOverride+speaker.memberlist+speaker.nodeSelector:t": {
       "else": {
         "$ref": "#/$defs/when~1speaker.memberlist.enabled:t~1then~1fullnameOverride+nameOverride~1else~1speaker.nodeSelector:t"
@@ -1883,6 +1959,17 @@
         "$ref": "#/$defs/when~1speaker.memberlist.enabled:t~1then~1nameOverride~1else~1speaker.nodeSelector:t"
       }
     },
+    "when/speaker.frr.enabled:t/then/nameOverride/else/speaker.memberlist+speaker.nodeSelector:t": {
+      "else": {
+        "$ref": "#/$defs/when~1speaker.memberlist.enabled:t~1then~1fail~1else~1nameOverride+speaker.nodeSelector:t"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1speaker.frr.enabled:t@5"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
+    },
     "when/speaker.frr.enabled:t/then/speaker.memberlist+speaker.nodeSelector:t/else/fail": {
       "else": false,
       "if": {
@@ -1909,6 +1996,24 @@
         "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t@3"
       },
       "then": true
+    },
+    "when/speaker.memberlist.enabled:t/then/fail/else/nameOverride+speaker.nodeSelector:t": {
+      "else": {
+        "$ref": "#/$defs/when~1speaker.nodeSelector:t~1then~1nameOverride~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t@3"
+      },
+      "then": false
+    },
+    "when/speaker.memberlist.enabled:t/then/fail/else/speaker.nodeSelector:t": {
+      "else": {
+        "$ref": "#/$defs/when~1speaker.nodeSelector:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t@3"
+      },
+      "then": false
     },
     "when/speaker.memberlist.enabled:t/then/fullnameOverride+nameOverride/else/speaker.nodeSelector:t": {
       "else": {
@@ -1940,7 +2045,7 @@
         "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t@3"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
+        "$ref": "#/$defs/constrains~1nameOverride@4"
       }
     },
     "when/speaker.memberlist.enabled:t/then/nameOverride/else/speaker.nodeSelector:t@2": {
@@ -1951,8 +2056,15 @@
         "$ref": "#/$defs/constrains~1speaker.memberlist.enabled:t@3"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
+        "$ref": "#/$defs/constrains~1nameOverride@5"
       }
+    },
+    "when/speaker.nodeSelector:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1speaker.nodeSelector:t"
+      },
+      "then": true
     },
     "when/speaker.nodeSelector:t/then/fail/else/any": {
       "else": true,
@@ -1988,7 +2100,7 @@
     },
     "when/speaker.nodeSelector:t/then/fail/else/nameOverride": {
       "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
+        "$ref": "#/$defs/constrains~1nameOverride@4"
       },
       "if": {
         "$ref": "#/$defs/constrains~1speaker.nodeSelector:t"
@@ -1997,12 +2109,21 @@
     },
     "when/speaker.nodeSelector:t/then/fail/else/nameOverride@2": {
       "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
+        "$ref": "#/$defs/constrains~1nameOverride@5"
       },
       "if": {
         "$ref": "#/$defs/constrains~1speaker.nodeSelector:t"
       },
       "then": false
+    },
+    "when/speaker.nodeSelector:t/then/nameOverride/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1speaker.nodeSelector:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2190,7 +2311,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@2"
+            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@3"
           },
           {
             "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr.enabled:t@4"
@@ -2501,7 +2622,7 @@
             "$ref": "#/$defs/constrains~1nameOverride:t@3"
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride@5"
+            "$ref": "#/$defs/constrains~1nameOverride@6"
           }
         ]
       },
@@ -2534,19 +2655,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+5more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1frrk8s.enabled:t+frrk8s.external:t+fullnameOverride+fullnameOverride:t+6more@2"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "additionalProperties": {},
@@ -2663,6 +2771,19 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1frrk8s.enabled:t+frrk8s.external:t+fullnameOverride+fullnameOverride:t+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1frrk8s+frrk8s.external:t+fullnameOverride+fullnameOverride:t+nameOverride+5more@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "frr-k8s": {
@@ -2673,6 +2794,12 @@
           ]
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1frrk8s.enabled:t~1then~1frrk8s.external:t+nameOverride+nameOverride:t+speaker.frr+speaker.memberlist+1more~1else~1any"
+      },
+      "then": false
     }
   ],
   "properties": {

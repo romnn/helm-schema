@@ -789,7 +789,12 @@ pub(super) fn mapped_character(character: char, transforms: &[TextTransform]) ->
             TextTransform::Replace { from: _, to: _ }
             | TextTransform::Truncate(_)
             | TextTransform::TrimPrefix(_)
-            | TextTransform::TrimSuffix(_) => return None,
+            | TextTransform::TrimSuffix(_)
+            | TextTransform::Cut(_)
+            | TextTransform::RegexReplace {
+                pattern: _,
+                replacement: _,
+            } => return None,
         }
         text = transform.apply(&text, 4096)?;
     }

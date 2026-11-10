@@ -115,6 +115,168 @@
       "condition": [
         [
           {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "global.labels",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "global",
+            "type": "not_eq",
+            "value": null
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "serviceMonitor.enabled",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ],
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "serviceMonitor.enabled",
+            "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "fullnameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "serviceMonitor.enabled",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "nameOverride",
+                  "schema_type": "string",
+                  "type": "type_is"
+                }
+              ],
+              [
+                {
+                  "path": "fullnameOverride",
+                  "schema_type": "string",
+                  "type": "not_type_is"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.labels",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "eq",
+                  "value": null
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "absent"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "fullnameOverride",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 94,
+            "start": 35
+          },
+          "template_path": "charts/surveyor/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "ServiceMonitor"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "serviceMonitor.enabled",
             "type": "truthy"
           },

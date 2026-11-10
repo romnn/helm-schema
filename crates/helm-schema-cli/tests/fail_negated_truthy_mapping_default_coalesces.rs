@@ -8,9 +8,10 @@
 //! with the declared mapping default instead of replacing it, so any object
 //! the user writes (even `{}`) merges into the default and renders truthy.
 //!
-//! The encoded terminal clause used to test the LITERAL document value for
-//! truthiness, so `global: {}` matched "present and falsy" and the schema
-//! rejected a values document the chart renders fine.
+//! The schema validates the coalesced values document (ADR 0054): a user's
+//! `global: {}` arrives as `global: {imageRegistry: ""}` and must stay valid,
+//! while a coalesced `global: {}` means every declared key was null-deleted,
+//! which Helm 4.2.3 aborts on ("global context lost").
 
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
@@ -80,16 +81,23 @@ fn empty_mapping_override_of_nonempty_mapping_default_stays_valid() -> eyre::Res
 
     // `global: {}` merges into the declared non-empty mapping default and
     // renders truthy, so the fail branch never fires.
-    let empty_mapping = serde_json::json!({ "global": {} });
+    let merged_empty_mapping = serde_json::json!({ "global": { "imageRegistry": "" } });
     assert!(
-        validator.is_valid(&empty_mapping),
+        validator.is_valid(&merged_empty_mapping),
         "`global: {{}}` coalesces with the non-empty mapping default and renders \
          truthy; the fail validator must not reject it: {}",
         validator
-            .iter_errors(&empty_mapping)
+            .iter_errors(&merged_empty_mapping)
             .map(|e| e.to_string())
             .collect::<Vec<_>>()
             .join("; "),
+    );
+
+    // Null-deleting every declared key coalesces to an empty, falsy mapping,
+    // and Helm aborts rendering.
+    assert!(
+        !validator.is_valid(&serde_json::json!({ "global": {} })),
+        "a coalesced empty `global` mapping aborts rendering and must be rejected",
     );
 
     // A falsy non-mapping override REPLACES the default, renders falsy, and

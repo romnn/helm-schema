@@ -5191,6 +5191,19 @@
       "description": "resources -- Set Vector resource requests and limits.\nrequests:\ncpu: 200m\nmemory: 256Mi\nlimits:\ncpu: 200m\nmemory: 256Mi"
     },
     "role": {
+      "anyOf": [
+        {
+          "enum": [
+            "Agent"
+          ]
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
       "description": "Each role is created with the following workloads:\nAgent = DaemonSet\nAggregator = StatefulSet\nStateless-Aggregator = Deployment"
     },
     "rollWorkload": {

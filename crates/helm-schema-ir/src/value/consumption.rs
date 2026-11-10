@@ -474,6 +474,23 @@ fn predicate_atoms(
 }
 
 impl State {
+    /// Records a proved failure independently of a raw operand identity.
+    pub(super) fn record_failure(&mut self, live: &Predicate) {
+        if live == &Predicate::False {
+            return;
+        }
+        let condition = super::output::RuntimeCondition::at_requirement(self);
+        let binder = self.loops.clone();
+        self.record_consumption(
+            ValuesPath::default(),
+            ConsumptionDomain::KnownFailure,
+            &[],
+            live,
+            &condition,
+            &binder,
+        );
+    }
+
     pub(super) fn record_consumption(
         &mut self,
         path: ValuesPath,

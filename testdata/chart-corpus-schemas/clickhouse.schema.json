@@ -293,7 +293,8 @@
     "global": {
       "additionalProperties": {},
       "properties": {
-        "apiVersions": {}
+        "apiVersions": {},
+        "kubeVersion": {}
       }
     },
     "hostAliases": {
@@ -315,6 +316,20 @@
     "keeper": {
       "additionalProperties": {},
       "properties": {
+        "autoscaling": {
+          "additionalProperties": {},
+          "description": "ClickHouse Keeper Autoscaling configuration\nref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/",
+          "properties": {
+            "vpa": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable VPA"
+                }
+              }
+            }
+          }
+        },
         "enabled": {
           "description": "Deploy ClickHouse Keeper to provide coordination capabilities\nBitnami ClickHouse Keeper image\nref: https://hub.docker.com/r/bitnami/clickhouse-keeper/tags/"
         }
