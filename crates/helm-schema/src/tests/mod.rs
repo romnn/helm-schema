@@ -5,4 +5,5 @@ mod chart;
 mod emission_profile_benchmark;
 mod explain;
 mod helm_global_namespace;
+mod r3b_laws;
 mod session;
