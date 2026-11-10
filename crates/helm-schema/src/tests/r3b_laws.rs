@@ -545,7 +545,14 @@ fn continue_rejects_a_later_integer_member() -> eyre::Result<()> {
 }
 
 fn child_global_schema() -> eyre::Result<Value> {
-    let parent_template = [CONFIG_MAP, "data:\n  k: v\n"].concat();
+    let parent_template = [
+        CONFIG_MAP,
+        indoc! {"
+            data:
+              k: v
+        "},
+    ]
+    .concat();
     law_schema(&[
         (
             "Chart.yaml",
@@ -653,7 +660,8 @@ fn tpl_define_schema(program: &str) -> eyre::Result<Value> {
         "x: \"a\"\n",
         &[
             CONFIG_MAP,
-            "data:\n  a: {{ tpl `",
+            "data:\n",
+            "  a: {{ tpl `",
             program,
             "` $ | quote }}\n",
             "  b: {{ include \"local\" . | quote }}\n",
@@ -703,7 +711,8 @@ fn from_yaml_schema() -> eyre::Result<Value> {
         &[
             "{{- $decoded := fromYaml .Values.raw }}\n",
             CONFIG_MAP,
-            "data:\n  decoded: {{ $decoded | toJson | quote }}\n",
+            "data:\n",
+            "  decoded: {{ $decoded | toJson | quote }}\n",
         ],
         "",
     )
@@ -811,7 +820,8 @@ fn namespace_memo_schema() -> eyre::Result<Value> {
         "w: \"s\"\n",
         &[
             CONFIG_MAP,
-            "data:\n  a: {{ include \"h\" . | quote }}\n",
+            "data:\n",
+            "  a: {{ include \"h\" . | quote }}\n",
             "  b: {{ tpl `{{- define \"h\" -}}{{ upper .Values.w }}{{- end -}}{{ include \"h\" . }}` $ | quote }}\n",
         ],
         r#"{{- define "h" -}}{{ toString .Values.w }}{{- end -}}"#,
