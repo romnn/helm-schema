@@ -1421,8 +1421,9 @@ impl Arena {
         } = left.diverge(right);
         let mut store = self.guards.borrow_mut();
         let mut work = GuardWorkBudget::new(MAX_PROJECTION_WORK);
-        let left_edges = tail_edges(&left_tail, |_| true);
-        let right_edges = tail_edges(&right_tail, |_| true);
+        // Which continuation a document takes depends on its branches and survivals only.
+        let left_edges = tail_edges(&left_tail, LinkKind::is_feasibility);
+        let right_edges = tail_edges(&right_tail, LinkKind::is_feasibility);
         let left_guard = store.conjunction(&left_edges, &self.next_decision);
         let right_guard = store.conjunction(&right_edges, &self.next_decision);
         let opposite = left_edges
@@ -1461,6 +1462,16 @@ impl Arena {
                 true,
             )
         };
+        // Each view joins as ITE(decision, left, right): the union of the tails when they are
+        // disjoint, and each source path gated by an independent choice when they overlap.
+        let selector = store.edge(
+            &DecisionEdge {
+                test: Rc::clone(&decision),
+                taken,
+            },
+            &self.next_decision,
+            &mut work,
+        );
         let mut active = common;
         let reach_left = store.conjunction(
             &tail_edges(&left_tail, |kind| kind == LinkKind::Branch),
@@ -1470,8 +1481,8 @@ impl Arena {
             &tail_edges(&right_tail, |kind| kind == LinkKind::Branch),
             &self.next_decision,
         );
-        let reach = store.apply(
-            Operation::Or,
+        let reach = store.choice(
+            &selector,
             &reach_left,
             &reach_right,
             &self.next_decision,
@@ -1506,8 +1517,8 @@ impl Arena {
             }
             let [valid_left, valid_right] = <[RuntimeGuard; 2]>::try_from(valid)
                 .unwrap_or([RuntimeGuard::False, RuntimeGuard::False]);
-            let valid = store.apply(
-                Operation::Or,
+            let valid = store.choice(
+                &selector,
                 &valid_left,
                 &valid_right,
                 &self.next_decision,
@@ -1528,8 +1539,8 @@ impl Arena {
         }
         let survives = |tail: &[&Link]| tail.iter().any(|link| link.kind() == LinkKind::Survival);
         if survives(&left_tail) || survives(&right_tail) {
-            let survival = store.apply(
-                Operation::Or,
+            let survival = store.choice(
+                &selector,
                 &left_guard,
                 &right_guard,
                 &self.next_decision,
