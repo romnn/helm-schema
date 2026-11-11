@@ -273,16 +273,16 @@
       }
     },
     "constrains/configMap+configMap=null": {
-      "$ref": "#/$defs/constrains~1configMap+configMap=null@6"
+      "$ref": "#/$defs/constrains~1configMap+configMap=null@9"
     },
     "constrains/configMap+configMap=null@2": {
-      "$ref": "#/$defs/constrains~1configMap+configMap=null@7"
+      "$ref": "#/$defs/constrains~1configMap+configMap=null@6"
     },
     "constrains/configMap+configMap=null@3": {
       "$ref": "#/$defs/constrains~1configMap+configMap=null@8"
     },
     "constrains/configMap+configMap=null@4": {
-      "$ref": "#/$defs/constrains~1configMap+configMap=null@9"
+      "$ref": "#/$defs/constrains~1configMap+configMap=null@7"
     },
     "constrains/configMap+configMap=null@5": {
       "anyOf": [
@@ -331,6 +331,17 @@
       "not": {
         "$ref": "#/$defs/constrains~1configMap+configMap=null@5"
       }
+    },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
     },
     "constrains/headlessService+headlessService=null": {
       "$ref": "#/$defs/constrains~1headlessService+headlessService=null@7"
@@ -944,13 +955,29 @@
     "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": true
+    },
+    "when/fullnameOverride:t/then/fail/else/nameOverride:t": {
+      "else": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+      },
+      "then": false
+    },
+    "when/nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
         "properties": {
-          "fullnameOverride": {
+          "nameOverride": {
             "$ref": "#/$defs/t"
           }
         },
         "required": [
-          "fullnameOverride"
+          "nameOverride"
         ],
         "type": "object"
       },
@@ -1001,7 +1028,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null"
@@ -1025,7 +1052,7 @@
             "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -1067,91 +1094,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null"
           },
           {
@@ -1161,13 +1103,13 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -1228,7 +1170,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@4"
@@ -1237,7 +1179,7 @@
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -1279,19 +1221,123 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@5"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null"
           },
           {
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -1321,7 +1367,16 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1service+service=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@3"
+          },
+          {
             "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
@@ -1336,19 +1391,28 @@
             "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
           },
           {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
           },
           {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service+service=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
@@ -1360,7 +1424,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
           },
           {
             "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
@@ -1375,54 +1439,10 @@
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
           },
           {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@5"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
           },
           {
             "$ref": "#/$defs/t"
@@ -1431,40 +1451,40 @@
             "anyOf": [
               {
                 "properties": {
-                  "config": {
+                  "promExporter": {
                     "properties": {
-                      "websocket": {
+                      "podMonitor": {
                         "enum": [
                           null
                         ]
                       }
                     },
                     "required": [
-                      "websocket"
+                      "podMonitor"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "config"
+                  "promExporter"
                 ],
                 "type": "object"
               },
               {
                 "not": {
                   "properties": {
-                    "config": {
+                    "promExporter": {
                       "properties": {
-                        "websocket": {}
+                        "podMonitor": {}
                       },
                       "required": [
-                        "websocket"
+                        "podMonitor"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "config"
+                    "promExporter"
                   ],
                   "type": "object"
                 }
@@ -1510,53 +1530,7 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "natsBox": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "natsBox"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "natsBox": {}
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
@@ -1568,7 +1542,16 @@
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
           },
           {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
             "$ref": "#/$defs/t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@5"
           }
         ]
       },
@@ -1626,6 +1609,55 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@5"
+          },
+          {
+            "$ref": "#/$defs/t"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -1690,129 +1722,22 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@5"
-          },
-          {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
           },
           {
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
           },
           {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
             "$ref": "#/$defs/t"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "promExporter": {
-                    "properties": {
-                      "podMonitor": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "podMonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "promExporter"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "promExporter": {
-                      "properties": {
-                        "podMonitor": {}
-                      },
-                      "required": [
-                        "podMonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@5"
           }
         ]
       },
@@ -1840,7 +1765,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@4"
@@ -1858,7 +1783,7 @@
             "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -1912,7 +1837,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@4"
@@ -1924,7 +1849,7 @@
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -1967,104 +1892,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@5"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@5"
-          },
-          {
-            "$ref": "#/$defs/t"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -2145,7 +1972,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1service+service=null@4"
@@ -2166,7 +1993,7 @@
             "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -2206,91 +2033,34 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1serviceAccount=null"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1serviceAccount"
-                }
-              }
-            ]
-          }
-        ]
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t"
       },
-      "then": false
+      "then": {
+        "if": {
+          "properties": {
+            "nameOverride": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "nameOverride": {
+              "description": "Common options\noverride name of the chart",
+              "type": "string"
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -2311,7 +2081,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@4"
@@ -2326,7 +2096,7 @@
             "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -2406,6 +2176,122 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "properties": {
+                  "promExporter": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "promExporter"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "promExporter": {}
+                  },
+                  "required": [
+                    "promExporter"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1service+service=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service+service=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/t"
           },
           {
@@ -2476,89 +2362,7 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "promExporter": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "promExporter"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "promExporter": {}
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null@5"
-          },
-          {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
           },
           {
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
@@ -2567,7 +2371,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
           },
           {
             "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
@@ -2580,106 +2384,18 @@
           },
           {
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "resolver": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "resolver"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "resolver": {}
-                      },
-                      "required": [
-                        "resolver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
           },
           {
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@5"
           },
           {
             "$ref": "#/$defs/t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@5"
           }
         ]
       },
@@ -2765,6 +2481,74 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "properties": {
+                  "natsBox": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "natsBox"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "natsBox": {}
+                  },
+                  "required": [
+                    "natsBox"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null"
           },
           {
@@ -2774,7 +2558,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@4"
@@ -2786,7 +2570,7 @@
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -2831,16 +2615,22 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
@@ -2852,7 +2642,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
           },
           {
             "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
@@ -2867,10 +2657,16 @@
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@5"
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
           },
           {
             "$ref": "#/$defs/t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@5"
           }
         ]
       },
@@ -2880,13 +2676,55 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1service+service=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service+service=null@2"
+          },
+          {
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
           },
           {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
@@ -2898,10 +2736,91 @@
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
           },
           {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
             "$ref": "#/$defs/t"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@5"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1serviceAccount=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1serviceAccount"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "websocket": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "websocket"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "websocket": {}
+                      },
+                      "required": [
+                        "websocket"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -2917,10 +2836,51 @@
             "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@5"
+            "$ref": "#/$defs/t"
           },
           {
-            "$ref": "#/$defs/t"
+            "anyOf": [
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "resolver": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resolver"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "resolver": {}
+                      },
+                      "required": [
+                        "resolver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -2957,7 +2917,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null"
@@ -2984,7 +2944,7 @@
             "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@4"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@2"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
           },
           {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@2"
@@ -3045,6 +3005,91 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1service+service=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service+service=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1statefulSet+statefulSet=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1config.websocket.ingress+config.websocket.ingress=null"
           },
           {
@@ -3081,28 +3126,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@2"
-          },
-          {
             "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
           },
           {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
@@ -3114,7 +3147,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
           },
           {
             "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
@@ -3129,10 +3162,16 @@
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
           },
           {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
             "$ref": "#/$defs/t"
           },
           {
-            "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@5"
+            "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null@5"
           }
         ]
       },
@@ -3142,8 +3181,24 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
           },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@5"
+          },
+          {
+            "$ref": "#/$defs/t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "$ref": "#/$defs/constrains~1natsBox.serviceAccount+natsBox.serviceAccount=null@2"
           },
@@ -3163,19 +3218,16 @@
             "$ref": "#/$defs/constrains~1natsBox.deployment+natsBox.deployment=null"
           },
           {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contextsSecret+natsBox.contextsSecret=null"
           },
           {
-            "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null@2"
+            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@2"
           },
           {
             "$ref": "#/$defs/constrains~1natsBox.contentsSecret+natsBox.contentsSecret=null"
@@ -3187,7 +3239,7 @@
             "$ref": "#/$defs/constrains~1headlessService+headlessService=null"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap+configMap=null@4"
+            "$ref": "#/$defs/constrains~1configMap+configMap=null"
           },
           {
             "$ref": "#/$defs/constrains~1configMap+configMap=null@3"
@@ -3200,6 +3252,12 @@
           },
           {
             "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.resolver.pvc+config.resolver.pvc=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.jetstream.fileStore.pvc+config.jetstream.fileStore.pvc=null@3"
           },
           {
             "$ref": "#/$defs/t"
