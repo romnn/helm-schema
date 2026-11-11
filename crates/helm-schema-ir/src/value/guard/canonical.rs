@@ -17,7 +17,8 @@ use super::RuntimeGuard;
 /// Steps one form construction or one compatibility walk may take.
 const MAX_CANONICAL_WORK: usize = 16_384;
 /// Diagram nodes a context keeps before it starts over (answers do not depend on the tables).
-const MAX_CANONICAL_NODES: usize = 1 << 22;
+/// Unit tests start over far more often, so every query is checked against fresh tables.
+const MAX_CANONICAL_NODES: usize = if cfg!(test) { 64 } else { 1 << 22 };
 
 const FALSE: u32 = 0;
 const TRUE: u32 = 1;
@@ -159,11 +160,6 @@ impl CanonicalGuards {
     /// The canonical form of `guard`, composing every runtime test it holds; `None` when a
     /// node belongs to another context or a construction exhausts its allowance.
     fn form(&mut self, guard: &RuntimeGuard, context: *const super::GuardQueries) -> Option<u32> {
-        if self.nodes.len() >= MAX_CANONICAL_NODES {
-            self.nodes.clear();
-            self.unique.clear();
-            self.forms.clear();
-        }
         let mut pending = vec![(guard, false)];
         while let Some((guard, expanded)) = pending.pop() {
             let RuntimeGuard::Branch(node) = guard else {
@@ -183,6 +179,11 @@ impl CanonicalGuards {
                 continue;
             }
             let form = self.compose(node.test.id, parts);
+            if form.is_none() {
+                let _bound =
+                    tracing::debug_span!(target: "helm_schema_ir::counters", "canonical_bound")
+                        .entered();
+            }
             self.forms.insert(node.id, form);
         }
         self.known(guard)
@@ -202,6 +203,16 @@ impl CanonicalGuards {
         self.ite(forms, &mut AHashMap::new(), &mut { MAX_CANONICAL_WORK })
     }
 
+    /// Starts the tables over when they are full. Called once per query, before any of its
+    /// forms is built, so no form a query compares can name a node of cleared tables.
+    fn start_query(&mut self) {
+        if self.nodes.len() >= MAX_CANONICAL_NODES {
+            self.nodes.clear();
+            self.unique.clear();
+            self.forms.clear();
+        }
+    }
+
     fn known(&self, guard: &RuntimeGuard) -> Option<u32> {
         match guard {
             RuntimeGuard::False => Some(FALSE),
@@ -217,6 +228,7 @@ impl CanonicalGuards {
         [(left, left_value), (right, right_value)]: [(&RuntimeGuard, bool); 2],
         context: *const super::GuardQueries,
     ) -> Option<bool> {
+        self.start_query();
         let left = self.form(left, context)?;
         let right = self.form(right, context)?;
         self.joint(
@@ -241,6 +253,7 @@ impl CanonicalGuards {
         value: bool,
         context: *const super::GuardQueries,
     ) -> Option<bool> {
+        self.start_query();
         let form = self.form(guard, context)?;
         let decision = self.make(atom.decision, FALSE, TRUE);
         self.joint(

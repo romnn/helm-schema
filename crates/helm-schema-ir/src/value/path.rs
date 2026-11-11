@@ -447,6 +447,10 @@ impl Path {
 /// every document that took a link's other outcome when none of them continues, so later facts
 /// need not carry the link (ADR 0072 §2). A path that does not extend `entry` makes the set
 /// incomplete, and then nothing is re-kinded.
+///
+/// Sibling subtrees describe disjoint documents only where they split on the two outcomes of one
+/// test. Elsewhere (a joined link beside an unjoined exit, or more than two branches) a document
+/// may continue through a sibling, so nothing below such a node is re-kinded.
 pub(super) fn settle_survival(entry: &Path, paths: &mut [&mut Path]) {
     // A trie over the links below the entry: node ids, child counts and paths ending there.
     type Key = (usize, bool, LinkKind);
@@ -460,6 +464,7 @@ pub(super) fn settle_survival(entry: &Path, paths: &mut [&mut Path]) {
     let mut children = std::collections::HashMap::<(usize, Key), usize>::new();
     let mut fanout = vec![0_usize];
     let mut ends = vec![false];
+    let mut keys = vec![Vec::<Key>::new()];
     let mut nodes = Vec::with_capacity(paths.len());
     for path in paths.iter() {
         let mut node = 0;
@@ -475,8 +480,12 @@ pub(super) fn settle_survival(entry: &Path, paths: &mut [&mut Path]) {
             if child == next {
                 fanout.push(0);
                 ends.push(false);
+                keys.push(Vec::new());
                 if let Some(count) = fanout.get_mut(node) {
                     *count += 1;
+                }
+                if let Some(node_keys) = keys.get_mut(node) {
+                    node_keys.push(key);
                 }
             }
             visited.push(node);
@@ -487,18 +496,37 @@ pub(super) fn settle_survival(entry: &Path, paths: &mut [&mut Path]) {
         }
         nodes.push(visited);
     }
+    // A node is disjoint when no path ends above it and every split on the way to it is the two
+    // outcomes of one test.
+    let splits_one_test = |node: usize| {
+        ends.get(node) == Some(&false)
+            && match keys.get(node).map(Vec::as_slice) {
+                Some([_] | []) => true,
+                Some([(left, left_taken, _), (right, right_taken, _)]) => {
+                    left == right && left_taken != right_taken
+                }
+                Some(_) | None => false,
+            }
+    };
+    let disjoint = |visited: &[usize], index: usize| {
+        visited
+            .get(..index)
+            .is_some_and(|ancestors| ancestors.iter().all(|node| splits_one_test(*node)))
+    };
     for (path, visited) in paths.iter_mut().zip(nodes) {
         let links = path.links();
         let survived = links
             .iter()
             .skip(depth)
             .zip(&visited)
-            .filter(|(link, parent)| {
+            .enumerate()
+            .filter(|(index, (link, parent))| {
                 link.kind == LinkKind::Branch
                     && fanout.get(**parent) == Some(&1)
                     && ends.get(**parent) == Some(&false)
+                    && disjoint(&visited, *index)
             })
-            .map(|(link, _)| link.depth)
+            .map(|(_, (link, _))| link.depth)
             .collect::<Vec<_>>();
         drop(links);
         if !survived.is_empty() {

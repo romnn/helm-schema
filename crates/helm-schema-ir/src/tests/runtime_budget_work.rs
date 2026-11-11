@@ -2026,3 +2026,39 @@ fn canonical_forms_decide_implications_the_bounded_search_cannot() {
     let unrelated = first.map(|left| path.implies_test(&left));
     sim_assert_eq!(have: unrelated, want: Some(None));
 }
+
+/// Starting the canonical tables over never invalidates a form a query already holds: both
+/// operands of one query are built against the same tables. Unit tests cap the tables at 64
+/// nodes, below the left form, so building the right operand would start them over; the bounded
+/// search cannot decide the query (16 disjunctive pairs), so only the canonical forms answer it.
+#[test]
+fn a_query_never_compares_a_form_from_cleared_tables() {
+    use crate::value::{Coverage, DecisionEdge, State, Value};
+    use helm_schema_core::Predicate;
+    use std::rc::Rc;
+
+    let state = State::new(Value::nil());
+    let arena = &state.heap.arena;
+    let atom = || {
+        let test = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+        let guard = arena.runtime_path(&[DecisionEdge {
+            test: Rc::clone(&test),
+            taken: true,
+        }]);
+        (test, guard)
+    };
+    let (implied_test, implied) = atom();
+    let excluded = arena.runtime_path(&[DecisionEdge {
+        test: implied_test,
+        taken: false,
+    }]);
+    let mut path = implied;
+    for _ in 0..16 {
+        let (_, left) = atom();
+        let (_, right) = atom();
+        let pair = arena.union_runtime_guards(&left, &right);
+        path = arena.intersect_runtime_guards(&path, &pair);
+    }
+    sim_assert_eq!(have: path.compatible(true, &excluded, true), want: Some(false));
+    sim_assert_eq!(have: excluded.compatible(true, &path, true), want: Some(false));
+}

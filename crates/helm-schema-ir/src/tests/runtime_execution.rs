@@ -19,6 +19,8 @@ mod range_laws;
 mod reconvergence_laws;
 #[path = "runtime_serialized_payload.rs"]
 mod serialized_payload_laws;
+#[path = "runtime_survival_trie.rs"]
+mod survival_trie_laws;
 #[path = "template_action_laws.rs"]
 mod template_action_laws;
 

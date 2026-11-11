@@ -243,6 +243,11 @@ impl State {
             &self.heap.arena.predicate_memo,
             &mut remaining,
         );
+        if remaining == 0 {
+            let _bound =
+                tracing::debug_span!(target: "helm_schema_ir::counters", "action_free_bound")
+                    .entered();
+        }
         if action_free == helm_schema_core::Predicate::False || action_free.contains_approximation()
         {
             return false;

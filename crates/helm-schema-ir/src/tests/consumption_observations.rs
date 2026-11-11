@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::fmt::Write as _;
 
 use ahash::AHashMap;
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
@@ -440,5 +441,53 @@ fn a_capped_fold_omits_the_requirement_in_the_emitted_schema() -> eyre::Result<(
     let document = serde_json::Value::Object(document);
     assert!(jsonschema::validator_for(&actual)?.is_valid(&document));
     export_validator_case("cap-omission", &actual, &document)?;
+    Ok(())
+}
+
+/// One requirement group's rows never depend on the groups folded before it or on the order the
+/// consumptions arrive in (ADR 0072 §10). Three hundred member hosts read under eight exclusive pairs
+/// each exhaust their union and fold per occurrence. Under one chart-wide allowance they spent
+/// it all before the later `zz` group, which then lost its rows.
+#[test]
+fn a_requirement_group_keeps_its_rows_after_exhausted_groups_in_any_order() -> eyre::Result<()> {
+    const HOSTS: usize = 300;
+    const PAIRS: usize = 8;
+    let mut hosts = String::new();
+    let mut victim = String::new();
+    for pair in 1..=PAIRS {
+        for host in 1..=HOSTS {
+            write!(
+                hosts,
+                "{{{{- if and .Values.a{pair} .Values.b{pair} }}}}{{{{ $_ := .Values.h{host:03}.port }}}}{{{{ end }}}}"
+            )?;
+        }
+        write!(
+            victim,
+            "{{{{- if and .Values.a{pair} .Values.b{pair} }}}}{{{{ $_ := .Values.zz | trunc 3 }}}}{{{{ end }}}}"
+        )?;
+    }
+    let signals = |consumptions: Vec<FrozenConsumption>| {
+        let facts = crate::observed_facts::ObservedFacts {
+            consumptions,
+            ..crate::observed_facts::ObservedFacts::default()
+        };
+        crate::contract_signal_builder::derive_schema_signals_from_contract_parts(
+            &[],
+            &facts,
+            &BTreeSet::new(),
+            &helm_schema_core::PredicateMemo::new(),
+        )
+    };
+    let zz = ValuesPath::parse("zz");
+    let alone = signals(observations(&victim));
+    let after = observations(&format!("{hosts}{victim}"));
+    let mut reversed = after.clone();
+    reversed.reverse();
+    let after = signals(after);
+    let reversed = signals(reversed);
+    let rows = alone.evidence_for(&zz).ok_or_eyre("zz rows")?;
+    assert!(!rows.requirement_implications.is_empty(), "{rows:?}");
+    sim_assert_eq!(have: after.evidence_for(&zz), want: Some(rows));
+    sim_assert_eq!(have: &reversed, want: &after);
     Ok(())
 }

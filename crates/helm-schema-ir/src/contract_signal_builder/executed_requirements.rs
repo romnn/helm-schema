@@ -7,6 +7,8 @@ use super::{
 use crate::value::{ConsumptionDomain, ConsumptionKey, FrozenConsumption};
 
 const MAX_CHART_WORK: usize = 8_388_608;
+/// Steps one group's coverage read may take (the corpus peak is under 80k).
+const MAX_GROUP_COVERAGE_WORK: usize = 1 << 18;
 
 #[tracing::instrument(skip_all)]
 pub(super) fn record_executed_requirements(
@@ -47,18 +49,25 @@ pub(super) fn record_executed_requirements(
         if matches!(key.domain, ConsumptionDomain::KnownAny) {
             continue;
         }
-        // Each group reads its coverage on the allowance left after the shared setup, so no
-        // group's demand depends on what the groups before it spent (ADR 0072 §10).
-        let mut group_remaining = remaining;
-        let Some(covers) = existing_coverage(
+        // Each group reads its coverage on a fixed allowance of its own, so no group's demand
+        // depends on what the groups before it spent. A read that exhausts it proves no
+        // coverage: the demand is still folded, only possibly redundant (ADR 0072 §10).
+        let mut allowance = MAX_GROUP_COVERAGE_WORK;
+        let covers = existing_coverage(
             paths,
             terminal_clauses,
             &absence_by_path,
             &key,
-            &mut group_remaining,
-        ) else {
-            continue;
-        };
+            &mut allowance,
+        )
+        .unwrap_or_else(|| {
+            let _bound = tracing::debug_span!(
+                target: "helm_schema_ir::counters",
+                "requirement_coverage_bound"
+            )
+            .entered();
+            ExistingCoverage::default()
+        });
         let presence = matches!(
             &key.domain,
             ConsumptionDomain::Known {
@@ -211,6 +220,7 @@ struct FoldedRequirement {
     absence_covered: bool,
 }
 
+#[derive(Default)]
 struct ExistingCoverage {
     body: Vec<helm_schema_core::Predicate>,
     absence: Vec<helm_schema_core::Predicate>,
