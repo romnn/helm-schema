@@ -47,12 +47,14 @@ pub(super) fn record_executed_requirements(
         if matches!(key.domain, ConsumptionDomain::KnownAny) {
             continue;
         }
+        // Each group reads its coverage on the allowance left after the shared setup, so no
+        // group's demand depends on what the groups before it spent (ADR 0072 §10).
         let Some(covers) = existing_coverage(
             paths,
             terminal_clauses,
             &absence_by_path,
             &key,
-            &mut remaining,
+            &mut { remaining },
         ) else {
             continue;
         };
@@ -68,7 +70,6 @@ pub(super) fn record_executed_requirements(
             &occurrences,
             &covers,
             presence.then_some(&key.path),
-            &mut remaining,
             &mut identities,
         ) {
             emit_requirement(paths, terminal_clauses, key, folded, &dependency_roots);
@@ -91,7 +92,6 @@ pub(super) fn record_executed_requirements(
                 &[occurrence],
                 &covers,
                 presence.then_some(&key.path),
-                &mut remaining,
                 &mut identities,
             ) {
                 emit_requirement(
@@ -383,18 +383,16 @@ fn nullable_preimage(old: &super::FailValueRequirement, new: &super::FailValueRe
     }
 }
 
+/// Folds one group on an allowance of its own: whether a group completes never depends on how
+/// much the groups before it spent (ADR 0072 §10).
 fn fold(
     occurrences: &[&FrozenConsumption],
     covers: &ExistingCoverage,
     presence: Option<&ValuesPath>,
-    remaining: &mut usize,
     identities: &mut crate::value::RequirementIdentities,
 ) -> Option<FoldedRequirement> {
-    let mut local = (*remaining).min(helm_schema_core::RequirementBdd::WORK_BUDGET);
-    let before = local;
-    let folded = fold_with_budget(occurrences, covers, presence, &mut local, identities);
-    *remaining = remaining.saturating_sub(before - local);
-    folded
+    let mut local = helm_schema_core::RequirementBdd::WORK_BUDGET;
+    fold_with_budget(occurrences, covers, presence, &mut local, identities)
 }
 
 fn fold_with_budget(
