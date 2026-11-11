@@ -1975,3 +1975,42 @@ fn local_guard_facts_are_proved_before_expanding_ambient_history() {
     sim_assert_eq!(have: implied, want: Some(true));
     sim_assert_eq!(have: impossible, want: true);
 }
+
+/// GUARDX D54: a canonical form decides an implication that exhausts the bounded proof search
+/// (16 disjunctive pairs, 2^16 backtracks), and leaves unrelated decisions undecided.
+#[test]
+fn canonical_forms_decide_implications_the_bounded_search_cannot() {
+    use crate::value::{Coverage, DecisionEdge, State, Value};
+    use helm_schema_core::Predicate;
+    use std::rc::Rc;
+
+    let state = State::new(Value::nil());
+    let arena = &state.heap.arena;
+    let atom = || {
+        let test = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+        let guard = arena.runtime_path(&[DecisionEdge {
+            test: Rc::clone(&test),
+            taken: true,
+        }]);
+        (test, guard)
+    };
+    // The implied decision sorts below every pair, so a search binds it first and then
+    // backtracks through each pair's two satisfying arms before it reaches the contradiction.
+    let (_, implied) = atom();
+    let mut path = implied.clone();
+    let mut first = None;
+    for _ in 0..16 {
+        let (left, left_guard) = atom();
+        let (_, right_guard) = atom();
+        let pair = arena.union_runtime_guards(&left_guard, &right_guard);
+        path = arena.intersect_runtime_guards(&path, &pair);
+        first.get_or_insert(left);
+    }
+    let implied_test = {
+        let mut store = arena.guards.borrow_mut();
+        arena.guard_test(&mut store, implied)
+    };
+    sim_assert_eq!(have: path.implies_test(&implied_test), want: Some(true));
+    let unrelated = first.map(|left| path.implies_test(&left));
+    sim_assert_eq!(have: unrelated, want: Some(None));
+}

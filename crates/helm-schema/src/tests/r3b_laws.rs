@@ -857,18 +857,38 @@ fn helper_calls_in_different_namespaces_are_not_merged() -> eyre::Result<()> {
 
 #[test]
 fn zz_probe() -> eyre::Result<()> {
-    let template = [
-        "{{- if .Values.enabled }}{{ tpl .Values.program $ }}{{ end }}\n",
-        CONFIG_MAP,
-        "data:\n  after: {{ upper .Values.after | quote }}\n",
-    ]
-    .concat();
-    let session = law_session(&[
-        ("Chart.yaml", CHART),
-        ("values.yaml", "enabled: false\nprogram: \"\"\nafter: \"x\"\n"),
-        ("templates/cm.yaml", template.as_str()),
-    ])?;
-    println!("{:#?}", session.explain("after")?);
-    println!("{}", session.explain_generation("after", crate::explain::ExplainFormat::Text)?);
+    let root = std::path::Path::new("/Volumes/T9/dev/round8-r3b-s3/target/tmp/vb");
+    let mut owned = Vec::new();
+    for entry in walk(root)? {
+        let relative = entry.strip_prefix(root)?.to_string_lossy().to_string();
+        owned.push((relative, std::fs::read_to_string(&entry)?));
+    }
+    let files = owned
+        .iter()
+        .map(|(path, source)| (path.as_str(), source.as_str()))
+        .collect::<Vec<_>>();
+    let session = law_session(&files)?;
+    let path = std::env::var("PROBE_PATH").unwrap_or_else(|_| "ui".to_owned());
+    let contract = session.finalized_contract()?;
+    let evidence = contract
+        .schema_signals()
+        .evidence_for(&helm_schema_core::ValuesPath::parse(&path));
+    println!(
+        "IMPLICATIONS {:#?}",
+        evidence.map(|evidence| &evidence.requirement_implications)
+    );
     Ok(())
+}
+
+fn walk(dir: &std::path::Path) -> eyre::Result<Vec<std::path::PathBuf>> {
+    let mut out = Vec::new();
+    for entry in std::fs::read_dir(dir)? {
+        let path = entry?.path();
+        if path.is_dir() {
+            out.extend(walk(&path)?);
+        } else {
+            out.push(path);
+        }
+    }
+    Ok(out)
 }

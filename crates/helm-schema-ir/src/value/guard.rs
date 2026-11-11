@@ -150,7 +150,11 @@ struct GuardQueries {
     atoms: RefCell<AHashMap<AtomQuery, Option<bool>>>,
     compatibilities: RefCell<AHashMap<CompatibilityQuery, Option<bool>>>,
     conjunctions_dirty: Cell<bool>,
+    /// The canonical forms that answer queries before the bounded proof search.
+    canonical: RefCell<canonical::CanonicalGuards>,
 }
+
+mod canonical;
 
 impl std::fmt::Debug for GuardQueries {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -447,13 +451,18 @@ impl RuntimeGuard {
                 }
             }
         }
-        self.satisfiable(
-            &Self::True,
-            outcome,
-            true,
-            Some(&DecisionEdgeKey { decision, taken }),
-            &mut work,
-        )
+        let atom = DecisionEdgeKey { decision, taken };
+        if let Self::Branch(node) = self
+            && let Some(result) = node.queries.canonical.borrow_mut().possible_atom(
+                self,
+                &atom,
+                outcome,
+                Rc::as_ptr(&node.queries),
+            )
+        {
+            return Some(result);
+        }
+        self.satisfiable(&Self::True, outcome, true, Some(&atom), &mut work)
     }
 
     pub(super) fn overlaps(&self, other: &Self) -> bool {
@@ -501,6 +510,20 @@ impl RuntimeGuard {
         other: &Self,
         other_outcome: bool,
     ) -> Option<bool> {
+        let queries = match (self, other) {
+            (Self::Branch(node), _) | (Self::False | Self::True, Self::Branch(node)) => {
+                Some(&node.queries)
+            }
+            (Self::False | Self::True, Self::False | Self::True) => None,
+        };
+        if let Some(queries) = queries
+            && let Some(result) = queries.canonical.borrow_mut().compatible(
+                [(self, outcome), (other, other_outcome)],
+                Rc::as_ptr(queries),
+            )
+        {
+            return Some(result);
+        }
         self.satisfiable(
             other,
             outcome,

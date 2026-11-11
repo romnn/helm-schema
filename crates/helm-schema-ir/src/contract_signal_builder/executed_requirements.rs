@@ -64,16 +64,41 @@ pub(super) fn record_executed_requirements(
             }
         ) && key.path.item_parent().is_none()
             && !dependency_roots.contains(&key.path);
-        let Some(folded) = fold(
+        if let Some(folded) = fold(
             &occurrences,
             &covers,
             presence.then_some(&key.path),
             &mut remaining,
             &mut identities,
-        ) else {
+        ) {
+            emit_requirement(paths, terminal_clauses, key, folded, &dependency_roots);
             continue;
-        };
-        emit_requirement(paths, terminal_clauses, key, folded, &dependency_roots);
+        }
+        // The group's union exhausted its allowance. Each occurrence still proves the
+        // requirement under its own guard, so only the union is lost (ADR 0072 §10).
+        tracing::debug!(
+            target: "helm_schema_ir::bounds",
+            path = ?key.path,
+            occurrences = occurrences.len(),
+            "fold each requirement occurrence on its own allowance"
+        );
+        for occurrence in occurrences {
+            if let Some(folded) = fold(
+                &[occurrence],
+                &covers,
+                presence.then_some(&key.path),
+                &mut remaining,
+                &mut identities,
+            ) {
+                emit_requirement(
+                    paths,
+                    terminal_clauses,
+                    key.clone(),
+                    folded,
+                    &dependency_roots,
+                );
+            }
+        }
     }
 }
 

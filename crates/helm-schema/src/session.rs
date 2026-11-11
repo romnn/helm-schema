@@ -510,7 +510,7 @@ impl AnalysisSession {
     }
 
     #[tracing::instrument(skip_all)]
-    fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
+    pub(crate) fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
         self.finalized_contract
             .get_or_try_init(&self.initializing, || {
                 let prepared = self.prepared()?;
