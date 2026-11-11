@@ -49,12 +49,13 @@ pub(super) fn record_executed_requirements(
         }
         // Each group reads its coverage on the allowance left after the shared setup, so no
         // group's demand depends on what the groups before it spent (ADR 0072 §10).
+        let mut group_remaining = remaining;
         let Some(covers) = existing_coverage(
             paths,
             terminal_clauses,
             &absence_by_path,
             &key,
-            &mut { remaining },
+            &mut group_remaining,
         ) else {
             continue;
         };
