@@ -6,7 +6,7 @@ use std::rc::Rc;
 use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
 
-use crate::value::path::{LinkKind, Path, settle_survival};
+use crate::value::path::{LinkKind, Path, PathLink, settle_survival};
 use crate::value::{Coverage, DecisionEdge, FrozenTest, State, Value};
 
 fn decision(state: &State) -> Rc<FrozenTest> {
@@ -29,7 +29,7 @@ fn path(edges: &[(&Rc<FrozenTest>, bool)]) -> Path {
 }
 
 fn kinds(path: &Path) -> Vec<LinkKind> {
-    path.links().into_iter().map(|link| link.kind()).collect()
+    path.links().into_iter().map(PathLink::kind).collect()
 }
 
 /// `if d {if e {} else {break}} else {if h {} else {fail}}`: the break exit `[d, ¬e]` is not
