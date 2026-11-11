@@ -1,5 +1,50 @@
 {
   "$defs": {
+    "constrains/apiVersions": {
+      "properties": {
+        "apiVersions": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "apiVersions"
+      ],
+      "type": "object"
+    },
+    "constrains/apiVersions+apiVersions=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1apiVersions=null"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1apiVersions@2"
+          }
+        }
+      ]
+    },
+    "constrains/apiVersions=null": {
+      "properties": {
+        "apiVersions": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "apiVersions"
+      ],
+      "type": "object"
+    },
+    "constrains/apiVersions@2": {
+      "properties": {
+        "apiVersions": {}
+      },
+      "required": [
+        "apiVersions"
+      ],
+      "type": "object"
+    },
     "constrains/bitnami-common+bitnami-common:t+bitnami-common=null": {
       "anyOf": [
         {
@@ -45,31 +90,53 @@
       }
     },
     "constrains/global+global=null": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {}
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "global": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/global+global=null@2": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      }
     },
     "constrains/global+global=null@3": {
       "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      }
+    },
+    "constrains/global.apiVersions": {
+      "$ref": "#/$defs/when~1global.apiVersions~1then~1fail~1else~1any"
+    },
+    "constrains/global.apiVersions+global.apiVersions=null": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
               "global": {
-                "enum": [
-                  null
-                ]
+                "$ref": "#/$defs/constrains~1apiVersions@2"
               }
             },
             "required": [
@@ -77,8 +144,60 @@
             ],
             "type": "object"
           }
-        ]
-      }
+        },
+        {
+          "properties": {
+            "global": {
+              "$ref": "#/$defs/constrains~1apiVersions=null"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global.apiVersions:t": {
+      "properties": {
+        "global": {
+          "properties": {
+            "apiVersions": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "apiVersions"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.apiVersions@2": {
+      "$ref": "#/$defs/when~1global.apiVersions~1then~1fail~1else~1any"
+    },
+    "constrains/keeper.enabled:t": {
+      "properties": {
+        "keeper": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "keeper"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -104,6 +223,347 @@
           "const": true
         }
       ]
+    },
+    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions": {
+      "else": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": false
+    },
+    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions+global+global=null": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1apiVersions~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": false
+    },
+    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions+global+global=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1apiVersions~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": false
+    },
+    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions@2": {
+      "else": {
+        "$ref": "#/$defs/when~1apiVersions~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": false
+    },
+    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions@3": {
+      "else": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": false
+    },
+    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions@4": {
+      "else": {
+        "$ref": "#/$defs/when~1apiVersions~1then~1fail~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": false
+    },
+    "when/apiVersions+apiVersions=null/then/global+global.apiVersions+global=null/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1apiVersions~1else~1global+global.apiVersions+global.apiVersions=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null@3"
+      }
+    },
+    "when/apiVersions+apiVersions=null/then/global+global.apiVersions+global=null/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1apiVersions+apiVersions=null~1else~1global"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null@4"
+      }
+    },
+    "when/apiVersions+apiVersions=null/then/global+global.apiVersions+global=null/else/any@3": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1apiVersions~1else~1global+global.apiVersions+global.apiVersions=null@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null"
+      }
+    },
+    "when/apiVersions+apiVersions=null/then/global+global.apiVersions+global=null/else/any@4": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1apiVersions+apiVersions=null~1else~1global@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions+apiVersions=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null@2"
+      }
+    },
+    "when/apiVersions/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions"
+      },
+      "then": false
+    },
+    "when/apiVersions/then/fail/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1apiVersions"
+      },
+      "then": false
+    },
+    "when/global+global=null/then/apiVersions+apiVersions=null/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1apiVersions+global+global=null~1else~1global"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions@4"
+      }
+    },
+    "when/global+global=null/then/apiVersions+apiVersions=null/else/global@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1apiVersions+global+global=null~1else~1global@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions@2"
+      }
+    },
+    "when/global+global=null/then/apiVersions/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions~1then~1fail~1else~1any"
+      }
+    },
+    "when/global+global=null/then/apiVersions/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions~1then~1fail~1else~1any@2"
+      }
+    },
+    "when/global+global=null/then/apiVersions/else/global+global.apiVersions+global.apiVersions=null": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions~1then~1fail~1else~1any@2"
+      }
+    },
+    "when/global+global=null/then/apiVersions/else/global+global.apiVersions+global.apiVersions=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions~1then~1fail~1else~1any"
+      }
+    },
+    "when/global+global=null/then/fail/else/global+global.apiVersions+global.apiVersions=null": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": false
+    },
+    "when/global+global=null/then/fail/else/global+global.apiVersions+global.apiVersions=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global+global.apiVersions+global=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": false
+    },
+    "when/global+global=null/then/fail/else/global+global.apiVersions+global.apiVersions=null@3": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": false
+    },
+    "when/global+global=null/then/fail/else/global+global.apiVersions+global.apiVersions=null@4": {
+      "else": {
+        "$ref": "#/$defs/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global+global.apiVersions+global=null@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": false
+    },
+    "when/global.apiVersions+global.apiVersions=null/then/apiVersions+global+global=null/else/global": {
+      "else": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1global+global.apiVersions+global=null~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions+global.apiVersions=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions+global+global=null"
+      }
+    },
+    "when/global.apiVersions+global.apiVersions=null/then/apiVersions+global+global=null/else/global@2": {
+      "else": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1global+global.apiVersions+global=null~1else~1any@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions+global.apiVersions=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions+global+global=null@2"
+      }
+    },
+    "when/global.apiVersions+global.apiVersions=null/then/fail/else/global+global.apiVersions+global=null": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions+global.apiVersions=null"
+      },
+      "then": false
+    },
+    "when/global.apiVersions+global.apiVersions=null/then/fail/else/global+global.apiVersions+global=null@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null@3"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions+global.apiVersions=null"
+      },
+      "then": false
+    },
+    "when/global.apiVersions+global.apiVersions=null/then/fail/else/global.apiVersions": {
+      "else": {
+        "$ref": "#/$defs/constrains~1global.apiVersions@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions+global.apiVersions=null"
+      },
+      "then": false
+    },
+    "when/global.apiVersions+global.apiVersions=null/then/fail/else/global.apiVersions@2": {
+      "else": {
+        "$ref": "#/$defs/constrains~1global.apiVersions"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions+global.apiVersions=null"
+      },
+      "then": false
+    },
+    "when/global.apiVersions/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "properties": {
+          "global": {
+            "$ref": "#/$defs/constrains~1apiVersions"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    "when/global.apiVersions:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1keeper.enabled:t~1then~1apiVersions+apiVersions=null~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1keeper.enabled:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null~1else~1fail"
+      }
+    },
+    "when/global.apiVersions:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1keeper.enabled:t~1then~1apiVersions+apiVersions=null~1else~1fail@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.apiVersions:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1keeper.enabled:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null~1else~1fail@2"
+      }
+    },
+    "when/keeper.enabled:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1keeper.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1global+global.apiVersions+global=null~1else~1any@2"
+      }
+    },
+    "when/keeper.enabled:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1keeper.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1global+global.apiVersions+global=null~1else~1any@4"
+      }
+    },
+    "when/keeper.enabled:t/then/apiVersions+apiVersions=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1keeper.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions"
+      }
+    },
+    "when/keeper.enabled:t/then/apiVersions+apiVersions=null/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1keeper.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions@3"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -144,29 +604,13 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1global+global=null@3"
+          },
+          {
             "$ref": "#/$defs/constrains~1global+global=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          },
-          {
-            "properties": {
-              "keeper": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "keeper"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1keeper.enabled:t"
           }
         ]
       },
@@ -178,6 +622,172 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any@2"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "keeper": {
+                      "properties": {
+                        "autoscaling": {}
+                      },
+                      "required": [
+                        "autoscaling"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "keeper"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "keeper": {
+                    "properties": {
+                      "autoscaling": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "autoscaling"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "keeper"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "keeper": {
+                "additionalProperties": {},
+                "properties": {
+                  "autoscaling": {
+                    "additionalProperties": {},
+                    "description": "ClickHouse Keeper Autoscaling configuration\nref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/",
+                    "properties": {
+                      "vpa": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "keeper": {
+                "additionalProperties": {},
+                "properties": {
+                  "autoscaling": {
+                    "description": "ClickHouse Keeper Autoscaling configuration\nref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "keeper": {
+                    "properties": {
+                      "autoscaling": {
+                        "properties": {
+                          "vpa": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "vpa"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoscaling"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "keeper"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "keeper": {
+                      "properties": {
+                        "autoscaling": {
+                          "properties": {
+                            "vpa": {}
+                          },
+                          "required": [
+                            "vpa"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "autoscaling"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "keeper"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

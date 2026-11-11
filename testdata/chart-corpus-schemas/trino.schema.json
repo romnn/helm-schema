@@ -28,25 +28,6 @@
         }
       ]
     },
-    "constrains/serviceMonitor.worker": {
-      "properties": {
-        "serviceMonitor": {
-          "properties": {
-            "worker": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "worker"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
-    },
     "constrains/worker": {
       "properties": {
         "worker": {}
@@ -74,19 +55,6 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceMonitor.worker"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "serviceMonitor": {
@@ -96,19 +64,6 @@
               "description": "serviceMonitor.coordinator -- Override ServiceMonitor configurations for the Trino coordinator.\nExample\n```yaml\ncoordinator:\nenabled: true\nlabels:\nprometheus: my-prometheus\n```\nserviceMonitor.worker -- Override ServiceMonitor configurations for the Trino workers.\nExample\n```yaml\nworker:\nenabled: true\nlabels:\nprometheus: my-prometheus\n```",
               "type": "object"
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.worker"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "type": "object"
           }
         }
       }

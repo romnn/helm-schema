@@ -6,21 +6,28 @@
       }
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        }
+      ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
@@ -30,96 +37,32 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
       }
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -143,57 +86,21 @@
     },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       }
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
     },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
         }
       },
       "required": [
@@ -226,46 +133,19 @@
         }
       ]
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "then": true
-    },
     "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
       },
       "then": true
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride~1else~1fail"
-      }
     },
     "when/nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1nameOverride:t"
       },
       "then": true
-    },
-    "when/nameOverride:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -273,49 +153,30 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "loadBalancer": {}
-                  },
-                  "required": [
-                    "loadBalancer"
-                  ],
-                  "type": "object"
-                }
+            "not": {
+              "properties": {
+                "ingress": {}
               },
-              {
-                "properties": {
-                  "loadBalancer": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "loadBalancer"
-                ],
-                "type": "object"
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
               }
-            ]
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -323,7 +184,38 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t~1else~1any"
+        "anyOf": [
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -337,182 +229,36 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ingress": {}
-                  },
-                  "required": [
-                    "ingress"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ingress": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
       },
       "then": false
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@4"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "loadBalancer": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
             "properties": {
               "nodePort": {
-                "type": "object"
+                "enum": [
+                  null
+                ]
               }
+            },
+            "required": [
+              "nodePort"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "nodePort": {}
+              },
+              "required": [
+                "nodePort"
+              ],
+              "type": "object"
             }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "nodePort": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "nodePort"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "nodePort": {}
-                  },
-                  "required": [
-                    "nodePort"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
           }
         ]
       },
@@ -531,6 +277,37 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "loadBalancer": {}
+              },
+              "required": [
+                "loadBalancer"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "loadBalancer": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "loadBalancer"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -559,7 +336,8 @@
         "tag": {
           "description": "Specify the image tag to use. If you want to use a specific version, set it here."
         }
-      }
+      },
+      "type": "object"
     },
     "imagePullSecrets": {
       "description": "This is for the secrets for pulling an image from a private repository"
@@ -582,7 +360,8 @@
         "tlsSecretName": {
           "description": "To enable HTTPS, set this to reference a TLS secret (with a valid cert)"
         }
-      }
+      },
+      "type": "object"
     },
     "loadBalancer": {
       "additionalProperties": {},
@@ -593,7 +372,8 @@
         "enabled": {
           "description": "Set to true to enable the LoadBalancer service type"
         }
-      }
+      },
+      "type": "object"
     },
     "nameOverride": {
       "description": "This is to override the chart name when naming resources"
@@ -610,7 +390,8 @@
         "port": {
           "description": "Optionally set the NodePort number, if you want to use a specific one"
         }
-      }
+      },
+      "type": "object"
     },
     "nodeSelector": {
       "description": "If you want to schedule the pods to specific nodes, you can set node selectors here"

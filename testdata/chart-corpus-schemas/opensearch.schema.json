@@ -1,5 +1,16 @@
 {
   "$defs": {
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/image.tag": {
       "properties": {
         "image": {
@@ -22,7 +33,7 @@
     "constrains/image.tag+image.tag:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1image.tag:t"
+          "$ref": "#/$defs/constrains~1image.tag:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1image.tag"
@@ -35,7 +46,7 @@
           "$ref": "#/$defs/constrains~1majorVersion:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1image.tag:t"
+          "$ref": "#/$defs/constrains~1image.tag:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1image.tag"
@@ -45,20 +56,17 @@
     "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1image.tag+image.tag:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1majorVersion:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
         }
       ]
     },
     "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more": {
-      "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2"
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null"
@@ -67,37 +75,37 @@
           "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t"
         },
         {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        }
+      ]
+    },
+    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@2"
         }
       ]
     },
     "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t@2"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@4": {
       "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2"
+        },
         {
           "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
         }
       ]
     },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@5": {
+    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@4": {
       "not": {
         "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
       }
@@ -105,7 +113,7 @@
     "constrains/image.tag+image.tag:t+majorVersion:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1image.tag:t@2"
+          "$ref": "#/$defs/constrains~1image.tag:t"
         },
         {
           "$ref": "#/$defs/constrains~1majorVersion:t@3"
@@ -182,12 +190,16 @@
       "type": "object"
     },
     "constrains/nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        }
+      ]
     },
     "constrains/nameOverride+nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
@@ -197,19 +209,9 @@
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@5": {
+    "constrains/nameOverride+nameOverride:t@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
       }
     },
     "constrains/nameOverride:t": {
@@ -245,12 +247,6 @@
       }
     },
     "constrains/nodeGroup+nodeGroup=null": {
-      "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@3"
-    },
-    "constrains/nodeGroup+nodeGroup=null@2": {
-      "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@3"
-    },
-    "constrains/nodeGroup+nodeGroup=null@3": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1nodeGroup@2"
@@ -263,17 +259,7 @@
         }
       ]
     },
-    "constrains/nodeGroup+nodeGroup=null@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup=null"
-        }
-      ]
-    },
-    "constrains/nodeGroup+nodeGroup=null@5": {
+    "constrains/nodeGroup+nodeGroup=null@2": {
       "not": {
         "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null"
       }
@@ -305,15 +291,7 @@
     "constrains/persistence.enabled:t": {
       "properties": {
         "persistence": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1enabled:t"
         }
       },
       "required": [
@@ -349,151 +327,21 @@
     "values/initResources": {
       "description": "limits:\ncpu: \"25m\"\nmemory: \"128Mi\"\nrequests:\ncpu: \"25m\"\nmemory: \"128Mi\""
     },
-    "when/image.tag/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag"
-      },
-      "then": true
-    },
-    "when/image.tag/then/nameOverride+nodeGroup/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1nodeGroup~1else~1fail"
-      }
-    },
-    "when/image.tag/then/nameOverride+nodeGroup/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1nodeGroup~1else~1fail@2"
-      }
-    },
-    "when/image.tag/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/image.tag/then/nodeGroup/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup~1then~1any~1else~1fail"
-      }
-    },
-    "when/image.tag/then/nodeGroup/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup~1then~1fail~1else~1any"
-      }
-    },
-    "when/image.tag:t/then/image.tag+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+nodeGroup=null+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+nodeGroup+nodeGroup=null+persistence.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1majorVersion:t~1then~1nameOverride+nameOverride:t+nodeGroup+nodeGroup=null+persistence.enabled:t~1else~1image.tag"
-      }
-    },
-    "when/image.tag:t/then/image.tag+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+nodeGroup=null/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+nodeGroup+nodeGroup=null~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1majorVersion:t~1then~1nameOverride+nameOverride:t+nodeGroup+nodeGroup=null~1else~1image.tag"
-      }
-    },
-    "when/image.tag:t/then/majorVersion:t+nameOverride+nameOverride:t/else/fail": {
+    "when/image.tag:t/then/majorVersion:t/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1image.tag:t@3"
       },
       "then": {
-        "$ref": "#/$defs/when~1majorVersion:t~1then~1fail~1else~1nameOverride+nameOverride:t"
+        "$ref": "#/$defs/when~1majorVersion:t~1then~1fail~1else~1any"
       }
     },
-    "when/majorVersion:t/then/fail/else/nameOverride+nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any"
-      },
+    "when/majorVersion:t/then/fail/else/any": {
+      "else": true,
       "if": {
         "$ref": "#/$defs/constrains~1majorVersion:t@3"
       },
       "then": false
-    },
-    "when/majorVersion:t/then/nameOverride+nameOverride:t+nodeGroup+nodeGroup=null+persistence.enabled:t/else/image.tag": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+nodeGroup+nodeGroup=null+persistence.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1majorVersion:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+nodeGroup+nodeGroup=null+persistence.enabled:t~1else~1any"
-      }
-    },
-    "when/majorVersion:t/then/nameOverride+nameOverride:t+nodeGroup+nodeGroup=null/else/image.tag": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1image.tag+nameOverride+nodeGroup+nodeGroup=null~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1majorVersion:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+nodeGroup+nodeGroup=null~1else~1any"
-      }
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/nodeGroup/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup~1then~1any~1else~1fail"
-      }
-    },
-    "when/nameOverride/then/nodeGroup/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup~1then~1fail~1else~1any"
-      }
     },
     "when/nameOverride:t/then/any/else/fail": {
       "else": false,
@@ -502,137 +350,19 @@
       },
       "then": true
     },
-    "when/nameOverride:t/then/image.tag+nameOverride+nodeGroup+nodeGroup=null+persistence.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1image.tag+nodeGroup+nodeGroup=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1image.tag+nameOverride+nodeGroup+nodeGroup=null~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/image.tag+nameOverride+nodeGroup+nodeGroup=null/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1image.tag+nodeGroup@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1image.tag+nameOverride+nodeGroup@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+nodeGroup+nodeGroup=null+persistence.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1nodeGroup+nodeGroup=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1nameOverride+nodeGroup+nodeGroup=null~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+nodeGroup+nodeGroup=null/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nameOverride+nodeGroup@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/nodeGroup+nodeGroup=null/then/any/else/nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": true
-    },
-    "when/nodeGroup+nodeGroup=null/then/any/else/nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1any~1else~1nodeGroup"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": true
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/image.tag+nameOverride+nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride+nodeGroup~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": false
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/image.tag+nameOverride+nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1image.tag+nameOverride+nodeGroup"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": false
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/image.tag+nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1image.tag~1then~1nodeGroup~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": false
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/image.tag+nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1image.tag+nodeGroup"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": false
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/nameOverride+nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1nodeGroup~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": false
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/nameOverride+nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nameOverride+nodeGroup"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": false
-    },
     "when/nodeGroup+nodeGroup=null/then/fail/else/nodeGroup": {
       "else": {
         "$ref": "#/$defs/when~1nodeGroup~1then~1fail~1else~1any"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1nodeGroup"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nodeGroup=null"
+          }
+        ]
       },
       "then": false
     },
@@ -641,82 +371,16 @@
         "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1nodeGroup"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nodeGroup=null"
+          }
+        ]
       },
       "then": false
-    },
-    "when/nodeGroup+nodeGroup=null/then/image.tag+nameOverride/else/nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride+nodeGroup~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/nodeGroup+nodeGroup=null/then/image.tag+nameOverride/else/nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1image.tag+nameOverride~1else~1nodeGroup"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1image.tag~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/nodeGroup+nodeGroup=null/then/image.tag/else/nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1image.tag~1then~1nodeGroup~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
-      }
-    },
-    "when/nodeGroup+nodeGroup=null/then/image.tag/else/nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1image.tag~1else~1nodeGroup"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1image.tag~1then~1any~1else~1fail"
-      }
-    },
-    "when/nodeGroup+nodeGroup=null/then/nameOverride/else/nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1nodeGroup~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/nodeGroup+nodeGroup=null/then/nameOverride/else/nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1nameOverride~1else~1nodeGroup"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/nodeGroup/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup@2"
-      },
-      "then": true
     },
     "when/nodeGroup/then/fail/else/any": {
       "else": true,
@@ -725,41 +389,12 @@
       },
       "then": false
     },
-    "when/persistence.enabled:t/then/image.tag+nameOverride+nodeGroup+nodeGroup=null/else/fail": {
+    "when/persistence.enabled:t/then/any/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1persistence.enabled:t"
       },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1image.tag+nameOverride~1else~1nodeGroup@2"
-      }
-    },
-    "when/persistence.enabled:t/then/image.tag+nodeGroup+nodeGroup=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1persistence.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1image.tag~1else~1nodeGroup@2"
-      }
-    },
-    "when/persistence.enabled:t/then/nameOverride+nodeGroup+nodeGroup=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1persistence.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1nameOverride~1else~1nodeGroup@2"
-      }
-    },
-    "when/persistence.enabled:t/then/nodeGroup+nodeGroup=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1persistence.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1any~1else~1nodeGroup@2"
-      }
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -767,70 +402,33 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {}
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1image.tag:t~1then~1majorVersion:t+nameOverride+nameOverride:t~1else~1fail"
+        "$ref": "#/$defs/constrains~1majorVersion:t"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "image": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "description": "override image tag, which is .Chart.AppVersion by default",
-                "type": "string"
-              }
-            }
+            "type": "object"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1image.tag:t~1then~1image.tag+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+nodeGroup=null+1more~1else~1any"
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1any~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -854,88 +452,28 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "persistence": {
-                    "properties": {
-                      "labels": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "labels"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
+        "$ref": "#/$defs/constrains~1persistence.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "persistence": {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "description": "override image, which is busybox by default\nimage: busybox\noverride image tag, which is latest by default\nimageTag:",
                 "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "labels": {}
-                      },
-                      "required": [
-                        "labels"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
               }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1persistence.enabled:t"
+            }
           }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@5"
-          }
-        ]
-      },
-      "then": false
+        }
+      }
     },
     {
       "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1majorVersion:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
           },
           {
             "anyOf": [
@@ -971,84 +509,69 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@4"
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1image.tag:t~1then~1image.tag+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+nodeGroup=null~1else~1any"
+        ]
       },
       "then": false
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1persistence.enabled:t"
-          }
-        ]
+        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup@2"
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistence": {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "description": "override image, which is busybox by default\nimage: busybox\noverride image tag, which is latest by default\nimageTag:",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
+      "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistence": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "persistence": {}
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "persistence": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "persistence"
+            ],
             "type": "object"
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1majorVersion:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          }
-        ]
+        "$ref": "#/$defs/when~1image.tag:t~1then~1majorVersion:t~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "image": {
-            "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "description": "override image tag, which is .Chart.AppVersion by default",
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -1160,6 +683,46 @@
     },
     "persistence": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "labels": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "labels": {}
+                      },
+                      "required": [
+                        "labels"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "accessModes": {
           "description": "OpenSearch Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nstorageClass: \"-\""
@@ -1178,7 +741,8 @@
             }
           }
         }
-      }
+      },
+      "type": "object"
     },
     "plugins": {
       "description": "Enable to add 3rd Party / Custom plugins not offered in the default OpenSearch image."

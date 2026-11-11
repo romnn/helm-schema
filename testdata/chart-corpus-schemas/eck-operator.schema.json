@@ -1,15 +1,147 @@
 {
   "$defs": {
-    "constrains/config.enableLeaderElection:t": {
+    "constrains/config": {
       "properties": {
         "config": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config+config.policies": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1config.policies@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies?"
+        }
+      ]
+    },
+    "constrains/config+config.policies+config.policies.passwords+config.policies.passwords?": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1config.policies.passwords?"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies?"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies.passwords"
+        }
+      ]
+    },
+    "constrains/config+config=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "config": {}
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        },
+        {
           "properties": {
-            "enableLeaderElection": {
-              "$ref": "#/$defs/t"
+            "config": {
+              "enum": [
+                null
+              ]
             }
           },
           "required": [
-            "enableLeaderElection"
+            "config"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/config.metrics+config.metrics=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "config": {
+                "$ref": "#/$defs/constrains~1metrics"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "config": {
+              "$ref": "#/$defs/constrains~1metrics=null"
+            }
+          },
+          "required": [
+            "config"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/config.policies": {
+      "not": {
+        "$ref": "#/$defs/constrains~1config.policies@3"
+      }
+    },
+    "constrains/config.policies+config.policies.passwords+config.policies.passwords?+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1config.policies?@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies.passwords?@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies.passwords"
+        }
+      ]
+    },
+    "constrains/config.policies+config.policies?": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1config.policies?@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1config.policies@3"
+        }
+      ]
+    },
+    "constrains/config.policies.passwords": {
+      "properties": {
+        "config": {
+          "properties": {
+            "policies": {
+              "properties": {
+                "passwords": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "passwords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "policies"
           ],
           "type": "object"
         }
@@ -19,16 +151,77 @@
       ],
       "type": "object"
     },
-    "constrains/config.validateStorageClass:t": {
+    "constrains/config.policies.passwords?": {
+      "not": {
+        "$ref": "#/$defs/constrains~1config.policies.passwords?@3"
+      }
+    },
+    "constrains/config.policies.passwords?@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1config.policies.passwords?@3"
+      }
+    },
+    "constrains/config.policies.passwords?@3": {
       "properties": {
         "config": {
           "properties": {
-            "validateStorageClass": {
-              "$ref": "#/$defs/t"
+            "policies": {
+              "required": [
+                "passwords"
+              ],
+              "type": "object"
             }
           },
           "required": [
-            "validateStorageClass"
+            "policies"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.policies?": {
+      "not": {
+        "$ref": "#/$defs/constrains~1config.policies?@3"
+      }
+    },
+    "constrains/config.policies?@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1config.policies?@3"
+      }
+    },
+    "constrains/config.policies?@3": {
+      "properties": {
+        "config": {
+          "required": [
+            "policies"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.policies@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1config.policies@3"
+      }
+    },
+    "constrains/config.policies@3": {
+      "properties": {
+        "config": {
+          "properties": {
+            "policies": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "policies"
           ],
           "type": "object"
         }
@@ -53,7 +246,7 @@
       "not": {
         "properties": {
           "eck-operator-crds": {
-            "$ref": "#/$defs/constrains~1nameOverride@13"
+            "$ref": "#/$defs/constrains~1nameOverride@2"
           }
         },
         "required": [
@@ -65,7 +258,7 @@
     "constrains/eck-operator-crds.nameOverride:t": {
       "properties": {
         "eck-operator-crds": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       },
       "required": [
@@ -84,9 +277,6 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
     "constrains/fullnameOverride:t": {
       "properties": {
         "fullnameOverride": {
@@ -98,73 +288,22 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride@2": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@3": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@4": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@5": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@6": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/global+global=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "global": {}
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "global": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/global.manifestGen:t": {
       "$ref": "#/$defs/constrains~1global.manifestGen:t@2"
     },
     "constrains/global.manifestGen:t+managedNamespaces+managedNamespaces=null+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
+          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
         },
         {
           "$ref": "#/$defs/constrains~1managedNamespaces"
         },
         {
-          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@3"
+          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@2"
+          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
@@ -174,123 +313,91 @@
     "constrains/global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@13"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t"
+          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
         },
         {
           "$ref": "#/$defs/constrains~1managedNamespaces"
         },
         {
-          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@3"
+          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@2"
+          "$ref": "#/$defs/constrains~1global.manifestGen:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         }
       ]
     },
     "constrains/global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride+3more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+1more"
         },
         {
           "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+1more"
+          "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride:t+1more"
         }
       ]
     },
     "constrains/global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
         },
         {
           "$ref": "#/$defs/constrains~1managedNamespaces"
         },
         {
-          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@3"
+          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.manifestGen:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
         }
       ]
     },
     "constrains/global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride:t+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.enabled:t@16"
+          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
         },
         {
           "$ref": "#/$defs/constrains~1managedNamespaces"
         },
         {
-          "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@3"
-        },
-        {
           "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@2"
-        }
-      ]
-    },
-    "constrains/global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@13"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.enabled:t@15"
+          "$ref": "#/$defs/constrains~1webhook.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1global.manifestGen:t"
         },
         {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-        }
-      ]
-    },
-    "constrains/global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@13"
+          "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.enabled:t@16"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
         }
       ]
     },
@@ -383,59 +490,45 @@
       "$ref": "#/$defs/constrains~1managedNamespaces@2"
     },
     "constrains/managedNamespaces+managedNamespaces=null": {
-      "$ref": "#/$defs/when~1managedNamespaces+managedNamespaces=null~1then~1any~1else~1managedNamespaces@2"
-    },
-    "constrains/managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more": {
-      "$ref": "#/$defs/when~1nameOverride:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more~1else~1any"
-    },
-    "constrains/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null~1else~1any"
-    },
-    "constrains/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t@2": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null~1else~1fail"
+      "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@3"
     },
     "constrains/managedNamespaces+managedNamespaces=null@2": {
-      "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@5"
+      "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@4"
     },
     "constrains/managedNamespaces+managedNamespaces=null@3": {
-      "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@6"
+      "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@5"
     },
     "constrains/managedNamespaces+managedNamespaces=null@4": {
-      "anyOf": [
-        {
-          "properties": {
-            "managedNamespaces": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "managedNamespaces"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
+      "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@5"
+    },
+    "constrains/managedNamespaces+managedNamespaces=null@5": {
+      "not": {
+        "anyOf": [
+          {
             "properties": {
-              "managedNamespaces": {}
+              "managedNamespaces": {
+                "enum": [
+                  null
+                ]
+              }
             },
             "required": [
               "managedNamespaces"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "managedNamespaces": {}
+              },
+              "required": [
+                "managedNamespaces"
+              ],
+              "type": "object"
+            }
           }
-        }
-      ]
-    },
-    "constrains/managedNamespaces+managedNamespaces=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@4"
-      }
-    },
-    "constrains/managedNamespaces+managedNamespaces=null@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@4"
+        ]
       }
     },
     "constrains/managedNamespaces:t": {
@@ -451,37 +544,50 @@
     },
     "constrains/managedNamespaces@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1managedNamespaces@3"
+        "properties": {
+          "managedNamespaces": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "managedNamespaces"
+        ],
+        "type": "object"
       }
     },
-    "constrains/managedNamespaces@3": {
+    "constrains/metrics": {
       "properties": {
-        "managedNamespaces": {
-          "type": "array"
+        "metrics": {}
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "constrains/metrics=null": {
+      "properties": {
+        "metrics": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "managedNamespaces"
+        "metrics"
       ],
       "type": "object"
     },
     "constrains/nameOverride": {
-      "$ref": "#/$defs/constrains~1nameOverride@8"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
       }
-    },
-    "constrains/nameOverride:t+webhook.enabled:t": {
-      "$ref": "#/$defs/when~1nameOverride:t~1then~1webhook.enabled:t~1else~1fail"
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -492,18 +598,7 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@10": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@11": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@12": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@13"
-      }
-    },
-    "constrains/nameOverride@13": {
+    "constrains/nameOverride@2": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -514,55 +609,29 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    "constrains/secureMode": {
+      "properties": {
+        "secureMode": {}
+      },
+      "required": [
+        "secureMode"
+      ],
+      "type": "object"
     },
-    "constrains/nameOverride@3": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@4": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@5": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@6": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@7": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@8": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@9": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+    "constrains/secureMode=null": {
+      "properties": {
+        "secureMode": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "secureMode"
+      ],
+      "type": "object"
     },
     "constrains/softMultiTenancy.enabled:t": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@2": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@3": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@4": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@5": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@6": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@7": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@8": {
-      "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/softMultiTenancy.enabled:t@9": {
       "properties": {
         "softMultiTenancy": {
           "$ref": "#/$defs/constrains~1enabled:t"
@@ -574,34 +643,11 @@
       "type": "object"
     },
     "constrains/webhook.enabled:t": {
-      "$ref": "#/$defs/constrains~1webhook.enabled:t@7"
-    },
-    "constrains/webhook.enabled:t@10": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@11": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@12": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fail"
-    },
-    "constrains/webhook.enabled:t@13": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@14": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fail"
-    },
-    "constrains/webhook.enabled:t@15": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
+        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
       }
     },
-    "constrains/webhook.enabled:t@16": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      }
-    },
-    "constrains/webhook.enabled:t@17": {
+    "constrains/webhook.enabled:t@2": {
       "properties": {
         "webhook": {
           "$ref": "#/$defs/constrains~1enabled:t"
@@ -611,30 +657,6 @@
         "webhook"
       ],
       "type": "object"
-    },
-    "constrains/webhook.enabled:t@2": {
-      "$ref": "#/$defs/constrains~1webhook.enabled:t@14"
-    },
-    "constrains/webhook.enabled:t@3": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@4": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@5": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@6": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@7": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fail"
-    },
-    "constrains/webhook.enabled:t@8": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/webhook.enabled:t@9": {
-      "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fail"
     },
     "t": {
       "anyOf": [
@@ -661,391 +683,155 @@
         }
       ]
     },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+7more/else/fail": {
+    "when/config.policies.passwords/then/any/else/config.policies.passwords?+config.policies?": {
+      "else": {
+        "$ref": "#/$defs/when~1config.policies?~1then~1config.policies.passwords?~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies.passwords"
+      },
+      "then": true
+    },
+    "when/config.policies.passwords/then/any/else/config.policies.passwords?+config.policies?@2": {
+      "else": {
+        "$ref": "#/$defs/when~1config.policies?~1then~1config.policies.passwords?~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies.passwords"
+      },
+      "then": true
+    },
+    "when/config.policies.passwords?/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies.passwords?@3"
+      },
+      "then": false
+    },
+    "when/config.policies.passwords?/then/fail/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies.passwords?@3"
+      },
+      "then": false
+    },
+    "when/config.policies/then/config+config.policies+config.policies.passwords/else/any": {
+      "else": {
+        "$ref": "#/$defs/when~1config.policies?~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1config.policies.passwords~1then~1any~1else~1config.policies.passwords?+config.policies?"
+      }
+    },
+    "when/config.policies/then/config+config.policies+config.policies.passwords/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1config.policies?~1then~1fail~1else~1any@2"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1config.policies.passwords~1then~1any~1else~1config.policies.passwords?+config.policies?@2"
+      }
+    },
+    "when/config.policies?/then/config.policies.passwords?/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies?@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1config.policies.passwords?~1then~1fail~1else~1any"
+      }
+    },
+    "when/config.policies?/then/config.policies.passwords?/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies?@3"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1config.policies.passwords?~1then~1fail~1else~1any@2"
+      }
+    },
+    "when/config.policies?/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies?@3"
+      },
+      "then": false
+    },
+    "when/config.policies?/then/fail/else/any@2": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1config.policies?@3"
+      },
+      "then": false
+    },
+    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+kubeAPIServerIP:t+managedNamespaceSelector:t+2more/else/webhook": {
+      "else": {
+        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1webhook"
+      },
+      "if": {
+        "properties": {
+          "config": {
+            "properties": {
+              "validateStorageClass": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "validateStorageClass"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1any"
+      }
+    },
+    "when/config/then/config+config.policies+config.policies.passwords/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
+        "$ref": "#/$defs/constrains~1config"
       },
       "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+global.manifestGen:t+managedNamespaceSelector:t+5more~1else~1any"
+        "$ref": "#/$defs/when~1config.policies~1then~1config+config.policies+config.policies.passwords~1else~1any"
       }
     },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+7more/else/fail@2": {
+    "when/config/then/config+config.policies+config.policies.passwords/else/fail@2": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
+        "$ref": "#/$defs/constrains~1config"
       },
       "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+global.manifestGen:t+managedNamespaceSelector:t+5more~1else~1any@2"
+        "$ref": "#/$defs/when~1config.policies~1then~1config+config.policies+config.policies.passwords~1else~1any@2"
       }
     },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+7more/else/any": {
+    "when/createClusterScopedResources:t/then/kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any"
+      }
+    },
+    "when/createClusterScopedResources:t/then/kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more/else/webhook": {
       "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more~1else~1any"
-      }
-    },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+7more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fail~1else~1nameOverride:t+webhook.enabled:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more~1else~1any@2"
-      }
-    },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+7more/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more~1else~1any@3"
-      }
-    },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+8more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more~1else~1webhook"
-      }
-    },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+8more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more~1else~1webhook@2"
-      }
-    },
-    "when/config.enableLeaderElection:t/then/config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride:t+7more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1config.enableLeaderElection:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+fullnameOverride:t+global.manifestGen:t+6more~1else~1any"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more~1else~1any"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more~1else~1any"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more~1else~1any@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more~1else~1any@3"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more/else/webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more~1else~1webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more~1else~1fail"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+fullnameOverride+fullnameOverride:t+6more/else/webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more~1else~1webhook@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more~1else~1fail@2"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+fullnameOverride:t+global.manifestGen:t+6more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride:t+global.manifestGen:t+managedNamespaceSelector:t+5more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1fullnameOverride:t+global.manifestGen:t+managedNamespaceSelector:t+5more~1else~1fail"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+global.manifestGen:t+kubeAPIServerIP:t+8more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+kubeAPIServerIP:t+managedNamespaceSelector:t+7more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+kubeAPIServerIP:t+managedNamespaceSelector:t+7more~1else~1any"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+global.manifestGen:t+managedNamespaceSelector:t+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more~1else~1fail"
-      }
-    },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+global.manifestGen:t+managedNamespaceSelector:t+5more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1config.validateStorageClass:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more~1else~1fail@2"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fail~1else~1nameOverride:t+webhook.enabled:t"
+        "$ref": "#/$defs/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more~1else~1any"
       },
       "if": {
         "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more~1else~1any@3"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+nameOverride:t+2more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more~1else~1any@3"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more~1else~1any"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more~1else~1any@2"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more/else/webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+nameOverride+3more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more~1else~1any"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+global.manifestGen:t+5more/else/webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+nameOverride+3more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more~1else~1any@2"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more~1else~1nameOverride+nameOverride:t"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+managedNamespaceSelector:t+softMultiTenancy+webhook.enabled:t~1else~1nameOverride+nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more~1else~1nameOverride+nameOverride:t"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more~1else~1nameOverride+nameOverride:t@2"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride+fullnameOverride:t+managedNamespaceSelector:t+5more/else/any@4": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+managedNamespaceSelector:t+softMultiTenancy+webhook.enabled:t~1else~1nameOverride+nameOverride:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more~1else~1nameOverride+nameOverride:t@2"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride:t+global.manifestGen:t+managedNamespaceSelector:t+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1managedNamespaceSelector:t+softMultiTenancy.enabled:t+webhook~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more~1else~1fail"
-      }
-    },
-    "when/createClusterScopedResources:t/then/fullnameOverride:t+global.manifestGen:t+managedNamespaceSelector:t+5more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more~1else~1fail"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+kubeAPIServerIP:t+managedNamespaceSelector:t+7more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces+3more~1else~1nameOverride+nameOverride:t+webhook"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+kubeAPIServerIP:t+managedNamespaceSelector:t+7more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces+4more~1else~1nameOverride+nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces+3more~1else~1nameOverride+nameOverride:t+webhook"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1softMultiTenancy.enabled:t+webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook@3"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1softMultiTenancy.enabled:t+webhook@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook@3"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook"
-      }
-    },
-    "when/createClusterScopedResources:t/then/global.manifestGen:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook@7"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1createClusterScopedResources:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook@2"
+        "$ref": "#/$defs/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any"
       }
     },
     "when/eck-operator-crds!=null/then/fail": {
@@ -1075,338 +861,56 @@
         "$ref": "#/$defs/when~1installCRDs:t~1then~1any~1else~1installCRDs+installCRDs=null"
       }
     },
-    "when/fullnameOverride/then/any/else/fail": {
+    "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@6"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
       },
       "then": true
     },
-    "when/fullnameOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more/else/any": {
+    "when/fullnameOverride:t/then/global.manifestGen:t+nameOverride:t/else/any": {
       "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t~1else~1any"
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1fullnameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1nameOverride+nameOverride:t"
+        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fail~1else~1nameOverride:t"
       }
     },
-    "when/fullnameOverride:t/then/fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more/else/any@2": {
+    "when/global.manifestGen:t/then/fail/else/nameOverride:t": {
       "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1nameOverride+nameOverride:t@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+4more/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+nameOverride:t+1more~1else~1webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fail~1else~1fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+nameOverride:t+2more"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+nameOverride+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fullnameOverride+managedNamespaceSelector:t+softMultiTenancy.enabled:t+webhook~1else~1nameOverride+nameOverride:t"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+nameOverride+3more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fullnameOverride+managedNamespaceSelector:t+softMultiTenancy.enabled:t+webhook~1else~1nameOverride+nameOverride:t@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+global.manifestGen:t+managedNamespaceSelector:t+nameOverride:t+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaceSelector:t+nameOverride:t+softMultiTenancy.enabled:t+webhook~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1fail~1else~1fullnameOverride+managedNamespaceSelector:t+nameOverride:t+softMultiTenancy+1more"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more/else/nameOverride+nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fullnameOverride+managedNamespaces:t+softMultiTenancy+webhook.enabled:t~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more/else/nameOverride+nameOverride:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fullnameOverride+managedNamespaces:t+softMultiTenancy+webhook.enabled:t~1else~1any@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+managedNamespaceSelector:t+softMultiTenancy+webhook.enabled:t/else/nameOverride+nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1webhook.enabled:t~1else~1nameOverride+nameOverride:t+softMultiTenancy"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1webhook.enabled:t~1else~1fullnameOverride+softMultiTenancy"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+managedNamespaceSelector:t+softMultiTenancy+webhook.enabled:t/else/nameOverride+nameOverride:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1webhook.enabled:t~1else~1nameOverride+nameOverride:t+softMultiTenancy@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1webhook.enabled:t~1else~1fullnameOverride+softMultiTenancy@2"
-      }
-    },
-    "when/fullnameOverride:t/then/global.manifestGen:t+managedNamespaceSelector:t+managedNamespaces:t+nameOverride+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.manifestGen:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1nameOverride+nameOverride:t+webhook@2"
-      }
-    },
-    "when/fullnameOverride:t/then/managedNamespaceSelector:t+softMultiTenancy.enabled:t+webhook/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1softMultiTenancy.enabled:t+webhook@3"
-      }
-    },
-    "when/global.manifestGen:t/then/fail/else/fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+nameOverride:t+2more": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fullnameOverride+managedNamespaces:t+nameOverride:t+softMultiTenancy+1more~1else~1any"
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
       },
       "then": false
     },
-    "when/global.manifestGen:t/then/fail/else/fullnameOverride+managedNamespaceSelector:t+nameOverride:t+softMultiTenancy+1more": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1nameOverride:t+webhook.enabled:t~1else~1fullnameOverride+softMultiTenancy"
-      },
+    "when/image.digest:t/then/config+config.policies+config.policies.passwords/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": false
-    },
-    "when/global.manifestGen:t/then/fail/else/nameOverride:t+webhook.enabled:t": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride:t+webhook.enabled:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": false
-    },
-    "when/global.manifestGen:t/then/fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+1more/else/nameOverride+nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fullnameOverride+managedNamespaces:t+nameOverride+nameOverride:t+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
+        "properties": {
+          "image": {
+            "properties": {
+              "digest": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "digest"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fullnameOverride+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any"
-      }
-    },
-    "when/global.manifestGen:t/then/fullnameOverride+managedNamespaceSelector:t+managedNamespaces:t+1more/else/nameOverride+nameOverride:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fullnameOverride+managedNamespaces:t+nameOverride+nameOverride:t+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fullnameOverride+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any@2"
-      }
-    },
-    "when/global.manifestGen:t/then/fullnameOverride+managedNamespaceSelector:t+softMultiTenancy.enabled:t+webhook/else/nameOverride+nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1fullnameOverride+softMultiTenancy.enabled:t+webhook"
-      }
-    },
-    "when/global.manifestGen:t/then/fullnameOverride+managedNamespaceSelector:t+softMultiTenancy.enabled:t+webhook/else/nameOverride+nameOverride:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1fullnameOverride+softMultiTenancy.enabled:t+webhook@2"
-      }
-    },
-    "when/global.manifestGen:t/then/kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces+3more/else/nameOverride+nameOverride:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+5more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+2more~1else~1any"
-      }
-    },
-    "when/global.manifestGen:t/then/kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces+4more/else/nameOverride+nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+5more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+3more~1else~1any"
-      }
-    },
-    "when/global.manifestGen:t/then/managedNamespaceSelector:t+managedNamespaces:t+nameOverride:t+1more/else/webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride:t+softMultiTenancy+webhook.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride:t+softMultiTenancy.enabled:t~1else~1any"
-      }
-    },
-    "when/global.manifestGen:t/then/managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t/else/nameOverride+nameOverride:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any"
-      }
-    },
-    "when/global.manifestGen:t/then/managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t/else/nameOverride+nameOverride:t+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any@2"
-      }
-    },
-    "when/global.manifestGen:t/then/managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t/else/nameOverride+nameOverride:t+webhook@3": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more~1else~1any@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any@3"
-      }
-    },
-    "when/global.manifestGen:t/then/managedNamespaceSelector:t+nameOverride:t+softMultiTenancy.enabled:t+webhook/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1nameOverride:t+webhook.enabled:t~1else~1softMultiTenancy"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1fail~1else~1nameOverride:t+softMultiTenancy.enabled:t+webhook"
-      }
-    },
-    "when/global.manifestGen:t/then/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t/else/nameOverride+nameOverride:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t"
-      }
-    },
-    "when/global.manifestGen:t/then/softMultiTenancy.enabled:t/else/nameOverride+nameOverride:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@4"
-      }
-    },
-    "when/global.manifestGen:t/then/softMultiTenancy.enabled:t/else/nameOverride+nameOverride:t+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@7"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@7"
+        "$ref": "#/$defs/when~1config~1then~1config+config.policies+config.policies.passwords~1else~1fail"
       }
     },
     "when/installCRDs+installCRDs=null/then/any/else/fail": {
@@ -1425,1665 +929,143 @@
       },
       "then": true
     },
-    "when/kubeAPIServerIP:t/then/managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+2more/else/any": {
+    "when/kubeAPIServerIP:t/then/managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy+1more/else/any": {
       "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces:t+managedNamespaces=null+1more~1else~1any@2"
+        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1any~1else~1softMultiTenancy.enabled:t+webhook"
       },
       "if": {
         "$ref": "#/$defs/constrains~1kubeAPIServerIP:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces:t+managedNamespaces=null+1more~1else~1any"
+        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1any~1else~1managedNamespaces:t+softMultiTenancy+webhook.enabled:t"
       }
     },
-    "when/kubeAPIServerIP:t/then/managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+3more/else/any": {
+    "when/kubeAPIServerIP:t/then/managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t/else/any": {
       "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t~1else~1webhook"
+        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any@2"
       },
       "if": {
         "$ref": "#/$defs/constrains~1kubeAPIServerIP:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t~1else~1managedNamespaces:t+webhook"
+        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any"
       }
     },
-    "when/kubeAPIServerIP:t/then/managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+5more/else/any": {
+    "when/managedNamespaceSelector:t/then/any/else/managedNamespaces:t+softMultiTenancy+webhook.enabled:t": {
       "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces:t+managedNamespaces=null+nameOverride+3more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeAPIServerIP:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces:t+managedNamespaces=null+nameOverride+3more~1else~1any"
-      }
-    },
-    "when/kubeAPIServerIP:t/then/managedNamespaceSelector:t+managedNamespaces+managedNamespaces:t+5more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeAPIServerIP:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaceSelector:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more~1else~1managedNamespaces:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any"
+        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1webhook.enabled:t~1else~1softMultiTenancy"
       },
       "if": {
         "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
       },
-      "then": false
+      "then": true
     },
-    "when/managedNamespaceSelector:t/then/fail/else/fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@2": {
+    "when/managedNamespaceSelector:t/then/any/else/softMultiTenancy.enabled:t+webhook": {
       "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@2"
+        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
       },
       "if": {
         "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
       },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/fullnameOverride+softMultiTenancy.enabled:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/fullnameOverride+softMultiTenancy.enabled:t+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+webhook@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/nameOverride:t+softMultiTenancy.enabled:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1softMultiTenancy.enabled:t+webhook~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/softMultiTenancy.enabled:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/softMultiTenancy.enabled:t+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fail/else/softMultiTenancy.enabled:t+webhook@3": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaceSelector:t/then/fullnameOverride+managedNamespaces:t+nameOverride+nameOverride:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+softMultiTenancy.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/fullnameOverride+managedNamespaces:t+nameOverride+nameOverride:t+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+softMultiTenancy.enabled:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t@2"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/fullnameOverride+managedNamespaces:t+nameOverride:t+softMultiTenancy+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+softMultiTenancy.enabled:t+webhook~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1nameOverride:t+webhook.enabled:t~1else~1fullnameOverride+softMultiTenancy"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/fullnameOverride+managedNamespaces:t+softMultiTenancy+webhook.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1webhook.enabled:t~1else~1fullnameOverride+softMultiTenancy"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/fullnameOverride+managedNamespaces:t+softMultiTenancy+webhook.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1webhook.enabled:t~1else~1fullnameOverride+softMultiTenancy@2"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/fullnameOverride+managedNamespaces:t+softMultiTenancy.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1fullnameOverride+softMultiTenancy.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/fullnameOverride+managedNamespaces:t+softMultiTenancy.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1fullnameOverride+softMultiTenancy.enabled:t@2"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces:t+managedNamespaces=null+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t~1else~1any"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces:t+managedNamespaces=null+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t~1else~1any"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces:t+managedNamespaces=null+nameOverride+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more~1else~1any"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces:t+managedNamespaces=null+nameOverride+3more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more~1else~1any"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more~1else~1any@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more/else/managedNamespaces:t": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t/else/managedNamespaces:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t+webhook~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t/else/webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null~1else~1webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1webhook.enabled:t~1else~1nameOverride+nameOverride:t+softMultiTenancy"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@9"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1webhook.enabled:t~1else~1nameOverride+nameOverride:t+softMultiTenancy@2"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@2"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@8"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@3"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1nameOverride+nameOverride:t+softMultiTenancy.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1nameOverride+nameOverride:t+softMultiTenancy.enabled:t@2"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride:t+softMultiTenancy+webhook.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1softMultiTenancy.enabled:t+webhook~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1nameOverride:t+webhook.enabled:t~1else~1softMultiTenancy"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+nameOverride:t+softMultiTenancy.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1softMultiTenancy.enabled:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1nameOverride:t+softMultiTenancy.enabled:t"
-      }
+      "then": true
     },
     "when/managedNamespaceSelector:t/then/managedNamespaces:t+softMultiTenancy.enabled:t/else/any": {
       "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@3"
+        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1softMultiTenancy.enabled:t"
       },
       "if": {
         "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1softMultiTenancy.enabled:t@2"
+        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
       }
     },
     "when/managedNamespaceSelector:t/then/managedNamespaces:t+softMultiTenancy.enabled:t/else/any@2": {
       "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@5"
+        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1any~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1softMultiTenancy.enabled:t@3"
+        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
       }
     },
-    "when/managedNamespaceSelector:t/then/managedNamespaces:t+softMultiTenancy.enabled:t/else/any@3": {
+    "when/managedNamespaces:t/then/any/else/softMultiTenancy.enabled:t": {
       "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
+        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1any~1else~1fail"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces:t~1then~1fail~1else~1softMultiTenancy.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/nameOverride:t+webhook.enabled:t/else/fullnameOverride+softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+softMultiTenancy.enabled:t+webhook~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride:t+webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/nameOverride:t+webhook.enabled:t/else/softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1softMultiTenancy.enabled:t+webhook~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride:t+webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/webhook.enabled:t/else/fullnameOverride+softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/webhook.enabled:t/else/fullnameOverride+softMultiTenancy@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/webhook.enabled:t/else/nameOverride+nameOverride:t+softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaceSelector:t/then/webhook.enabled:t/else/nameOverride+nameOverride:t+softMultiTenancy@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@9"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaceSelector:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      }
-    },
-    "when/managedNamespaces+managedNamespaces=null/then/any/else/managedNamespaces": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@4"
+        "$ref": "#/$defs/constrains~1managedNamespaces:t"
       },
       "then": true
-    },
-    "when/managedNamespaces+managedNamespaces=null/then/any/else/managedNamespaces@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces+managedNamespaces=null~1then~1any~1else~1managedNamespaces"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@4"
-      },
-      "then": true
-    },
-    "when/managedNamespaces+managedNamespaces=null/then/nameOverride/else/managedNamespaces": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/managedNamespaces+managedNamespaces=null/then/nameOverride/else/managedNamespaces@2": {
-      "else": {
-        "$ref": "#/$defs/when~1managedNamespaces+managedNamespaces=null~1then~1nameOverride~1else~1managedNamespaces"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/managedNamespaces/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces@3"
-      },
-      "then": true
-    },
-    "when/managedNamespaces/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/managedNamespaces:t/then/fail/else/fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+softMultiTenancy.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/fullnameOverride+nameOverride+nameOverride:t+softMultiTenancy.enabled:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+softMultiTenancy.enabled:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/fullnameOverride+softMultiTenancy.enabled:t": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/fullnameOverride+softMultiTenancy.enabled:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t": {
-      "else": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/nameOverride+nameOverride:t+softMultiTenancy.enabled:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/nameOverride+nameOverride:t+softMultiTenancy.enabled:t+webhook@3": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@8"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/nameOverride+nameOverride:t+softMultiTenancy.enabled:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/nameOverride:t+softMultiTenancy.enabled:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1softMultiTenancy.enabled:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
     },
     "when/managedNamespaces:t/then/fail/else/softMultiTenancy.enabled:t": {
       "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
+        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1any~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1managedNamespaces:t"
       },
       "then": false
     },
-    "when/managedNamespaces:t/then/fail/else/softMultiTenancy.enabled:t@2": {
+    "when/managedNamespaces:t/then/webhook.enabled:t/else/softMultiTenancy": {
       "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/fail/else/softMultiTenancy.enabled:t@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": false
-    },
-    "when/managedNamespaces:t/then/managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more~1else~1any@2"
+        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
       },
       "if": {
         "$ref": "#/$defs/constrains~1managedNamespaces:t"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more"
+        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fail"
       }
     },
-    "when/managedNamespaces:t/then/managedNamespaces+managedNamespaces=null+nameOverride+nameOverride:t+2more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more~1else~1any@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more~1else~1any@3"
-      }
-    },
-    "when/managedNamespaces:t/then/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t+webhook/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null~1else~1webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null+webhook~1else~1any"
-      }
-    },
-    "when/managedNamespaces:t/then/managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t"
-      }
-    },
-    "when/managedNamespaces:t/then/nameOverride:t+webhook.enabled:t/else/fullnameOverride+softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+softMultiTenancy.enabled:t+webhook~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride:t+webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaces:t/then/nameOverride:t+webhook.enabled:t/else/softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1softMultiTenancy.enabled:t+webhook~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride:t+webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaces:t/then/webhook.enabled:t/else/fullnameOverride+softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaces:t/then/webhook.enabled:t/else/fullnameOverride+softMultiTenancy@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      }
-    },
-    "when/managedNamespaces:t/then/webhook.enabled:t/else/nameOverride+nameOverride:t+softMultiTenancy": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      }
-    },
-    "when/managedNamespaces:t/then/webhook.enabled:t/else/nameOverride+nameOverride:t+softMultiTenancy@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+softMultiTenancy.enabled:t+webhook~1else~1any@9"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1managedNamespaces:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      }
-    },
-    "when/nameOverride/then/any/else/fail": {
+    "when/nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@13"
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
       },
       "then": true
     },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+softMultiTenancy.enabled:t+webhook/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride+webhook"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+softMultiTenancy.enabled:t+webhook/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+webhook@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride+webhook@2"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+softMultiTenancy.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+softMultiTenancy.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride@2"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+softMultiTenancy.enabled:t+webhook/else/fail": {
+    "when/softMultiTenancy.enabled:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1fullnameOverride@2"
-      }
-    },
-    "when/nameOverride:t/then/managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+webhook~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null+softMultiTenancy.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+webhook~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null+webhook~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+webhook~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/managedNamespaces+managedNamespaces=null+nameOverride+softMultiTenancy.enabled:t+1more/else/any@4": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null~1else~1webhook"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride+webhook~1else~1any@3"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride+webhook"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride+webhook@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride+webhook@3"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@4": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@5": {
-      "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride+webhook@5"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@6": {
-      "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride+webhook@4"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@7": {
-      "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@7"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride+webhook@6"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@8": {
-      "else": {
         "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
       },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride+webhook@7"
-      }
+      "then": true
     },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t+webhook/else/any@9": {
+    "when/softMultiTenancy.enabled:t/then/any/else/webhook": {
       "else": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1any@3"
+        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fail"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t"
       },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1nameOverride@2"
-      }
+      "then": true
     },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+softMultiTenancy.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1nameOverride@2"
-      }
-    },
-    "when/nameOverride:t/then/softMultiTenancy.enabled:t+webhook/else/fail": {
+    "when/tracing.enabled:t/then/config+config.policies+config.policies.passwords/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "properties": {
+          "tracing": {
+            "$ref": "#/$defs/constrains~1enabled:t"
+          }
+        },
+        "required": [
+          "tracing"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1webhook~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/softMultiTenancy.enabled:t+webhook/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1softMultiTenancy.enabled:t~1then~1fail~1else~1webhook@8"
-      }
-    },
-    "when/nameOverride:t/then/softMultiTenancy.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@8"
-      }
-    },
-    "when/nameOverride:t/then/webhook.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@12"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride+nameOverride+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride+nameOverride+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride+nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/fullnameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride+webhook": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride+webhook@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride+webhook@3": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride+webhook@4": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1any@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride+webhook@5": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1fail~1else~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride+webhook@6": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1any@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride+webhook@7": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1any@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook@4": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook@5": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@8"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook@6": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@10"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook@7": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@11"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/fail/else/webhook@8": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@13"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": false
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null+nameOverride+webhook/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1any@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride~1else~1any"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null+nameOverride+webhook/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride~1else~1fail"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null+nameOverride+webhook/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride~1else~1any"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null+nameOverride+webhook/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1managedNamespaces+managedNamespaces=null+nameOverride~1else~1any"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null+webhook/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@9"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1managedNamespaces+managedNamespaces=null~1else~1fail"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/managedNamespaces+managedNamespaces=null/else/webhook": {
-      "else": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@9"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@12"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/fullnameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@12"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/fullnameOverride@3": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t"
-      }
-    },
-    "when/softMultiTenancy.enabled:t/then/webhook/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.enabled:t~1then~1any~1else~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1softMultiTenancy.enabled:t@9"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
+        "$ref": "#/$defs/when~1config~1then~1config+config.policies+config.policies.passwords~1else~1fail@2"
       }
     },
     "when/webhook.enabled:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
+        "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
       },
       "then": true
-    },
-    "when/webhook.enabled:t/then/any/else/fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": true
-    },
-    "when/webhook.enabled:t/then/any/else/fullnameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": true
-    },
-    "when/webhook.enabled:t/then/any/else/fullnameOverride@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": true
-    },
-    "when/webhook.enabled:t/then/any/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": true
-    },
-    "when/webhook.enabled:t/then/any/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@11"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": true
-    },
-    "when/webhook.enabled:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": false
-    },
-    "when/webhook.enabled:t/then/fail/else/fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": false
-    },
-    "when/webhook.enabled:t/then/fail/else/fullnameOverride+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": false
-    },
-    "when/webhook.enabled:t/then/fail/else/fullnameOverride+nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": false
-    },
-    "when/webhook.enabled:t/then/fail/else/fullnameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": false
-    },
-    "when/webhook.enabled:t/then/fail/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": false
-    },
-    "when/webhook.enabled:t/then/fail/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": false
-    },
-    "when/webhook.enabled:t/then/managedNamespaces+managedNamespaces=null+nameOverride/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces+managedNamespaces=null~1then~1nameOverride~1else~1managedNamespaces@2"
-      }
-    },
-    "when/webhook.enabled:t/then/managedNamespaces+managedNamespaces=null+nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1managedNamespaces+managedNamespaces=null~1then~1nameOverride~1else~1managedNamespaces@2"
-      }
-    },
-    "when/webhook.enabled:t/then/managedNamespaces+managedNamespaces=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1managedNamespaces+managedNamespaces=null"
-      }
-    },
-    "when/webhook.enabled:t/then/nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
-    },
-    "when/webhook.enabled:t/then/nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      }
-    },
-    "when/webhook.enabled:t/then/nameOverride/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@7"
-      }
-    },
-    "when/webhook.enabled:t/then/nameOverride/else/any@4": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/webhook.enabled:t/then/nameOverride/else/any@5": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@10"
-      }
-    },
-    "when/webhook.enabled:t/then/nameOverride/else/any@6": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@9"
-      }
-    },
-    "when/webhook.enabled:t/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -3091,16 +1073,21 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/when~1eck-operator-crds.nameOverride:t~1then~1installCRDs+installCRDs:t+installCRDs=null~1else~1fail"
+        "$ref": "#/$defs/when~1tracing.enabled:t~1then~1config+config.policies+config.policies.passwords~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "eck-operator-crds": {
+          "tracing": {
             "additionalProperties": {},
             "properties": {
-              "nameOverride": {
-                "type": "string"
+              "config": {
+                "description": "config is a map of APM Server configuration variables that should be set in the environment.",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -3109,32 +1096,52 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1global.manifestGen:t+nameOverride:t~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "nameOverride is the short name for the deployment. Leave empty to let Helm generate a name using chart values.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t@2"
+            "$ref": "#/$defs/constrains~1config.policies+config.policies.passwords+config.policies.passwords?+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.policies+config.policies?"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config"
           },
           {
             "anyOf": [
               {
                 "properties": {
-                  "softMultiTenancy": {
+                  "image": {
                     "enum": [
                       null
                     ]
                   }
                 },
                 "required": [
-                  "softMultiTenancy"
+                  "image"
                 ],
                 "type": "object"
               },
               {
                 "not": {
                   "properties": {
-                    "softMultiTenancy": {}
+                    "image": {}
                   },
                   "required": [
-                    "softMultiTenancy"
+                    "image"
                   ],
                   "type": "object"
                 }
@@ -3142,6 +1149,12 @@
             ]
           }
         ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride+3more@2"
       },
       "then": false
     },
@@ -3178,49 +1191,41 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more~1else~1any@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "description": "config values for the operator.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1createClusterScopedResources:t~1then~1global.manifestGen:t+nameOverride+nameOverride:t+softMultiTenancy.enabled:t+1more~1else~1any"
+            "$ref": "#/$defs/constrains~1config.policies+config.policies.passwords+config.policies.passwords?+1more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.policies+config.policies?"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config"
           },
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {}
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
                 "properties": {
-                  "config": {
+                  "serviceAccount": {
                     "enum": [
                       null
                     ]
                   }
                 },
                 "required": [
-                  "config"
+                  "serviceAccount"
                 ],
                 "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           }
@@ -3230,61 +1235,121 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1eck-operator-crds.nameOverride:t~1then~1installCRDs+installCRDs:t+installCRDs=null~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "eck-operator-crds": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1image.digest:t~1then~1config+config.policies+config.policies.passwords~1else~1fail"
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "image": {
+              "properties": {
+                "digest": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "digest"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "image": {
+              "additionalProperties": {},
+              "properties": {
+                "digest": {
+                  "description": "digest pins the image to a specific content digest for immutable image references.\nWhen set, the rendered image reference becomes repo:tag@sha256:<hex>.\nMust be in the format sha256:<hex> (64 hex characters).\nExample:\ndigest: sha256:8c933444cb78d632d2d15851daf7bcb1fc4ec57689bb4aebf7b3353e6bf395a9",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
+            "$ref": "#/$defs/constrains~1config.policies?@3"
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.manifestGen:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride@12"
+            "$ref": "#/$defs/constrains~1config"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "config values for the operator.",
+            "properties": {
+              "policies": {
+                "description": "policies contains policies for the operator, currently only password generation policies are supported.\npasswords:\nlength: 24",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+7more~1else~1any@3"
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
           },
           {
-            "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "description": "Globals meant for internal use only",
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
             "type": "object"
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride:t+7more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "fullnameOverride is the full name for the deployment. Leave empty to let Helm generate a name using chart values.",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+global.manifestGen:t+kubeAPIServerIP:t+8more~1else~1any"
+        ]
       },
       "then": false
     },
@@ -3292,7 +1357,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+7more~1else~1fail@2"
+            "$ref": "#/$defs/constrains~1config.metrics+config.metrics=null"
           },
           {
             "anyOf": [
@@ -3301,7 +1366,9 @@
                   "properties": {
                     "config": {
                       "properties": {
-                        "metrics": {}
+                        "metrics": {
+                          "$ref": "#/$defs/constrains~1secureMode"
+                        }
                       },
                       "required": [
                         "metrics"
@@ -3320,9 +1387,7 @@
                   "config": {
                     "properties": {
                       "metrics": {
-                        "enum": [
-                          null
-                        ]
+                        "$ref": "#/$defs/constrains~1secureMode=null"
                       }
                     },
                     "required": [
@@ -3346,10 +1411,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1webhook.enabled:t@17"
+            "$ref": "#/$defs/constrains~1config+config=null"
           },
           {
-            "$ref": "#/$defs/constrains~1global+global=null"
+            "$ref": "#/$defs/constrains~1config.metrics+config.metrics=null"
           }
         ]
       },
@@ -3357,30 +1422,278 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t+nameOverride+nameOverride:t+webhook.enabled:t"
+        "anyOf": [
+          {
+            "properties": {
+              "softMultiTenancy": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "softMultiTenancy"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "softMultiTenancy": {}
+              },
+              "required": [
+                "softMultiTenancy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "policies": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "policies"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "policies": {}
+                      },
+                      "required": [
+                        "policies"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.policies?@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1config+config=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global.manifestGen:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1webhook.enabled:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "softMultiTenancy": {
-            "type": "object"
+          "fullnameOverride": {
+            "description": "fullnameOverride is the full name for the deployment. Leave empty to let Helm generate a name using chart values.",
+            "type": "string"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+7more~1else~1any@2"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config.policies@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.policies.passwords?@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.policies?@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "description": "nameOverride is the short name for the deployment. Leave empty to let Helm generate a name using chart values.",
-            "type": "string"
+          "config": {
+            "additionalProperties": {},
+            "description": "config values for the operator.",
+            "properties": {
+              "policies": {
+                "additionalProperties": {},
+                "description": "policies contains policies for the operator, currently only password generation policies are supported.\npasswords:\nlength: 24",
+                "properties": {
+                  "passwords": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "telemetry": {}
+              },
+              "required": [
+                "telemetry"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "telemetry": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "telemetry"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config.policies@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.policies.passwords?@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.policies?@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "policies": {
+                          "properties": {
+                            "passwords": {}
+                          },
+                          "required": [
+                            "passwords"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "policies"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "policies": {
+                        "properties": {
+                          "passwords": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "passwords"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "policies"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -3402,75 +1715,30 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1global.manifestGen:t+managedNamespaces+managedNamespaces=null+nameOverride+3more@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+8more~1else~1fail@2"
+            "properties": {
+              "tracing": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tracing"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "secureMode": {}
-                          },
-                          "required": [
-                            "secureMode"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+            "not": {
+              "properties": {
+                "tracing": {}
               },
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "metrics": {
-                        "properties": {
-                          "secureMode": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "secureMode"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "metrics"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            ]
+              "required": [
+                "tracing"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -3480,10 +1748,76 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1installCRDs:t"
+            "$ref": "#/$defs/constrains~1config"
           },
           {
+            "$ref": "#/$defs/constrains~1config+config.policies"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "refs": {}
+              },
+              "required": [
+                "refs"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "refs": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "refs"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride"
+          },
+          {
+            "$ref": "#/$defs/constrains~1installCRDs:t"
           },
           {
             "$ref": "#/$defs/constrains~1eck-operator-crds.nameOverride:t"
@@ -3496,60 +1830,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+7more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "description": "config values for the operator.",
-            "properties": {
-              "metrics": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          },
-          {
-            "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+7more~1else~1any"
-          }
-        ]
+        "$ref": "#/$defs/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+kubeAPIServerIP:t+managedNamespaceSelector:t+2more~1else~1webhook"
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1config.enableLeaderElection:t~1then~1config.validateStorageClass:t+createClusterScopedResources:t+fullnameOverride+8more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "description": "config values for the operator.",
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "properties": {
-                  "secureMode": {
-                    "description": "secureMode contains the options for enabling and configuring RBAC and TLS/HTTPs for the metrics endpoint.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   ],
   "properties": {
@@ -3561,6 +1844,23 @@
     },
     "config": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1metrics=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1metrics"
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "description": "config values for the operator.",
       "properties": {
         "caDir": {
@@ -3613,6 +1913,23 @@
         },
         "metrics": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1secureMode=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1secureMode"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "port": {
               "description": "port defines the port to expose operator metrics. Set to 0 to disable metrics reporting."
@@ -3624,9 +1941,11 @@
                 "enabled": {
                   "description": "secureMode.enabled specifies whether to enable RBAC and TLS/HTTPs for the metrics endpoint.\n* This option makes most sense when using a ServiceMonitor to scrape the metrics and is therefore mutually exclusive with the podMonitor.enabled option.\n* This option also requires using cluster scoped resources (ClusterRole, ClusterRoleBinding) to\ngrant access to the /metrics endpoint. (createClusterScopedResources: true is required)"
                 }
-              }
+              },
+              "type": "object"
             }
-          }
+          },
+          "type": "object"
         },
         "metricsPort": {
           "description": "(Deprecated: use metrics.port: will be removed in v2.14.0) metricsPort defines the port to expose operator metrics. Set to 0 to disable metrics reporting."
@@ -3656,7 +1975,8 @@
         "validateStorageClass": {
           "description": "validateStorageClass specifies whether storage classes volume expansion support should be verified.\nCan be disabled if cluster-wide storage class RBAC access is not available."
         }
-      }
+      },
+      "type": "object"
     },
     "createClusterScopedResources": {
       "description": "createClusterScopedResources determines whether cluster-scoped resources (ClusterRoles, ClusterRoleBindings) should be created."
@@ -3693,7 +2013,8 @@
         "manifestGen": {
           "description": "manifestGen specifies whether the chart is running under manifest generator.\nThis is used for tasks specific to generating the all-in-one.yaml file."
         }
-      }
+      },
+      "type": "object"
     },
     "hostNetwork": {
       "description": "hostNetwork allows a Pod to use the Node network namespace.\nThis is required to allow for communication with the kube API when using some alternate CNIs in conjunction with webhook enabled.\nIf hostNetwork is enabled, dnsPolicy defaults to ClusterFirstWithHostNet unless explicitly set.\nCAUTION: Proceed at your own risk. This setting has security concerns such as allowing malicious users to access workloads running on the host."
@@ -3767,7 +2088,8 @@
         "enforceRBAC": {
           "description": "enforceRBAC specifies whether RBAC should be enforced for cross-namespace associations between resources."
         }
-      }
+      },
+      "type": "object"
     },
     "replicaCount": {
       "description": "replicaCount is the number of operator pods to run."
@@ -3798,7 +2120,8 @@
         "enabled": {
           "description": "enabled determines whether the operator is installed with soft multi-tenancy extensions.\nThis requires network policies to be enabled on the Kubernetes cluster."
         }
-      }
+      },
+      "type": "object"
     },
     "statefulsetAnnotations": {
       "description": "statefulsetAnnotations define the annotations that should be added to the operator StatefulSet."
@@ -3816,7 +2139,8 @@
           "description": "distributionChannel denotes which distribution channel was used to install the operator."
         },
         "interval": {}
-      }
+      },
+      "type": "object"
     },
     "tolerations": {
       "description": "tolerations defines the node tolerations for the operator pod."
@@ -3825,22 +2149,13 @@
       "additionalProperties": {},
       "properties": {
         "config": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            }
-          ],
           "description": "config is a map of APM Server configuration variables that should be set in the environment."
         },
         "enabled": {
           "description": "enabled specifies whether APM tracing is enabled for the operator."
         }
-      }
+      },
+      "type": "object"
     },
     "volumeMounts": {
       "description": "additional volume mounts for the operator container."

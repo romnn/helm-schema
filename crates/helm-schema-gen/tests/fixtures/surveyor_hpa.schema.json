@@ -1,107 +1,67 @@
 {
   "$defs": {
     "helm-condition-0": {
-      "anyOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "global": {}
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            },
-            {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
               "properties": {
-                "global": {
-                  "enum": [
-                    null
-                  ]
-                }
+                "global": {}
               },
               "required": [
                 "global"
               ],
               "type": "object"
             }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "global": {}
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
               }
             },
-            {
-              "properties": {
-                "global": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      }
     },
     "helm-condition-1": {
       "not": {
-        "$ref": "#/$defs/helm-condition-0"
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
       }
     },
     "helm-condition-10": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-9"
-      }
-    },
-    "helm-condition-11": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "helm-condition-12": {
-      "else": {
-        "$ref": "#/$defs/helm-condition-11"
-      },
-      "if": {
+      "not": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/t"
@@ -111,131 +71,33 @@
           "fullnameOverride"
         ],
         "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-10"
       }
     },
-    "helm-condition-13": {
-      "else": false,
-      "if": {
-        "properties": {
-          "autoscaling": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "autoscaling"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-12"
-      }
-    },
-    "helm-condition-14": {
-      "anyOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "global": {}
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "global": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "global": {}
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "global": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "helm-condition-15": {
-      "not": {
-        "$ref": "#/$defs/helm-condition-14"
-      }
-    },
-    "helm-condition-16": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-17": {
-      "anyOf": [
+    "helm-condition-11": {
+      "allOf": [
         {
           "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
+            "autoscaling": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
             }
           },
           "required": [
-            "fullnameOverride"
+            "autoscaling"
           ],
           "type": "object"
         },
         {
           "properties": {
             "nameOverride": {
-              "type": "string"
+              "$ref": "#/$defs/t"
             }
           },
           "required": [
@@ -244,326 +106,27 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/$defs/helm-condition-10"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-6"
         }
       ]
     },
-    "helm-condition-18": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-19": {
+    "helm-condition-12": {
       "anyOf": [
         {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-18"
+          "$ref": "#/$defs/helm-condition-9"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-11"
         }
       ]
     },
     "helm-condition-2": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-20": {
-      "anyOf": [
-        {
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-16"
-        }
-      ]
-    },
-    "helm-condition-21": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-22": {
-      "allOf": [
-        {
-          "properties": {
-            "autoscaling": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "autoscaling"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-21"
-        }
-      ]
-    },
-    "helm-condition-23": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-24": {
-      "allOf": [
-        {
-          "properties": {
-            "autoscaling": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "autoscaling"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-23"
-        }
-      ]
-    },
-    "helm-condition-25": {
-      "allOf": [
-        {
-          "properties": {
-            "autoscaling": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "autoscaling"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-18"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-21"
-        }
-      ]
-    },
-    "helm-condition-26": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/helm-condition-22"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-24"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-25"
-        }
-      ]
-    },
-    "helm-condition-3": {
-      "anyOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-2"
-        }
-      ]
-    },
-    "helm-condition-4": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-5": {
-      "anyOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-4"
-        }
-      ]
-    },
-    "helm-condition-6": {
-      "anyOf": [
-        {
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-2"
-        }
-      ]
-    },
-    "helm-condition-7": {
       "else": false,
       "if": {
         "properties": {
@@ -578,7 +141,7 @@
       },
       "then": true
     },
-    "helm-condition-8": {
+    "helm-condition-3": {
       "else": false,
       "if": {
         "properties": {
@@ -600,12 +163,123 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-7"
+        "$ref": "#/$defs/helm-condition-2"
       }
     },
-    "helm-condition-9": {
+    "helm-condition-4": {
       "else": false,
       "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "helm-condition-5": {
+      "else": false,
+      "if": {
+        "properties": {
+          "autoscaling": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "autoscaling"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/helm-condition-4"
+      }
+    },
+    "helm-condition-6": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-7": {
+      "allOf": [
+        {
+          "properties": {
+            "autoscaling": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "autoscaling"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-6"
+        }
+      ]
+    },
+    "helm-condition-8": {
+      "not": {
         "properties": {
           "fullnameOverride": {
             "type": "string"
@@ -615,8 +289,44 @@
           "fullnameOverride"
         ],
         "type": "object"
-      },
-      "then": true
+      }
+    },
+    "helm-condition-9": {
+      "allOf": [
+        {
+          "properties": {
+            "autoscaling": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "autoscaling"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-8"
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -649,7 +359,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-8"
+        "$ref": "#/$defs/helm-condition-3"
       },
       "then": {
         "additionalProperties": {},
@@ -683,16 +393,10 @@
             "type": "object"
           },
           {
+            "$ref": "#/$defs/helm-condition-0"
+          },
+          {
             "$ref": "#/$defs/helm-condition-1"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-3"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-5"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-6"
           }
         ]
       },
@@ -707,7 +411,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-13"
+        "$ref": "#/$defs/helm-condition-5"
       },
       "then": {
         "additionalProperties": {},
@@ -717,72 +421,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "autoscaling": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "autoscaling"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/helm-condition-15"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-17"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-19"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-20"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -817,7 +455,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-26"
+        "$ref": "#/$defs/helm-condition-12"
       },
       "then": false
     }

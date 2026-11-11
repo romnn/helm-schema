@@ -2,24 +2,21 @@
   "$defs": {
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
       }
     },
     "constrains/fullnameOverride:t": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
         }
       },
       "required": [
@@ -52,48 +49,27 @@
         }
       ]
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "then": true
-    },
     "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1fullnameOverride:t"
       },
       "then": true
-    },
-    "when/fullnameOverride:t/then/fullnameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "labels": {
-            "description": "additionals labels",
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
-          }
+      "additionalProperties": {},
+      "properties": {
+        "labels": {
+          "description": "additionals labels",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
         }
       }
     },

@@ -1,46 +1,46 @@
 {
   "$defs": {
     "constrains/config": {
-      "$ref": "#/$defs/constrains~1config@2"
+      "$ref": "#/$defs/constrains~1config@5"
     },
     "constrains/config+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1tempo.tag"
         },
         {
           "$ref": "#/$defs/constrains~1config"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/config+fullnameOverride+fullnameOverride:t+nameOverride:t+tempo.tag": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1tempo.tag"
         },
         {
           "$ref": "#/$defs/constrains~1config"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
         }
       ]
     },
@@ -50,36 +50,56 @@
           "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1tempo.tag"
         },
         {
           "$ref": "#/$defs/constrains~1config"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
     "constrains/config+fullnameOverride:t+nameOverride:t+tempo.tag": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1tempo.tag"
         },
         {
           "$ref": "#/$defs/constrains~1config"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
     "constrains/config@2": {
+      "$ref": "#/$defs/constrains~1config@4"
+    },
+    "constrains/config@3": {
+      "$ref": "#/$defs/constrains~1config@4"
+    },
+    "constrains/config@4": {
+      "not": {
+        "properties": {
+          "config": {
+            "pattern": "\\{\\{",
+            "type": "string"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/config@5": {
       "not": {
         "properties": {
           "config": {
@@ -93,90 +113,27 @@
       }
     },
     "constrains/fullnameOverride": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      "not": {
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
         },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      }
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
       }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@3": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      }
-    },
-    "constrains/fullnameOverride@5": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
         }
       },
       "required": [
@@ -186,43 +143,23 @@
     },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       }
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      }
-    },
-    "constrains/nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      }
-    },
-    "constrains/nameOverride:t@4": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -233,43 +170,97 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
+    "constrains/tag=null": {
       "properties": {
-        "nameOverride": {
-          "type": "string"
+        "tag": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "nameOverride"
+        "tag"
       ],
       "type": "object"
+    },
+    "constrains/tempo+tempo=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "tempo": {}
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "tempo": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "tempo"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/tempo.pullSecrets:t": {
+      "$ref": "#/$defs/constrains~1tempo.pullSecrets:t@3"
+    },
+    "constrains/tempo.pullSecrets:t@2": {
+      "$ref": "#/$defs/constrains~1tempo.pullSecrets:t@3"
+    },
+    "constrains/tempo.pullSecrets:t@3": {
+      "not": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "pullSecrets": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "pullSecrets"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      }
     },
     "constrains/tempo.tag": {
       "$ref": "#/$defs/constrains~1tempo.tag@2"
     },
     "constrains/tempo.tag@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1tempo.tag@3"
+        "properties": {
+          "tempo": {
+            "properties": {
+              "tag": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
       }
-    },
-    "constrains/tempo.tag@3": {
-      "properties": {
-        "tempo": {
-          "properties": {
-            "tag": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "tag"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "tempo"
-      ],
-      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -296,272 +287,17 @@
         }
       ]
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "then": true
-    },
-    "when/fullnameOverride/then/nameOverride+tempo.tag/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1tempo.tag~1else~1fail"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride+tempo.tag/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1tempo.tag~1else~1fail@2"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/fullnameOverride/then/tempo.tag/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1tempo.tag~1then~1any~1else~1fail"
-      }
-    },
-    "when/fullnameOverride/then/tempo.tag/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1tempo.tag~1then~1any~1else~1fail@2"
-      }
-    },
     "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
       },
       "then": true
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+tempo.tag/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+tempo.tag~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+tempo.tag~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+tempo.tag/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+tempo.tag~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+tempo.tag~1else~1any@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride~1else~1any@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/tempo.tag/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1tempo.tag~1then~1any~1else~1fail"
-      }
-    },
-    "when/nameOverride/then/tempo.tag/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1tempo.tag~1then~1any~1else~1fail@2"
-      }
     },
     "when/nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+tempo.tag/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1tempo.tag~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride+tempo.tag~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+tempo.tag/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1tempo.tag~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride+tempo.tag~1else~1fail@2"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+tempo.tag/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1tempo.tag~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1tempo.tag~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+tempo.tag/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1tempo.tag~1then~1any~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1tempo.tag~1else~1fail@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/tempo.tag/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1tempo.tag@3"
-      },
-      "then": true
-    },
-    "when/tempo.tag/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1tempo.tag@3"
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
       },
       "then": true
     }
@@ -570,10 +306,290 @@
   "additionalProperties": false,
   "allOf": [
     {
+      "additionalProperties": {},
+      "properties": {
+        "tempo": {
+          "additionalProperties": {},
+          "properties": {
+            "tag": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "Overrides the chart's name",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1tempo+tempo=null"
+      },
+      "then": false
+    },
+    {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t~1else~1any@2"
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempoQuery": {}
+                  },
+                  "required": [
+                    "tempoQuery"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1tempo.pullSecrets:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "config": {
+          "description": "Tempo configuration file contents",
+          "type": "string"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "config": {}
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "config": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1config@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "Overrides the chart's computed fullname",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "persistence": {}
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "persistence": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tempo.pullSecrets:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config+fullnameOverride+fullnameOverride:t+nameOverride:t+tempo.tag"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config+fullnameOverride:t+nameOverride:t+tempo.tag"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1config@3"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1tempo+tempo=null"
           },
           {
             "anyOf": [
@@ -599,17 +615,7 @@
               {
                 "properties": {
                   "tempo": {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/constrains~1tag=null"
                   }
                 },
                 "required": [
@@ -618,322 +624,6 @@
                 "type": "object"
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {}
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1tempo.tag@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1tempo.tag@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "tempo": {}
-                  },
-                  "required": [
-                    "tempo"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "tempo": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "tempo"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "Overrides the chart's computed fullname",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tempo": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+tempo.tag~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "description": "Tempo configuration file contents",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+tempo.tag~1else~1any@2"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "config": {}
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "config": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "Overrides the chart's name",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tempo.tag@3"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "persistence": {
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tempo": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride+fullnameOverride:t+nameOverride:t+tempo.tag"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride:t+nameOverride:t+tempo.tag"
           }
         ]
       },
@@ -965,7 +655,8 @@
         "commonLabels": {
           "description": "Common labels for all object directly managed by this chart."
         }
-      }
+      },
+      "type": "object"
     },
     "hostAliases": {
       "description": "hostAliases to add"
@@ -989,7 +680,8 @@
           "description": "Enable StatefulSetAutoDeletePVC feature"
         },
         "enabled": {}
-      }
+      },
+      "type": "object"
     },
     "podAnnotations": {
       "description": "Pod Annotations"
@@ -1008,18 +700,62 @@
       "description": "securityContext for container"
     },
     "service": {},
-    "serviceAccount": {},
+    "serviceAccount": {
+      "additionalProperties": {},
+      "properties": {
+        "automountServiceAccountToken": {},
+        "create": {
+          "description": "Specifies whether a ServiceAccount should be created"
+        },
+        "name": {
+          "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+        }
+      }
+    },
     "serviceMonitor": {},
     "tempo": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1tag=null"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "tag": {}
+                  },
+                  "required": [
+                    "tag"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "per_tenant_overrides": {
           "description": "The `per tenant` aka `tenant-specific` runtime overrides. This allows overriding values set in the configuration on a per-tenant basis. Note that *all* values must be given for each per-tenant configuration block. Refer to [Runtime overrides](https://grafana.com/docs/tempo/latest/configuration/#runtime-overrides) and [Tenant-Specific overrides](https://grafana.com/docs/tempo/latest/configuration/#tenant-specific-overrides) documentation for more details.\n'tenant-id':\nmetrics_generator:\nprocessors:\n- service-graphs\n- span-metrics"
         },
+        "pullSecrets": {},
         "tag": {}
+      },
+      "type": "object"
+    },
+    "tempoQuery": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "if False the tempo-query container is not deployed"
+        },
+        "pullSecrets": {}
       }
     },
-    "tempoQuery": {},
     "tolerations": {
       "description": "Tolerations for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
     }

@@ -1,5 +1,27 @@
 {
   "$defs": {
+    "constrains/cluster": {
+      "properties": {
+        "cluster": {}
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
+    "constrains/cluster=null": {
+      "properties": {
+        "cluster": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
     "constrains/config+config=null": {
       "anyOf": [
         {
@@ -34,13 +56,7 @@
           "not": {
             "properties": {
               "config": {
-                "properties": {
-                  "cluster": {}
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/constrains~1cluster"
               }
             },
             "required": [
@@ -52,17 +68,7 @@
         {
           "properties": {
             "config": {
-              "properties": {
-                "cluster": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "cluster"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/constrains~1cluster=null"
             }
           },
           "required": [
@@ -79,17 +85,7 @@
             "config": {
               "properties": {
                 "cluster": {
-                  "properties": {
-                    "p2p": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "p2p"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/constrains~1p2p=null"
                 }
               },
               "required": [
@@ -133,207 +129,68 @@
       ]
     },
     "constrains/fullnameOverride": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@6"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
       }
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "anyOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -345,23 +202,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@3": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@4": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@5": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      }
-    },
-    "constrains/fullnameOverride@7": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -373,39 +213,19 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
         },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
-        }
-      ]
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
     },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -416,28 +236,16 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@3": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@4": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      }
-    },
-    "constrains/nameOverride@6": {
+    "constrains/p2p=null": {
       "properties": {
-        "nameOverride": {
-          "type": "string"
+        "p2p": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "nameOverride"
+        "p2p"
       ],
       "type": "object"
     },
@@ -447,31 +255,36 @@
     "constrains/replicaCount+replicaCount=1+snapshotRestoration.enabled:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1@2"
+          "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
+          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1"
         }
       ]
     },
     "constrains/replicaCount+replicaCount=1+snapshotRestoration.enabled:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1"
+          "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
+          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1@2"
         }
       ]
     },
     "constrains/replicaCount+replicaCount=1+snapshotRestoration.enabled:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t"
-      }
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@4"
+        }
+      ]
     },
     "constrains/replicaCount+replicaCount=1+snapshotRestoration.enabled:t@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@2"
+        "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t"
       }
     },
     "constrains/replicaCount+replicaCount=1@2": {
@@ -565,7 +378,7 @@
         }
       ]
     },
-    "when/additionalLabels:t/then/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t/else/fail": {
+    "when/additionalLabels:t/then/any/else/fail": {
       "else": false,
       "if": {
         "properties": {
@@ -578,219 +391,21 @@
         ],
         "type": "object"
       },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t~1else~1any@2"
-      }
-    },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
       "then": true
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
     },
     "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+replicaCount=1+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+replicaCount=1+snapshotRestoration.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+replicaCount=1+snapshotRestoration.enabled:t~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride~1else~1any@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride+nameOverride:t/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride~1else~1any@3"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
       },
       "then": true
     },
     "when/nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1nameOverride:t"
       },
       "then": true
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+replicaCount=1+snapshotRestoration.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1snapshotRestoration.enabled:t~1then~1fullnameOverride+replicaCount=1~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1snapshotRestoration.enabled:t~1then~1fullnameOverride+nameOverride+replicaCount=1~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@3"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+replicaCount=1+snapshotRestoration.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1snapshotRestoration.enabled:t~1then~1replicaCount=1~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1snapshotRestoration.enabled:t~1then~1nameOverride+replicaCount=1~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      }
     },
     "when/replicaCount=1/then/any/else/fail": {
       "else": false,
@@ -798,60 +413,6 @@
         "$ref": "#/$defs/constrains~1replicaCount=1"
       },
       "then": true
-    },
-    "when/replicaCount=1/then/fullnameOverride+nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1replicaCount=1"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@4"
-      }
-    },
-    "when/replicaCount=1/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1replicaCount=1"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      }
-    },
-    "when/replicaCount=1/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1replicaCount=1"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
-    },
-    "when/snapshotRestoration.enabled:t/then/fullnameOverride+nameOverride+replicaCount=1/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1replicaCount=1~1then~1fullnameOverride+nameOverride~1else~1fail"
-      }
-    },
-    "when/snapshotRestoration.enabled:t/then/fullnameOverride+replicaCount=1/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1replicaCount=1~1then~1fullnameOverride~1else~1fail"
-      }
-    },
-    "when/snapshotRestoration.enabled:t/then/nameOverride+replicaCount=1/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1snapshotRestoration.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1replicaCount=1~1then~1nameOverride~1else~1fail"
-      }
     },
     "when/snapshotRestoration.enabled:t/then/replicaCount=1/else/fail": {
       "else": false,
@@ -868,23 +429,13 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          }
-        ]
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "snapshotRestoration": {
-            "type": "object"
+          "nameOverride": {
+            "type": "string"
           }
         }
       }
@@ -893,10 +444,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t~1else~1any@3"
-          },
-          {
             "$ref": "#/$defs/constrains~1config+config=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.cluster+config.cluster=null"
           }
         ]
       },
@@ -904,122 +455,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t~1else~1any@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.cluster.p2p+config.cluster.p2p=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@5"
-          },
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t~1else~1any"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "description": "modification example for configuration to overwrite defaults",
-                "properties": {
-                  "cluster": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "p2p": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "description": "modification example for configuration to overwrite defaults",
-                "properties": {
-                  "cluster": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "description": "modification example for configuration to overwrite defaults",
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "snapshotRestoration": {}
-                  },
-                  "required": [
-                    "snapshotRestoration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "snapshotRestoration": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "snapshotRestoration"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+replicaCount=1+1more~1else~1any"
+        "$ref": "#/$defs/when~1snapshotRestoration.enabled:t~1then~1replicaCount=1~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -1043,52 +479,15 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@6"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+config=null"
-          }
-        ]
+        "$ref": "#/$defs/constrains~1config+config=null"
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1additionalLabels:t~1then~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "additionalLabels": {
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@6"
+            "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@3"
           },
           {
             "$ref": "#/$defs/constrains~1config.cluster+config.cluster=null"
@@ -1101,7 +500,64 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+replicaCount+2more@6"
+            "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config.cluster.p2p+config.cluster.p2p=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "snapshotRestoration": {}
+              },
+              "required": [
+                "snapshotRestoration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "snapshotRestoration": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "snapshotRestoration"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1config+config=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1config.cluster+config.cluster=null"
           },
           {
             "$ref": "#/$defs/constrains~1config.cluster.p2p+config.cluster.p2p=null"
@@ -1118,19 +574,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t~1else~1any@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config.cluster+config.cluster=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
       },
       "then": {
@@ -1138,6 +581,23 @@
         "properties": {
           "fullnameOverride": {
             "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1additionalLabels:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalLabels": {
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
           }
         }
       }
@@ -1163,21 +623,64 @@
     "chartTests": {},
     "config": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1cluster"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1cluster=null"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "description": "modification example for configuration to overwrite defaults",
       "properties": {
         "cluster": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1p2p=null"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "p2p": {}
+                      },
+                      "required": [
+                        "p2p"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "p2p": {
               "additionalProperties": {},
               "properties": {
                 "enable_tls": {},
                 "port": {}
-              }
+              },
+              "type": "object"
             }
-          }
+          },
+          "type": "object"
         }
-      }
+      },
+      "type": "object"
     },
     "containerSecurityContext": {},
     "env": {
@@ -1226,7 +729,8 @@
         "snapshots": {
           "description": "- /qdrant/snapshot-restoration/test_collection/test_collection-2022-10-24-13-56-50.snapshot:test_collection"
         }
-      }
+      },
+      "type": "object"
     },
     "startupProbe": {},
     "tolerations": {},

@@ -1,123 +1,11 @@
 {
   "$defs": {
-    "constrains/CACerts+CACerts=null": {
-      "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1any"
-    },
-    "constrains/CACerts+CACerts=null@2": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "CACerts": {}
-            },
-            "required": [
-              "CACerts"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "CACerts": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "CACerts"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/CACerts=''": {
-      "properties": {
-        "CACerts": {
-          "enum": [
-            ""
-          ]
-        }
-      },
-      "required": [
-        "CACerts"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride:t": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
     "constrains/global.enabled:t": {
       "properties": {
         "global": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride:t": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/syncWorkspace.enabled:t": {
-      "properties": {
-        "syncWorkspace": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "syncWorkspace"
-      ],
-      "type": "object"
-    },
-    "constrains/syncWorkspace.enabled=-": {
-      "properties": {
-        "syncWorkspace": {
           "properties": {
             "enabled": {
-              "enum": [
-                "-"
-              ]
+              "$ref": "#/$defs/t"
             }
           },
           "required": [
@@ -127,9 +15,27 @@
         }
       },
       "required": [
-        "syncWorkspace"
+        "global"
       ],
       "type": "object"
+    },
+    "constrains/syncWorkspace.enabled=-": {
+      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+    },
+    "constrains/syncWorkspace.enabled=-@2": {
+      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+    },
+    "constrains/syncWorkspace.enabled=-@3": {
+      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+    },
+    "constrains/syncWorkspace.enabled=-@4": {
+      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+    },
+    "constrains/syncWorkspace.enabled=-@5": {
+      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+    },
+    "constrains/syncWorkspace.enabled=-@6": {
+      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
     },
     "t": {
       "anyOf": [
@@ -156,104 +62,7 @@
         }
       ]
     },
-    "when/CACerts+CACerts=null/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride+nameOverride+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1CACerts+CACerts=null~1else~1fullnameOverride+nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride+nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1CACerts+CACerts=null~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/fullnameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/nameOverride+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1CACerts+CACerts=null~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts+CACerts=null/then/fail/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null@2"
-      },
-      "then": false
-    },
-    "when/CACerts:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+fullnameOverride:t+5more/else/fail": {
+    "when/CACerts:t/then/any/else/fail": {
       "else": false,
       "if": {
         "properties": {
@@ -266,156 +75,23 @@
         ],
         "type": "object"
       },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+global.enabled:t+nameOverride+3more~1else~1any"
-      }
-    },
-    "when/CACerts=''/then/fail/else/CACerts+CACerts=null": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts=''"
-      },
-      "then": false
-    },
-    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts=''"
-      },
-      "then": false
-    },
-    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+fullnameOverride+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts=''"
-      },
-      "then": false
-    },
-    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+fullnameOverride+nameOverride+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+nameOverride+syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts=''"
-      },
-      "then": false
-    },
-    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+fullnameOverride+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts=''"
-      },
-      "then": false
-    },
-    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts=''"
-      },
-      "then": false
-    },
-    "when/CACerts=''/then/fail/else/CACerts+CACerts=null+nameOverride+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride+syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1CACerts=''"
-      },
-      "then": false
-    },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      },
       "then": true
-    },
-    "when/fullnameOverride/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      },
-      "then": true
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/fullnameOverride:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+global.enabled:t+nameOverride+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride+nameOverride:t~1else~1syncWorkspace+syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+nameOverride:t~1else~1syncWorkspace+syncWorkspace.enabled=-"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+global.enabled:t+nameOverride:t+syncWorkspace.enabled=-/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1nameOverride:t+syncWorkspace.enabled=-~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1fullnameOverride+nameOverride:t+syncWorkspace.enabled=-~1else~1fail"
-      }
     },
     "when/fullnameOverride:t/then/global.enabled:t+syncWorkspace.enabled=-/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
-      }
-    },
-    "when/global.enabled:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+nameOverride:t/else/syncWorkspace+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+2more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride~1else~1any"
-      }
-    },
-    "when/global.enabled:t/then/CACerts+CACerts=''+CACerts=null+nameOverride+nameOverride:t/else/syncWorkspace+syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride+syncWorkspace.enabled:t+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride~1else~1any"
-      }
-    },
-    "when/global.enabled:t/then/fullnameOverride+nameOverride:t+syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+syncWorkspace.enabled=-~1else~1fail"
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail@3"
       }
     },
     "when/global.enabled:t/then/nameOverride:t+syncWorkspace.enabled=-/else/fail": {
@@ -433,15 +109,33 @@
         "$ref": "#/$defs/constrains~1global.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@3"
       }
     },
-    "when/nameOverride/then/any/else/fail": {
+    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@4"
+      }
+    },
+    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail@3": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1global.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@5"
+      }
+    },
+    "when/nameOverride:t/then/syncWorkspace.enabled=-/else/fail": {
       "else": false,
       "if": {
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -449,158 +143,34 @@
         ],
         "type": "object"
       },
-      "then": true
-    },
-    "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride~1else~1syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
       "then": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride~1else~1syncWorkspace.enabled=-"
-      }
-    },
-    "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+nameOverride+syncWorkspace.enabled:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled:t~1then~1CACerts+CACerts=''+CACerts=null+nameOverride~1else~1syncWorkspace.enabled=-"
-      }
-    },
-    "when/nameOverride:t/then/CACerts+CACerts=''+CACerts=null+nameOverride/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1fullnameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/syncWorkspace.enabled:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride+nameOverride/else/syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+nameOverride+syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+nameOverride"
-      }
-    },
-    "when/syncWorkspace.enabled:t/then/CACerts+CACerts=''+CACerts=null+fullnameOverride/else/syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride+syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+fullnameOverride"
-      }
-    },
-    "when/syncWorkspace.enabled:t/then/CACerts+CACerts=''+CACerts=null+nameOverride/else/syncWorkspace.enabled=-": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+nameOverride+syncWorkspace.enabled=-"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1CACerts=''~1then~1fail~1else~1CACerts+CACerts=null+nameOverride"
-      }
-    },
-    "when/syncWorkspace.enabled=-/then/CACerts+CACerts=null/else/fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
-      }
-    },
-    "when/syncWorkspace.enabled=-/then/CACerts+CACerts=null/else/fullnameOverride+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1fullnameOverride+nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
-      }
-    },
-    "when/syncWorkspace.enabled=-/then/CACerts+CACerts=null/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1CACerts+CACerts=null~1then~1fail~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1CACerts+CACerts=null"
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@6"
       }
     },
     "when/syncWorkspace.enabled=-/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+        "properties": {
+          "syncWorkspace": {
+            "properties": {
+              "enabled": {
+                "enum": [
+                  "-"
+                ]
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "syncWorkspace"
+        ],
+        "type": "object"
       },
       "then": true
-    },
-    "when/syncWorkspace.enabled=-/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
-      },
-      "then": true
-    },
-    "when/syncWorkspace.enabled=-/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -608,17 +178,41 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/when~1CACerts:t~1then~1CACerts+CACerts=''+CACerts=null+fullnameOverride+fullnameOverride:t+5more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "CACerts": {
-            "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
-            "type": "string"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@2"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -632,6 +226,88 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1CACerts:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "CACerts": {
+            "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "description": "global holds values that affect multiple components of the chart.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "sensitiveVariables": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "sensitiveVariables"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "syncWorkspace": {
+                      "properties": {
+                        "sensitiveVariables": {}
+                      },
+                      "required": [
+                        "sensitiveVariables"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "syncWorkspace"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -666,7 +342,61 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global.enabled:t+nameOverride:t+syncWorkspace.enabled=-~1else~1any"
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "syncWorkspace": {
+                    "properties": {
+                      "terraformRC": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "terraformRC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "syncWorkspace"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "syncWorkspace": {
+                      "properties": {
+                        "terraformRC": {}
+                      },
+                      "required": [
+                        "terraformRC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "syncWorkspace"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1nameOverride:t+syncWorkspace.enabled=-~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -675,6 +405,45 @@
             "type": "string"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "sensitiveVariables": {
+                    "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     }
   ],

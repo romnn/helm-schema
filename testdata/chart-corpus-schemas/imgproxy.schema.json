@@ -1,41 +1,41 @@
 {
   "$defs": {
+    "constrains/common": {
+      "properties": {
+        "common": {}
+      },
+      "required": [
+        "common"
+      ],
+      "type": "object"
+    },
+    "constrains/common=null": {
+      "properties": {
+        "common": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "common"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
       }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
     },
     "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -46,43 +46,33 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride@2": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/resources.common.labels:t": {
-      "properties": {
-        "resources": {
+    "constrains/resources+resources=null": {
+      "anyOf": [
+        {
           "properties": {
-            "common": {
-              "properties": {
-                "labels": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "labels"
-              ],
-              "type": "object"
+            "resources": {
+              "enum": [
+                null
+              ]
             }
           },
           "required": [
-            "common"
+            "resources"
           ],
           "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "resources": {}
+            },
+            "required": [
+              "resources"
+            ],
+            "type": "object"
+          }
         }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
+      ]
     },
     "t": {
       "anyOf": [
@@ -109,46 +99,43 @@
         }
       ]
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "then": true
-    },
     "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t"
       },
       "then": true
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+resources.common.labels:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1resources.common.labels:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resources.common.labels:t~1then~1fullnameOverride~1else~1fail"
-      }
     },
     "when/resources.common.labels:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1resources.common.labels:t"
+        "properties": {
+          "resources": {
+            "properties": {
+              "common": {
+                "properties": {
+                  "labels": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "common"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "resources"
+        ],
+        "type": "object"
       },
       "then": true
-    },
-    "when/resources.common.labels:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1resources.common.labels:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -158,35 +145,10 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "resources": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "resources"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "resources": {}
-                  },
-                  "required": [
-                    "resources"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/$defs/constrains~1fullnameOverride"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+            "$ref": "#/$defs/constrains~1fullnameOverride:t"
           }
         ]
       },
@@ -194,40 +156,51 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        "$ref": "#/$defs/constrains~1resources+resources=null"
       },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "resources": {
-                "description": "Configure K8s resources",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "resources": {
-                "additionalProperties": {},
-                "description": "Configure K8s resources",
-                "properties": {
-                  "common": {
-                    "description": "Settings applied to every single resource of the chart.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
+      "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+resources.common.labels:t~1else~1any"
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "resources": {
+                      "$ref": "#/$defs/constrains~1common"
+                    }
+                  },
+                  "required": [
+                    "resources"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "resources": {
+                    "$ref": "#/$defs/constrains~1common=null"
+                  }
+                },
+                "required": [
+                  "resources"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1resources+resources=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1resources.common.labels:t~1then~1any~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -253,73 +226,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "resources": {
-                      "properties": {
-                        "common": {}
-                      },
-                      "required": [
-                        "common"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "resources"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "resources": {
-                    "properties": {
-                      "common": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "common"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "resources"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -350,6 +256,23 @@
     },
     "resources": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1common"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1common=null"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "description": "Configure K8s resources",
       "properties": {
         "common": {
@@ -357,9 +280,11 @@
           "description": "Settings applied to every single resource of the chart.",
           "properties": {
             "labels": {}
-          }
+          },
+          "type": "object"
         }
-      }
+      },
+      "type": "object"
     }
   },
   "type": "object"

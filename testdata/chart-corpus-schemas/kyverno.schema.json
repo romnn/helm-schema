@@ -22,6 +22,81 @@
       ],
       "type": "object"
     },
+    "constrains/configMapName": {
+      "$ref": "#/$defs/constrains~1configMapName@4"
+    },
+    "constrains/configMapName/string;pattern-x20": {
+      "pattern": "^(?:(?:[\\x20])*)$",
+      "type": "string"
+    },
+    "constrains/configMapName/string;pattern-x20-x2e": {
+      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/configMapName/string;pattern-x20-x2e@2": {
+      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+      "type": "string"
+    },
+    "constrains/configMapName@2": {
+      "$ref": "#/$defs/constrains~1configMapName@3"
+    },
+    "constrains/configMapName@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1configMapName@5"
+        },
+        {
+          "properties": {
+            "configMapName": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20-x2e@2"
+            }
+          },
+          "required": [
+            "configMapName"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "configMapName": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20"
+            }
+          },
+          "required": [
+            "configMapName"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "configMapName": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "configMapName"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/configMapName@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1configMapName@5"
+      }
+    },
+    "constrains/configMapName@5": {
+      "properties": {
+        "configMapName": {
+          "pattern": "\\{\\{",
+          "type": "string"
+        }
+      },
+      "required": [
+        "configMapName"
+      ],
+      "type": "object"
+    },
     "constrains/crds": {
       "not": {
         "properties": {
@@ -35,27 +110,26 @@
         "type": "object"
       }
     },
-    "constrains/crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+11more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+7more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+reportsController+1more"
-        }
-      ]
-    },
-    "constrains/crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+11more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+7more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+reportsController+1more@3"
-        }
-      ]
-    },
     "constrains/crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1crds.global.templating"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds.reportsServer.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds+crds.install+crds.install:t+crds.install=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds+global+global.templating+global.templating!=null+global.templating=null+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t@2"
+        }
+      ]
+    },
+    "constrains/crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+7more@2": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1crds+crds.install+crds.install:t+crds.install=null"
@@ -74,47 +148,23 @@
         }
       ]
     },
-    "constrains/crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+7more@2": {
-      "allOf": [
+    "constrains/crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+9more": {
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1crds.reportsServer.enabled:t@2"
+          "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+7more"
         },
         {
-          "$ref": "#/$defs/constrains~1crds.global.templating"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds+crds.install+crds.install:t+crds.install=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds+global+global.templating+global.templating!=null+global.templating=null+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t@2"
+          "$ref": "#/$defs/constrains~1reportsController+reportsController.serviceMonitor.enabled:t"
         }
       ]
     },
-    "constrains/crds+crds.global.templating.version+crds.global.templating.version=null+11more": {
+    "constrains/crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+9more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1crds.reportsServer.enabled:t@3"
+          "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+7more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1crds.global.templating.version+crds.global.templating.version=null+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds+global.templating.version+global.templating.version!=null+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds+global.templating.version+global.templating.version!=null+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds+global.templating+global.templating.version+global.templating.version!=null+2more@2"
+          "$ref": "#/$defs/constrains~1reportsController+reportsController.serviceMonitor.enabled:t@2"
         }
       ]
     },
@@ -124,17 +174,42 @@
           "$ref": "#/$defs/constrains~1crds.reportsServer.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@2"
+          "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@3"
         },
         {
           "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t"
         }
       ]
     },
+    "constrains/crds+crds.groups.wgpolicyk8s.policyreports:t+crds.reportsServer.enabled:t+global+10more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1crds.reportsServer.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds+global.templating.version+global.templating.version!=null+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds+global.templating+global.templating.version+global.templating.version!=null+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds+global.templating.version+global.templating.version!=null+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds+global.templating.version+global.templating.version!=null+2more"
+        }
+      ]
+    },
     "constrains/crds+crds.groups.wgpolicyk8s.policyreports:t+global.templating.enabled+4more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@2"
+          "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@3"
         },
         {
           "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t@2"
@@ -166,10 +241,10 @@
     "constrains/crds+global+global.templating+global.templating!=null+global.templating=null+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.templating+global.templating!=null+global.templating?"
+          "$ref": "#/$defs/constrains~1global.templating+global.templating!=null+global.templating?@2"
         },
         {
-          "$ref": "#/$defs/constrains~1crds.global.templating+global+global.templating+global.templating=null"
+          "$ref": "#/$defs/constrains~1crds.global.templating+global.templating+global.templating=null+1more"
         }
       ]
     },
@@ -196,6 +271,16 @@
     "constrains/crds+global.templating.enabled+global.templating.enabled!=null+3more": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1global.templating.enabled!=null+global.templating.enabled:t+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1crds.global.templating.enabled:t+global.templating.enabled+2more@2"
+        }
+      ]
+    },
+    "constrains/crds+global.templating.enabled+global.templating.enabled!=null+3more@2": {
+      "anyOf": [
+        {
           "$ref": "#/$defs/constrains~1global.templating.enabled!=null+global.templating.enabled:t+1more"
         },
         {
@@ -203,18 +288,28 @@
         }
       ]
     },
-    "constrains/crds+global.templating.enabled+global.templating.enabled!=null+3more@2": {
+    "constrains/crds+global.templating.enabled+global.templating.enabled!=null+3more@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more"
+        "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@2"
       }
     },
     "constrains/crds+global.templating.version+global.templating.version!=null+2more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version!=null+2more@2"
+          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version!=null+2more"
         },
         {
+          "$ref": "#/$defs/constrains~1crds.global.templating.version+crds.global.templating.version=null+1more"
+        }
+      ]
+    },
+    "constrains/crds+global.templating.version+global.templating.version!=null+2more@2": {
+      "anyOf": [
+        {
           "$ref": "#/$defs/constrains~1crds+global.templating.version+global.templating.version=null+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version!=null+2more@2"
         }
       ]
     },
@@ -277,10 +372,10 @@
     "constrains/crds.global.templating+global+global.templating+global.templating!=null+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1crds.global.templating+global+global.templating+global.templating=null@2"
+          "$ref": "#/$defs/constrains~1crds.global.templating+global+global.templating+global.templating=null"
         },
         {
-          "$ref": "#/$defs/constrains~1global.templating+global.templating!=null+global.templating?@2"
+          "$ref": "#/$defs/constrains~1global.templating+global.templating!=null+global.templating?"
         }
       ]
     },
@@ -299,13 +394,13 @@
         }
       ]
     },
-    "constrains/crds.global.templating+global+global.templating+global.templating=null@2": {
+    "constrains/crds.global.templating+global.templating+global.templating=null+1more": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1crds.global.templating@4"
         },
         {
-          "$ref": "#/$defs/constrains~1global+global.templating+global.templating=null@2"
+          "$ref": "#/$defs/constrains~1global.templating+global.templating=null+global.templating?"
         }
       ]
     },
@@ -334,26 +429,6 @@
       ],
       "type": "object"
     },
-    "constrains/crds.global.templating.enabled:t+global.templating+global.templating.enabled+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1crds.global.templating.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating+global.templating.enabled+global.templating.enabled=null"
-        }
-      ]
-    },
-    "constrains/crds.global.templating.enabled:t+global.templating+global.templating.enabled+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1crds.global.templating.enabled:t+global.templating+global.templating.enabled+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating.enabled!=null+global.templating.enabled:t+1more@2"
-        }
-      ]
-    },
     "constrains/crds.global.templating.enabled:t+global.templating.enabled+2more": {
       "allOf": [
         {
@@ -361,6 +436,16 @@
         },
         {
           "$ref": "#/$defs/constrains~1global.templating.enabled+global.templating.enabled=null+1more"
+        }
+      ]
+    },
+    "constrains/crds.global.templating.enabled:t+global.templating.enabled+2more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1crds.global.templating.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.templating.enabled+global.templating.enabled=null+1more@2"
         }
       ]
     },
@@ -425,16 +510,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null+1more@2"
-        }
-      ]
-    },
-    "constrains/crds.global.templating.version+crds.global.templating.version=null+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1crds.global.templating.version+crds.global.templating.version=null+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version!=null+2more"
         }
       ]
     },
@@ -680,21 +755,14 @@
       "type": "object"
     },
     "constrains/enabled+enabled=null": {
-      "allOf": [
+      "anyOf": [
         {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/constrains~1enabled"
-              }
-            },
-            {
-              "$ref": "#/$defs/constrains~1enabled=null"
-            }
-          ]
+          "not": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
         },
         {
-          "type": "object"
+          "$ref": "#/$defs/constrains~1enabled=null"
         }
       ]
     },
@@ -775,7 +843,7 @@
     "constrains/global+global.templating+global.templating.version+global.templating.version=''+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null@3"
+          "$ref": "#/$defs/constrains~1global.templating.version@2"
         },
         {
           "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null@2"
@@ -784,10 +852,10 @@
           "$ref": "#/$defs/constrains~1global.templating.version=''"
         },
         {
-          "$ref": "#/$defs/constrains~1global.templating.version@2"
+          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null@3"
         },
         {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
         },
         {
           "$ref": "#/$defs/constrains~1reportsController.enabled:t"
@@ -803,10 +871,7 @@
           "$ref": "#/$defs/constrains~1global.templating.version@4"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null@2"
@@ -815,10 +880,13 @@
           "$ref": "#/$defs/constrains~1global.templating.version=''"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+          "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
         },
         {
           "$ref": "#/$defs/constrains~1reportsController.enabled:t"
@@ -837,13 +905,13 @@
           "$ref": "#/$defs/constrains~1global.templating.enabled:t+nameOverride+nameOverride:t+reportsController+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1global.templating+global.templating.version+global.templating.version=''+3more@2"
+          "$ref": "#/$defs/constrains~1global+global.templating+global.templating.version+global.templating.version=''+5more"
         },
         {
           "$ref": "#/$defs/constrains~1global.templating+global.templating.version=''+reportsController+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1global+global.templating+global.templating.version+global.templating.version=''+5more"
+          "$ref": "#/$defs/constrains~1global.templating+global.templating.version+global.templating.version=''+3more@2"
         },
         {
           "$ref": "#/$defs/constrains~1global.templating+global.templating.version+global.templating.version=''+3more"
@@ -857,19 +925,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1global.templating?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating=null"
-        }
-      ]
-    },
-    "constrains/global+global.templating+global.templating=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.templating@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating?@2"
         },
         {
           "$ref": "#/$defs/constrains~1global.templating=null"
@@ -923,19 +978,6 @@
         }
       ]
     },
-    "constrains/global.templating+global.templating.enabled+global.templating.enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.templating.enabled@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating.enabled?@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.templating.enabled=null"
-        }
-      ]
-    },
     "constrains/global.templating+global.templating.version+global.templating.version=''+3more": {
       "allOf": [
         {
@@ -945,7 +987,7 @@
           "$ref": "#/$defs/constrains~1global.templating.version=''"
         },
         {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
         },
         {
           "$ref": "#/$defs/constrains~1reportsController.enabled:t"
@@ -964,7 +1006,7 @@
           "$ref": "#/$defs/constrains~1global.templating.version=''"
         },
         {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
         },
         {
           "$ref": "#/$defs/constrains~1reportsController.enabled:t"
@@ -980,7 +1022,7 @@
     "constrains/global.templating+global.templating.version=''+reportsController+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
         },
         {
           "$ref": "#/$defs/constrains~1reportsController.enabled:t"
@@ -990,6 +1032,19 @@
         },
         {
           "$ref": "#/$defs/constrains~1global.templating.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/global.templating+global.templating=null+global.templating?": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.templating?@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.templating@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.templating=null"
         }
       ]
     },
@@ -1041,6 +1096,19 @@
         }
       ]
     },
+    "constrains/global.templating.enabled+global.templating.enabled=null+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global.templating.enabled?@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.templating.enabled@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.templating.enabled=null"
+        }
+      ]
+    },
     "constrains/global.templating.enabled:t": {
       "not": {
         "$ref": "#/$defs/constrains~1global.templating.enabled:t@2"
@@ -1049,16 +1117,16 @@
     "constrains/global.templating.enabled:t+nameOverride+nameOverride:t+reportsController+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1global.templating.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
         },
         {
           "$ref": "#/$defs/constrains~1reportsController.enabled:t"
@@ -1578,6 +1646,45 @@
       ],
       "type": "object"
     },
+    "constrains/grafana": {
+      "not": {
+        "properties": {
+          "grafana": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "grafana"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/grafana+grafana.enabled+grafana.enabled:t+grafana.enabled=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1grafana"
+        },
+        {
+          "$ref": "#/$defs/constrains~1grafana.enabled+grafana.enabled=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1grafana.enabled:t"
+        }
+      ]
+    },
+    "constrains/grafana.configMapName": {
+      "not": {
+        "properties": {
+          "grafana": {
+            "$ref": "#/$defs/constrains~1configMapName@5"
+          }
+        },
+        "required": [
+          "grafana"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/grafana.enabled": {
       "not": {
         "properties": {
@@ -1591,6 +1698,35 @@
         "type": "object"
       }
     },
+    "constrains/grafana.enabled+grafana.enabled=null": {
+      "properties": {
+        "grafana": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1enabled+enabled=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "grafana"
+      ],
+      "type": "object"
+    },
+    "constrains/grafana.enabled:t": {
+      "properties": {
+        "grafana": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "grafana"
+      ],
+      "type": "object"
+    },
     "constrains/install": {
       "properties": {
         "install": {}
@@ -1601,7 +1737,9 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
     },
     "constrains/nameOverride!=null": {
       "properties": {
@@ -1618,66 +1756,7 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+reportsController+1more": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+reportsController+1more@2"
-    },
-    "constrains/nameOverride+nameOverride:t+reportsController+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+reportsController+1more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        }
-      ]
-    },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -1689,17 +1768,6 @@
       "type": "object"
     },
     "constrains/nameOverride@2": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@3": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      }
-    },
-    "constrains/nameOverride@5": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -1709,6 +1777,662 @@
         "nameOverride"
       ],
       "type": "object"
+    },
+    "constrains/namespace": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1namespace@2"
+            },
+            {
+              "properties": {
+                "namespace": {
+                  "maxItems": 1,
+                  "maxProperties": 1
+                }
+              },
+              "required": [
+                "namespace"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/constrains~1namespace~1object"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/namespace+namespace:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespace:t@3"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20-x2e@2"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/namespace+namespace:t+namespace=false+namespace=null+namespace=true+5more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespace:t+namespaceOverride+namespaceOverride:t+namespaceOverride=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace:t+namespaceOverride+namespaceOverride:t+namespaceOverride=false+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace+namespace:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace:t+namespaceOverride+namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace+namespace:t+namespace=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace+namespace:t+namespace=false+namespace=true"
+        }
+      ]
+    },
+    "constrains/namespace+namespace:t+namespace=false+namespace=true": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace:t@3"
+        }
+      ]
+    },
+    "constrains/namespace+namespace:t+namespace=null": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespace+namespace=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace:t@3"
+        }
+      ]
+    },
+    "constrains/namespace+namespace=false+namespace=true": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespace"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1object@3"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/namespace+namespace=false+namespace=true/array": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1array@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1object@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1string;pattern-x20-x2d"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/namespace+namespace=false+namespace=true/array@2": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1string;pattern-x20-x2d"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/namespace+namespace=false+namespace=true/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1array@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1object@2"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1namespace~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/namespace+namespace=false+namespace=true/object@2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1namespace~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/namespace+namespace=false+namespace=true/object@3": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1array"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1string;pattern-x3a-x2d"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1object"
+                }
+              ]
+            },
+            "propertyNames": {
+              "$ref": "#/$defs/constrains~1namespace~1string;pattern-x20-x2d"
+            },
+            "type": "object"
+          },
+          {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1array"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1string;pattern-x20-x2d"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1object"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+          },
+          {
+            "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1namespace~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/namespace+namespace=false+namespace=true/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/namespace+namespace=false+namespace=true/string;pattern-x3a-x2d": {
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/namespace+namespace=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "namespace": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1namespace@2"
+                },
+                {
+                  "properties": {
+                    "namespace": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "namespace"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace@2"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20"
+            }
+          },
+          "required": [
+            "namespace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/namespace/null,boolean,number": {
+      "type": [
+        "null",
+        "boolean",
+        "number"
+      ]
+    },
+    "constrains/namespace/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+          },
+          {
+            "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+            "type": "string"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1namespace~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/namespace/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "type": "string"
+    },
+    "constrains/namespace:t": {
+      "$ref": "#/$defs/constrains~1namespace:t@2"
+    },
+    "constrains/namespace:t+namespaceOverride+namespaceOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespace:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20-x2e@2"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/namespace:t+namespaceOverride+namespaceOverride:t+namespaceOverride=false+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespace:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride=false+namespaceOverride=true"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        }
+      ]
+    },
+    "constrains/namespace:t+namespaceOverride+namespaceOverride:t+namespaceOverride=null": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        }
+      ]
+    },
+    "constrains/namespace:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1namespace:t@3"
+      }
+    },
+    "constrains/namespace:t@3": {
+      "properties": {
+        "namespace": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "namespace"
+      ],
+      "type": "object"
+    },
+    "constrains/namespace@2": {
+      "not": {
+        "properties": {
+          "namespace": {}
+        },
+        "required": [
+          "namespace"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/namespace@3": {
+      "properties": {
+        "namespace": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "namespace"
+      ],
+      "type": "object"
+    },
+    "constrains/namespace@4": {
+      "properties": {
+        "namespace": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "namespace"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaceOverride": {
+      "allOf": [
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/constrains~1namespace~1object"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1namespaceOverride@2"
+            },
+            {
+              "properties": {
+                "namespaceOverride": {
+                  "maxItems": 1,
+                  "maxProperties": 1
+                }
+              },
+              "required": [
+                "namespaceOverride"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/namespaceOverride+namespaceOverride=false+namespaceOverride=true": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/constrains~1namespace+namespace=false+namespace=true~1object@3"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/namespaceOverride+namespaceOverride=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "namespaceOverride": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@2"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/constrains~1configMapName~1string;pattern-x20"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "namespaceOverride": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "namespaceOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1namespaceOverride@2"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/namespaceOverride:t": {
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaceOverride@2": {
+      "not": {
+        "properties": {
+          "namespaceOverride": {}
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      }
     },
     "constrains/openreports.installCrds": {
       "not": {
@@ -1732,36 +2456,20 @@
     "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture"
-        },
-        {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@2"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more"
-        }
-      ]
-    },
-    "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=null"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture"
         }
       ]
     },
     "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@2"
@@ -1770,21 +2478,18 @@
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@2"
         }
       ]
     },
     "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more": {
       "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t"
-        },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@2"
         },
@@ -1795,13 +2500,16 @@
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@2"
         }
       ]
     },
@@ -1817,33 +2525,24 @@
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@2"
         }
       ]
     },
     "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more@2": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture+5more"
-        },
         {
           "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more"
         },
@@ -1855,13 +2554,22 @@
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql+reports-server.postgresql.architecture+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more"
         }
       ]
     },
     "constrains/reports-server.apiServicesManagement+reports-server.fullnameOverride+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t@2"
@@ -1877,7 +2585,7 @@
     "constrains/reports-server.apiServicesManagement+reports-server.fullnameOverride+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t@2"
@@ -1889,7 +2597,7 @@
           "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1reports-server.nameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.fullnameOverride@2"
@@ -1899,23 +2607,23 @@
     "constrains/reports-server.apiServicesManagement+reports-server.fullnameOverride+4more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride+4more"
+          "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride:t+3more"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride:t+3more"
+          "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride+4more"
         }
       ]
     },
     "constrains/reports-server.apiServicesManagement+reports-server.fullnameOverride:t+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t@2"
+          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.nameOverride"
@@ -1924,7 +2632,7 @@
           "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1reports-server.nameOverride:t"
         }
       ]
     },
@@ -1952,40 +2660,12 @@
         "$ref": "#/$defs/constrains~1reports-server.fullnameOverride@2"
       }
     },
-    "constrains/reports-server.fullnameOverride+reports-server.fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride@2"
-        }
-      ]
-    },
     "constrains/reports-server.fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@2"
       }
-    },
-    "constrains/reports-server.fullnameOverride:t+reports-server.nameOverride+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.nameOverride@2"
-        }
-      ]
     },
     "constrains/reports-server.fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@3"
-      }
-    },
-    "constrains/reports-server.fullnameOverride:t@3": {
       "properties": {
         "reports-server": {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
@@ -2009,39 +2689,21 @@
     },
     "constrains/reports-server.nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1reports-server.nameOverride@2"
-      }
-    },
-    "constrains/reports-server.nameOverride+reports-server.nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.nameOverride:t"
+        "properties": {
+          "reports-server": {
+            "$ref": "#/$defs/constrains~1nameOverride@2"
+          }
         },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.nameOverride@2"
-        }
-      ]
+        "required": [
+          "reports-server"
+        ],
+        "type": "object"
+      }
     },
     "constrains/reports-server.nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1reports-server.nameOverride:t@2"
-      }
-    },
-    "constrains/reports-server.nameOverride:t@2": {
       "properties": {
         "reports-server": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        }
-      },
-      "required": [
-        "reports-server"
-      ],
-      "type": "object"
-    },
-    "constrains/reports-server.nameOverride@2": {
-      "properties": {
-        "reports-server": {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       },
       "required": [
@@ -2052,16 +2714,16 @@
     "constrains/reports-server.postgresql+reports-server.postgresql.architecture+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -2071,19 +2733,19 @@
     "constrains/reports-server.postgresql+reports-server.postgresql.architecture+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@5"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -2099,16 +2761,16 @@
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -2117,36 +2779,67 @@
     },
     "constrains/reports-server.postgresql.architecture": {
       "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@2"
       }
     },
     "constrains/reports-server.postgresql.architecture+1more": {
       "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@4"
     },
     "constrains/reports-server.postgresql.architecture+1more@2": {
-      "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@5"
+      "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
     },
     "constrains/reports-server.postgresql.architecture+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=null"
-        }
-      ]
+      "not": {
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@5"
+      }
     },
     "constrains/reports-server.postgresql.architecture+1more@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reports-server": {
+                  "properties": {
+                    "postgresql": {
+                      "$ref": "#/$defs/constrains~1architecture"
+                    }
+                  },
+                  "required": [
+                    "postgresql"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reports-server"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reports-server": {
+                "properties": {
+                  "postgresql": {
+                    "$ref": "#/$defs/constrains~1architecture=null"
+                  }
+                },
+                "required": [
+                  "postgresql"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reports-server"
+            ],
+            "type": "object"
+          }
+        ]
       }
     },
     "constrains/reports-server.postgresql.architecture+1more@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      }
-    },
-    "constrains/reports-server.postgresql.architecture+1more@6": {
       "properties": {
         "reports-server": {
           "properties": {
@@ -2168,25 +2861,6 @@
                   ]
                 }
               ]
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "reports-server"
-      ],
-      "type": "object"
-    },
-    "constrains/reports-server.postgresql.architecture=null": {
-      "properties": {
-        "reports-server": {
-          "properties": {
-            "postgresql": {
-              "$ref": "#/$defs/constrains~1architecture=null"
             }
           },
           "required": [
@@ -2230,27 +2904,6 @@
       "type": "object"
     },
     "constrains/reports-server.postgresql.architecture@2": {
-      "not": {
-        "properties": {
-          "reports-server": {
-            "properties": {
-              "postgresql": {
-                "$ref": "#/$defs/constrains~1architecture"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "reports-server"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/reports-server.postgresql.architecture@3": {
       "properties": {
         "reports-server": {
           "properties": {
@@ -2384,7 +3037,14 @@
         "reports-server": {
           "properties": {
             "postgresql": {
-              "$ref": "#/$defs/constrains~1enabled+enabled=null"
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                },
+                {
+                  "type": "object"
+                }
+              ]
             }
           },
           "required": [
@@ -2437,42 +3097,16 @@
       "type": "object"
     },
     "constrains/reports-server.postgresql.fullnameOverride": {
-      "$ref": "#/$defs/when~1reports-server.postgresql.fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/reports-server.postgresql.fullnameOverride+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@3"
-        }
-      ]
+      "not": {
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@2"
+      }
     },
     "constrains/reports-server.postgresql.fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
       }
-    },
-    "constrains/reports-server.postgresql.fullnameOverride:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride@3"
-        }
-      ]
     },
     "constrains/reports-server.postgresql.fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
-      }
-    },
-    "constrains/reports-server.postgresql.fullnameOverride:t@3": {
       "properties": {
         "reports-server": {
           "properties": {
@@ -2492,11 +3126,6 @@
       "type": "object"
     },
     "constrains/reports-server.postgresql.fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@3"
-      }
-    },
-    "constrains/reports-server.postgresql.fullnameOverride@3": {
       "properties": {
         "reports-server": {
           "properties": {
@@ -2519,16 +3148,11 @@
       "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride@2"
     },
     "constrains/reports-server.postgresql.nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
-      }
-    },
-    "constrains/reports-server.postgresql.nameOverride:t@2": {
       "properties": {
         "reports-server": {
           "properties": {
             "postgresql": {
-              "$ref": "#/$defs/constrains~1nameOverride:t@3"
+              "$ref": "#/$defs/constrains~1nameOverride:t"
             }
           },
           "required": [
@@ -2544,27 +3168,24 @@
     },
     "constrains/reports-server.postgresql.nameOverride@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride@3"
+        "properties": {
+          "reports-server": {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1nameOverride@2"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "reports-server"
+        ],
+        "type": "object"
       }
-    },
-    "constrains/reports-server.postgresql.nameOverride@3": {
-      "properties": {
-        "reports-server": {
-          "properties": {
-            "postgresql": {
-              "$ref": "#/$defs/constrains~1nameOverride@5"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "reports-server"
-      ],
-      "type": "object"
     },
     "constrains/reports-server.templating.enabled:t": {
       "not": {
@@ -2587,6 +3208,22 @@
       ],
       "type": "object"
     },
+    "constrains/reportsController+reportsController.serviceMonitor.enabled:t": {
+      "$ref": "#/$defs/constrains~1reportsController+reportsController.serviceMonitor.enabled:t@3"
+    },
+    "constrains/reportsController+reportsController.serviceMonitor.enabled:t@2": {
+      "$ref": "#/$defs/constrains~1reportsController+reportsController.serviceMonitor.enabled:t@3"
+    },
+    "constrains/reportsController+reportsController.serviceMonitor.enabled:t@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1reportsController.enabled:t"
+        }
+      ]
+    },
     "constrains/reportsController.enabled:t": {
       "properties": {
         "reportsController": {
@@ -2608,6 +3245,12 @@
       "$ref": "#/$defs/when~1reportsController.serviceMonitor.enabled:t~1then~1any~1else~1fail"
     },
     "constrains/reportsController.serviceMonitor.enabled:t@4": {
+      "$ref": "#/$defs/when~1reportsController.serviceMonitor.enabled:t~1then~1any~1else~1fail"
+    },
+    "constrains/reportsController.serviceMonitor.enabled:t@5": {
+      "$ref": "#/$defs/when~1reportsController.serviceMonitor.enabled:t~1then~1any~1else~1fail"
+    },
+    "constrains/reportsController.serviceMonitor.enabled:t@6": {
       "properties": {
         "reportsController": {
           "properties": {
@@ -2845,6 +3488,36 @@
       ],
       "type": "object"
     },
+    "helm-marker-free": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-marker-free"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-marker-free"
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "pattern": "<no value>"
+          },
+          "type": "string"
+        }
+      ]
+    },
     "t": {
       "anyOf": [
         {
@@ -2869,6 +3542,150 @@
           "const": true
         }
       ]
+    },
+    "values/grafana/null;namespace-defines-the-space": {
+      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "type": "null"
+    },
+    "values/grafana/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/values~1grafana~1string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/values~1grafana~1string"
+      },
+      "type": "object"
+    },
+    "values/grafana/string": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/grafana/string;namespace-defines-the-space": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        }
+      ],
+      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "type": "string"
+    },
+    "values/grafana/string;pattern-r-n": {
+      "not": {
+        "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+      },
+      "pattern": "[\\r\\n]",
+      "type": "string"
+    },
+    "values/grafana/string@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/grafana/string@3": {
+      "not": {
+        "pattern": "[^A-Za-z0-9_./+-]"
+      },
+      "type": "string"
     },
     "values/reports-server.livenessProbe.httpGet": {
       "additionalProperties": {},
@@ -2901,94 +3718,33 @@
       },
       "then": false
     },
-    "when/global.templating.enabled:t/then/global.templating.version+global.templating.version=''+5more/else/fail": {
+    "when/global.templating.enabled:t/then/reportsController+reportsController.serviceMonitor/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1global.templating.enabled:t@2"
       },
       "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1global.templating.version+global.templating.version=''+4more~1else~1any"
+        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail@2"
       }
     },
-    "when/global.templating.version+global.templating.version=null/then/fail/else/any": {
-      "else": true,
+    "when/global.templating.enabled:t/then/reportsController+reportsController.serviceMonitor/else/fail@2": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null"
+        "$ref": "#/$defs/constrains~1global.templating.enabled:t@2"
       },
-      "then": false
-    },
-    "when/global.templating.version+global.templating.version=null/then/fail/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1global.templating.version+global.templating.version=null~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null"
-      },
-      "then": false
-    },
-    "when/global.templating.version+global.templating.version=null/then/fail/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null"
-      },
-      "then": false
-    },
-    "when/global.templating.version+global.templating.version=null/then/fail/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1global.templating.version+global.templating.version=null~1then~1fail~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null"
-      },
-      "then": false
-    },
-    "when/global.templating.version=''/then/fail/else/global.templating.version+global.templating.version=null": {
-      "else": {
-        "$ref": "#/$defs/when~1global.templating.version+global.templating.version=null~1then~1fail~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.templating.version=''@3"
-      },
-      "then": false
-    },
-    "when/global.templating.version=''/then/fail/else/global.templating.version+global.templating.version=null+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1global.templating.version+global.templating.version=null~1then~1fail~1else~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.templating.version=''@3"
-      },
-      "then": false
+      "then": {
+        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail@5"
+      }
     },
     "when/grafana+grafana.enabled+grafana.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "grafana": {
-                  "type": "object"
-                }
-              },
-              "required": [
-                "grafana"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/constrains~1grafana"
           },
           {
-            "properties": {
-              "grafana": {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null"
-              }
-            },
-            "required": [
-              "grafana"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1grafana.enabled+grafana.enabled=null"
           }
         ]
       },
@@ -2999,65 +3755,17 @@
         "$ref": "#/$defs/when~1grafana+grafana.enabled+grafana.enabled=null~1then~1any~1else~1fail"
       },
       "if": {
-        "properties": {
-          "grafana": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          }
-        },
-        "required": [
-          "grafana"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/constrains~1grafana.enabled:t"
       },
       "then": true
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/global.templating.version+global.templating.version=''+4more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1global.templating.version+global.templating.version=''+2more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1global.templating.version+global.templating.version=''+3more~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+reportsController.enabled:t+reportsController.serviceMonitor/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1nameOverride+reportsController.serviceMonitor~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+reportsController.enabled:t+reportsController.serviceMonitor/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1nameOverride+reportsController.serviceMonitor~1else~1fail@2"
-      }
     },
     "when/nameOverride:t/then/reportsController.enabled:t+reportsController.serviceMonitor/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail@2"
+        "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail@3"
       }
     },
     "when/reports-server.apiServicesManagement.enabled!=null+3more/then/fail": {
@@ -3119,15 +3827,6 @@
       },
       "then": false
     },
-    "when/reports-server.apiServicesManagement.enabled:t/then/reports-server.fullnameOverride+reports-server.fullnameOverride:t+5more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.fullnameOverride:t~1then~1reports-server.fullnameOverride+reports-server.nameOverride:t+4more~1else~1any"
-      }
-    },
     "when/reports-server.apiServicesManagement.enabled:t/then/reports-server.fullnameOverride:t+reports-server.templating+reportsServer+2more/else/fail": {
       "else": false,
       "if": {
@@ -3137,46 +3836,28 @@
         "$ref": "#/$defs/when~1reports-server.fullnameOverride:t~1then~1reports-server.templating.enabled:t+reportsServer+reportsServer.enabled+1more~1else~1fail"
       }
     },
-    "when/reports-server.fullnameOverride/then/any/else/fail": {
+    "when/reports-server.apiServicesManagement.enabled:t/then/reports-server.nameOverride:t+reports-server.templating+reportsServer+2more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.fullnameOverride@2"
-      },
-      "then": true
-    },
-    "when/reports-server.fullnameOverride:t/then/reports-server.fullnameOverride+reports-server.nameOverride:t+4more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.nameOverride:t~1then~1reports-server.templating.enabled:t+reportsServer+reportsServer.enabled+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.nameOverride:t~1then~1reports-server.fullnameOverride+reports-server.templating.enabled:t+3more~1else~1fail"
+        "$ref": "#/$defs/when~1reports-server.nameOverride:t~1then~1reports-server.templating.enabled:t+reportsServer+reportsServer.enabled+1more~1else~1fail"
       }
     },
     "when/reports-server.fullnameOverride:t/then/reports-server.templating.enabled:t+reportsServer+reportsServer.enabled+1more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t@2"
       },
       "then": {
         "$ref": "#/$defs/when~1reports-server.templating.enabled:t~1then~1fail~1else~1reportsServer+reportsServer.enabled+reportsServer.enabled=null"
       }
     },
-    "when/reports-server.nameOverride:t/then/reports-server.fullnameOverride+reports-server.templating.enabled:t+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.templating.enabled:t~1then~1fail~1else~1reports-server.fullnameOverride+reportsServer+reportsServer.enabled+1more"
-      }
-    },
     "when/reports-server.nameOverride:t/then/reports-server.templating.enabled:t+reportsServer+reportsServer.enabled+1more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.nameOverride:t@2"
+        "$ref": "#/$defs/constrains~1reports-server.nameOverride:t"
       },
       "then": {
         "$ref": "#/$defs/when~1reports-server.templating.enabled:t~1then~1fail~1else~1reportsServer+reportsServer.enabled+reportsServer.enabled=null@2"
@@ -3261,391 +3942,72 @@
       },
       "then": false
     },
-    "when/reports-server.postgresql.architecture+1more/then/any/else/reports-server.postgresql+reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1any~1else~1reports-server.postgresql.architecture"
-      },
+    "when/reports-server.postgresql.architecture=replication/then/any/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": true
     },
-    "when/reports-server.postgresql.architecture+1more/then/any/else/reports-server.postgresql+reports-server.postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1any~1else~1reports-server.postgresql.architecture@2"
-      },
+    "when/reports-server.postgresql.architecture=replication/then/any/else/fail@2": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": true
     },
-    "when/reports-server.postgresql.architecture+1more/then/any/else/reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1any~1else~1fail"
-      },
+    "when/reports-server.postgresql.architecture=replication/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": true
-    },
-    "when/reports-server.postgresql.architecture+1more/then/any/else/reports-server.postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1any~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": true
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/reports-server.postgresql+reports-server.postgresql.archit...": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1reports-server.postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/reports-server.postgresql+reports-server.postgresql.archit...@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1reports-server.postgresql.architecture@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": {
         "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reportsServer~1else~1fail"
       }
     },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/reports-server.postgresql+reports-server.postgresql.archit...@3": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1reports-server.postgresql.architecture@3"
-      },
+    "when/reports-server.postgresql.architecture=replication/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/fail@2": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": {
         "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reportsServer~1else~1fail@2"
       }
     },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.architecture+1more~1else~1fail"
-      },
+    "when/reports-server.postgresql.architecture=replication/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/reports-server.postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.architecture+reportsServer~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reportsServer~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more/else/reports-server.postgresql.architecture@3": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.architecture+reportsServer~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reportsServer~1else~1fail@2"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+2more/else/reports-server.postgresql+reports-server.postgresql.archit...": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+2more~1else~1reports-server.postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.fullnameOverride+reportsServer~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+2more/else/reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.architecture+2more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.fullnameOverride+reportsServer~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/else/reports-server.postgresql+reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1else~1reports-server.postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": {
         "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1any~1else~1fail"
       }
     },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/else/reports-server.postgresql+reports-server.postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1else~1reports-server.postgresql.architecture@2"
-      },
+    "when/reports-server.postgresql.architecture=replication/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/else/fail@2": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": {
         "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1any~1else~1fail@2"
       }
     },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/else/reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail"
-      },
+    "when/reports-server.postgresql.architecture=replication/then/reportsServer.enabled+reportsServer.enabled=null/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1any~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/else/reports-server.postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.fullnameOverride+reportsServer.enabled+1more/else/reports-server.postgresql+reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.fullnameOverride+reportsServer.enabled+1more~1else~1reports-server.postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.fullnameOverride+reportsServer.enabled+1more/else/reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.fullnameOverride/else/reports-server.postgresql+reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.fullnameOverride~1else~1reports-server.postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reports-server.postgresql.fullnameOverride/else/reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reportsServer.enabled+reportsServer.enabled=null/else/reports-server.postgresql+reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reportsServer.enabled+reportsServer.enabled=null~1else~1reports-server.postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": {
         "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
       }
     },
-    "when/reports-server.postgresql.architecture+1more/then/reportsServer.enabled+reportsServer.enabled=null/else/reports-server.postgresql+reports-server.postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reportsServer.enabled+reportsServer.enabled=null~1else~1reports-server.postgresql.architecture@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@4"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reportsServer.enabled+reportsServer.enabled=null/else/reports-server.postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null"
-      }
-    },
-    "when/reports-server.postgresql.architecture+1more/then/reportsServer.enabled+reportsServer.enabled=null/else/reports-server.postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture+1more@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@4"
-      }
-    },
-    "when/reports-server.postgresql.architecture/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
-      },
-      "then": true
-    },
-    "when/reports-server.postgresql.architecture/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
-      },
-      "then": true
-    },
-    "when/reports-server.postgresql.architecture/then/reports-server.postgresql.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more/else/fail": {
+    "when/reports-server.postgresql.architecture=replication/then/reportsServer.enabled+reportsServer.enabled=null/else/fail@2": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1any~1else~1reports-server.postgresql+reports-server.postgresql.architecture"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1any~1else~1reports-server.postgresql+reports-server.postgresql.architecture@2"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.fullnameOverride~1else~1reports-server.postgresql+reports-server.postgresql.architecture"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reportsServer.enabled+reportsServer.enabled=null~1else~1reports-server.postgresql+reports-server.postgresql.architecture"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1else~1reports-server.postgresql+reports-server.postgresql.architecture"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reportsServer.enabled+reportsServer.enabled=null~1else~1reports-server.postgresql+reports-server.postgresql.architecture@2"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1else~1reports-server.postgresql+reports-server.postgresql.architecture@2"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.fullnameOverride+reportsServer.enabled+1more~1else~1reports-server.postgresql+reports-server.postgresql.architecture"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1reports-server.postgresql+reports-server.postgresql.archit..."
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1reports-server.postgresql+reports-server.postgresql.archit...@2"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1reports-server.postgresql+reports-server.postgresql.archit...@3"
-      }
-    },
-    "when/reports-server.postgresql.architecture=replication/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture+1more~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+2more~1else~1reports-server.postgresql+reports-server.postgresql.archit..."
+        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@2"
       }
     },
     "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/any/else/fail": {
@@ -3662,78 +4024,6 @@
       },
       "then": true
     },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.architecture+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.architecture+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture+1more~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.architecture+reportsServer/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.architecture+reportsServer/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail@2"
-      }
-    },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.architecture/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1any~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.architecture/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.fullnameOverride+reportsServer/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reports-server.postgresql.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride"
-      }
-    },
     "when/reports-server.postgresql.enabled+reports-server.postgresql.enabled=null/then/reportsServer/else/fail": {
       "else": false,
       "if": {
@@ -3749,122 +4039,66 @@
         "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@4"
+        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@2"
       }
     },
-    "when/reports-server.postgresql.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more/else/reports-server.postgresql": {
+    "when/reports-server.postgresql.enabled:t/then/reports-server.postgresql.architecture=replication+4more/else/reports-server.postgresql": {
       "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.fullnameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more~1else~1fail"
+        "$ref": "#/$defs/when~1reports-server.postgresql.fullnameOverride:t~1then~1reports-server.postgresql.architecture=replication+4more~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.fullnameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more~1else~1fail"
+        "$ref": "#/$defs/when~1reports-server.postgresql.fullnameOverride:t~1then~1reports-server.postgresql.architecture=replication+reportsServer.enabled+2more~1else~1fail"
       }
     },
-    "when/reports-server.postgresql.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+8more/else/reports-server.postgresql": {
+    "when/reports-server.postgresql.enabled:t/then/reports-server.postgresql.architecture=replication+4more/else/reports-server.postgresql@2": {
       "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.fullnameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+8more~1else~1any"
+        "$ref": "#/$defs/when~1reports-server.postgresql.nameOverride:t~1then~1reports-server.postgresql.architecture=replication+4more~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.fullnameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+7more~1else~1any"
+        "$ref": "#/$defs/when~1reports-server.postgresql.nameOverride:t~1then~1reports-server.postgresql.architecture=replication+reportsServer.enabled+2more~1else~1fail"
       }
     },
-    "when/reports-server.postgresql.fullnameOverride/then/any/else/fail": {
+    "when/reports-server.postgresql.fullnameOverride:t/then/reports-server.postgresql.architecture=replication+4more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
       },
-      "then": true
+      "then": {
+        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server.postgresql.architecture=replication+2more~1else~1reportsServer"
+      }
     },
-    "when/reports-server.postgresql.fullnameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more/else/fail": {
+    "when/reports-server.postgresql.fullnameOverride:t/then/reports-server.postgresql.architecture=replication+reportsServer.enabled+2more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@2"
       },
       "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+2more~1else~1reportsServer.enabled+reportsServer.enabled=null@2"
+        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server.postgresql.architecture=replication~1else~1reportsServer.enabled+reportsServer.enabled=null"
       }
     },
-    "when/reports-server.postgresql.fullnameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more/else/fail": {
+    "when/reports-server.postgresql.nameOverride:t/then/reports-server.postgresql.architecture=replication+4more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more~1else~1reportsServer@2"
+        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server.postgresql.architecture=replication+2more~1else~1reportsServer@2"
       }
     },
-    "when/reports-server.postgresql.fullnameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+7more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.nameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.nameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.fullnameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+8more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.nameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.nameOverride:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+7more~1else~1fail"
-      }
-    },
-    "when/reports-server.postgresql.nameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more/else/fail": {
+    "when/reports-server.postgresql.nameOverride:t/then/reports-server.postgresql.architecture=replication+reportsServer.enabled+2more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
+        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+2more~1else~1reportsServer.enabled+reportsServer.enabled=null"
+        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server.postgresql.architecture=replication~1else~1reportsServer.enabled+reportsServer.enabled=null@2"
       }
-    },
-    "when/reports-server.postgresql.nameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more~1else~1reportsServer.enabled+reportsServer.enabled=null"
-      }
-    },
-    "when/reports-server.postgresql.nameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more~1else~1reportsServer"
-      }
-    },
-    "when/reports-server.postgresql.nameOverride:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+7more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more~1else~1reportsServer"
-      }
-    },
-    "when/reports-server.templating.enabled:t/then/fail/else/reports-server.fullnameOverride+reportsServer+reportsServer.enabled+1more": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsServer.enabled:t~1then~1reports-server.fullnameOverride~1else~1reportsServer.enabled+reportsServer.enabled=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t@3"
-      },
-      "then": false
     },
     "when/reports-server.templating.enabled:t/then/fail/else/reportsServer+reportsServer.enabled+reportsServer.enabled=null": {
       "else": {
@@ -3883,42 +4117,6 @@
         "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t@3"
       },
       "then": false
-    },
-    "when/reportsController.enabled:t/then/global.templating.version+global.templating.version=''+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsController.serviceMonitor.enabled:t~1then~1global.templating.version+global.templating.version=''+1more~1else~1fail"
-      }
-    },
-    "when/reportsController.enabled:t/then/global.templating.version+global.templating.version=''+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsController.serviceMonitor.enabled:t~1then~1global.templating.version+global.templating.version=''+2more~1else~1fail"
-      }
-    },
-    "when/reportsController.enabled:t/then/nameOverride+reportsController.serviceMonitor/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsController.serviceMonitor.enabled:t~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/reportsController.enabled:t/then/nameOverride+reportsController.serviceMonitor/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reportsController.serviceMonitor.enabled:t~1then~1nameOverride~1else~1fail@2"
-      }
     },
     "when/reportsController.enabled:t/then/reportsController.serviceMonitor/else/fail": {
       "else": false,
@@ -3947,48 +4145,30 @@
         "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@3"
       }
     },
+    "when/reportsController.enabled:t/then/reportsController.serviceMonitor/else/fail@4": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1reportsController.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+      }
+    },
+    "when/reportsController.enabled:t/then/reportsController.serviceMonitor/else/fail@5": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1reportsController.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@5"
+      }
+    },
     "when/reportsController.serviceMonitor.enabled:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
+        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
       },
       "then": true
-    },
-    "when/reportsController.serviceMonitor.enabled:t/then/global.templating.version+global.templating.version=''+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.templating.version=''~1then~1fail~1else~1global.templating.version+global.templating.version=null"
-      }
-    },
-    "when/reportsController.serviceMonitor.enabled:t/then/global.templating.version+global.templating.version=''+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.templating.version=''~1then~1fail~1else~1global.templating.version+global.templating.version=null+nameOverride"
-      }
-    },
-    "when/reportsController.serviceMonitor.enabled:t/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/reportsController.serviceMonitor.enabled:t/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
     },
     "when/reportsServer.enabled+reportsServer.enabled=null/then/any/else/fail": {
       "else": false,
@@ -3997,61 +4177,7 @@
       },
       "then": true
     },
-    "when/reportsServer.enabled+reportsServer.enabled=null/then/reports-server.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/reportsServer.enabled+reportsServer.enabled=null/then/reports-server.postgresql.architecture+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1reports-server.postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/reportsServer.enabled+reportsServer.enabled=null/then/reports-server.postgresql.architecture/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1any~1else~1fail"
-      }
-    },
-    "when/reportsServer.enabled+reportsServer.enabled=null/then/reports-server.postgresql.architecture/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/reportsServer.enabled+reportsServer.enabled=null/then/reports-server.postgresql.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride"
-      }
-    },
     "when/reportsServer.enabled:t/then/any/else/reportsServer.enabled+reportsServer.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
-      },
-      "then": true
-    },
-    "when/reportsServer.enabled:t/then/any/else/reportsServer.enabled+reportsServer.enabled=null@2": {
       "else": {
         "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@3"
       },
@@ -4060,81 +4186,57 @@
       },
       "then": true
     },
-    "when/reportsServer.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+2more/else/reportsServer.enabled+reportsServer.enabled=null": {
+    "when/reportsServer.enabled:t/then/any/else/reportsServer.enabled+reportsServer.enabled=null@2": {
       "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more~1else~1fail"
+        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@4"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
+      },
+      "then": true
+    },
+    "when/reportsServer.enabled:t/then/reports-server.postgresql.architecture=replication+2more/else/reportsServer": {
+      "else": {
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more~1else~1fail"
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1else~1fail"
       }
     },
-    "when/reportsServer.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+2more/else/reportsServer.enabled+reportsServer.enabled=null@2": {
+    "when/reportsServer.enabled:t/then/reports-server.postgresql.architecture=replication+2more/else/reportsServer@2": {
       "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more~1else~1fail@3"
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null+1more~1else~1fail@2"
       },
       "if": {
         "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more~1else~1fail@2"
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null~1else~1fail@2"
       }
     },
-    "when/reportsServer.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more/else/reportsServer.enabled+reportsServer.enabled=null": {
+    "when/reportsServer.enabled:t/then/reports-server.postgresql.architecture=replication/else/reportsServer.enabled+reportsServer.enabled=null": {
       "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more~1else~1fail"
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reportsServer.enabled+reportsServer.enabled=null~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+2more~1else~1fail"
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1any~1else~1fail"
       }
     },
-    "when/reportsServer.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more/else/reportsServer": {
+    "when/reportsServer.enabled:t/then/reports-server.postgresql.architecture=replication/else/reportsServer.enabled+reportsServer.enabled=null@2": {
       "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more~1else~1fail@3"
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reportsServer.enabled+reportsServer.enabled=null~1else~1fail@2"
       },
       "if": {
         "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more~1else~1fail@2"
-      }
-    },
-    "when/reportsServer.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more/else/reportsServer@2": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more~1else~1fail@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more~1else~1fail@4"
-      }
-    },
-    "when/reportsServer.enabled:t/then/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more/else/reportsServer": {
-      "else": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+5more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+4more~1else~1fail@2"
-      }
-    },
-    "when/reportsServer.enabled:t/then/reports-server.fullnameOverride/else/reportsServer.enabled+reportsServer.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.fullnameOverride~1then~1any~1else~1fail"
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture=replication~1then~1any~1else~1fail@2"
       }
     }
   },
@@ -4161,42 +4263,6 @@
       }
     },
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride+4more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled!=null+3more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled!=null"
-        },
-        "then": false
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "grafana": {
@@ -4211,25 +4277,88 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+11more@2"
+            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled:t+reportsServer.enabled=null"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.templating@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.templating=null"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
           }
         ]
       },
       "then": {
-        "if": {
-          "$ref": "#/$defs/constrains~1crds.global.templating!=null"
-        },
-        "then": false
+        "additionalProperties": {},
+        "properties": {
+          "reports-server": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds.global.templating"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.global.templating.enabled@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.templating@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+global.templating.enabled+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.global.templating.version"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.templating.enabled"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.templating.version"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+crds.reportsServer.enabled:t+global+10more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+crds.reportsServer.enabled:t+5more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.install:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1crds.global.templating!=null+crds.global.templating.enabled!=null+1more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1reports-server.postgresql.architecture!=null+3more~1then~1fail"
       }
     },
     {
@@ -4248,42 +4377,57 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1crds+crds.global.templating.version+crds.global.templating.version=null+11more"
+            "$ref": "#/$defs/when~1global.templating.enabled:t~1then~1reportsController+reportsController.serviceMonitor~1else~1fail@2"
           },
           {
-            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+crds.reportsServer.enabled:t+5more"
+            "$ref": "#/$defs/constrains~1global.templating.version+global.templating.version=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride+4more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global.templating"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating.enabled"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+global.templating.enabled+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.templating.enabled"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.templating.version"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating.enabled:t+global.templating+global.templating.enabled+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating.version"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.install:t"
+            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
           }
         ]
       },
       "then": {
-        "$ref": "#/$defs/when~1crds.global.templating!=null+crds.global.templating.enabled!=null+1more~1then~1fail"
+        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled!=null+3more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1global.templating.enabled:t~1then~1reportsController+reportsController.serviceMonitor~1else~1fail"
+      },
+      "then": {
+        "if": {
+          "$ref": "#/$defs/constrains~1global.templating.version!=null"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "global": {
+              "additionalProperties": {},
+              "properties": {
+                "templating": {
+                  "additionalProperties": {},
+                  "description": "Internal settings used with `helm template` to generate install manifest",
+                  "properties": {
+                    "version": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -4390,25 +4534,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.architecture!=null+3more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more"
+            "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1crds+crds.install+crds.install:t+crds.install=null"
@@ -4420,10 +4546,10 @@
             "$ref": "#/$defs/constrains~1crds.global.templating+global+global.templating+global.templating!=null+1more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global.templating@2"
+            "$ref": "#/$defs/constrains~1global.templating"
           },
           {
-            "$ref": "#/$defs/constrains~1crds.global.templating.enabled@2"
+            "$ref": "#/$defs/constrains~1crds.global.templating.enabled"
           },
           {
             "$ref": "#/$defs/constrains~1crds.global.templating@2"
@@ -4469,19 +4595,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled:t+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride:t+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql.fullnameOverride+1more"
-          },
-          {
             "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled:t+reportsServer.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled:t+1more"
           },
           {
             "$ref": "#/$defs/constrains~1reports-server.postgresql.architecture=replication"
@@ -4611,26 +4728,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+reportsController.enabled:t+reportsController.serviceMonitor~1else~1any@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+11more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "$ref": "#/$defs/constrains~1templating"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "properties": {
               "reportsController": {
                 "enum": [
@@ -4660,57 +4757,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled!=null"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1global.templating.enabled:t~1then~1global.templating.version+global.templating.version=''+5more~1else~1fail"
-      },
-      "then": {
-        "if": {
-          "$ref": "#/$defs/constrains~1global.templating.version!=null"
-        },
-        "then": {
-          "additionalProperties": {},
-          "properties": {
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "templating": {
-                  "additionalProperties": {},
-                  "description": "Internal settings used with `helm template` to generate install manifest",
-                  "properties": {
-                    "version": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more~1else~1reports-server.postgresql"
+        "$ref": "#/$defs/when~1reports-server.postgresql.enabled:t~1then~1reports-server.postgresql.architecture=replication+4more~1else~1reports-server.postgresql"
       },
       "then": {
         "additionalProperties": {},
@@ -4734,115 +4781,24 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1reportsController.enabled:t+reportsController.serviceMonitor~1else~1fail"
-      },
-      "then": {
-        "if": {
-          "$ref": "#/$defs/constrains~1nameOverride!=null"
-        },
-        "then": {
-          "additionalProperties": {},
-          "properties": {
-            "nameOverride": {
-              "description": "(string) Override the name of the chart",
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds.reportsServer.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.templating"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating.enabled"
-          },
           {
             "$ref": "#/$defs/constrains~1crds.global.templating"
           },
           {
-            "$ref": "#/$defs/constrains~1crds+crds.install+crds.install:t+crds.install=null@3"
+            "$ref": "#/$defs/constrains~1crds.global.templating.enabled@2"
           },
           {
-            "$ref": "#/$defs/constrains~1crds+global+global.templating+global.templating!=null+global.templating=null+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating.enabled:t+global.templating+global.templating.enabled+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1global.templating.enabled@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1global.templating.enabled=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1crds.global.templating.enabled!=null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1crds.global.templating!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1grafana.enabled:t~1then~1any~1else~1grafana+grafana.enabled+grafana.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "grafana": {
-            "additionalProperties": {},
-            "properties": {
-              "configMapName": {
-                "description": "Configmap name template.",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1crds+crds.global.templating.version+crds.global.templating.version=null+11more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+crds.reportsServer.enabled:t+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.templating"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating.enabled"
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.global.templating"
+            "$ref": "#/$defs/constrains~1global.templating@2"
           },
           {
             "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+global.templating.enabled+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.global.templating.version"
           },
           {
             "$ref": "#/$defs/constrains~1global.templating.enabled"
@@ -4851,10 +4807,10 @@
             "$ref": "#/$defs/constrains~1global.templating.version"
           },
           {
-            "$ref": "#/$defs/constrains~1crds.global.templating.enabled:t+global.templating+global.templating.enabled+2more"
+            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+crds.reportsServer.enabled:t+global+10more"
           },
           {
-            "$ref": "#/$defs/constrains~1crds.global.templating.version"
+            "$ref": "#/$defs/constrains~1crds+crds.groups.wgpolicyk8s.policyreports:t+crds.reportsServer.enabled:t+5more"
           },
           {
             "anyOf": [
@@ -4874,105 +4830,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsController.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride+4more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled!=null+3more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled:t+reportsServer.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "reports-server": {
-            "$ref": "#/$defs/constrains~1templating"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1reports-server.fullnameOverride+reports-server.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.nameOverride+reports-server.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.templating.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled:t+reportsServer.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.fullnameOverride:t+reports-server.nameOverride+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
-          }
-        ]
+        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled:t+reportsServer.enabled=null"
       },
       "then": {
         "additionalProperties": {},
@@ -4980,7 +4838,7 @@
           "reports-server": {
             "additionalProperties": {},
             "properties": {
-              "serviceAccount": {
+              "apiServicesManagement": {
                 "type": "object"
               }
             }
@@ -4992,7 +4850,48 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+reportsController.enabled:t+reportsController.serviceMonitor~1else~1any"
+            "$ref": "#/$defs/constrains~1grafana.configMapName"
+          },
+          {
+            "$ref": "#/$defs/constrains~1grafana+grafana.enabled+grafana.enabled:t+grafana.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "grafana": {
+            "additionalProperties": {},
+            "properties": {
+              "grafanaDashboard": {
+                "description": "create GrafanaDashboard custom resource referencing to the configMap.\naccording to https://grafana-operator.github.io/grafana-operator/docs/examples/dashboard_from_configmap/readme/",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement+reports-server.fullnameOverride+4more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled!=null+3more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+9more"
           },
           {
             "anyOf": [
@@ -5006,30 +4905,11 @@
           }
         ]
       },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1reports-server.postgresql.enabled:t~1then~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+8more~1else~1reports-server.postgresql"
-      },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "reports-server": {
-            "additionalProperties": {},
-            "properties": {
-              "postgresql": {
-                "additionalProperties": {},
-                "properties": {
-                  "nameOverride": {
-                    "description": "String to partially override common.names.fullname template (will maintain the release name)",
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
+        "if": {
+          "$ref": "#/$defs/constrains~1crds.global.templating!=null"
+        },
+        "then": false
       }
     },
     {
@@ -5060,22 +4940,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled:t~1then~1reports-server.fullnameOverride:t+reports-server.templating+reportsServer+2more~1else~1fail"
+        "$ref": "#/$defs/constrains~1global+global.templating+global.templating.version+global.templating.version=''+5more@2"
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "reports-server": {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "description": "Full name override",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
+      "then": false
     },
     {
       "if": {
@@ -5084,7 +4951,7 @@
             "$ref": "#/$defs/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
+            "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
           },
           {
             "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
@@ -5211,6 +5078,46 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled:t+reportsServer.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reports-server.apiServicesManagement.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "reports-server": {
+            "$ref": "#/$defs/constrains~1templating"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail@4"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global.templating@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.templating=null"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -5276,15 +5183,85 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+reportsController+1more@2"
+        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled:t~1then~1reports-server.fullnameOverride:t+reports-server.templating+reportsServer+2more~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "global": {
-            "type": "object"
+          "reports-server": {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "description": "Full name override",
+                "type": "string"
+              }
+            }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1reports-server.postgresql.enabled:t~1then~1reports-server.postgresql.architecture=replication+4more~1else~1reports-server.postgresql@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "reports-server": {
+            "additionalProperties": {},
+            "properties": {
+              "postgresql": {
+                "additionalProperties": {},
+                "properties": {
+                  "nameOverride": {
+                    "description": "String to partially override common.names.fullname template (will maintain the release name)",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1reportsController.enabled:t+reportsController.serviceMonitor~1else~1fail"
+      },
+      "then": {
+        "if": {
+          "$ref": "#/$defs/constrains~1nameOverride!=null"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "nameOverride": {
+              "description": "(string) Override the name of the chart",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsServer.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled!=null"
+        },
+        "then": false
       }
     },
     {
@@ -5305,7 +5282,108 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled:t~1then~1reports-server.fullnameOverride+reports-server.fullnameOverride:t+5more~1else~1fail"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds+crds.global.templating+crds.groups.wgpolicyk8s.policyreports:t+crds.install+9more@2"
+          },
+          {
+            "$ref": "#/$defs/when~1reportsController.enabled:t~1then~1reportsController.serviceMonitor~1else~1fail"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "$ref": "#/$defs/constrains~1templating"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsController.serviceMonitor.enabled:t@6"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsController.enabled:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1grafana.enabled:t~1then~1any~1else~1grafana+grafana.enabled+grafana.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "grafana": {
+            "additionalProperties": {},
+            "properties": {
+              "configMapName": {
+                "description": "Configmap name template.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled=null@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/$defs/constrains~1reports-server.postgresql.enabled!=null"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1reports-server.apiServicesManagement.enabled:t~1then~1reports-server.nameOverride:t+reports-server.templating+reportsServer+2more~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -5324,9 +5402,56 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1global+global.templating+global.templating.version+global.templating.version=''+5more@2"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds.global.templating"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.global.templating.enabled@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.reportsServer.enabled:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global.templating@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+crds.install+crds.install:t+crds.install=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+global+global.templating+global.templating!=null+global.templating=null+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds+global.templating.enabled+global.templating.enabled!=null+3more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1crds.groups.wgpolicyk8s.policyreports:t@2"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1global.templating.enabled@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1global.templating.enabled=null"
+              }
+            ]
+          }
+        ]
       },
-      "then": false
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1crds.global.templating.enabled!=null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1crds.global.templating!=null"
+            }
+          ]
+        },
+        "then": false
+      }
     },
     {
       "additionalProperties": {},
@@ -5342,18 +5467,13 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1reportsServer.enabled+reportsServer.enabled:t+reportsServer.enabled=null"
+        "$ref": "#/$defs/constrains~1reportsController+reportsController.serviceMonitor.enabled:t@3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "reports-server": {
-            "additionalProperties": {},
-            "properties": {
-              "apiServicesManagement": {
-                "type": "object"
-              }
-            }
+          "global": {
+            "type": "object"
           }
         }
       }
@@ -5447,14 +5567,470 @@
     },
     "grafana": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/values~1grafana~1string;pattern-r-n"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1null;namespace-defines-the-space"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1string@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1object"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1string;namespace-defines-the-space"
+                  }
+                ],
+                "description": "(string) Namespace to create the grafana dashboard configmap.\nIf not set, it will be created in the same namespace where the chart is deployed."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1namespace+namespace:t+namespace=false+namespace=null+namespace=true+5more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1namespace+namespace:t+namespace=false+namespace=null+namespace=true+5more"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                        "type": [
+                          "object",
+                          "null"
+                        ]
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-marker-free"
+                        }
+                      }
+                    ],
+                    "description": "Grafana dashboard configmap annotations."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-marker-free"
+                        }
+                      },
+                      {
+                        "additionalProperties": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                        "type": [
+                          "object",
+                          "null"
+                        ]
+                      }
+                    ],
+                    "description": "Grafana dashboard configmap labels"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1namespace@4"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1namespace@4"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "additionalProperties": {
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+                        },
+                        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+                        "type": "string"
+                      },
+                      "maxProperties": 1,
+                      "minProperties": 1,
+                      "propertyNames": {
+                        "minLength": 1,
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+-]"
+                        },
+                        "type": "string"
+                      },
+                      "type": "object"
+                    }
+                  }
+                ],
+                "description": "(string) Namespace to create the grafana dashboard configmap.\nIf not set, it will be created in the same namespace where the chart is deployed."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1namespace@3"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1namespace@3"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "items": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+                                },
+                                {
+                                  "$ref": "#/$defs/values~1grafana~1string@3"
+                                }
+                              ]
+                            },
+                            "propertyNames": {
+                              "$ref": "#/$defs/values~1grafana~1string@3"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+                          },
+                          {
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/$defs/constrains~1namespace~1null,boolean,number"
+                                },
+                                {
+                                  "$ref": "#/$defs/values~1grafana~1string@3"
+                                }
+                              ]
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1grafana~1string@3"
+                          }
+                        ]
+                      },
+                      "type": "array"
+                    }
+                  }
+                ],
+                "description": "(string) Namespace to create the grafana dashboard configmap.\nIf not set, it will be created in the same namespace where the chart is deployed."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1namespace:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1configMapName@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1namespace:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/values~1grafana~1string;pattern-r-n"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1null;namespace-defines-the-space"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1string@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1object"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1grafana~1string;namespace-defines-the-space"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
       "properties": {
+        "annotations": {
+          "description": "Grafana dashboard configmap annotations."
+        },
         "configMapName": {
           "description": "Configmap name template."
         },
         "enabled": {
           "description": "Enable grafana dashboard creation."
         },
-        "global": {}
+        "global": {},
+        "grafanaDashboard": {
+          "additionalProperties": {},
+          "description": "create GrafanaDashboard custom resource referencing to the configMap.\naccording to https://grafana-operator.github.io/grafana-operator/docs/examples/dashboard_from_configmap/readme/",
+          "properties": {
+            "create": {}
+          }
+        },
+        "labels": {
+          "description": "Grafana dashboard configmap labels"
+        },
+        "namespace": {
+          "description": "(string) Namespace to create the grafana dashboard configmap.\nIf not set, it will be created in the same namespace where the chart is deployed."
+        },
+        "namespaceOverride": {}
       }
     },
     "imagePullSecrets": {

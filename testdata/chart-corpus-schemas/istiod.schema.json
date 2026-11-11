@@ -1,21 +1,5 @@
 {
   "$defs": {
-    "constrains/defaults:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1defaults:t@2"
-      }
-    },
-    "constrains/defaults:t@2": {
-      "properties": {
-        "defaults": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "defaults"
-      ],
-      "type": "object"
-    },
     "constrains/global+global=null": {
       "$ref": "#/$defs/constrains~1global+global=null@3"
     },
@@ -23,33 +7,41 @@
       "$ref": "#/$defs/constrains~1global+global=null@3"
     },
     "constrains/global+global=null@3": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
+              "global": {}
             },
             "required": [
               "global"
             ],
             "type": "object"
           }
-        ]
+        },
+        {
+          "properties": {
+            "global": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global+global=null@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      }
+    },
+    "constrains/global+global=null@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global=null@2"
       }
     },
     "t": {
@@ -85,15 +77,32 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1global+global=null@2"
+            "$ref": "#/$defs/constrains~1global+global=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1defaults:t"
+            "$ref": "#/$defs/constrains~1global+global=null@5"
           }
         ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "defaults": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "defaults"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null@4"
       },
       "then": {
         "additionalProperties": {},
@@ -103,12 +112,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1defaults:t@2"
-      },
-      "then": false
     }
   ],
   "properties": {

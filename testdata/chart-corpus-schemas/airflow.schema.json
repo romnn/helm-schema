@@ -32,13 +32,13 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -76,13 +76,13 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -101,10 +101,10 @@
           "$ref": "#/$defs/constrains~1architecture=replication"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -126,9 +126,6 @@
     "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more"
         },
         {
@@ -138,10 +135,13 @@
           "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride:t+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@3"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@3"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more@2"
@@ -160,13 +160,13 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -182,10 +182,10 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1architecture+architecture=null"
         },
         {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -204,13 +204,13 @@
     "constrains/architecture+architecture=null@3": {
       "allOf": [
         {
+          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
+        },
+        {
           "$ref": "#/$defs/constrains~1architecture"
         },
         {
           "$ref": "#/$defs/constrains~1architecture+architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
         }
       ]
     },
@@ -227,11 +227,27 @@
     "constrains/architecture+architecture=null@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1architecture=null"
+          "properties": {
+            "architecture": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "architecture"
+          ],
+          "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1architecture@3"
+            "properties": {
+              "architecture": {}
+            },
+            "required": [
+              "architecture"
+            ],
+            "type": "object"
           }
         }
       ]
@@ -245,19 +261,6 @@
       "not": {
         "$ref": "#/$defs/constrains~1architecture+architecture=null@4"
       }
-    },
-    "constrains/architecture=null": {
-      "properties": {
-        "architecture": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
     },
     "constrains/architecture=replication": {
       "properties": {
@@ -283,12 +286,25 @@
       ],
       "type": "object"
     },
-    "constrains/architecture@3": {
+    "constrains/celery": {
       "properties": {
-        "architecture": {}
+        "celery": {}
       },
       "required": [
-        "architecture"
+        "celery"
+      ],
+      "type": "object"
+    },
+    "constrains/celery=null": {
+      "properties": {
+        "celery": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "celery"
       ],
       "type": "object"
     },
@@ -382,19 +398,16 @@
     },
     "constrains/nameOverride@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       }
-    },
-    "constrains/nameOverride@3": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
     },
     "constrains/postgresql": {
       "not": {
@@ -408,22 +421,6 @@
         ],
         "type": "object"
       }
-    },
-    "constrains/postgresql+postgresql.architecture+postgresql.architecture=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql.architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.architecture"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.architecture@2"
-        }
-      ]
     },
     "constrains/postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null": {
       "anyOf": [
@@ -439,75 +436,15 @@
       ]
     },
     "constrains/postgresql+postgresql.enabled+postgresql.enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.enabled+postgresql.enabled=null"
-        }
-      ]
+      "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail"
     },
-    "constrains/postgresql.architecture": {
-      "not": {
-        "properties": {
-          "postgresql": {
-            "$ref": "#/$defs/constrains~1architecture@3"
-          }
-        },
-        "required": [
-          "postgresql"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/postgresql.architecture+postgresql.architecture=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql.architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.architecture"
-        }
-      ]
-    },
-    "constrains/postgresql.architecture+postgresql.architecture=null@2": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@4"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.architecture=null": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/$defs/constrains~1architecture=null"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
+    "constrains/postgresql+postgresql.enabled+postgresql.enabled=null@2": {
+      "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail"
     },
     "constrains/postgresql.architecture=replication": {
       "properties": {
         "postgresql": {
           "$ref": "#/$defs/constrains~1architecture=replication"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.architecture@2": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/$defs/constrains~1architecture@2"
         }
       },
       "required": [
@@ -557,46 +494,7 @@
       ],
       "type": "object"
     },
-    "constrains/postgresql.fullnameOverride": {
-      "$ref": "#/$defs/when~1postgresql.fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/postgresql.fullnameOverride+postgresql.fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t"
-        }
-      ]
-    },
     "constrains/postgresql.fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t@2"
-      }
-    },
-    "constrains/postgresql.fullnameOverride:t+postgresql.nameOverride+postgresql.nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1postgresql.nameOverride:t"
-        },
-        {
-          "properties": {
-            "postgresql": {
-              "$ref": "#/$defs/constrains~1nameOverride@3"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/postgresql.fullnameOverride:t@2": {
       "properties": {
         "postgresql": {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -607,23 +505,7 @@
       ],
       "type": "object"
     },
-    "constrains/postgresql.fullnameOverride@2": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
     "constrains/postgresql.nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1postgresql.nameOverride:t@2"
-      }
-    },
-    "constrains/postgresql.nameOverride:t@2": {
       "properties": {
         "postgresql": {
           "$ref": "#/$defs/constrains~1nameOverride:t"
@@ -702,9 +584,6 @@
         "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null"
       }
     },
-    "constrains/workers": {
-      "$ref": "#/$defs/when~1workers~1then~1any~1else~1fail"
-    },
     "constrains/workers+workers=null": {
       "anyOf": [
         {
@@ -732,12 +611,6 @@
           "type": "object"
         }
       ]
-    },
-    "constrains/workers@2": {
-      "$ref": "#/$defs/when~1workers~1then~1any~1else~1fail"
-    },
-    "constrains/workers@3": {
-      "$ref": "#/$defs/when~1workers~1then~1any~1else~1fail"
     },
     "t": {
       "anyOf": [
@@ -895,416 +768,110 @@
     "when/postgresql+postgresql.enabled+postgresql.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1postgresql"
+          },
+          {
+            "$ref": "#/$defs/constrains~1postgresql.enabled+postgresql.enabled=null"
+          }
+        ]
       },
       "then": true
     },
-    "when/postgresql+postgresql.enabled+postgresql.enabled=null/then/any/else/fail@2": {
+    "when/postgresql.architecture=replication/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
+        "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
       },
       "then": true
     },
-    "when/postgresql+postgresql.enabled+postgresql.enabled=null/then/postgresql.architecture+postgresql.fullnameOverride/else/fail": {
+    "when/postgresql.architecture=replication/then/any/else/fail@2": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture~1then~1postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/postgresql+postgresql.enabled+postgresql.enabled=null/then/postgresql.architecture/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/postgresql+postgresql.enabled+postgresql.enabled=null/then/postgresql.architecture/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture~1then~1any~1else~1fail"
-      }
-    },
-    "when/postgresql+postgresql.enabled+postgresql.enabled=null/then/postgresql.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/any/else/postgresql+postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1any~1else~1postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null"
+        "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
       },
       "then": true
     },
-    "when/postgresql.architecture+postgresql.architecture=null/then/any/else/postgresql+postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1any~1else~1postgresql.architecture@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null"
-      },
-      "then": true
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/any/else/postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-      },
-      "then": true
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/any/else/postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture~1then~1any~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-      },
-      "then": true
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql+postgresql.enabled+postgresql.enabled=null+1more/else/postgresql+postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql+postgresql.enabled+postgresql.enabled=null+1more~1else~1postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql+postgresql.enabled+postgresql.enabled=null+1more/else/postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1postgresql.architecture+postgresql.fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1postgresql.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql+postgresql.enabled+postgresql.enabled=null/else/postgresql+postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql+postgresql.enabled+postgresql.enabled=null~1else~1postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql+postgresql.enabled+postgresql.enabled=null/else/postgresql+postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql+postgresql.enabled+postgresql.enabled=null~1else~1postgresql.architecture@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql+postgresql.enabled+postgresql.enabled=null/else/postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1postgresql.architecture~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql+postgresql.enabled+postgresql.enabled=null/else/postgresql.architecture@2": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1postgresql.architecture~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql.fullnameOverride/else/postgresql+postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql.fullnameOverride~1else~1postgresql.architecture"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride"
-      }
-    },
-    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql.fullnameOverride/else/postgresql.architecture": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.architecture~1then~1postgresql.fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride"
-      }
-    },
-    "when/postgresql.architecture/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture@2"
-      },
-      "then": true
-    },
-    "when/postgresql.architecture/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture@2"
-      },
-      "then": true
-    },
-    "when/postgresql.architecture/then/postgresql.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture@2"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride"
-      }
-    },
-    "when/postgresql.architecture=replication/then/postgresql+postgresql.architecture+postgresql.architecture=null+1more/else/fail": {
+    "when/postgresql.architecture=replication/then/postgresql+postgresql.enabled+postgresql.enabled=null/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql.fullnameOverride~1else~1postgresql+postgresql.architecture"
+        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
       }
     },
-    "when/postgresql.architecture=replication/then/postgresql+postgresql.architecture+postgresql.architecture=null+2more/else/fail": {
+    "when/postgresql.architecture=replication/then/postgresql+postgresql.enabled+postgresql.enabled=null/else/fail@2": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql+postgresql.enabled+postgresql.enabled=null~1else~1postgresql+postgresql.architecture"
+        "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null@2"
       }
     },
-    "when/postgresql.architecture=replication/then/postgresql+postgresql.architecture+postgresql.architecture=null+2more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql+postgresql.enabled+postgresql.enabled=null~1else~1postgresql+postgresql.architecture@2"
-      }
-    },
-    "when/postgresql.architecture=replication/then/postgresql+postgresql.architecture+postgresql.architecture=null+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql+postgresql.enabled+postgresql.enabled=null+1more~1else~1postgresql+postgresql.architecture"
-      }
-    },
-    "when/postgresql.architecture=replication/then/postgresql+postgresql.architecture+postgresql.architecture=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1any~1else~1postgresql+postgresql.architecture"
-      }
-    },
-    "when/postgresql.architecture=replication/then/postgresql+postgresql.architecture+postgresql.architecture=null/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture+postgresql.architecture=null~1then~1any~1else~1postgresql+postgresql.architecture@2"
-      }
-    },
-    "when/postgresql.enabled:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+2more/else/postgresql+postgresql.enabled+postgresql.enabled=null": {
+    "when/postgresql.enabled:t/then/postgresql.architecture=replication+postgresql.fullnameOverride:t/else/postgresql+postgresql.enabled+postgresql.enabled=null": {
       "else": {
-        "$ref": "#/$defs/when~1postgresql.fullnameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+3more~1else~1fail"
+        "$ref": "#/$defs/when~1postgresql.fullnameOverride:t~1then~1postgresql+postgresql.architecture=replication+postgresql.enabled+1more~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1postgresql.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql.fullnameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+1more~1else~1fail"
+        "$ref": "#/$defs/when~1postgresql.fullnameOverride:t~1then~1postgresql.architecture=replication~1else~1fail"
       }
     },
-    "when/postgresql.enabled:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+4more/else/postgresql+postgresql.enabled+postgresql.enabled=null": {
+    "when/postgresql.enabled:t/then/postgresql.architecture=replication+postgresql.nameOverride:t/else/postgresql+postgresql.enabled+postgresql.enabled=null": {
       "else": {
-        "$ref": "#/$defs/when~1postgresql.fullnameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+5more~1else~1any"
+        "$ref": "#/$defs/when~1postgresql.nameOverride:t~1then~1postgresql+postgresql.architecture=replication+postgresql.enabled+1more~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1postgresql.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql.fullnameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+3more~1else~1any"
+        "$ref": "#/$defs/when~1postgresql.nameOverride:t~1then~1postgresql.architecture=replication~1else~1fail"
       }
     },
-    "when/postgresql.fullnameOverride/then/any/else/fail": {
+    "when/postgresql.fullnameOverride:t/then/postgresql+postgresql.architecture=replication+postgresql.enabled+1more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride@2"
+        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t"
       },
-      "then": true
+      "then": {
+        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.enabled+postgresql.enabled=null~1else~1fail@2"
+      }
     },
-    "when/postgresql.fullnameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+1more/else/fail": {
+    "when/postgresql.fullnameOverride:t/then/postgresql.architecture=replication/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t@2"
+        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null~1else~1fail@2"
+        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1any~1else~1fail"
       }
     },
-    "when/postgresql.fullnameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.nameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.nameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+2more~1else~1fail"
-      }
-    },
-    "when/postgresql.fullnameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+3more/else/fail": {
+    "when/postgresql.nameOverride:t/then/postgresql+postgresql.architecture=replication+postgresql.enabled+1more/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t@2"
+        "$ref": "#/$defs/constrains~1postgresql.nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+2more~1else~1fail"
+        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.enabled+postgresql.enabled=null~1else~1fail"
       }
     },
-    "when/postgresql.fullnameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1postgresql.nameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+3more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.nameOverride:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+4more~1else~1fail"
-      }
-    },
-    "when/postgresql.nameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+1more/else/fail": {
+    "when/postgresql.nameOverride:t/then/postgresql.architecture=replication/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1postgresql.nameOverride:t@2"
+        "$ref": "#/$defs/constrains~1postgresql.nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null~1else~1fail"
+        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1any~1else~1fail@2"
       }
     },
-    "when/postgresql.nameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+1more~1else~1fail"
-      }
-    },
-    "when/postgresql.nameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+2more~1else~1fail@2"
-      }
-    },
-    "when/postgresql.nameOverride:t/then/postgresql+postgresql.architecture+postgresql.architecture=null+4more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1postgresql.nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+3more~1else~1fail"
-      }
-    },
-    "when/workers+workers=null/then/any/else/workers": {
+    "when/workers.celery.enableDefault:t/then/fail/else/workers.celery.sets:t": {
       "else": {
-        "$ref": "#/$defs/constrains~1workers"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1workers+workers=null"
-      },
-      "then": true
-    },
-    "when/workers+workers=null/then/any/else/workers@2": {
-      "else": {
-        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1workers+workers=null"
-      },
-      "then": true
-    },
-    "when/workers+workers=null/then/any/else/workers@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1workers@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1workers+workers=null"
-      },
-      "then": true
-    },
-    "when/workers+workers=null/then/any/else/workers@4": {
-      "else": {
-        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1workers+workers=null"
-      },
-      "then": true
-    },
-    "when/workers+workers=null/then/any/else/workers@5": {
-      "else": {
-        "$ref": "#/$defs/constrains~1workers@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1workers+workers=null"
-      },
-      "then": true
-    },
-    "when/workers+workers=null/then/any/else/workers@6": {
-      "else": {
-        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1workers+workers=null"
-      },
-      "then": true
-    },
-    "when/workers.celery.enableDefault:t/then/fail/else/workers+workers.celery.sets:t+workers=null": {
-      "else": {
-        "$ref": "#/$defs/when~1workers.celery.sets:t~1then~1workers+workers=null~1else~1fail"
+        "$ref": "#/$defs/when~1workers.celery.sets:t~1then~1any~1else~1fail"
       },
       "if": {
         "properties": {
@@ -1335,7 +902,7 @@
       },
       "then": false
     },
-    "when/workers.celery.sets:t/then/workers+workers=null/else/fail": {
+    "when/workers.celery.sets:t/then/any/else/fail": {
       "else": false,
       "if": {
         "properties": {
@@ -1364,23 +931,6 @@
         ],
         "type": "object"
       },
-      "then": {
-        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@4"
-      }
-    },
-    "when/workers/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "workers": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "workers"
-        ],
-        "type": "object"
-      },
       "then": true
     }
   },
@@ -1388,8 +938,61 @@
   "additionalProperties": false,
   "allOf": [
     {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql": {
+          "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
       "if": {
-        "$ref": "#/$defs/when~1workers.celery.enableDefault:t~1then~1fail~1else~1workers+workers.celery.sets:t+workers=null"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1postgresql.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/when~1postgresql!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+            "properties": {
+              "readReplicas": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1workers.celery.enableDefault:t~1then~1fail~1else~1workers.celery.sets:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1418,30 +1021,23 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "postgresql": {
-          "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
-          }
-        ]
+        "$ref": "#/$defs/when~1postgresql.enabled:t~1then~1postgresql.architecture=replication+postgresql.nameOverride:t~1else~1postgresql+postgresql.enabled+postgresql.enabled=null"
       },
       "then": {
-        "$ref": "#/$defs/when~1postgresql!=null~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+            "properties": {
+              "nameOverride": {
+                "description": "String to partially override common.names.fullname template (will maintain the release name)",
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -1464,7 +1060,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1postgresql.enabled:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+4more~1else~1postgresql+postgresql.enabled+postgresql.enabled=null"
+        "$ref": "#/$defs/when~1postgresql.enabled:t~1then~1postgresql.architecture=replication+postgresql.fullnameOverride:t~1else~1postgresql+postgresql.enabled+postgresql.enabled=null"
       },
       "then": {
         "additionalProperties": {},
@@ -1473,8 +1069,8 @@
             "additionalProperties": {},
             "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
             "properties": {
-              "nameOverride": {
-                "description": "String to partially override common.names.fullname template (will maintain the release name)",
+              "fullnameOverride": {
+                "description": "String to fully override common.names.fullname template",
                 "type": "string"
               }
             }
@@ -1497,25 +1093,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "workers": {
-            "additionalProperties": {},
-            "description": "Airflow Worker Config",
-            "properties": {
-              "celery": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/constrains~1workers+workers=null"
       },
       "then": false
@@ -1524,10 +1101,17 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1postgresql"
+              },
+              {
+                "$ref": "#/$defs/constrains~1postgresql.enabled+postgresql.enabled=null"
+              }
+            ]
           },
           {
-            "$ref": "#/$defs/constrains~1postgresql.enabled:t"
+            "$ref": "#/$defs/constrains~1tags.bitnami-common+tags.bitnami-common:t+tags.bitnami-common=null@2"
           }
         ]
       },
@@ -1636,20 +1220,14 @@
       }
     },
     {
-      "if": {
-        "$ref": "#/$defs/when~1postgresql.enabled:t~1then~1postgresql+postgresql.architecture+postgresql.architecture=null+2more~1else~1postgresql+postgresql.enabled+postgresql.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
-            "properties": {
-              "fullnameOverride": {
-                "description": "String to fully override common.names.fullname template",
-                "type": "string"
-              }
+      "additionalProperties": {},
+      "properties": {
+        "workers": {
+          "additionalProperties": {},
+          "description": "Airflow Worker Config",
+          "properties": {
+            "celery": {
+              "type": "object"
             }
           }
         }
@@ -1658,60 +1236,12 @@
     {
       "if": {
         "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1postgresql.fullnameOverride:t+postgresql.nameOverride+postgresql.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1postgresql.fullnameOverride+postgresql.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1postgresql.architecture=replication"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
-            "properties": {
-              "readReplicas": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/when~1workers+workers=null~1then~1any~1else~1workers@6"
-          },
           {
             "anyOf": [
               {
                 "properties": {
                   "workers": {
-                    "properties": {
-                      "celery": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "celery"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/constrains~1celery=null"
                   }
                 },
                 "required": [
@@ -1723,13 +1253,7 @@
                 "not": {
                   "properties": {
                     "workers": {
-                      "properties": {
-                        "celery": {}
-                      },
-                      "required": [
-                        "celery"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/constrains~1celery"
                     }
                   },
                   "required": [
@@ -1739,6 +1263,9 @@
                 }
               }
             ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1workers+workers=null"
           }
         ]
       },
@@ -1919,7 +1446,10 @@
                 "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t"
+                "$ref": "#/$defs/constrains~1enabled+enabled=null"
+              },
+              {
+                "type": "object"
               }
             ]
           },
@@ -1934,10 +1464,7 @@
                 "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more@3"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null"
-              },
-              {
-                "type": "object"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -2082,6 +1609,23 @@
     },
     "workers": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1celery=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1celery"
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "description": "Airflow Worker Config",
       "type": "object"
     }

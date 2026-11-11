@@ -11,99 +11,6 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@3": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@4": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
     "constrains/knative.enabled:t": {
       "properties": {
         "knative": {
@@ -115,117 +22,7 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/ollama.gpu+ollama.gpu.enabled:t+ollama.gpu.type+ollama.gpu.type=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ollama.gpu.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ollama.gpu.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ollama.gpu.type@2"
-        }
-      ]
-    },
-    "constrains/ollama.gpu.enabled+ollama.gpu.enabled:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-        },
-        {
-          "properties": {
-            "ollama": {
-              "properties": {
-                "gpu": {
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "gpu"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ollama"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/ollama.gpu.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      }
-    },
-    "constrains/ollama.gpu.enabled:t@2": {
       "properties": {
         "ollama": {
           "properties": {
@@ -244,40 +41,63 @@
       ],
       "type": "object"
     },
-    "constrains/ollama.gpu.type": {
-      "not": {
-        "properties": {
-          "ollama": {
+    "constrains/ollama.gpu.type+ollama.gpu.type=null": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "gpu": {
+              "ollama": {
                 "properties": {
-                  "type": {}
+                  "gpu": {
+                    "properties": {
+                      "type": {}
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
                 },
                 "required": [
-                  "type"
+                  "gpu"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "gpu"
+              "ollama"
             ],
             "type": "object"
           }
         },
-        "required": [
-          "ollama"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/ollama.gpu.type+ollama.gpu.type=null": {
-      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ollama.gpu.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ollama.gpu.type=null"
+          "properties": {
+            "ollama": {
+              "properties": {
+                "gpu": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "gpu"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ollama"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -346,62 +166,6 @@
         }
       ]
     },
-    "constrains/ollama.gpu.type=null": {
-      "properties": {
-        "ollama": {
-          "properties": {
-            "gpu": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "gpu"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ollama"
-      ],
-      "type": "object"
-    },
-    "constrains/ollama.gpu.type@2": {
-      "properties": {
-        "ollama": {
-          "properties": {
-            "gpu": {
-              "properties": {
-                "type": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "gpu"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ollama"
-      ],
-      "type": "object"
-    },
     "constrains/resources:t": {
       "properties": {
         "resources": {
@@ -445,97 +209,18 @@
         }
       ]
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      },
-      "then": true
-    },
-    "when/fullnameOverride/then/nameOverride+ollama.gpu.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1ollama.gpu.type~1else~1fail"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/fullnameOverride/then/ollama.gpu.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.type~1then~1fail~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+knative.enabled:t+nameOverride+nameOverride:t+ollama+ollama.gpu+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1nameOverride+nameOverride:t+ollama+ollama.gpu+ollama.gpu.type+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1fullnameOverride+nameOverride+nameOverride:t+ollama+ollama.gpu+ollama.gpu.type+1more~1else~1fail"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+knative.enabled:t+nameOverride+nameOverride:t+ollama.gpu/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1nameOverride+nameOverride:t+ollama.gpu~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1fullnameOverride+nameOverride+nameOverride:t+ollama.gpu~1else~1fail"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+knative.enabled:t+nameOverride+nameOverride:t+ollama.gpu/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1nameOverride+nameOverride:t+ollama.gpu~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1fullnameOverride+nameOverride+nameOverride:t+ollama.gpu~1else~1fail@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+knative.enabled:t+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1nameOverride:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1fullnameOverride+nameOverride:t~1else~1fail"
-      }
-    },
     "when/fullnameOverride:t/then/knative.enabled:t/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
       },
       "then": {
         "$ref": "#/$defs/when~1knative.enabled:t~1then~1any~1else~1fail"
@@ -548,69 +233,6 @@
       },
       "then": true
     },
-    "when/knative.enabled:t/then/fullnameOverride+nameOverride+nameOverride:t+ollama+ollama.gpu+ollama.gpu.type+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+ollama.gpu+ollama.gpu.enabled:t+ollama.gpu.type+1more~1else~1any"
-      }
-    },
-    "when/knative.enabled:t/then/fullnameOverride+nameOverride+nameOverride:t+ollama.gpu/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+ollama.gpu.enabled:t~1else~1any"
-      }
-    },
-    "when/knative.enabled:t/then/fullnameOverride+nameOverride+nameOverride:t+ollama.gpu/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+ollama.gpu.enabled:t~1else~1any@2"
-      }
-    },
-    "when/knative.enabled:t/then/fullnameOverride+nameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride~1else~1fail"
-      }
-    },
-    "when/knative.enabled:t/then/nameOverride+nameOverride:t+ollama+ollama.gpu+ollama.gpu.type+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+ollama.gpu+ollama.gpu.enabled:t+ollama.gpu.type+1more~1else~1any"
-      }
-    },
-    "when/knative.enabled:t/then/nameOverride+nameOverride:t+ollama.gpu/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+ollama.gpu.enabled:t~1else~1any"
-      }
-    },
-    "when/knative.enabled:t/then/nameOverride+nameOverride:t+ollama.gpu/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+ollama.gpu.enabled:t~1else~1any@2"
-      }
-    },
     "when/knative.enabled:t/then/nameOverride:t/else/fail": {
       "else": false,
       "if": {
@@ -620,268 +242,70 @@
         "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
       }
     },
-    "when/nameOverride/then/any/else/fail": {
+    "when/knative.enabled:t/then/ollama+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/ollama.gpu.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride"
+        "$ref": "#/$defs/constrains~1knative.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.type~1then~1fail~1else~1any"
+        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
+      }
+    },
+    "when/knative.enabled:t/then/ollama.gpu/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1knative.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1any"
+      }
+    },
+    "when/knative.enabled:t/then/ollama.gpu/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1knative.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1any@2"
       }
     },
     "when/nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       },
       "then": true
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+ollama.gpu+ollama.gpu.enabled:t+ollama.gpu.type+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fullnameOverride+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fullnameOverride+nameOverride+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+ollama.gpu.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1fullnameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+ollama.gpu.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1fullnameOverride+nameOverride@2"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+ollama.gpu+ollama.gpu.enabled:t+ollama.gpu.type+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1nameOverride+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+ollama.gpu.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+ollama.gpu.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1nameOverride@2"
-      }
     },
     "when/ollama.gpu.enabled:t/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
+        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
       },
       "then": false
     },
     "when/ollama.gpu.enabled:t/then/fail/else/any@2": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
+        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
       },
       "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/fullnameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/fullnameOverride+nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/fullnameOverride+nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/fullnameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fullnameOverride+nameOverride+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1fullnameOverride+nameOverride+ollama.gpu.type@2"
-      }
-    },
-    "when/ollama.gpu.enabled:t/then/fullnameOverride+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1fullnameOverride+ollama.gpu.type@2"
-      }
-    },
-    "when/ollama.gpu.enabled:t/then/nameOverride+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1nameOverride+ollama.gpu.type@2"
-      }
     },
     "when/ollama.gpu.enabled:t/then/ollama.gpu+ollama.gpu.type+ollama.gpu.type=null/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
+        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
       },
       "then": {
         "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1ollama.gpu.type@2"
       }
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/fullnameOverride+nameOverride+ollama.gpu.type": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride+ollama.gpu.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/fullnameOverride+nameOverride+ollama.gpu.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1fullnameOverride+nameOverride+ollama.gpu.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/fullnameOverride+ollama.gpu.type": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1ollama.gpu.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/fullnameOverride+ollama.gpu.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1fullnameOverride+ollama.gpu.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/nameOverride+ollama.gpu.type": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1ollama.gpu.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/nameOverride+ollama.gpu.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1nameOverride+ollama.gpu.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
     },
     "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/ollama.gpu.type": {
       "else": {
@@ -904,7 +328,31 @@
     "when/ollama.gpu.type/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type@2"
+        "properties": {
+          "ollama": {
+            "properties": {
+              "gpu": {
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "gpu"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ollama"
+        ],
+        "type": "object"
       },
       "then": false
     }
@@ -912,6 +360,12 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "$ref": "#/$defs/when~1knative.enabled:t~1then~1ollama+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
+      },
+      "then": false
+    },
     {
       "if": {
         "allOf": [
@@ -922,19 +376,29 @@
             "$ref": "#/$defs/constrains~1knative.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
+            "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
+            "$ref": "#/$defs/constrains~1ollama.gpu.type:t+ollama.gpu.type=nvidia"
           },
           {
-            "$ref": "#/$defs/constrains~1ollama.gpu.enabled+ollama.gpu.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ollama.gpu+ollama.gpu.enabled:t+ollama.gpu.type+ollama.gpu.type=null"
+            "properties": {
+              "resources": {
+                "properties": {
+                  "limits": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "limits"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "resources"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -942,275 +406,24 @@
         "additionalProperties": {},
         "properties": {
           "resources": {
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ollama": {}
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ollama": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+knative.enabled:t+nameOverride+nameOverride:t+ollama.gpu~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ollama": {
             "additionalProperties": {},
-            "description": "Ollama parameters",
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
             "properties": {
-              "gpu": {
-                "additionalProperties": {},
-                "properties": {
-                  "enabled": {
-                    "description": "Enable GPU integration",
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ollama": {
-                      "properties": {
-                        "gpu": {}
-                      },
-                      "required": [
-                        "gpu"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ollama": {
-                    "properties": {
-                      "gpu": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "gpu"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+knative.enabled:t+nameOverride+nameOverride:t+ollama+ollama.gpu+2more~1else~1any"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1knative.enabled:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override template",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+knative.enabled:t+nameOverride:t~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override template  (will maintain the release name)",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "knative": {}
-              },
-              "required": [
-                "knative"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "knative": {
-                "enum": [
-                  null
+              "limits": {
+                "description": "Pod limit\nMemory limit\nmemory: 8192Mi",
+                "type": [
+                  "null",
+                  "object"
                 ]
               }
-            },
-            "required": [
-              "knative"
-            ],
-            "type": "object"
+            }
           }
-        ]
-      },
-      "then": false
+        }
+      }
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          }
-        ]
+        "$ref": "#/$defs/constrains~1knative.enabled:t"
       },
       "then": {
         "allOf": [
@@ -1262,8 +475,26 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+knative.enabled:t+nameOverride+nameOverride:t+ollama.gpu~1else~1any@2"
+            "$ref": "#/$defs/constrains~1resources:t"
           },
+          {
+            "$ref": "#/$defs/constrains~1knative.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "resources": {
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "anyOf": [
               {
@@ -1323,6 +554,61 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "$ref": "#/$defs/when~1knative.enabled:t~1then~1ollama.gpu~1else~1fail@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1knative.enabled:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override template",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1knative.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -1332,14 +618,167 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+            "$ref": "#/$defs/constrains~1knative.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ollama": {
+                      "properties": {
+                        "gpu": {}
+                      },
+                      "required": [
+                        "gpu"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ollama": {
+                    "properties": {
+                      "gpu": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "gpu"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ollama"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1knative.enabled:t~1then~1ollama.gpu~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ollama": {
+            "additionalProperties": {},
+            "description": "Ollama parameters",
+            "properties": {
+              "gpu": {
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "description": "Enable GPU integration",
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1knative.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ollama": {}
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ollama": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ollama"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "knative": {}
+              },
+              "required": [
+                "knative"
+              ],
+              "type": "object"
+            }
           },
+          {
+            "properties": {
+              "knative": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "knative"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1knative.enabled:t~1then~1nameOverride:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override template  (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "anyOf": [
               {
@@ -1374,76 +813,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1resources:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ollama.gpu.enabled+ollama.gpu.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ollama.gpu+ollama.gpu.enabled:t+ollama.gpu.type+ollama.gpu.type=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ollama.gpu.type:t+ollama.gpu.type=nvidia"
-          },
-          {
-            "properties": {
-              "resources": {
-                "properties": {
-                  "limits": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "limits"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "resources"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "resources": {
-            "additionalProperties": {},
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
-            "properties": {
-              "limits": {
-                "description": "Pod limit\nMemory limit\nmemory: 8192Mi",
-                "type": [
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
     }
   ],
   "properties": {

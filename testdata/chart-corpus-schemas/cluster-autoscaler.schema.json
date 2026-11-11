@@ -12,223 +12,76 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+      }
     },
     "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@4"
+          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@3"
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
+        }
+      ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@2": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@3"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@5": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+vpa.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+vpa.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+2more@3"
-        },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+vpa.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+vpa.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+vpa.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+vpa.enabled:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+2more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+2more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more"
-        },
-        {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+vpa.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+2more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more"
         }
       ]
     },
@@ -238,119 +91,39 @@
           "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+2more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+1more": {
-      "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
+          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+vpa.enabled:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@6"
+          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      }
     },
     "constrains/fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+1more": {
       "allOf": [
@@ -358,51 +131,13 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@4"
+          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
         }
       ]
     },
@@ -412,241 +147,42 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
+          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
+          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+vpa.enabled:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@4"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t+vpa.enabled:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+nameOverride:t@2": {
-      "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+vpa.enabled:t": {
-      "allOf": [
-        {
           "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kubeTargetVersionOverride:t+vpa.enabled:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+vpa.enabled:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+vpa.enabled:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1vpa.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-    },
-    "constrains/fullnameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      }
-    },
-    "constrains/fullnameOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      }
-    },
-    "constrains/fullnameOverride:t@5": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -658,23 +194,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@3": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@4": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride@5": {
-      "$ref": "#/$defs/constrains~1fullnameOverride@4"
-    },
-    "constrains/fullnameOverride@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      }
-    },
-    "constrains/fullnameOverride@7": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -686,25 +205,16 @@
       "type": "object"
     },
     "constrains/kubeTargetVersionOverride": {
-      "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@2"
+      }
     },
     "constrains/kubeTargetVersionOverride:t": {
-      "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@4"
+      "not": {
+        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
+      }
     },
     "constrains/kubeTargetVersionOverride:t@2": {
-      "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@3"
-    },
-    "constrains/kubeTargetVersionOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      }
-    },
-    "constrains/kubeTargetVersionOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      }
-    },
-    "constrains/kubeTargetVersionOverride:t@5": {
       "properties": {
         "kubeTargetVersionOverride": {
           "$ref": "#/$defs/t"
@@ -716,17 +226,6 @@
       "type": "object"
     },
     "constrains/kubeTargetVersionOverride@2": {
-      "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1any~1else~1fail"
-    },
-    "constrains/kubeTargetVersionOverride@3": {
-      "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1any~1else~1fail"
-    },
-    "constrains/kubeTargetVersionOverride@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-      }
-    },
-    "constrains/kubeTargetVersionOverride@5": {
       "properties": {
         "kubeTargetVersionOverride": {
           "type": "string"
@@ -738,25 +237,9 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
+      "$ref": "#/$defs/constrains~1nameOverride@2"
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
-    },
-    "constrains/nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@4"
-    },
-    "constrains/nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      }
-    },
-    "constrains/nameOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      }
-    },
-    "constrains/nameOverride:t@5": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -768,63 +251,17 @@
       "type": "object"
     },
     "constrains/nameOverride@2": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@3": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@4": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@5": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@6": {
-      "$ref": "#/$defs/constrains~1nameOverride@7"
-    },
-    "constrains/nameOverride@7": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      }
-    },
-    "constrains/nameOverride@8": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceMonitor+serviceMonitor=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "serviceMonitor": {}
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
+        "properties": {
+          "nameOverride": {
+            "type": "string"
           }
         },
-        {
-          "properties": {
-            "serviceMonitor": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "serviceMonitor"
-          ],
-          "type": "object"
-        }
-      ]
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
     },
     "constrains/serviceMonitor.enabled:t": {
       "properties": {
@@ -847,19 +284,11 @@
       "$ref": "#/$defs/when~1vpa.enabled:t~1then~1any~1else~1fail"
     },
     "constrains/vpa.enabled:t@4": {
-      "$ref": "#/$defs/constrains~1vpa.enabled:t@6"
+      "not": {
+        "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
+      }
     },
     "constrains/vpa.enabled:t@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      }
-    },
-    "constrains/vpa.enabled:t@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      }
-    },
-    "constrains/vpa.enabled:t@7": {
       "properties": {
         "vpa": {
           "$ref": "#/$defs/constrains~1enabled:t"
@@ -895,449 +324,31 @@
         }
       ]
     },
-    "when/fullnameOverride/then/any/else/fail": {
+    "when/fullnameOverride:t/then/serviceMonitor.enabled:t+vpa/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": true
-    },
-    "when/fullnameOverride/then/kubeTargetVersionOverride+nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
       },
       "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/fullnameOverride/then/kubeTargetVersionOverride+nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1nameOverride~1else~1fail@2"
-      }
-    },
-    "when/fullnameOverride/then/kubeTargetVersionOverride+nameOverride/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1nameOverride~1else~1fail@3"
-      }
-    },
-    "when/fullnameOverride/then/kubeTargetVersionOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride"
-      }
-    },
-    "when/fullnameOverride/then/kubeTargetVersionOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@2"
-      }
-    },
-    "when/fullnameOverride/then/kubeTargetVersionOverride/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@3"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      }
-    },
-    "when/fullnameOverride/then/nameOverride/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1kubeTargetVersionOverride+nameOverride+nameOverride:t+vpa.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride+nameOverride:t+1more~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1kubeTargetVersionOverride+nameOverride+nameOverride:t+vpa.enabled:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride+nameOverride:t+1more~1else~1any@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+kubeTargetVersionOverride+kubeTargetVersionOverride:t+4more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1kubeTargetVersionOverride+nameOverride+nameOverride:t+serviceMonitor.enabled:t+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride+nameOverride:t+2more~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1nameOverride+nameOverride:t+vpa.enabled:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1fullnameOverride+nameOverride+nameOverride:t+vpa.enabled:t~1else~1fail"
-      }
-    },
-    "when/fullnameOverride:t/then/nameOverride+nameOverride:t+serviceMonitor.enabled:t+vpa/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+serviceMonitor.enabled:t+vpa~1else~1any@2"
-      }
-    },
-    "when/kubeTargetVersionOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-      },
-      "then": true
-    },
-    "when/kubeTargetVersionOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/kubeTargetVersionOverride/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      }
-    },
-    "when/kubeTargetVersionOverride/then/nameOverride/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride+nameOverride:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+vpa.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride+vpa.enabled:t~1else~1any"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride+nameOverride:t+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+vpa.enabled:t~1else~1any@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride+vpa.enabled:t~1else~1any@2"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride+nameOverride:t+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+serviceMonitor.enabled:t+vpa~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride+serviceMonitor.enabled:t+1more~1else~1any"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/fullnameOverride+nameOverride+nameOverride:t+vpa.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+nameOverride+vpa.enabled:t~1else~1any@2"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/kubeTargetVersionOverride+nameOverride+nameOverride:t+serviceMonitor.enabled:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+serviceMonitor.enabled:t+vpa~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1kubeTargetVersionOverride+nameOverride+serviceMonitor.enabled:t+vpa~1else~1any"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/kubeTargetVersionOverride+nameOverride+nameOverride:t+vpa.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+vpa.enabled:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1kubeTargetVersionOverride+nameOverride+vpa.enabled:t~1else~1any"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/kubeTargetVersionOverride+nameOverride+nameOverride:t+vpa.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+vpa.enabled:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1kubeTargetVersionOverride+nameOverride+vpa.enabled:t~1else~1any@2"
-      }
-    },
-    "when/kubeTargetVersionOverride:t/then/nameOverride+nameOverride:t+vpa.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+vpa.enabled:t~1else~1any@3"
-      }
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride+serviceMonitor.enabled:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride+vpa~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride+vpa~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride+vpa.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride+vpa.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+serviceMonitor.enabled:t+vpa/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride+nameOverride+vpa~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+vpa.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+nameOverride~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+vpa.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+nameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+nameOverride+vpa.enabled:t/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+nameOverride~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/kubeTargetVersionOverride+nameOverride+serviceMonitor.enabled:t+vpa/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1kubeTargetVersionOverride+vpa~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1kubeTargetVersionOverride+nameOverride+vpa~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/kubeTargetVersionOverride+nameOverride+vpa.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1kubeTargetVersionOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1kubeTargetVersionOverride+nameOverride~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/kubeTargetVersionOverride+nameOverride+vpa.enabled:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1kubeTargetVersionOverride~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1kubeTargetVersionOverride+nameOverride~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+serviceMonitor.enabled:t+vpa/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1nameOverride+vpa~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+serviceMonitor.enabled:t+vpa/else/any@2": {
-      "else": {
         "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1vpa"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1nameOverride+vpa~1else~1any"
       }
     },
-    "when/nameOverride:t/then/nameOverride+vpa.enabled:t/else/any": {
-      "else": true,
+    "when/kubeTargetVersionOverride:t/then/vpa.enabled:t/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride:t@2"
       },
       "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1nameOverride~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+vpa.enabled:t/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1nameOverride~1else~1any@3"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+vpa.enabled:t/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1nameOverride~1else~1fail"
+        "$ref": "#/$defs/constrains~1vpa.enabled:t"
       }
     },
     "when/nameOverride:t/then/vpa.enabled:t/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
+        "$ref": "#/$defs/constrains~1nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t"
+        "$ref": "#/$defs/constrains~1vpa.enabled:t@2"
       }
     },
     "when/serviceMonitor.enabled:t/then/any/else/fail": {
@@ -1356,317 +367,12 @@
       },
       "then": true
     },
-    "when/serviceMonitor.enabled:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride+vpa/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride+nameOverride~1else~1any@3"
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/fullnameOverride+kubeTargetVersionOverride+vpa/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+kubeTargetVersionOverride~1else~1any@3"
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/fullnameOverride+nameOverride+vpa/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1fullnameOverride+nameOverride~1else~1any@3"
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/kubeTargetVersionOverride+nameOverride+vpa/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1kubeTargetVersionOverride+nameOverride~1else~1any@3"
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/kubeTargetVersionOverride+vpa/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1kubeTargetVersionOverride~1else~1any@3"
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/nameOverride+vpa/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1nameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1nameOverride~1else~1any@2"
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/nameOverride+vpa/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1vpa.enabled:t~1then~1nameOverride~1else~1any@4"
-      }
-    },
     "when/vpa.enabled:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
+        "$ref": "#/$defs/constrains~1vpa.enabled:t@5"
       },
       "then": true
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1kubeTargetVersionOverride+nameOverride~1else~1fail"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1kubeTargetVersionOverride+nameOverride~1else~1fail@2"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+kubeTargetVersionOverride+nameOverride/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1kubeTargetVersionOverride+nameOverride~1else~1fail@3"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+kubeTargetVersionOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1kubeTargetVersionOverride~1else~1fail"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+kubeTargetVersionOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1kubeTargetVersionOverride~1else~1fail@2"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+kubeTargetVersionOverride/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1kubeTargetVersionOverride~1else~1fail@3"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@2"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@3"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+nameOverride/else/any@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail@4"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride+nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "when/vpa.enabled:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "when/vpa.enabled:t/then/kubeTargetVersionOverride+nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/vpa.enabled:t/then/kubeTargetVersionOverride+nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1nameOverride~1else~1fail@2"
-      }
-    },
-    "when/vpa.enabled:t/then/kubeTargetVersionOverride+nameOverride/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kubeTargetVersionOverride~1then~1nameOverride~1else~1fail@3"
-      }
-    },
-    "when/vpa.enabled:t/then/kubeTargetVersionOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride"
-      }
-    },
-    "when/vpa.enabled:t/then/kubeTargetVersionOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@2"
-      }
-    },
-    "when/vpa.enabled:t/then/kubeTargetVersionOverride/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1kubeTargetVersionOverride@3"
-      }
-    },
-    "when/vpa.enabled:t/then/nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/vpa.enabled:t/then/nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
-    },
-    "when/vpa.enabled:t/then/nameOverride/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      }
-    },
-    "when/vpa.enabled:t/then/nameOverride/else/any@4": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@5"
-      }
-    },
-    "when/vpa.enabled:t/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/vpa.enabled:t/then/nameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1vpa.enabled:t@7"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1674,28 +380,61 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@7"
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@2"
       },
       "then": false
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1vpa.enabled:t@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride@6"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-          }
-        ]
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1vpa.enabled:t~1else~1fail"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "nameOverride -- String to partially override `cluster-autoscaler.fullname` template (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1kubeTargetVersionOverride:t~1then~1vpa.enabled:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kubeTargetVersionOverride": {
+            "description": "kubeTargetVersionOverride -- Allow overriding the `.Capabilities.KubeVersion.GitVersion` check. Useful for `helm template` commands.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "additionalProperties": {},
+            "description": "Are you using Prometheus Operator?",
+            "properties": {
+              "selector": {
+                "description": "[Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#prometheus-operator-1)\n[Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)\nserviceMonitor.selector -- Default to kube-prometheus install (CoreOS recommended), but should be set according to Prometheus install.",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1732,10 +471,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more~1else~1any"
+            "$ref": "#/$defs/constrains~1fullnameOverride"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null"
+            "$ref": "#/$defs/constrains~1vpa.enabled:t@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
           }
         ]
       },
@@ -1743,93 +488,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1vpa.enabled:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "nameOverride -- String to partially override `cluster-autoscaler.fullname` template (will maintain the release name)",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kubeTargetVersionOverride+4more@6"
-          },
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+kubeTargetVersionOverride:t+3more~1else~1any@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "description": "Are you using Prometheus Operator?",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride:t+nameOverride+nameOverride:t+1more~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "kubeTargetVersionOverride": {
-            "description": "kubeTargetVersionOverride -- Allow overriding the `.Capabilities.KubeVersion.GitVersion` check. Useful for `helm template` commands.",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+kubeTargetVersionOverride+kubeTargetVersionOverride:t+4more~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "additionalProperties": {},
-            "description": "Are you using Prometheus Operator?",
-            "properties": {
-              "selector": {
-                "description": "[Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#prometheus-operator-1)\n[Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)\nserviceMonitor.selector -- Default to kube-prometheus install (CoreOS recommended), but should be set according to Prometheus install.",
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1nameOverride+nameOverride:t+serviceMonitor.enabled:t+vpa~1else~1fail"
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1serviceMonitor.enabled:t+vpa~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -1840,6 +499,37 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -2060,7 +750,8 @@
           "additionalProperties": {},
           "description": "[Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#prometheus-operator-1)\n[Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)\nserviceMonitor.selector -- Default to kube-prometheus install (CoreOS recommended), but should be set according to Prometheus install."
         }
-      }
+      },
+      "type": "object"
     },
     "tolerations": {
       "description": "tolerations -- List of node taints to tolerate (requires Kubernetes >= 1.6)."

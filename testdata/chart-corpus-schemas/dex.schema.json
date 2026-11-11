@@ -14,9 +14,6 @@
     "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.annotations"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
@@ -30,6 +27,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations"
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.annotations"
@@ -54,30 +54,24 @@
     "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-        },
-        {
           "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride:t+serviceMonitor+6more"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
+          "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
         }
       ]
     },
     "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride:t+serviceMonitor+6more": {
       "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
@@ -86,6 +80,12 @@
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1serviceMonitor.annotations"
         },
         {
           "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.annotations"
@@ -152,10 +152,10 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+serviceMonitor.enabled:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
@@ -461,24 +461,6 @@
         }
       ]
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t+serviceMonitor.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1serviceMonitor.enabled:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+serviceMonitor.enabled:t~1else~1fail"
-      }
-    },
     "when/fullnameOverride:t/then/serviceMonitor.enabled:t/else/fail": {
       "else": false,
       "if": {
@@ -486,15 +468,6 @@
       },
       "then": {
         "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/fullnameOverride+serviceMonitor.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled:t~1then~1fullnameOverride~1else~1fail"
       }
     },
     "when/nameOverride:t/then/serviceMonitor.enabled:t/else/fail": {
@@ -519,15 +492,6 @@
         "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
       },
       "then": true
-    },
-    "when/serviceMonitor.enabled:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -535,9 +499,17 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2"
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1serviceMonitor.enabled:t~1else~1fail"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "A name in place of the chart name for `app:` labels.",
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -555,17 +527,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t+serviceMonitor.enabled:t~1else~1any"
+        "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2"
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "A name in place of the chart name for `app:` labels.",
-            "type": "string"
-          }
-        }
-      }
+      "then": false
     },
     {
       "if": {

@@ -2,24 +2,21 @@
   "$defs": {
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       }
     },
     "constrains/nameOverride:t": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
         }
       },
       "required": [
@@ -71,7 +68,7 @@
         }
       ]
     },
-    "when/imagePullSecrets:t/then/nameOverride+nameOverride:t+serviceAccount.create:t/else/fail": {
+    "when/imagePullSecrets:t/then/serviceAccount.create:t/else/fail": {
       "else": false,
       "if": {
         "properties": {
@@ -85,25 +82,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+serviceAccount.create:t~1else~1any"
-      }
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/nameOverride+serviceAccount.create:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1nameOverride~1else~1fail"
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1fail"
       }
     },
     "when/nameOverride:t/then/serviceAccount.create:t/else/fail": {
@@ -112,7 +91,7 @@
         "$ref": "#/$defs/constrains~1nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1fail"
+        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1any~1else~1fail@2"
       }
     },
     "when/serviceAccount.create:t/then/any/else/fail": {
@@ -128,15 +107,6 @@
         "$ref": "#/$defs/constrains~1serviceAccount.create:t"
       },
       "then": true
-    },
-    "when/serviceAccount.create:t/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceAccount.create:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -191,20 +161,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1serviceAccount.create:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1imagePullSecrets:t~1then~1nameOverride+nameOverride:t+serviceAccount.create:t~1else~1fail"
+        "$ref": "#/$defs/when~1imagePullSecrets:t~1then~1serviceAccount.create:t~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -216,6 +173,19 @@
               "null",
               "object"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1serviceAccount.create:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
           }
         }
       }

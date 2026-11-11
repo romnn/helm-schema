@@ -86,14 +86,50 @@
         }
       ]
     },
-    "values/worker/anyOf/array+null,boolean,number+object+string": {
+    "values/replicas/allOf/not/object": {
+      "allOf": [
+        {
+          "not": {
+            "additionalProperties": {
+              "$ref": "#/$defs/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
+            },
+            "propertyNames": {
+              "$ref": "#/$defs/values~1replicas~1string"
+            },
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "additionalProperties": {
+              "not": {
+                "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+              },
+              "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+              "type": "string"
+            },
+            "maxProperties": 1,
+            "minProperties": 1,
+            "propertyNames": {
+              "minLength": 1,
+              "not": {
+                "pattern": "[^A-Za-z0-9_.$/+-]"
+              },
+              "type": "string"
+            },
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "values/replicas/anyOf/array+null,boolean,number+object+string": {
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1worker~1anyOf~1null,boolean,number+string"
+            "$ref": "#/$defs/values~1replicas~1anyOf~1null,boolean,number+string"
           },
           "propertyNames": {
-            "$ref": "#/$defs/values~1worker~1string"
+            "$ref": "#/$defs/values~1replicas~1string"
           },
           "type": "object"
         },
@@ -106,16 +142,16 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/values~1worker~1anyOf~1null,boolean,number+string"
+            "$ref": "#/$defs/values~1replicas~1anyOf~1null,boolean,number+string"
           },
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1worker~1string"
+          "$ref": "#/$defs/values~1replicas~1string"
         }
       ]
     },
-    "values/worker/anyOf/null,boolean,number+string": {
+    "values/replicas/anyOf/null,boolean,number+string": {
       "anyOf": [
         {
           "type": [
@@ -125,20 +161,53 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1worker~1string"
+          "$ref": "#/$defs/values~1replicas~1string"
         }
       ]
     },
-    "values/worker/string": {
+    "values/replicas/integer:int32;number-of-desired-pods": {
+      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "values/replicas/null:int32;number-of-desired-pods": {
+      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+      "format": "int32",
+      "type": "null"
+    },
+    "values/replicas/string": {
       "not": {
         "pattern": "[^A-Za-z0-9_./+-]"
       },
+      "type": "string"
+    },
+    "values/replicas/string;pattern-0-1-9": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/replicas/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/replicas/string;pattern-r-n": {
+      "not": {
+        "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+      },
+      "pattern": "[\\r\\n]",
       "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "version": {
+          "type": "string"
+        }
+      }
+    },
     {
       "additionalProperties": {},
       "properties": {
@@ -156,7 +225,8 @@
       "additionalProperties": {},
       "properties": {
         "kind": {}
-      }
+      },
+      "type": "object"
     },
     "global": {},
     "guard": {
@@ -164,7 +234,8 @@
       "properties": {
         "enabled": {},
         "message": {}
-      }
+      },
+      "type": "object"
     },
     "host": {
       "additionalProperties": {},
@@ -201,9 +272,59 @@
           ]
         },
         "setting": {}
-      }
+      },
+      "type": "object"
     },
-    "replicas": {},
+    "replicas": {
+      "allOf": [
+        {
+          "if": {
+            "type": "array"
+          },
+          "then": {
+            "not": {
+              "items": {
+                "$ref": "#/$defs/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
+              },
+              "type": "array"
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/values~1replicas~1allOf~1not~1object"
+          }
+        }
+      ],
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1replicas~1string;pattern-r-n"
+        },
+        {
+          "$ref": "#/$defs/values~1replicas~1integer:int32;number-of-desired-pods"
+        },
+        {
+          "$ref": "#/$defs/values~1replicas~1null:int32;number-of-desired-pods"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1replicas~1string;pattern-0-1-9"
+        },
+        {
+          "$ref": "#/$defs/values~1replicas~1string;pattern-null-null-null"
+        }
+      ]
+    },
     "requiredText": {},
     "version": {},
     "worker": {
@@ -243,7 +364,7 @@
               "replicas": {
                 "not": {
                   "items": {
-                    "$ref": "#/$defs/values~1worker~1anyOf~1array+null,boolean,number+object+string"
+                    "$ref": "#/$defs/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
                   },
                   "type": "array"
                 }
@@ -275,21 +396,13 @@
               "replicas": {
                 "anyOf": [
                   {
-                    "not": {
-                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
-                    },
-                    "pattern": "[\\r\\n]",
-                    "type": "string"
+                    "$ref": "#/$defs/values~1replicas~1string;pattern-r-n"
                   },
                   {
-                    "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-                    "format": "int32",
-                    "type": "integer"
+                    "$ref": "#/$defs/values~1replicas~1integer:int32;number-of-desired-pods"
                   },
                   {
-                    "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-                    "format": "int32",
-                    "type": "null"
+                    "$ref": "#/$defs/values~1replicas~1null:int32;number-of-desired-pods"
                   },
                   {
                     "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
@@ -300,12 +413,10 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-                    "type": "string"
+                    "$ref": "#/$defs/values~1replicas~1string;pattern-0-1-9"
                   },
                   {
-                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                    "type": "string"
+                    "$ref": "#/$defs/values~1replicas~1string;pattern-null-null-null"
                   }
                 ]
               }
@@ -344,40 +455,7 @@
             "additionalProperties": {},
             "properties": {
               "replicas": {
-                "allOf": [
-                  {
-                    "not": {
-                      "additionalProperties": {
-                        "$ref": "#/$defs/values~1worker~1anyOf~1array+null,boolean,number+object+string"
-                      },
-                      "propertyNames": {
-                        "$ref": "#/$defs/values~1worker~1string"
-                      },
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "not": {
-                      "additionalProperties": {
-                        "not": {
-                          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
-                        },
-                        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
-                        "type": "string"
-                      },
-                      "maxProperties": 1,
-                      "minProperties": 1,
-                      "propertyNames": {
-                        "minLength": 1,
-                        "not": {
-                          "pattern": "[^A-Za-z0-9_.$/+-]"
-                        },
-                        "type": "string"
-                      },
-                      "type": "object"
-                    }
-                  }
-                ]
+                "$ref": "#/$defs/values~1replicas~1allOf~1not~1object"
               }
             }
           }

@@ -5,32 +5,6 @@
         "$ref": "#/$defs/constrains~1'$chart_tests':t@3"
       }
     },
-    "constrains/'$chart_tests':t+image.digest+image.digest:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1image.digest:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1'$chart_tests':t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.digest"
-        }
-      ]
-    },
-    "constrains/'$chart_tests':t+image.digest+image.digest:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1image.digest:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1'$chart_tests':t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.digest"
-        }
-      ]
-    },
     "constrains/'$chart_tests':t@2": {
       "not": {
         "$ref": "#/$defs/constrains~1'$chart_tests':t@3"
@@ -47,158 +21,100 @@
       ],
       "type": "object"
     },
-    "constrains/controller+controller.type+controller.type=null": {
-      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@4"
+    "constrains/autoscaling.enabled:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1autoscaling.enabled:t@2"
+      }
     },
-    "constrains/controller+controller.type+controller.type=null@2": {
-      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
-    },
-    "constrains/controller+controller.type+controller.type=null@3": {
-      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@5"
-    },
-    "constrains/controller+controller.type+controller.type=null@4": {
-      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@5"
-    },
-    "constrains/controller+controller.type+controller.type=null@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.type@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type@5"
+    "constrains/autoscaling.enabled:t@2": {
+      "properties": {
+        "autoscaling": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
         }
-      ]
+      },
+      "required": [
+        "autoscaling"
+      ],
+      "type": "object"
     },
     "constrains/controller.autoscaling.enabled:t": {
-      "$ref": "#/$defs/constrains~1controller.autoscaling.enabled:t@3"
-    },
-    "constrains/controller.autoscaling.enabled:t@2": {
-      "$ref": "#/$defs/constrains~1controller.autoscaling.enabled:t@3"
-    },
-    "constrains/controller.autoscaling.enabled:t@3": {
       "not": {
         "properties": {
           "controller": {
+            "$ref": "#/$defs/constrains~1autoscaling.enabled:t@2"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/controller.type+controller.type=null": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "autoscaling": {
+              "controller": {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
+                  "type": {}
                 },
                 "required": [
-                  "enabled"
+                  "type"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "autoscaling"
+              "controller"
             ],
             "type": "object"
           }
         },
-        "required": [
-          "controller"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/controller.type": {
-      "$ref": "#/$defs/when~1controller.type~1then~1any~1else~1fail"
-    },
-    "constrains/controller.type+controller.type=null": {
-      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1controller.type@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=null"
+          "properties": {
+            "controller": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "controller"
+          ],
+          "type": "object"
         }
       ]
     },
-    "constrains/controller.type=null": {
-      "properties": {
-        "controller": {
-          "properties": {
-            "type": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "controller"
-      ],
-      "type": "object"
-    },
     "constrains/controller.type=statefulset": {
+      "$ref": "#/$defs/when~1controller.type=statefulset~1then~1any~1else~1fail"
+    },
+    "constrains/controller.type=statefulset@2": {
+      "$ref": "#/$defs/when~1controller.type=statefulset~1then~1any~1else~1fail"
+    },
+    "constrains/controller.type=statefulset@3": {
+      "$ref": "#/$defs/when~1controller.type=statefulset~1then~1any~1else~1fail"
+    },
+    "constrains/controller.type=statefulset@4": {
       "properties": {
         "controller": {
-          "properties": {
-            "type": {
-              "enum": [
-                "statefulset"
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "controller"
-      ],
-      "type": "object"
-    },
-    "constrains/controller.type@2": {
-      "$ref": "#/$defs/when~1controller.type~1then~1any~1else~1fail"
-    },
-    "constrains/controller.type@3": {
-      "$ref": "#/$defs/when~1controller.type~1then~1any~1else~1fail"
-    },
-    "constrains/controller.type@4": {
-      "not": {
-        "properties": {
-          "controller": {
-            "properties": {
-              "type": {}
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "controller"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/controller.type@5": {
-      "properties": {
-        "controller": {
-          "properties": {
-            "type": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1type=statefulset"
         }
       },
       "required": [
@@ -225,229 +141,16 @@
         "type": "object"
       }
     },
-    "constrains/enableStatefulSetAutoDeletePVC:t": {
-      "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@4"
-    },
-    "constrains/enableStatefulSetAutoDeletePVC:t@2": {
-      "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@3"
-    },
-    "constrains/enableStatefulSetAutoDeletePVC:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@5"
-      }
-    },
-    "constrains/enableStatefulSetAutoDeletePVC:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@5"
-      }
-    },
-    "constrains/enableStatefulSetAutoDeletePVC:t@5": {
+    "constrains/type=statefulset": {
       "properties": {
-        "enableStatefulSetAutoDeletePVC": {
-          "$ref": "#/$defs/t"
+        "type": {
+          "enum": [
+            "statefulset"
+          ]
         }
       },
       "required": [
-        "enableStatefulSetAutoDeletePVC"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@4"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/image.digest": {
-      "properties": {
-        "image": {
-          "properties": {
-            "digest": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "digest"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/image.digest:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1image.digest:t@3"
-      }
-    },
-    "constrains/image.digest:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1image.digest:t@3"
-      }
-    },
-    "constrains/image.digest:t@3": {
-      "properties": {
-        "image": {
-          "properties": {
-            "digest": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "digest"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
+        "type"
       ],
       "type": "object"
     },
@@ -476,407 +179,148 @@
         }
       ]
     },
-    "when/'$chart_tests':t/then/fail/else/controller+controller.type+controller.type=null+controller.type=statefulset+6more": {
+    "when/'$chart_tests':t/then/fail/else/controller.type=statefulset+image.digest:t": {
       "else": {
-        "$ref": "#/$defs/when~1enableStatefulSetAutoDeletePVC:t~1then~1fail~1else~1controller+controller.type+controller.type=null+controller.type=statefulset+5more"
+        "$ref": "#/$defs/when~1image.digest:t~1then~1controller.type=statefulset~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1'$chart_tests':t@3"
       },
       "then": false
     },
-    "when/controller.type+controller.type=null/then/any/else/controller.type": {
+    "when/controller.type+controller.type=null/then/fail/else/controller.type": {
       "else": {
-        "$ref": "#/$defs/constrains~1controller.type"
+        "$ref": "#/$defs/when~1controller.type~1then~1fail~1else~1any"
       },
       "if": {
         "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": true
-    },
-    "when/controller.type+controller.type=null/then/any/else/controller.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1any~1else~1controller.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": true
-    },
-    "when/controller.type+controller.type=null/then/any/else/controller.type@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1controller.type@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": true
-    },
-    "when/controller.type+controller.type=null/then/any/else/controller.type@4": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1any~1else~1controller.type@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": true
-    },
-    "when/controller.type+controller.type=null/then/any/else/controller.type@5": {
-      "else": {
-        "$ref": "#/$defs/constrains~1controller.type@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": true
-    },
-    "when/controller.type+controller.type=null/then/any/else/controller.type@6": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1any~1else~1controller.type@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": true
-    },
-    "when/controller.type+controller.type=null/then/fullnameOverride+nameOverride/else/controller.type": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type~1then~1fullnameOverride+nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/controller.type+controller.type=null/then/fullnameOverride+nameOverride/else/controller.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fullnameOverride+nameOverride~1else~1controller.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/controller.type+controller.type=null/then/fullnameOverride/else/controller.type": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type~1then~1fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/controller.type+controller.type=null/then/fullnameOverride/else/controller.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fullnameOverride~1else~1controller.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/controller.type+controller.type=null/then/fullnameOverride/else/controller.type@3": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type~1then~1fullnameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/controller.type+controller.type=null/then/fullnameOverride/else/controller.type@4": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fullnameOverride~1else~1controller.type@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/controller.type+controller.type=null/then/nameOverride/else/controller.type": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/controller.type+controller.type=null/then/nameOverride/else/controller.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1nameOverride~1else~1controller.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/controller.type/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type@5"
-      },
-      "then": true
-    },
-    "when/controller.type/then/fullnameOverride+nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1nameOverride~1else~1fail"
-      }
-    },
-    "when/controller.type/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/controller.type/then/fullnameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/controller.type/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/controller.type=statefulset/then/controller+controller.type+controller.type=null+fullnameOverride+nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=statefulset"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fullnameOverride+nameOverride~1else~1controller.type@2"
-      }
-    },
-    "when/controller.type=statefulset/then/controller+controller.type+controller.type=null+fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=statefulset"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fullnameOverride~1else~1controller.type@2"
-      }
-    },
-    "when/controller.type=statefulset/then/controller+controller.type+controller.type=null+fullnameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=statefulset"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fullnameOverride~1else~1controller.type@4"
-      }
-    },
-    "when/controller.type=statefulset/then/controller+controller.type+controller.type=null+nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=statefulset"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1nameOverride~1else~1controller.type@2"
-      }
-    },
-    "when/controller.type=statefulset/then/controller+controller.type+controller.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=statefulset"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1any~1else~1controller.type@2"
-      }
-    },
-    "when/controller.type=statefulset/then/controller+controller.type+controller.type=null/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=statefulset"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1any~1else~1controller.type@4"
-      }
-    },
-    "when/controller.type=statefulset/then/controller+controller.type+controller.type=null/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=statefulset"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1any~1else~1controller.type@6"
-      }
-    },
-    "when/enableStatefulSetAutoDeletePVC:t/then/fail/else/controller+controller.type+controller.type=null+controller.type=statefulset+1more": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@5"
       },
       "then": false
     },
-    "when/enableStatefulSetAutoDeletePVC:t/then/fail/else/controller+controller.type+controller.type=null+controller.type=statefulset+3more": {
+    "when/controller.type+controller.type=null/then/fail/else/controller.type@2": {
       "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset+2more~1else~1any"
+        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fail~1else~1controller.type"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@5"
+        "$ref": "#/$defs/constrains~1controller.type+controller.type=null"
       },
       "then": false
     },
-    "when/enableStatefulSetAutoDeletePVC:t/then/fail/else/controller+controller.type+controller.type=null+controller.type=statefulset+5more": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset+4more~1else~1any"
-      },
+    "when/controller.type/then/fail/else/any": {
+      "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@5"
+        "properties": {
+          "controller": {
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
       },
       "then": false
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
+    "when/controller.type=statefulset/then/any/else/controller+controller.type+controller.type=null": {
+      "else": {
+        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fail~1else~1controller.type@2"
+      },
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
+        "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
       },
       "then": true
     },
-    "when/fullnameOverride/then/any/else/fail@2": {
+    "when/controller.type=statefulset/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
+        "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
       },
       "then": true
     },
-    "when/fullnameOverride/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/fullnameOverride:t/then/controller+controller.type+controller.type=null+controller.type=statefulset+2more/else/any": {
+    "when/enableStatefulSetAutoDeletePVC:t/then/controller+controller.type+controller.type=null+controller.type=statefulset/else/any": {
       "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset~1else~1fail"
+        "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fail~1else~1controller.type@2"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "properties": {
+          "enableStatefulSetAutoDeletePVC": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "enableStatefulSetAutoDeletePVC"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset+1more~1else~1fail"
+        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1any~1else~1controller+controller.type+controller.type=null"
       }
     },
-    "when/fullnameOverride:t/then/controller+controller.type+controller.type=null+controller.type=statefulset+4more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1image.digest:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset+2more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1image.digest:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset+3more~1else~1fail"
-      }
-    },
-    "when/fullnameOverride:t/then/controller+controller.type+controller.type=null+controller.type=statefulset/else/fail": {
+    "when/fullnameOverride:t/then/controller.type=statefulset/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null~1else~1fail"
+        "$ref": "#/$defs/constrains~1controller.type=statefulset"
       }
     },
-    "when/image.digest:t/then/controller+controller.type+controller.type=null+controller.type=statefulset+2more/else/fail": {
+    "when/image.digest:t/then/controller.type=statefulset/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1image.digest:t@3"
+        "properties": {
+          "image": {
+            "properties": {
+              "digest": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "digest"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset+1more~1else~1any"
+        "$ref": "#/$defs/constrains~1controller.type=statefulset@2"
       }
     },
-    "when/image.digest:t/then/controller+controller.type+controller.type=null+controller.type=statefulset+3more/else/fail": {
+    "when/nameOverride:t/then/controller.type=statefulset/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1image.digest:t@3"
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset+2more~1else~1any"
-      }
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/controller+controller.type+controller.type=null+controller.type=statefulset+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null~1else~1fail@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null+nameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/controller+controller.type+controller.type=null+controller.type=statefulset+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null+fullnameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/controller+controller.type+controller.type=null+controller.type=statefulset+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null+fullnameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null+fullnameOverride+nameOverride~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/controller+controller.type+controller.type=null+controller.type=statefulset/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1controller.type=statefulset~1then~1controller+controller.type+controller.type=null~1else~1fail@2"
+        "$ref": "#/$defs/constrains~1controller.type=statefulset@3"
       }
     }
   },
@@ -887,25 +331,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            "$ref": "#/$defs/constrains~1'$chart_tests':t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
+            "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
           },
           {
             "anyOf": [
@@ -941,58 +370,9 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "controller": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "controller": {}
-              },
-              "required": [
-                "controller"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t+image.digest+image.digest:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
+            "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
           },
           {
             "anyOf": [
@@ -1021,6 +401,57 @@
                 }
               }
             ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1'$chart_tests':t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "controller": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {}
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -1127,7 +558,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1enableStatefulSetAutoDeletePVC:t~1then~1fail~1else~1controller+controller.type+controller.type=null+controller.type=statefulset+3more"
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1controller.type=statefulset~1else~1fail"
       },
       "then": {
         "if": {
@@ -1160,150 +591,47 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "controller": {
-                      "properties": {
-                        "autoscaling": {
-                          "properties": {
-                            "horizontal": {}
-                          },
-                          "required": [
-                            "horizontal"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "autoscaling"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "autoscaling": {
-                        "properties": {
-                          "horizontal": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "horizontal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoscaling"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
+            "properties": {
+              "agent": {
+                "$ref": "#/$defs/t"
               }
-            ]
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.autoscaling.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t+image.digest+image.digest:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
+            "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
           }
         ]
       },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1enableStatefulSetAutoDeletePVC:t~1then~1fail~1else~1controller+controller.type+controller.type=null+controller.type=statefulset+1more"
-      },
       "then": {
-        "if": {
-          "properties": {
-            "fullnameOverride": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "additionalProperties": {},
-          "properties": {
-            "fullnameOverride": {
-              "description": "Overrides the chart's computed fullname. Used to change the full prefix of\nresource names.",
-              "type": "string"
-            }
+        "additionalProperties": {},
+        "properties": {
+          "agent": {
+            "type": [
+              "null",
+              "object"
+            ]
           }
         }
       }
     },
     {
       "if": {
+        "$ref": "#/$defs/when~1enableStatefulSetAutoDeletePVC:t~1then~1controller+controller.type+controller.type=null+controller.type=statefulset~1else~1any"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
+          },
+          {
             "$ref": "#/$defs/constrains~1controller.autoscaling.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t+image.digest+image.digest:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
           }
         ]
       },
@@ -1329,114 +657,38 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          }
-        ]
+        "$ref": "#/$defs/constrains~1controller.type=statefulset@4"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "type": "object"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "autoscaling": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "alloy": {
+                "description": "Various Alloy settings. For backwards compatibility with the grafana-agent\nchart, this field may also be called \"agent\". Naming this field \"agent\" is\ndeprecated and will be removed in a future release.",
+                "type": "object"
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t+image.digest+image.digest:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "autoscaling": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "autoscaling"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "controller": {
-                      "properties": {
-                        "autoscaling": {}
-                      },
-                      "required": [
-                        "autoscaling"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1'$chart_tests':t~1then~1fail~1else~1controller+controller.type+controller.type=null+controller.type=statefulset+6more"
+        "$ref": "#/$defs/when~1'$chart_tests':t~1then~1fail~1else~1controller.type=statefulset+image.digest:t"
       },
       "then": {
         "if": {
@@ -1480,55 +732,33 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t+image.digest+image.digest:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          }
-        ]
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1controller.type=statefulset~1else~1fail"
       },
       "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "autoscaling": {
-                    "type": "object"
-                  }
-                }
+        "if": {
+          "properties": {
+            "fullnameOverride": {
+              "not": {
+                "enum": [
+                  null
+                ]
               }
             }
           },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "alloy": {
-                "description": "Various Alloy settings. For backwards compatibility with the grafana-agent\nchart, this field may also be called \"agent\". Naming this field \"agent\" is\ndeprecated and will be removed in a future release.",
-                "type": "object"
-              }
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "fullnameOverride": {
+              "description": "Overrides the chart's computed fullname. Used to change the full prefix of\nresource names.",
+              "type": "string"
             }
           }
-        ]
+        }
       }
     },
     {
@@ -1539,66 +769,6 @@
             "null",
             "object"
           ]
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "agent": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "agent"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.type=statefulset"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1'$chart_tests':t+image.digest+image.digest:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1enableStatefulSetAutoDeletePVC:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "properties": {
-              "alloy": {
-                "type": "object"
-              }
-            },
-            "required": [
-              "alloy"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "agent": {
-            "type": [
-              "null",
-              "object"
-            ]
-          }
         }
       }
     }
@@ -1614,6 +784,103 @@
     },
     "controller": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "autoscaling": {
+                          "properties": {
+                            "horizontal": {}
+                          },
+                          "required": [
+                            "horizontal"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "autoscaling"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "autoscaling": {
+                        "properties": {
+                          "horizontal": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "horizontal"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoscaling"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1autoscaling.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1type=statefulset"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1type=statefulset"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoscaling": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "autoscaling"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "autoscaling": {}
+                      },
+                      "required": [
+                        "autoscaling"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "autoscaling": {
           "additionalProperties": {},

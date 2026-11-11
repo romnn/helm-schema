@@ -1,19 +1,5 @@
 {
   "$defs": {
-    "constrains/enablePSP:t": {
-      "properties": {
-        "enablePSP": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enablePSP"
-      ],
-      "type": "object"
-    },
-    "constrains/enablePSP:t+ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more": {
-      "$ref": "#/$defs/when~1enablePSP:t~1then~1fail~1else~1ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more"
-    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -22,25 +8,6 @@
       },
       "required": [
         "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/global.imagePullSecrets": {
-      "properties": {
-        "global": {
-          "properties": {
-            "imagePullSecrets": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "imagePullSecrets"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
       ],
       "type": "object"
     },
@@ -63,1040 +30,98 @@
       ],
       "type": "object"
     },
+    "constrains/image+image=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "image": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "image": {}
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/image.longhorn+image.longhorn=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "image": {
+              "$ref": "#/$defs/constrains~1longhorn=null"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "image": {
+                "$ref": "#/$defs/constrains~1longhorn"
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t+networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+2more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1ingress+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+networkPolicies+networkPolicies.type+networkPolicies.type=null"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more"
-      }
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@2"
-      }
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+5more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@8"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+7more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+7more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@8"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@8"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@8"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@8"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@8"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+6more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+4more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+5more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
-        }
-      ]
-    },
-    "constrains/ingress+namespaceOverride:t+networkPolicies.enabled:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        }
-      ]
-    },
-    "constrains/ingress+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t": {
-      "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+networkPolicies+networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@5"
         }
       ]
     },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+2more@2": {
+    "constrains/ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+2more"
+        "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more"
       }
+    },
+    "constrains/ingress+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t": {
+      "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more": {
       "allOf": [
@@ -1104,13 +129,10 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1122,10 +144,76 @@
           "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@12"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@10": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@8"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@11": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@12": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@2"
         }
       ]
     },
@@ -1135,13 +223,10 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1156,7 +241,10 @@
           "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         }
       ]
     },
@@ -1166,10 +254,7 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1182,6 +267,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@12"
@@ -1194,10 +282,7 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1213,26 +298,257 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@3"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@2"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@4"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@8"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@8": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@8"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@9": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
         }
       ]
     },
@@ -1242,10 +558,19 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
@@ -1254,19 +579,10 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@12"
@@ -1279,16 +595,44 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@11": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1300,19 +644,6 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@12"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@11": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
         },
         {
@@ -1322,7 +653,20 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1namespaceOverride@12"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@12": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1337,41 +681,13 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@12": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@12"
         }
       ]
     },
@@ -1381,16 +697,7 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1400,6 +707,15 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@12"
@@ -1412,16 +728,7 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1434,62 +741,293 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@15": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@13"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@8"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@16": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@4"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@9"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@14"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@17": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@12"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@8"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@18": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@7"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@8"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@19": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@5"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@10"
+          "$ref": "#/$defs/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
         }
       ]
     },
@@ -1499,57 +1037,19 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@13"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@20": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@11"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@6"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
@@ -1561,16 +1061,159 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@20": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@8"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@21": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@11"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@22": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@12"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@23": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@24": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@2"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@25": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@9"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@26": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@10"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
         },
         {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
           "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@12"
@@ -1583,127 +1226,13 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@13"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@12"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@6": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@13"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@7": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1718,17 +1247,35 @@
           "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         }
       ]
     },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@8": {
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@5": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
@@ -1740,7 +1287,57 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@12"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@7": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1752,19 +1349,6 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride@12"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@9": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
         },
         {
@@ -1774,7 +1358,20 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@12"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@8": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1787,6 +1384,194 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@9": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@12"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+1more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+2more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+2more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+2more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
         }
       ]
     },
@@ -1796,13 +1581,10 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1814,7 +1596,10 @@
           "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         }
       ]
     },
@@ -1824,10 +1609,7 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1840,6 +1622,9 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         }
       ]
     },
@@ -1853,16 +1638,112 @@
         }
       ]
     },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+4more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+4more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        }
+      ]
+    },
     "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
@@ -1871,29 +1752,71 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@10": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@11": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@7"
+        },
+        {
           "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@6"
         },
         {
           "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@12": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@4"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@13": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@5"
         }
       ]
     },
@@ -1903,13 +1826,22 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
@@ -1918,16 +1850,7 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         }
       ]
     },
@@ -1937,7 +1860,19 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@4"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
@@ -1949,19 +1884,7 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         }
       ]
     },
@@ -1971,7 +1894,19 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
@@ -1980,7 +1915,20 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -1993,37 +1941,12 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
         }
       ]
     },
@@ -2033,16 +1956,10 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -2054,7 +1971,13 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@5"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         }
       ]
     },
@@ -2064,16 +1987,7 @@
           "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
-        },
-        {
-          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
@@ -2083,48 +1997,115 @@
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@8": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@2"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@5"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@7"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
         }
       ]
     },
     "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@9": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@4"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more"
+          "$ref": "#/$defs/constrains~1networkPolicies.type=k3s@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke2@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=''@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
+        }
+      ]
+    },
+    "constrains/ingress.enabled:t+namespaceOverride:t+networkPolicies@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
         }
       ]
     },
     "constrains/ingress.enabled:t+networkPolicies+networkPolicies.type+networkPolicies.type=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
+          "$ref": "#/$defs/constrains~1ingress.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@3"
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@4"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
         }
       ]
     },
@@ -2149,46 +2130,47 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
-      "$ref": "#/$defs/constrains~1nameOverride@4"
-    },
-    "constrains/nameOverride:t": {
+    "constrains/longhorn": {
       "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
+        "longhorn": {}
       },
       "required": [
-        "nameOverride"
+        "longhorn"
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
-      "$ref": "#/$defs/constrains~1nameOverride@5"
-    },
-    "constrains/nameOverride@3": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@4": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@5": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@6": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@7": {
-      "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride@8": {
+    "constrains/longhorn=null": {
       "properties": {
-        "nameOverride": {
-          "type": "string"
+        "longhorn": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "nameOverride"
+        "longhorn"
+      ],
+      "type": "object"
+    },
+    "constrains/manager": {
+      "properties": {
+        "manager": {}
+      },
+      "required": [
+        "manager"
+      ],
+      "type": "object"
+    },
+    "constrains/manager=null": {
+      "properties": {
+        "manager": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "manager"
       ],
       "type": "object"
     },
@@ -2217,19 +2199,19 @@
     "constrains/namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
+          "$ref": "#/$defs/constrains~1namespaceOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@7"
@@ -2251,16 +2233,16 @@
     "constrains/namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        },
-        {
           "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1networkPolicies.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1namespaceOverride@3"
         },
         {
           "$ref": "#/$defs/constrains~1namespaceOverride@7"
@@ -2741,10 +2723,10 @@
     "constrains/namespaceOverride:t+networkPolicies.enabled:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
+          "$ref": "#/$defs/constrains~1namespaceOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+          "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
         }
       ]
     },
@@ -3173,7 +3155,7 @@
       "type": "object"
     },
     "constrains/networkPolicies.type": {
-      "$ref": "#/$defs/constrains~1networkPolicies.type@8"
+      "$ref": "#/$defs/constrains~1networkPolicies.type@2"
     },
     "constrains/networkPolicies.type+networkPolicies.type=null": {
       "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@6"
@@ -3193,7 +3175,7 @@
           "$ref": "#/$defs/constrains~1networkPolicies.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1networkPolicies.type@9"
+          "$ref": "#/$defs/constrains~1networkPolicies.type@3"
         }
       ]
     },
@@ -3218,7 +3200,7 @@
       }
     },
     "constrains/networkPolicies.type=''": {
-      "$ref": "#/$defs/constrains~1networkPolicies.type=''@3"
+      "$ref": "#/$defs/constrains~1networkPolicies.type=''@2"
     },
     "constrains/networkPolicies.type=''@2": {
       "not": {
@@ -3310,7 +3292,7 @@
       "type": "object"
     },
     "constrains/networkPolicies.type=rke1": {
-      "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@3"
+      "$ref": "#/$defs/constrains~1networkPolicies.type=rke1@2"
     },
     "constrains/networkPolicies.type=rke1@2": {
       "not": {
@@ -3377,49 +3359,12 @@
       ],
       "type": "object"
     },
-    "constrains/networkPolicies.type@10": {
-      "properties": {
-        "networkPolicies": {
-          "properties": {
-            "type": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "networkPolicies"
-      ],
-      "type": "object"
-    },
     "constrains/networkPolicies.type@2": {
-      "$ref": "#/$defs/when~1networkPolicies.type~1then~1any~1else~1fail"
-    },
-    "constrains/networkPolicies.type@3": {
-      "$ref": "#/$defs/when~1networkPolicies.type~1then~1any~1else~1fail"
-    },
-    "constrains/networkPolicies.type@4": {
-      "$ref": "#/$defs/when~1networkPolicies.type~1then~1any~1else~1fail"
-    },
-    "constrains/networkPolicies.type@5": {
-      "$ref": "#/$defs/when~1networkPolicies.type~1then~1any~1else~1fail"
-    },
-    "constrains/networkPolicies.type@6": {
-      "$ref": "#/$defs/when~1networkPolicies.type~1then~1any~1else~1fail"
-    },
-    "constrains/networkPolicies.type@7": {
-      "$ref": "#/$defs/when~1networkPolicies.type~1then~1any~1else~1fail"
-    },
-    "constrains/networkPolicies.type@8": {
       "not": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+        "$ref": "#/$defs/constrains~1networkPolicies.type@4"
       }
     },
-    "constrains/networkPolicies.type@9": {
+    "constrains/networkPolicies.type@3": {
       "not": {
         "properties": {
           "networkPolicies": {
@@ -3438,46 +3383,51 @@
         "type": "object"
       }
     },
-    "constrains/privateRegistry.registrySecret": {
-      "$ref": "#/$defs/when~1privateRegistry.registrySecret~1then~1fail~1else~1any"
-    },
-    "constrains/privateRegistry.registrySecret:t": {
+    "constrains/networkPolicies.type@4": {
       "properties": {
-        "privateRegistry": {
+        "networkPolicies": {
           "properties": {
-            "registrySecret": {
-              "$ref": "#/$defs/t"
+            "type": {
+              "type": "string"
             }
           },
           "required": [
-            "registrySecret"
+            "type"
           ],
           "type": "object"
         }
       },
       "required": [
-        "privateRegistry"
+        "networkPolicies"
       ],
       "type": "object"
     },
     "constrains/privateRegistry.registryUrl:t": {
-      "properties": {
-        "privateRegistry": {
-          "properties": {
-            "registryUrl": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "registryUrl"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "privateRegistry"
-      ],
-      "type": "object"
+      "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t@3"
+    },
+    "constrains/privateRegistry.registryUrl:t@2": {
+      "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t@3"
+    },
+    "constrains/privateRegistry.registryUrl:t@3": {
+      "not": {
+        "properties": {
+          "privateRegistry": {
+            "properties": {
+              "registryUrl": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "registryUrl"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "privateRegistry"
+        ],
+        "type": "object"
+      }
     },
     "t": {
       "anyOf": [
@@ -3709,196 +3659,45 @@
       },
       "type": "string"
     },
-    "when/enablePSP:t/then/fail/else/global.imagePullSecrets+global.imagePullSecrets:t+ingress.enabled:t+nameOverride+4more": {
-      "else": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets:t~1then~1global.imagePullSecrets+ingress.enabled:t+nameOverride+nameOverride:t+3more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enablePSP:t"
-      },
-      "then": false
-    },
-    "when/enablePSP:t/then/fail/else/global.imagePullSecrets:t+ingress.enabled:t+nameOverride+nameOverride:t+5more": {
-      "else": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets:t~1then~1fail~1else~1ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+4more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enablePSP:t"
-      },
-      "then": false
-    },
-    "when/enablePSP:t/then/fail/else/ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more": {
-      "else": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enablePSP:t"
-      },
-      "then": false
-    },
-    "when/enablePSP:t/then/fail/else/ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enablePSP:t"
-      },
-      "then": false
-    },
-    "when/enablePSP:t/then/fail/else/ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+2more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enablePSP:t"
-      },
-      "then": false
-    },
-    "when/enablePSP:t/then/fail/else/ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+3more@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+2more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enablePSP:t"
-      },
-      "then": false
-    },
-    "when/enablePSP:t/then/fail/else/ingress.enabled:t+nameOverride:t+networkPolicies+networkPolicies.type+1more": {
-      "else": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1nameOverride:t+networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enablePSP:t"
-      },
-      "then": false
-    },
     "when/global.imagePullSecrets/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1global.imagePullSecrets"
+        "properties": {
+          "global": {
+            "properties": {
+              "imagePullSecrets": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "imagePullSecrets"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
       },
       "then": false
     },
-    "when/global.imagePullSecrets/then/fail/else/nameOverride": {
+    "when/global.imagePullSecrets:t/then/fail/else/privateRegistry.registrySecret+privateRegistry.registrySecret:t": {
       "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.imagePullSecrets"
-      },
-      "then": false
-    },
-    "when/global.imagePullSecrets/then/fail/else/nameOverride+networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1networkPolicies.type~1else~1fail@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.imagePullSecrets"
-      },
-      "then": false
-    },
-    "when/global.imagePullSecrets/then/fail/else/networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.imagePullSecrets"
-      },
-      "then": false
-    },
-    "when/global.imagePullSecrets:t/then/fail/else/ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+4more": {
-      "else": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+3more~1else~1any"
+        "$ref": "#/$defs/when~1privateRegistry.registrySecret:t~1then~1privateRegistry.registrySecret~1else~1fail"
       },
       "if": {
         "$ref": "#/$defs/constrains~1global.imagePullSecrets:t"
       },
       "then": false
     },
-    "when/global.imagePullSecrets:t/then/global.imagePullSecrets+ingress.enabled:t+nameOverride+nameOverride:t+3more/else/fail": {
+    "when/global.imagePullSecrets:t/then/global.imagePullSecrets/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1global.imagePullSecrets:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1global.imagePullSecrets+nameOverride+nameOverride:t+networkPolicies+2more~1else~1any"
-      }
-    },
-    "when/ingress.enabled:t/then/global.imagePullSecrets+nameOverride+nameOverride:t+networkPolicies+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1global.imagePullSecrets+nameOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1global.imagePullSecrets+nameOverride+networkPolicies+networkPolicies.enabled:t+2more~1else~1any"
-      }
-    },
-    "when/ingress.enabled:t/then/nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more~1else~1any"
-      }
-    },
-    "when/ingress.enabled:t/then/nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more~1else~1any@2"
-      }
-    },
-    "when/ingress.enabled:t/then/nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+privateRegistry.registryUrl:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+2more~1else~1any"
-      }
-    },
-    "when/ingress.enabled:t/then/nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+2more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+privateRegistry.registryUrl:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+2more~1else~1any@2"
-      }
-    },
-    "when/ingress.enabled:t/then/nameOverride+nameOverride:t+networkPolicies+networkPolicies.type+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+privateRegistry.registrySecret+privateRegistry.registrySecret:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+3more~1else~1any"
-      }
-    },
-    "when/ingress.enabled:t/then/nameOverride:t+networkPolicies+networkPolicies.type+networkPolicies.type=null/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more~1else~1fail"
+        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1any"
       }
     },
     "when/ingress.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null/else/fail": {
@@ -3910,356 +3709,20 @@
         "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1fail"
       }
     },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/networkPolicies.type+privateRegistry.registrySecret/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type~1then~1privateRegistry.registrySecret~1else~1fail"
-      }
-    },
-    "when/nameOverride/then/networkPolicies.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@2"
-      }
-    },
-    "when/nameOverride/then/networkPolicies.type/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@3"
-      }
-    },
-    "when/nameOverride/then/networkPolicies.type/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@4"
-      }
-    },
-    "when/nameOverride/then/networkPolicies.type/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@5"
-      }
-    },
-    "when/nameOverride/then/networkPolicies.type/else/fail@5": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@6"
-      }
-    },
-    "when/nameOverride/then/privateRegistry.registrySecret/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret"
-      }
-    },
     "when/nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
       },
       "then": true
-    },
-    "when/nameOverride:t/then/global.imagePullSecrets+nameOverride+networkPolicies+networkPolicies.enabled:t+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1global.imagePullSecrets+networkPolicies+networkPolicies.type+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1global.imagePullSecrets+nameOverride+networkPolicies+networkPolicies.type+1more~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/global.imagePullSecrets+nameOverride/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null+1more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+1more~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+2more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null+1more~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+1more~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null+2more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+2more~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+privateRegistry.registrySecret+privateRegistry.registrySecret:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registrySecret:t~1then~1privateRegistry.registrySecret~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registrySecret:t~1then~1nameOverride+privateRegistry.registrySecret~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+privateRegistry.registryUrl:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+privateRegistry.registryUrl:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1nameOverride@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/nameOverride:t/then/networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1any@3"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/global.imagePullSecrets+nameOverride+networkPolicies+networkPolicies.type+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1global.imagePullSecrets+nameOverride~1else~1networkPolicies.type@2"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/global.imagePullSecrets+networkPolicies+networkPolicies.type+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1global.imagePullSecrets~1else~1networkPolicies.type@2"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null@2"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registrySecret:t~1then~1nameOverride+privateRegistry.registrySecret~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registrySecret:t~1then~1nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+1more~1else~1fail"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type@2"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type@6"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1networkPolicies+networkPolicies.type+networkPolicies.type=null"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null+1more/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registryUrl:t~1then~1fail~1else~1networkPolicies+networkPolicies.type+networkPolicies.type=null@2"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1privateRegistry.registrySecret:t~1then~1privateRegistry.registrySecret~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1privateRegistry.registrySecret:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null+1more~1else~1fail"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@2"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@6"
-      }
-    },
-    "when/networkPolicies.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@10"
-      }
     },
     "when/networkPolicies.enabled:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null/else/fail": {
       "else": false,
@@ -4269,96 +3732,6 @@
       "then": {
         "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1fail~1else~1networkPolicies.type@2"
       }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@10": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@9"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@4": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@5": {
-      "else": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@6": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@7": {
-      "else": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@8": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@7"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/any/else/networkPolicies.type@9": {
-      "else": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@7"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": true
     },
     "when/networkPolicies.type+networkPolicies.type=null/then/fail/else/networkPolicies.type": {
       "else": {
@@ -4378,204 +3751,12 @@
       },
       "then": false
     },
-    "when/networkPolicies.type+networkPolicies.type=null/then/global.imagePullSecrets+nameOverride/else/networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1nameOverride+networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1nameOverride"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/global.imagePullSecrets+nameOverride/else/networkPolicies.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1global.imagePullSecrets+nameOverride~1else~1networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1nameOverride"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/global.imagePullSecrets/else/networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1any"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/global.imagePullSecrets/else/networkPolicies.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1global.imagePullSecrets~1else~1networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets~1then~1fail~1else~1any"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride+privateRegistry.registrySecret/else/networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1networkPolicies.type+privateRegistry.registrySecret~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1privateRegistry.registrySecret~1else~1fail"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride+privateRegistry.registrySecret/else/networkPolicies.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride+privateRegistry.registrySecret~1else~1networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1privateRegistry.registrySecret~1else~1fail"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1networkPolicies.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type@3": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1networkPolicies.type~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type@4": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type@5": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1networkPolicies.type~1else~1fail@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type@6": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type@7": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1networkPolicies.type~1else~1fail@5"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@7"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/nameOverride/else/networkPolicies.type@8": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type@7"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1nameOverride@7"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/privateRegistry.registrySecret/else/networkPolicies.type": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type~1then~1privateRegistry.registrySecret~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret"
-      }
-    },
-    "when/networkPolicies.type+networkPolicies.type=null/then/privateRegistry.registrySecret/else/networkPolicies.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1privateRegistry.registrySecret~1else~1networkPolicies.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type+networkPolicies.type=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret"
-      }
-    },
-    "when/networkPolicies.type/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@10"
-      },
-      "then": true
-    },
     "when/networkPolicies.type/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@10"
+        "$ref": "#/$defs/constrains~1networkPolicies.type@4"
       },
       "then": false
-    },
-    "when/networkPolicies.type/then/privateRegistry.registrySecret/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicies.type@10"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret"
-      }
     },
     "when/privateRegistry.registrySecret/then/fail/else/any": {
       "else": true,
@@ -4600,109 +3781,30 @@
       },
       "then": false
     },
-    "when/privateRegistry.registrySecret:t/then/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride+privateRegistry.registrySecret~1else~1networkPolicies.type@2"
-      }
-    },
-    "when/privateRegistry.registrySecret:t/then/nameOverride+privateRegistry.registrySecret/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1privateRegistry.registrySecret~1else~1fail"
-      }
-    },
-    "when/privateRegistry.registrySecret:t/then/networkPolicies+networkPolicies.type+networkPolicies.type=null+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1privateRegistry.registrySecret~1else~1networkPolicies.type@2"
-      }
-    },
     "when/privateRegistry.registrySecret:t/then/privateRegistry.registrySecret/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret:t"
+        "properties": {
+          "privateRegistry": {
+            "properties": {
+              "registrySecret": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "registrySecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "privateRegistry"
+        ],
+        "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registrySecret"
+        "$ref": "#/$defs/when~1privateRegistry.registrySecret~1then~1fail~1else~1any"
       }
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/nameOverride": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@6"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/nameOverride+networkPolicies+networkPolicies.type+networkPolicies.type=null@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1nameOverride~1else~1networkPolicies.type@8"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/nameOverride@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride@7"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/networkPolicies+networkPolicies.type+networkPolicies.type=null": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
-    },
-    "when/privateRegistry.registryUrl:t/then/fail/else/networkPolicies+networkPolicies.type+networkPolicies.type=null@2": {
-      "else": {
-        "$ref": "#/$defs/when~1networkPolicies.type+networkPolicies.type=null~1then~1any~1else~1networkPolicies.type@8"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
-      },
-      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -4710,74 +3812,9 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/when~1enablePSP:t~1then~1fail~1else~1ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more@2"
-      },
-      "then": {
         "allOf": [
           {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "longhorn": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "manager": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "privateRegistry": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "longhorn": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1enablePSP:t+ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more"
+            "$ref": "#/$defs/constrains~1image.longhorn+image.longhorn=null"
           },
           {
             "anyOf": [
@@ -4787,13 +3824,7 @@
                     "image": {
                       "properties": {
                         "longhorn": {
-                          "properties": {
-                            "manager": {}
-                          },
-                          "required": [
-                            "manager"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/constrains~1manager"
                         }
                       },
                       "required": [
@@ -4813,17 +3844,7 @@
                   "image": {
                     "properties": {
                       "longhorn": {
-                        "properties": {
-                          "manager": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "manager"
-                        ],
-                        "type": "object"
+                        "$ref": "#/$defs/constrains~1manager=null"
                       }
                     },
                     "required": [
@@ -4845,18 +3866,106 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@20"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+4more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+4more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@10"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+2more"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+2more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+4more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+2more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@9"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@10"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+1more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@5"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@7"
           },
           {
             "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@6"
           },
           {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@18"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@8"
           },
           {
             "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@16"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@17"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@15"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@20"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@19"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@18"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@9"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@8"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+1more"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@22"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@12"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@26"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@24"
           }
         ]
       },
@@ -4874,45 +3983,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1enablePSP:t+ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
+        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1fail"
       },
       "then": false
     },
@@ -4950,7 +4021,88 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1enablePSP:t~1then~1fail~1else~1ingress.enabled:t+nameOverride:t+networkPolicies+networkPolicies.type+1more"
+        "$ref": "#/$defs/constrains~1image+image=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1image.longhorn+image.longhorn=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1image+image=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "privateRegistry": {}
+              },
+              "required": [
+                "privateRegistry"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "privateRegistry": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "privateRegistry"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -4965,76 +4117,19 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1enablePSP:t+ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more"
+            "$ref": "#/$defs/constrains~1namespaceOverride:t+networkPolicies.enabled:t"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "longhorn": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "longhorn"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "longhorn": {}
-                      },
-                      "required": [
-                        "longhorn"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkPolicies+networkPolicies.type+networkPolicies.type=null"
+          },
           {
-            "$ref": "#/$defs/constrains~1namespaceOverride:t+networkPolicies.enabled:t"
+            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@2"
           },
           {
             "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@4"
           },
           {
             "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+networkPolicies+networkPolicies.enabled:t+networkPolicies.type+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+3more@4"
           },
           {
             "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
@@ -5045,24 +4140,18 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1networkPolicies+networkPolicies.type+networkPolicies.type=null~1else~1fail"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@19"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@21"
           },
           {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@5"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+4more@11"
           },
           {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@17"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@25"
           },
           {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@15"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride+namespaceOverride:t+networkPolicies+6more@23"
           }
         ]
       },
@@ -5077,94 +4166,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+5more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+7more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+6more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+6more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+4more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+3more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t+networkPolicies.type+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies+networkPolicies.enabled:t+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t+4more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride:t+networkPolicies.enabled:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+5more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+5more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress+namespaceOverride+namespaceOverride:t+networkPolicies+7more"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -5206,64 +4207,9 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@10"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+3more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@9"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@8"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/values~1string;pattern-r-n"
-              },
-              {
-                "$ref": "#/$defs/values~1null;namespace-defines-the-space"
-              },
-              {
-                "$ref": "#/$defs/values~1string@2"
-              },
-              {
-                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                "type": "string"
-              },
-              {
-                "$ref": "#/$defs/values~1object"
-              },
-              {
-                "pattern": "^[ \\t]*(#.*)?$",
-                "type": "string"
-              },
-              {
-                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                "type": "string"
-              },
-              {
-                "$ref": "#/$defs/values~1string;namespace-defines-the-space"
-              }
-            ],
-            "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1enablePSP:t~1then~1fail~1else~1ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+3more"
+            "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t"
           },
           {
             "anyOf": [
@@ -5375,7 +4321,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1enablePSP:t~1then~1fail~1else~1global.imagePullSecrets:t+ingress.enabled:t+nameOverride+nameOverride:t+5more"
+        "$ref": "#/$defs/when~1global.imagePullSecrets:t~1then~1fail~1else~1privateRegistry.registrySecret+privateRegistry.registrySecret:t"
       },
       "then": {
         "additionalProperties": {},
@@ -5391,6 +4337,111 @@
                   "null",
                   "object"
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t+networkPolicies.enabled:t@2"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@11"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@12"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+3more@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+namespaceOverride:t+networkPolicies+networkPolicies.type+5more@13"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/values~1string;pattern-r-n"
+              },
+              {
+                "$ref": "#/$defs/values~1null;namespace-defines-the-space"
+              },
+              {
+                "$ref": "#/$defs/values~1string@2"
+              },
+              {
+                "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/values~1object"
+              },
+              {
+                "pattern": "^[ \\t]*(#.*)?$",
+                "type": "string"
+              },
+              {
+                "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/values~1string;namespace-defines-the-space"
+              }
+            ],
+            "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1global.imagePullSecrets:t~1then~1global.imagePullSecrets~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "imagePullSecrets": {
+                "description": "Global override for image pull secrets for container registry.",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1privateRegistry.registryUrl:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "cattle": {
+                "type": "object"
               }
             }
           }
@@ -5431,63 +4482,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1enablePSP:t+ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "privateRegistry": {}
-                  },
-                  "required": [
-                    "privateRegistry"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "privateRegistry": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "privateRegistry"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1enablePSP:t~1then~1fail~1else~1ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+3more@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "cattle": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -5516,69 +4510,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1enablePSP:t+ingress.enabled:t+nameOverride+nameOverride:t+networkPolicies+2more"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1enablePSP:t~1then~1fail~1else~1global.imagePullSecrets+global.imagePullSecrets:t+ingress.enabled:t+nameOverride+4more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "imagePullSecrets": {
-                "description": "Global override for image pull secrets for container registry.",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
     }
   ],
   "properties": {
@@ -5625,16 +4556,51 @@
         "timezone": {
           "description": "Set container timezone (TZ env) for all Longhorn workloads. Leave empty to use container default."
         }
-      }
+      },
+      "type": "object"
     },
     "httproute": {
       "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using kube-lego, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\n- name: longhorn.local-tls\nkey:\ncertificate:"
     },
     "image": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1longhorn"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1longhorn=null"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "longhorn": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1manager=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1manager"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "manager": {
               "additionalProperties": {},
@@ -5649,14 +4615,17 @@
                 "tag": {
                   "description": "Tag for the Longhorn Manager image."
                 }
-              }
+              },
+              "type": "object"
             }
-          }
+          },
+          "type": "object"
         },
         "pullPolicy": {
           "description": "Image pull policy that applies to all user-deployed Longhorn components, such as Longhorn Manager, Longhorn driver, and Longhorn UI."
         }
-      }
+      },
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -5703,7 +4672,8 @@
         "registryUrl": {
           "description": "URL of a private registry. When unspecified, Longhorn uses the default system registry."
         }
-      }
+      },
+      "type": "object"
     },
     "service": {},
     "serviceAccount": {}

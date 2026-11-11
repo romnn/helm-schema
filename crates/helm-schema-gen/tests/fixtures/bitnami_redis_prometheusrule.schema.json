@@ -57,170 +57,214 @@
       }
     },
     "helm-condition-10": {
-      "else": {
-        "$ref": "#/$defs/helm-condition-9"
-      },
-      "if": {
+      "allOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "prometheusRule": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheusRule"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-9"
+        }
+      ]
+    },
+    "helm-condition-11": {
+      "not": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "type": "string"
           }
         },
         "required": [
           "nameOverride"
         ],
         "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-8"
-      }
-    },
-    "helm-condition-11": {
-      "else": false,
-      "if": {
-        "properties": {
-          "metrics": {
-            "properties": {
-              "prometheusRule": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheusRule"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "metrics"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-10"
       }
     },
     "helm-condition-12": {
-      "else": false,
-      "if": {
-        "properties": {
-          "metrics": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
+      "allOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
         },
-        "required": [
-          "metrics"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-11"
-      }
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "prometheusRule": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheusRule"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-11"
+        }
+      ]
     },
     "helm-condition-13": {
-      "else": {
-        "$ref": "#/$defs/helm-condition-12"
-      },
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-6"
-      }
-    },
-    "helm-condition-14": {
-      "else": false,
-      "if": {
-        "properties": {
-          "namespaceOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "helm-condition-15": {
-      "else": false,
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-14"
-      }
-    },
-    "helm-condition-16": {
-      "else": false,
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "helm-condition-17": {
-      "else": {
-        "$ref": "#/$defs/helm-condition-16"
-      },
-      "if": {
-        "properties": {
-          "namespaceOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-15"
-      }
-    },
-    "helm-condition-18": {
-      "else": false,
-      "if": {
+      "not": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/t"
@@ -230,43 +274,342 @@
           "nameOverride"
         ],
         "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-17"
       }
     },
-    "helm-condition-19": {
-      "else": false,
-      "if": {
+    "helm-condition-14": {
+      "allOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "prometheusRule": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheusRule"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-13"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-9"
+        }
+      ]
+    },
+    "helm-condition-15": {
+      "not": {
         "properties": {
-          "metrics": {
-            "properties": {
-              "prometheusRule": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheusRule"
-            ],
-            "type": "object"
+          "fullnameOverride": {
+            "type": "string"
           }
         },
         "required": [
-          "metrics"
+          "fullnameOverride"
         ],
         "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-18"
       }
+    },
+    "helm-condition-16": {
+      "allOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "prometheusRule": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheusRule"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-15"
+        }
+      ]
+    },
+    "helm-condition-17": {
+      "not": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "helm-condition-18": {
+      "allOf": [
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "prometheusRule": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheusRule"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-17"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-9"
+        }
+      ]
+    },
+    "helm-condition-19": {
+      "allOf": [
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "prometheusRule": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheusRule"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-17"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-11"
+        }
+      ]
     },
     "helm-condition-2": {
       "else": false,
@@ -286,31 +629,101 @@
       }
     },
     "helm-condition-20": {
-      "else": false,
-      "if": {
-        "properties": {
-          "metrics": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
+      "allOf": [
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
         },
-        "required": [
-          "metrics"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-19"
-      }
+        {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "prometheusRule": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheusRule"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespaceOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-17"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-13"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-9"
+        }
+      ]
     },
     "helm-condition-21": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/helm-condition-10"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-12"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-14"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-16"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-18"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-19"
+        },
+        {
+          "$ref": "#/$defs/helm-condition-20"
+        }
+      ]
+    },
+    "helm-condition-3": {
       "else": false,
       "if": {
         "properties": {
@@ -325,7 +738,7 @@
       },
       "then": true
     },
-    "helm-condition-22": {
+    "helm-condition-4": {
       "else": false,
       "if": {
         "properties": {
@@ -351,745 +764,6 @@
         },
         "required": [
           "metrics"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-21"
-      }
-    },
-    "helm-condition-23": {
-      "else": false,
-      "if": {
-        "properties": {
-          "metrics": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "metrics"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-22"
-      }
-    },
-    "helm-condition-24": {
-      "else": {
-        "$ref": "#/$defs/helm-condition-23"
-      },
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/helm-condition-20"
-      }
-    },
-    "helm-condition-25": {
-      "not": {
-        "properties": {
-          "namespaceOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-26": {
-      "allOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "prometheusRule": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheusRule"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "namespaceOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-25"
-        }
-      ]
-    },
-    "helm-condition-27": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-28": {
-      "allOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "prometheusRule": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheusRule"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-27"
-        }
-      ]
-    },
-    "helm-condition-29": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-3": {
-      "else": false,
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "helm-condition-30": {
-      "allOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "prometheusRule": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheusRule"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "namespaceOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-29"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-25"
-        }
-      ]
-    },
-    "helm-condition-31": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-32": {
-      "allOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "prometheusRule": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheusRule"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-31"
-        }
-      ]
-    },
-    "helm-condition-33": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-34": {
-      "allOf": [
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "prometheusRule": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheusRule"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "namespaceOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-33"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-25"
-        }
-      ]
-    },
-    "helm-condition-35": {
-      "allOf": [
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "prometheusRule": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheusRule"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-33"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-27"
-        }
-      ]
-    },
-    "helm-condition-36": {
-      "allOf": [
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "metrics": {
-              "properties": {
-                "prometheusRule": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheusRule"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "namespaceOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-33"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-29"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-25"
-        }
-      ]
-    },
-    "helm-condition-37": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/helm-condition-26"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-28"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-30"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-32"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-34"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-35"
-        },
-        {
-          "$ref": "#/$defs/helm-condition-36"
-        }
-      ]
-    },
-    "helm-condition-4": {
-      "else": false,
-      "if": {
-        "properties": {
-          "namespaceOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "namespaceOverride"
         ],
         "type": "object"
       },
@@ -1103,20 +777,12 @@
         "properties": {
           "metrics": {
             "properties": {
-              "prometheusRule": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+              "enabled": {
+                "$ref": "#/$defs/t"
               }
             },
             "required": [
-              "prometheusRule"
+              "enabled"
             ],
             "type": "object"
           }
@@ -1134,6 +800,54 @@
       "else": false,
       "if": {
         "properties": {
+          "namespaceOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "helm-condition-7": {
+      "else": false,
+      "if": {
+        "properties": {
+          "metrics": {
+            "properties": {
+              "prometheusRule": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheusRule"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "metrics"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/helm-condition-6"
+      }
+    },
+    "helm-condition-8": {
+      "else": false,
+      "if": {
+        "properties": {
           "metrics": {
             "properties": {
               "enabled": {
@@ -1152,55 +866,21 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-5"
-      }
-    },
-    "helm-condition-7": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "helm-condition-8": {
-      "else": false,
-      "if": {
-        "properties": {
-          "namespaceOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
         "$ref": "#/$defs/helm-condition-7"
       }
     },
     "helm-condition-9": {
-      "else": false,
-      "if": {
+      "not": {
         "properties": {
           "namespaceOverride": {
-            "$ref": "#/$defs/t"
+            "type": "string"
           }
         },
         "required": [
           "namespaceOverride"
         ],
         "type": "object"
-      },
-      "then": true
+      }
     },
     "t": {
       "anyOf": [
@@ -1280,7 +960,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-24"
+        "$ref": "#/$defs/helm-condition-5"
       },
       "then": {
         "additionalProperties": {},
@@ -1293,7 +973,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-13"
+        "$ref": "#/$defs/helm-condition-8"
       },
       "then": {
         "additionalProperties": {},
@@ -1337,7 +1017,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-37"
+        "$ref": "#/$defs/helm-condition-21"
       },
       "then": false
     }

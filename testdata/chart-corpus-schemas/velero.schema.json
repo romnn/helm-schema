@@ -1,63 +1,5 @@
 {
   "$defs": {
-    "constrains/podSecurityContext+podSecurityContext:t+podSecurityContext=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "podSecurityContext": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "podSecurityContext"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "podSecurityContext": {}
-            },
-            "required": [
-              "podSecurityContext"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t"
-        },
-        {
-          "properties": {
-            "podSecurityContext": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "podSecurityContext"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/podSecurityContext:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext:t@2"
-      }
-    },
-    "constrains/podSecurityContext:t@2": {
-      "properties": {
-        "podSecurityContext": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "podSecurityContext"
-      ],
-      "type": "object"
-    },
     "constrains/upgradeCRDs:t": {
       "properties": {
         "upgradeCRDs": {
@@ -102,7 +44,15 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1podSecurityContext:t@2"
+            "properties": {
+              "podSecurityContext": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "podSecurityContext"
+            ],
+            "type": "object"
           },
           {
             "$ref": "#/$defs/constrains~1upgradeCRDs:t"
@@ -138,9 +88,6 @@
               "securityContext"
             ],
             "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null"
           }
         ]
       },

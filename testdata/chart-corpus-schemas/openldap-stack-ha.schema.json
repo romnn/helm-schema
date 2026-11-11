@@ -83,26 +83,6 @@
       ],
       "type": "object"
     },
-    "constrains/enabled+enabled:t+enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      ]
-    },
-    "constrains/enabled+enabled:t+enabled=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      ]
-    },
     "constrains/enabled+enabled=null": {
       "allOf": [
         {
@@ -160,466 +140,244 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/fullnameOverride!=null": {
-      "properties": {
-        "fullnameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@5"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+global:t+nameOverride+nameOverride:t": {
       "allOf": [
         {
-          "properties": {
-            "global": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+global:t+nameOverride+nameOverride:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+global:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
+          "$ref": "#/$defs/constrains~1service.type"
         },
         {
           "$ref": "#/$defs/constrains~1service.type+service.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1service.type"
-        },
-        {
           "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.type+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.type+service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.type+1more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.type+1more"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.type+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.type+service.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.type+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1service.type"
         },
         {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
           "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@8": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+      }
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@5"
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        }
+      ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.type+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1service.type"
         },
         {
           "$ref": "#/$defs/constrains~1service.type+service.type=null"
         },
         {
-          "$ref": "#/$defs/constrains~1service.type"
+          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
         }
       ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
+          "$ref": "#/$defs/constrains~1nameOverride@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
         },
         {
           "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@8": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
         }
       ]
     },
     "constrains/fullnameOverride:t+nameOverride:t+service+service.type+service.type=null": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null"
         },
         {
           "$ref": "#/$defs/constrains~1service.type"
         },
         {
+          "$ref": "#/$defs/constrains~1service.type+service.type=null"
+        },
+        {
           "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
       }
     },
     "constrains/fullnameOverride:t@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
       }
     },
     "constrains/fullnameOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-      }
-    },
-    "constrains/fullnameOverride:t@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-      }
-    },
-    "constrains/fullnameOverride:t@6": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -631,27 +389,16 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
     },
     "constrains/fullnameOverride@3": {
-      "$ref": "#/$defs/when~1fullnameOverride~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
     },
     "constrains/fullnameOverride@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      }
-    },
-    "constrains/fullnameOverride@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      }
-    },
-    "constrains/fullnameOverride@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      }
-    },
-    "constrains/fullnameOverride@7": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -690,42 +437,31 @@
         }
       ]
     },
-    "constrains/global:t": {
-      "properties": {
-        "global": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/ingress+ingress=null": {
+    "constrains/global:t+service.enableLdapPort:t+service.enableSslLdapPort:t": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "ingress": {}
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        },
-        {
           "properties": {
-            "ingress": {
-              "enum": [
-                null
+            "global": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/t"
+                },
+                {
+                  "type": "object"
+                }
               ]
             }
           },
           "required": [
-            "ingress"
+            "global"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
         }
       ]
     },
@@ -773,12 +509,6 @@
       }
     },
     "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null": {
-      "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null@3"
-    },
-    "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null@2": {
-      "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null@3"
-    },
-    "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null@3": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1ltb-passwd.enabled+ltb-passwd.enabled=null"
@@ -799,16 +529,6 @@
     },
     "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@3": {
       "$ref": "#/$defs/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.enabled+ltb-passwd.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd"
-        }
-      ]
     },
     "constrains/ltb-passwd.enabled": {
       "not": {
@@ -845,77 +565,10 @@
       ],
       "type": "object"
     },
-    "constrains/ltb-passwd.fullnameOverride": {
-      "properties": {
-        "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        }
-      },
-      "required": [
-        "ltb-passwd"
-      ],
-      "type": "object"
-    },
-    "constrains/ltb-passwd.fullnameOverride+ltb-passwd.fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride"
-        }
-      ]
-    },
-    "constrains/ltb-passwd.fullnameOverride+ltb-passwd.fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride"
-        }
-      ]
-    },
     "constrains/ltb-passwd.fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
-      }
-    },
-    "constrains/ltb-passwd.fullnameOverride:t+ltb-passwd.nameOverride+ltb-passwd.nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride"
-        }
-      ]
-    },
-    "constrains/ltb-passwd.fullnameOverride:t+ltb-passwd.nameOverride+ltb-passwd.nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride"
-        }
-      ]
-    },
-    "constrains/ltb-passwd.fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
-      }
-    },
-    "constrains/ltb-passwd.fullnameOverride:t@3": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       },
       "required": [
@@ -945,31 +598,10 @@
       ],
       "type": "object"
     },
-    "constrains/ltb-passwd.nameOverride": {
-      "properties": {
-        "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        }
-      },
-      "required": [
-        "ltb-passwd"
-      ],
-      "type": "object"
-    },
     "constrains/ltb-passwd.nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t@3"
-      }
-    },
-    "constrains/ltb-passwd.nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t@3"
-      }
-    },
-    "constrains/ltb-passwd.nameOverride:t@3": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       },
       "required": [
@@ -982,55 +614,12 @@
         "$ref": "#/$defs/constrains~1nameOverride@4"
       }
     },
-    "constrains/nameOverride!=null": {
-      "properties": {
-        "nameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        }
-      ]
-    },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      }
-    },
-    "constrains/nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      }
-    },
-    "constrains/nameOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      }
-    },
-    "constrains/nameOverride:t@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      }
-    },
-    "constrains/nameOverride:t@6": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -1076,12 +665,6 @@
       }
     },
     "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more": {
-      "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more@3"
-    },
-    "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more@2": {
-      "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more@3"
-    },
-    "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more@3": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1phpldapadmin.enabled+phpldapadmin.enabled=null"
@@ -1102,76 +685,6 @@
     },
     "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@3": {
       "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.enabled+phpldapadmin.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin"
-        }
-      ]
-    },
-    "constrains/phpldapadmin+phpldapadmin.service+phpldapadmin.service.loadBalancerIP:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.loadBalancerIP:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type"
-        }
-      ]
-    },
-    "constrains/phpldapadmin+phpldapadmin.service+phpldapadmin.service.loadBalancerIP:t+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.loadBalancerIP:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type"
-        }
-      ]
-    },
-    "constrains/phpldapadmin+phpldapadmin.service+phpldapadmin.service.type+1more": {
-      "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.service+phpldapadmin.service.type+1more@3"
-    },
-    "constrains/phpldapadmin+phpldapadmin.service+phpldapadmin.service.type+1more@2": {
-      "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.service+phpldapadmin.service.type+1more@3"
-    },
-    "constrains/phpldapadmin+phpldapadmin.service+phpldapadmin.service.type+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type"
-        }
-      ]
     },
     "constrains/phpldapadmin.enabled": {
       "not": {
@@ -1208,77 +721,10 @@
       ],
       "type": "object"
     },
-    "constrains/phpldapadmin.fullnameOverride": {
-      "properties": {
-        "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1fullnameOverride@7"
-        }
-      },
-      "required": [
-        "phpldapadmin"
-      ],
-      "type": "object"
-    },
-    "constrains/phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride"
-        }
-      ]
-    },
-    "constrains/phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride"
-        }
-      ]
-    },
     "constrains/phpldapadmin.fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-      }
-    },
-    "constrains/phpldapadmin.fullnameOverride:t+phpldapadmin.nameOverride+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/phpldapadmin.fullnameOverride:t+phpldapadmin.nameOverride+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/phpldapadmin.fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-      }
-    },
-    "constrains/phpldapadmin.fullnameOverride:t@3": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       },
       "required": [
@@ -1308,174 +754,16 @@
       ],
       "type": "object"
     },
-    "constrains/phpldapadmin.nameOverride": {
-      "$ref": "#/$defs/when~1phpldapadmin.nameOverride~1then~1any~1else~1fail"
-    },
-    "constrains/phpldapadmin.nameOverride+phpldapadmin.nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t"
-        }
-      ]
-    },
-    "constrains/phpldapadmin.nameOverride+phpldapadmin.nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@2"
-        }
-      ]
-    },
     "constrains/phpldapadmin.nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      }
-    },
-    "constrains/phpldapadmin.nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      }
-    },
-    "constrains/phpldapadmin.nameOverride:t@3": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@6"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         }
       },
       "required": [
         "phpldapadmin"
       ],
       "type": "object"
-    },
-    "constrains/phpldapadmin.nameOverride@2": {
-      "properties": {
-        "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        }
-      },
-      "required": [
-        "phpldapadmin"
-      ],
-      "type": "object"
-    },
-    "constrains/phpldapadmin.service.loadBalancerIP:t": {
-      "$ref": "#/$defs/constrains~1phpldapadmin.service.loadBalancerIP:t@3"
-    },
-    "constrains/phpldapadmin.service.loadBalancerIP:t@2": {
-      "$ref": "#/$defs/constrains~1phpldapadmin.service.loadBalancerIP:t@3"
-    },
-    "constrains/phpldapadmin.service.loadBalancerIP:t@3": {
-      "not": {
-        "properties": {
-          "phpldapadmin": {
-            "$ref": "#/$defs/constrains~1service.loadBalancerIP:t@2"
-          }
-        },
-        "required": [
-          "phpldapadmin"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/phpldapadmin.service.type": {
-      "not": {
-        "properties": {
-          "phpldapadmin": {
-            "$ref": "#/$defs/constrains~1service.type@4"
-          }
-        },
-        "required": [
-          "phpldapadmin"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/phpldapadmin.service.type+phpldapadmin.service.type=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.service.type"
-        }
-      ]
-    },
-    "constrains/phpldapadmin.service.type+phpldapadmin.service.type=null@2": {
-      "properties": {
-        "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
-        }
-      },
-      "required": [
-        "phpldapadmin"
-      ],
-      "type": "object"
-    },
-    "constrains/phpldapadmin.service.type=null": {
-      "properties": {
-        "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1service.type=null"
-        }
-      },
-      "required": [
-        "phpldapadmin"
-      ],
-      "type": "object"
-    },
-    "constrains/phpldapadmin.service.type@2": {
-      "properties": {
-        "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1service.type@3"
-        }
-      },
-      "required": [
-        "phpldapadmin"
-      ],
-      "type": "object"
-    },
-    "constrains/service+service.loadBalancerIP:t+service.type+service.type=null": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1service.type@4"
-          }
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.loadBalancerIP:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type@3"
-        }
-      ]
-    },
-    "constrains/service+service.type+service.type=null": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1service.type@4"
-          }
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type@3"
-        }
-      ]
     },
     "constrains/service.enableLdapPort:t": {
       "properties": {
@@ -1496,6 +784,16 @@
       ],
       "type": "object"
     },
+    "constrains/service.enableLdapPort:t+service.enableSslLdapPort:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
+        }
+      ]
+    },
     "constrains/service.enableSslLdapPort:t": {
       "properties": {
         "service": {
@@ -1515,78 +813,56 @@
       ],
       "type": "object"
     },
-    "constrains/service.loadBalancerIP:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1service.loadBalancerIP:t@2"
-      }
-    },
-    "constrains/service.loadBalancerIP:t@2": {
-      "properties": {
-        "service": {
-          "properties": {
-            "loadBalancerIP": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "loadBalancerIP"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "service"
-      ],
-      "type": "object"
-    },
     "constrains/service.type": {
       "$ref": "#/$defs/constrains~1service.type@2"
     },
-    "constrains/service.type!=null": {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "enum": [
-                  null
-                ]
+    "constrains/service.type+service.type=null": {
+      "$ref": "#/$defs/constrains~1service.type+service.type=null@4"
+    },
+    "constrains/service.type+service.type=null@2": {
+      "$ref": "#/$defs/constrains~1service.type+service.type=null@5"
+    },
+    "constrains/service.type+service.type=null@3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
               }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
             }
           },
           "required": [
-            "type"
+            "service"
           ],
           "type": "object"
-        }
-      },
-      "required": [
-        "service"
-      ],
-      "type": "object"
-    },
-    "constrains/service.type+service.type=null": {
-      "$ref": "#/$defs/constrains~1service.type+service.type=null@5"
-    },
-    "constrains/service.type+service.type=null@2": {
-      "$ref": "#/$defs/constrains~1service.type+service.type=null@4"
-    },
-    "constrains/service.type+service.type=null@3": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/constrains~1service.type@4"
-              }
-            },
-            {
-              "$ref": "#/$defs/constrains~1service.type=null"
-            }
-          ]
         }
       ]
     },
@@ -1597,38 +873,15 @@
     },
     "constrains/service.type+service.type=null@5": {
       "not": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "$ref": "#/$defs/constrains~1service.type@4"
-            }
+            "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1service.type=null"
+            "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
           }
         ]
       }
-    },
-    "constrains/service.type=null": {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "service"
-      ],
-      "type": "object"
     },
     "constrains/service.type@2": {
       "not": {
@@ -1642,23 +895,6 @@
             "type": {
               "type": "string"
             }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "service"
-      ],
-      "type": "object"
-    },
-    "constrains/service.type@4": {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {}
           },
           "required": [
             "type"
@@ -1703,145 +939,100 @@
       "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
       "type": "object"
     },
+    "when/enabled+enabled=null/then/service+service.type+service.type=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1enabled+enabled=null"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1service.type@2"
+      }
+    },
+    "when/enabled:t/then/service+service.type+service.type=null/else/enabled+enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1enabled+enabled=null+service.type"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1service.type"
+      }
+    },
     "when/fullnameOverride!=null+nameOverride!=null/then/fail": {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nameOverride!=null"
+            "properties": {
+              "nameOverride": {
+                "not": {
+                  "enum": [
+                    null
+                  ]
+                }
+              }
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride!=null"
+            "properties": {
+              "fullnameOverride": {
+                "not": {
+                  "enum": [
+                    null
+                  ]
+                }
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": false
     },
-    "when/fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@7"
-      },
-      "then": true
-    },
     "when/fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
       },
       "then": true
     },
-    "when/fullnameOverride:t/then/fullnameOverride+global:t+service.enableLdapPort:t+service.enableSslLdapPort:t/else/nameOverride+nameOverride:t": {
+    "when/global:t/then/any/else/service.enableLdapPort:t+service.enableSslLdapPort:t": {
       "else": {
-        "$ref": "#/$defs/when~1global:t~1then~1nameOverride+nameOverride:t~1else~1service.enableLdapPort:t+service.enableSslLdapPort:t"
+        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1any~1else~1service.enableSslLdapPort:t"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
+        "properties": {
+          "global": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
       },
-      "then": {
-        "$ref": "#/$defs/when~1global:t~1then~1fullnameOverride~1else~1service.enableLdapPort:t+service.enableSslLdapPort:t"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+global:t+service.enableLdapPort:t+service.enableSslLdapPort:t/else/nameOverride+nameOverride:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1global:t~1then~1nameOverride+nameOverride:t~1else~1service.enableLdapPort:t+service.enableSslLdapPort:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global:t~1then~1fullnameOverride~1else~1service.enableLdapPort:t+service.enableSslLdapPort:t@2"
-      }
-    },
-    "when/fullnameOverride:t/then/fullnameOverride+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride~1else~1fail"
-      }
-    },
-    "when/global:t/then/fullnameOverride/else/service.enableLdapPort:t+service.enableSslLdapPort:t": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1fullnameOverride~1else~1service.enableSslLdapPort:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "when/global:t/then/fullnameOverride/else/service.enableLdapPort:t+service.enableSslLdapPort:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1fullnameOverride~1else~1service.enableSslLdapPort:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "when/global:t/then/nameOverride+nameOverride:t/else/service.enableLdapPort:t+service.enableSslLdapPort:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+service.enableLdapPort:t+service.enableSslLdapPort:t~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any"
-      }
-    },
-    "when/global:t/then/nameOverride+nameOverride:t/else/service.enableLdapPort:t+service.enableSslLdapPort:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride+service.enableLdapPort:t+service.enableSslLdapPort:t~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1nameOverride~1else~1any@2"
-      }
+      "then": true
     },
     "when/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@4"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1ltb-passwd.enabled+ltb-passwd.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1ltb-passwd"
+          }
+        ]
       },
       "then": true
-    },
-    "when/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/then/ltb-passwd.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/then/ltb-passwd.nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.enabled:t/then/ltb-passwd.fullnameOverride+ltb-passwd.fullnameOverride:t+ltb-passwd.ingress+3more/else/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+3more~1else~1ltb-passwd.nameOverride+ltb-passwd.nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride:t~1then~1ltb-passwd.fullnameOverride+ltb-passwd.ingress.enabled:t+1more~1else~1ltb-passwd.nameOverride+ltb-passwd.nameOverride:t"
-      }
     },
     "when/ltb-passwd.enabled:t/then/ltb-passwd.fullnameOverride:t+ltb-passwd.nameOverride:t/else/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null": {
       "else": {
@@ -1865,17 +1056,21 @@
         "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride:t~1then~1any~1else~1fail"
       }
     },
-    "when/ltb-passwd.fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride"
+    "when/ltb-passwd.enabled:t/then/ltb-passwd.ingress+ltb-passwd.ingress.tls:t/else/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.ingress.tls:t~1else~1fail"
       },
-      "then": true
+      "if": {
+        "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd.ingress.tls:t~1else~1fail"
+      }
     },
     "when/ltb-passwd.fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
       },
       "then": true
     },
@@ -1884,7 +1079,7 @@
         "$ref": "#/$defs/when~1ltb-passwd.nameOverride:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1else~1fail"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
       },
       "then": false
     },
@@ -1893,326 +1088,89 @@
         "$ref": "#/$defs/when~1ltb-passwd.nameOverride:t~1then~1any~1else~1fail"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
       },
       "then": false
-    },
-    "when/ltb-passwd.fullnameOverride:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+3more/else/ltb-passwd.nameOverride+ltb-passwd.nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.ingress.tls:t+2more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+2more~1else~1fail"
-      }
     },
     "when/ltb-passwd.fullnameOverride:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
-      }
-    },
-    "when/ltb-passwd.fullnameOverride:t/then/ltb-passwd.fullnameOverride+ltb-passwd.ingress.enabled:t+1more/else/ltb-passwd.nameOverride+ltb-passwd.nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd.ingress.tls:t+ltb-passwd.nameOverride+ltb-passwd.nameOverride:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd.fullnameOverride+ltb-passwd.ingress.tls:t~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+1more~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.ingress.tls:t+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.nameOverride+1more~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd.fullnameOverride+ltb-passwd.ingress.tls:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1ltb-passwd.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd.ingress.tls:t+ltb-passwd.nameOverride+ltb-passwd.nameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1ltb-passwd.nameOverride+ltb-passwd.nameOverride:t~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.tls:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1ltb-passwd.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.tls:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.nameOverride+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.nameOverride:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.nameOverride~1else~1any"
-      }
-    },
-    "when/ltb-passwd.ingress.tls:t/then/ltb-passwd.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.tls:t/then/ltb-passwd.nameOverride+ltb-passwd.nameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.nameOverride:t~1then~1ltb-passwd.nameOverride~1else~1any"
-      }
-    },
-    "when/ltb-passwd.nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride"
-      },
-      "then": true
-    },
-    "when/ltb-passwd.nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/ltb-passwd.nameOverride:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.nameOverride/else/any": {
-      "else": {
         "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1ltb-passwd.nameOverride~1else~1fail"
       }
     },
-    "when/ltb-passwd.nameOverride:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/else/fail": {
+    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.ingress.tls:t/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1else~1fail"
+      }
+    },
+    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd.ingress.tls:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/ltb-passwd.ingress.tls:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
+      },
+      "then": true
+    },
+    "when/ltb-passwd.ingress.tls:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
       },
       "then": {
         "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@3"
       }
     },
-    "when/ltb-passwd.nameOverride:t/then/ltb-passwd.nameOverride/else/any": {
-      "else": true,
+    "when/ltb-passwd.nameOverride:t/then/any/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t"
+      },
+      "then": true
+    },
+    "when/ltb-passwd.nameOverride:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.nameOverride~1then~1any~1else~1fail"
+        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
       }
-    },
-    "when/nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      },
-      "then": true
-    },
-    "when/nameOverride/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      },
-      "then": true
     },
     "when/nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
+        "$ref": "#/$defs/constrains~1nameOverride:t@2"
       },
       "then": true
-    },
-    "when/nameOverride:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+service.enableLdapPort:t+service.enableSslLdapPort:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1any~1else~1service.enableSslLdapPort:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1nameOverride~1else~1service.enableSslLdapPort:t"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride+service.enableLdapPort:t+service.enableSslLdapPort:t/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1any~1else~1service.enableSslLdapPort:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1nameOverride~1else~1service.enableSslLdapPort:t@2"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/nameOverride/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      }
     },
     "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1phpldapadmin.enabled+phpldapadmin.enabled=null"
+          },
+          {
+            "$ref": "#/$defs/constrains~1phpldapadmin"
+          }
+        ]
       },
       "then": true
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.fullnameOverride+phpldapadmin.nameOverride+phpldapadmin.service+2more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.fullnameOverride+phpldapadmin.nameOverride~1else~1phpldapadmin.service.type"
-      }
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.fullnameOverride+phpldapadmin.nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1phpldapadmin.nameOverride~1else~1fail"
-      }
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.fullnameOverride+phpldapadmin.service+phpldapadmin.service.type+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.fullnameOverride~1else~1phpldapadmin.service.type"
-      }
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.fullnameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.nameOverride+phpldapadmin.service+phpldapadmin.service.type+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.nameOverride~1else~1phpldapadmin.service.type"
-      }
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride"
-      }
-    },
-    "when/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/then/phpldapadmin.service+phpldapadmin.service.type+phpldapadmin.service.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1any~1else~1phpldapadmin.service.type"
-      }
-    },
-    "when/phpldapadmin.enabled:t/then/phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t+7more/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+8more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride:t~1then~1phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.ingress.enabled:t+6more~1else~1any"
-      }
-    },
-    "when/phpldapadmin.enabled:t/then/phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t+1more/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+2more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride:t~1then~1phpldapadmin.fullnameOverride+phpldapadmin.nameOverride:t~1else~1any"
-      }
     },
     "when/phpldapadmin.enabled:t/then/phpldapadmin.fullnameOverride:t/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
       "else": {
@@ -2225,407 +1183,93 @@
         "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride:t~1then~1any~1else~1fail"
       }
     },
-    "when/phpldapadmin.fullnameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride"
+    "when/phpldapadmin.enabled:t/then/phpldapadmin.ingress+phpldapadmin.ingress.tls:t/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more~1else~1fail"
       },
-      "then": true
-    },
-    "when/phpldapadmin.fullnameOverride/then/any/else/fail@2": {
-      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride"
-      },
-      "then": true
-    },
-    "when/phpldapadmin.fullnameOverride/then/phpldapadmin.nameOverride+phpldapadmin.service.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride"
+        "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride~1then~1phpldapadmin.service.type~1else~1fail"
+        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin.ingress.tls:t~1else~1fail"
       }
     },
-    "when/phpldapadmin.fullnameOverride/then/phpldapadmin.nameOverride/else/fail": {
-      "else": false,
+    "when/phpldapadmin.enabled:t/then/phpldapadmin.nameOverride:t/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
+      "else": {
+        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1else~1fail"
+      },
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride"
+        "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride"
-      }
-    },
-    "when/phpldapadmin.fullnameOverride/then/phpldapadmin.service.type/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type~1then~1any~1else~1fail"
+        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1any~1else~1fail"
       }
     },
     "when/phpldapadmin.fullnameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t"
       },
       "then": true
-    },
-    "when/phpldapadmin.fullnameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.fullnameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+8more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+6more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+7more~1else~1fail"
-      }
     },
     "when/phpldapadmin.fullnameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t"
       },
       "then": {
         "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
       }
     },
-    "when/phpldapadmin.fullnameOverride:t/then/phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.ingress.enabled:t+6more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin+phpldapadmin.ingress.tls:t+phpldapadmin.nameOverride+4more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.ingress.tls:t+5more~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.fullnameOverride:t/then/phpldapadmin.fullnameOverride+phpldapadmin.nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+6more/else/fail": {
+    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1phpldapadmin.ingress.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+5more~1else~1fail"
+        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1else~1fail"
       }
     },
-    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+7more/else/fail": {
+    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin.ingress.tls:t/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1phpldapadmin.ingress.enabled:t"
       },
       "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+6more~1else~1fail"
+        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1any~1else~1fail"
       }
     },
-    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.ingress.tls:t+5more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.nameOverride+4more~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin+phpldapadmin.ingress.tls:t+phpldapadmin.nameOverride+4more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1phpldapadmin+phpldapadmin.nameOverride+phpldapadmin.nameOverride:t+3more~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.ingress.tls:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+5more/else/fail": {
+    "when/phpldapadmin.ingress.tls:t/then/any/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1phpldapadmin.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+4more~1else~1any"
-      }
-    },
-    "when/phpldapadmin.ingress.tls:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+6more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+5more~1else~1any"
-      }
-    },
-    "when/phpldapadmin.ingress.tls:t/then/phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.nameOverride+4more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.nameOverride+3more~1else~1any"
-      }
-    },
-    "when/phpldapadmin.ingress.tls:t/then/phpldapadmin+phpldapadmin.nameOverride+phpldapadmin.nameOverride:t+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.nameOverride+phpldapadmin.service+2more~1else~1any"
-      }
-    },
-    "when/phpldapadmin.nameOverride/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride@2"
       },
       "then": true
     },
-    "when/phpldapadmin.nameOverride/then/phpldapadmin.service.type/else/fail": {
+    "when/phpldapadmin.ingress.tls:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type~1then~1any~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+4more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1else~1phpldapadmin+phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more~1else~1phpldapadmin+phpldapadmin.service.type@2"
-      }
-    },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more~1else~1phpldapadmin+phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+2more~1else~1phpldapadmin+phpldapadmin.service.type"
-      }
-    },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.tls:t"
       },
       "then": {
         "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@2"
       }
     },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.nameOverride+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.fullnameOverride~1else~1phpldapadmin+phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.fullnameOverride+phpldapadmin.nameOverride~1else~1phpldapadmin+phpldapadmin.service.type"
-      }
-    },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.nameOverride+phpldapadmin.service+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1any~1else~1phpldapadmin+phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.nameOverride~1else~1phpldapadmin+phpldapadmin.service.type"
-      }
-    },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin.fullnameOverride/else/fail": {
+    "when/phpldapadmin.nameOverride:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/any/else/phpldapadmin+phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1any~1else~1phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
+        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t"
       },
       "then": true
     },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/any/else/phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type~1then~1any~1else~1fail"
-      },
+    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/fail": {
+      "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null@2"
-      },
-      "then": true
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more/else/phpldapadmin+phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.fullnameOverride+phpldapadmin.service+phpldapadmin.service.type+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.fullnameOverride~1else~1fail@2"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more/else/phpldapadmin+phpldapadmin.service.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.nameOverride+phpldapadmin.service+phpldapadmin.service.type+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.nameOverride~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+2more/else/phpldapadmin+phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.fullnameOverride+phpldapadmin.nameOverride+phpldapadmin.service+2more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.fullnameOverride+phpldapadmin.nameOverride~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/phpldapadmin+phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1phpldapadmin.service+phpldapadmin.service.type+phpldapadmin.service.type=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
+        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t"
       },
       "then": {
         "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@3"
       }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin.fullnameOverride+phpldapadmin.nameOverride/else/phpldapadmin+phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.fullnameOverride+phpldapadmin.nameOverride~1else~1phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1phpldapadmin.nameOverride~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin.fullnameOverride+phpldapadmin.nameOverride/else/phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1phpldapadmin.nameOverride+phpldapadmin.service.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1phpldapadmin.nameOverride~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin.fullnameOverride/else/phpldapadmin+phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.fullnameOverride~1else~1phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin.fullnameOverride/else/phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1phpldapadmin.service.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin.nameOverride/else/phpldapadmin+phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1phpldapadmin.nameOverride~1else~1phpldapadmin.service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride"
-      }
-    },
-    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/phpldapadmin.nameOverride/else/phpldapadmin.service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride~1then~1phpldapadmin.service.type~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null@2"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride"
-      }
-    },
-    "when/phpldapadmin.service.type/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.service.type@2"
-      },
-      "then": true
     },
     "when/service.enableLdapPort:t/then/any/else/service.enableSslLdapPort:t": {
       "else": {
@@ -2636,59 +1280,6 @@
       },
       "then": true
     },
-    "when/service.enableLdapPort:t/then/any/else/service.enableSslLdapPort:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableSslLdapPort:t~1then~1any~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-      },
-      "then": true
-    },
-    "when/service.enableLdapPort:t/then/fullnameOverride/else/service.enableSslLdapPort:t": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableSslLdapPort:t~1then~1fullnameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "when/service.enableLdapPort:t/then/fullnameOverride/else/service.enableSslLdapPort:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableSslLdapPort:t~1then~1fullnameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "when/service.enableLdapPort:t/then/nameOverride/else/service.enableSslLdapPort:t": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableSslLdapPort:t~1then~1nameOverride~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
-    },
-    "when/service.enableLdapPort:t/then/nameOverride/else/service.enableSslLdapPort:t@2": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableSslLdapPort:t~1then~1nameOverride~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      }
-    },
     "when/service.enableSslLdapPort:t/then/any/else/fail": {
       "else": false,
       "if": {
@@ -2696,48 +1287,72 @@
       },
       "then": true
     },
-    "when/service.enableSslLdapPort:t/then/any/else/fail@2": {
-      "else": false,
+    "when/service.type!=null/then/fail": {
       "if": {
-        "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
+        "properties": {
+          "service": {
+            "properties": {
+              "type": {
+                "not": {
+                  "enum": [
+                    null
+                  ]
+                }
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
       },
-      "then": true
+      "then": false
     },
-    "when/service.enableSslLdapPort:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
+    "when/service.type+service.type=null/then/fail/else/enabled+enabled=null+service.type": {
+      "else": {
+        "$ref": "#/$defs/when~1enabled+enabled=null~1then~1service+service.type+service.type=null~1else~1fail"
       },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
+      "if": {
+        "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+      },
+      "then": false
     },
-    "when/service.enableSslLdapPort:t/then/fullnameOverride/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
+    "when/service.type+service.type=null/then/fail/else/service.type": {
+      "else": {
+        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1service.type@2"
       },
-      "then": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
+      "if": {
+        "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+      },
+      "then": false
     },
-    "when/service.enableSslLdapPort:t/then/nameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
+    "when/service.type+service.type=null/then/fail/else/service.type@2": {
+      "else": {
+        "$ref": "#/$defs/when~1service.type~1then~1fail~1else~1any"
       },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail"
-      }
+      "if": {
+        "allOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+          }
+        ]
+      },
+      "then": false
     },
-    "when/service.enableSslLdapPort:t/then/nameOverride/else/fail@2": {
-      "else": false,
+    "when/service.type/then/fail/else/any": {
+      "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
+        "$ref": "#/$defs/constrains~1service.type@3"
       },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride~1then~1any~1else~1fail@2"
-      }
+      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2745,110 +1360,7 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride+phpldapadmin.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t+phpldapadmin.nameOverride+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "additionalProperties": {},
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "service": {
-                "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.fullnameOverride:t~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "additionalProperties": {},
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "fullnameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "phpldapadmin": {
-          "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@3"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1ltb-passwd.enabled:t~1then~1ltb-passwd.fullnameOverride+ltb-passwd.fullnameOverride:t+ltb-passwd.ingress+3more~1else~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
+        "$ref": "#/$defs/when~1ltb-passwd.enabled:t~1then~1ltb-passwd.ingress+ltb-passwd.ingress.tls:t~1else~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
       },
       "then": {
         "additionalProperties": {},
@@ -2879,14 +1391,63 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global:t+service.enableLdapPort:t+service.enableSslLdapPort:t~1else~1nameOverride+nameOverride:t@2"
+            "$ref": "#/$defs/constrains~1service.enableLdapPort:t+service.enableSslLdapPort:t"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+global:t+nameOverride+nameOverride:t+2more"
+            "$ref": "#/$defs/constrains~1global+global=null"
           }
         ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "phpldapadmin": {
+          "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1global:t+service.enableLdapPort:t+service.enableSslLdapPort:t"
       },
       "then": {
         "additionalProperties": {},
@@ -2919,44 +1480,80 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          },
-          {
-            "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+global:t+service.enableLdapPort:t+service.enableSslLdapPort:t~1else~1nameOverride+nameOverride:t"
-          }
-        ]
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.fullname",
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin+phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t+7more~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
+        "anyOf": [
+          {
+            "properties": {
+              "phpldapadmin": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "phpldapadmin"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "phpldapadmin": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "phpldapadmin"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "phpldapadmin": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "phpldapadmin"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "phpldapadmin": {
-            "additionalProperties": {},
             "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "tls": {
-                    "description": "Ingress cert\n- secretName: phpldapadmin.example\nhosts:\n- phpldapadmin.example",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
+            "type": "object"
           }
         }
       }
@@ -2965,15 +1562,18 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null"
+            "$ref": "#/$defs/when~1global:t~1then~1any~1else~1service.enableLdapPort:t+service.enableSslLdapPort:t"
           },
           {
-            "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t+ltb-passwd.nameOverride+ltb-passwd.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride+ltb-passwd.fullnameOverride:t"
+            "$ref": "#/$defs/constrains~1global+global=null"
           }
         ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null"
       },
       "then": {
         "allOf": [
@@ -3010,227 +1610,22 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "phpldapadmin": {
-                "$ref": "#/$defs/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "phpldapadmin"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "phpldapadmin": {
-                        "$ref": "#/$defs/constrains~1enabled!=true"
-                      }
-                    },
-                    "required": [
-                      "phpldapadmin"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "phpldapadmin": {
-                        "$ref": "#/$defs/constrains~1enabled!=false"
-                      }
-                    },
-                    "required": [
-                      "phpldapadmin"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@6"
+            "$ref": "#/$defs/constrains~1nameOverride"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@6"
+            "$ref": "#/$defs/constrains~1nameOverride:t@2"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/$defs/constrains~1fullnameOverride@4"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
           }
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t+1more~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "additionalProperties": {},
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "nameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "phpldapadmin": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1ingress+ingress=null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "phpldapadmin"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t+phpldapadmin.nameOverride+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.service+phpldapadmin.service.type+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.service+phpldapadmin.service.loadBalancerIP:t+2more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride+phpldapadmin.nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "phpldapadmin": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "phpldapadmin"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "phpldapadmin": {}
-                  },
-                  "required": [
-                    "phpldapadmin"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "phpldapadmin": {
-              "$ref": "#/$defs/constrains~1service.type!=null"
-            }
-          },
-          "required": [
-            "phpldapadmin"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fullnameOverride+nameOverride:t~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override common.names.fullname",
-            "type": "string"
-          }
-        }
-      }
     },
     {
       "if": {
@@ -3244,6 +1639,44 @@
             "type": "string"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "phpldapadmin": {
+                "additionalProperties": {},
+                "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+                "properties": {
+                  "ingress": {
+                    "$ref": "#/$defs/values~1object;configure-ingress-based-on"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "phpldapadmin": {
+                "additionalProperties": {},
+                "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+                "properties": {
+                  "service": {
+                    "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -3267,26 +1700,26 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride+phpldapadmin.nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride+phpldapadmin.fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.service+phpldapadmin.service.loadBalancerIP:t+2more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.service+phpldapadmin.service.type+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t+phpldapadmin.nameOverride+1more"
-          },
-          {
-            "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more"
+        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.nameOverride:t~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "additionalProperties": {},
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
           }
-        ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.ingress+phpldapadmin.ingress.tls:t~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
       },
       "then": {
         "additionalProperties": {},
@@ -3296,101 +1729,23 @@
             "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/values~1object;configure-ingress-based-on"
+                "additionalProperties": {},
+                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "tls": {
+                    "description": "Ingress cert\n- secretName: phpldapadmin.example\nhosts:\n- phpldapadmin.example",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
               }
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "ltb-passwd": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1ingress+ingress=null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ltb-passwd"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "ltb-passwd": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "ltb-passwd"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "ltb-passwd": {}
-                  },
-                  "required": [
-                    "ltb-passwd"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t+ltb-passwd.nameOverride+ltb-passwd.nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride+ltb-passwd.fullnameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "properties": {
-                "ltb-passwd": {
-                  "$ref": "#/$defs/constrains~1fullnameOverride!=null"
-                }
-              },
-              "required": [
-                "ltb-passwd"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "ltb-passwd": {
-                  "$ref": "#/$defs/constrains~1nameOverride!=null"
-                }
-              },
-              "required": [
-                "ltb-passwd"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        "then": false
       }
     },
     {
@@ -3407,22 +1762,22 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride:t@6"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride@7"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t@6"
-          }
-        ]
+        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.fullnameOverride:t~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "additionalProperties": {},
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -3489,6 +1844,12 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@3"
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -3619,30 +1980,6 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled:t+enabled=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@7"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@7"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress+ingress=null"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
               },
               {
@@ -3713,38 +2050,10 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.loadBalancerIP:t+service.type+service.type=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@8"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.type+service.type=null"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enabled+enabled:t+enabled=null@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@8"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ingress+ingress=null"
-              }
-            ]
+            "$ref": "#/$defs/when~1enabled:t~1then~1service+service.type+service.type=null~1else~1enabled+enabled=null"
           },
           "then": {
-            "if": {
-              "$ref": "#/$defs/constrains~1service.type!=null"
-            },
-            "then": false
+            "$ref": "#/$defs/when~1service.type!=null~1then~1fail"
           }
         },
         {
@@ -3762,10 +2071,7 @@
             ]
           },
           "then": {
-            "if": {
-              "$ref": "#/$defs/constrains~1service.type!=null"
-            },
-            "then": false
+            "$ref": "#/$defs/when~1service.type!=null~1then~1fail"
           }
         },
         {
@@ -3780,10 +2086,7 @@
             ]
           },
           "then": {
-            "if": {
-              "$ref": "#/$defs/constrains~1service.type!=null"
-            },
-            "then": false
+            "$ref": "#/$defs/when~1service.type!=null~1then~1fail"
           }
         }
       ],
@@ -3864,7 +2167,8 @@
           "description": "Disable if you do not want to expose port on service"
         },
         "enableSslLdapPort": {}
-      }
+      },
+      "type": "object"
     },
     "serviceAccount": {
       "description": "Service Account\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/"
