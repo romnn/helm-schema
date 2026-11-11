@@ -74,8 +74,12 @@ pub(super) fn record_executed_requirements(
             emit_requirement(paths, terminal_clauses, key, folded, &dependency_roots);
             continue;
         }
-        // The group's union exhausted its allowance. Each occurrence still proves the
-        // requirement under its own guard, so only the union is lost (ADR 0072 §10).
+        // The group's union exhausted its allowance. Each occurrence still proves a value
+        // requirement under its own guard, so only the union is lost (ADR 0072 §10). A failure
+        // clause also covers every later failure group, so a partial set of them is not kept.
+        if !matches!(key.domain, ConsumptionDomain::Known { .. }) {
+            continue;
+        }
         tracing::debug!(
             target: "helm_schema_ir::bounds",
             path = ?key.path,

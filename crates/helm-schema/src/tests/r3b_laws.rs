@@ -37,7 +37,7 @@ const CONFIG_MAP: &str = indoc! {"
 ///
 /// Declared defaults only annotate, so every verdict comes from template and
 /// Helm semantics rather than authoring policy (ADR 0043).
-fn law_session(files: &[(&str, &str)]) -> eyre::Result<crate::AnalysisSession> {
+fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     for (path, source) in files {
         test_util::write(&chart_dir.join(path)?, source)?;
@@ -60,11 +60,6 @@ fn law_session(files: &[(&str, &str)]) -> eyre::Result<crate::AnalysisSession> {
             ..Default::default()
         },
     });
-    Ok(session)
-}
-
-fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
-    let session = law_session(files)?;
     Ok(session.emit(crate::output::EmitRequest {
         reference_policy: crate::output::ReferencePolicy::SelfContained,
         output: crate::output::OutputPipelineOptions {
@@ -156,7 +151,6 @@ fn assumption_join_accepts_documents_a_conditional_program_repairs() -> eyre::Re
 /// (a) With the branch not taken no program runs, so the typed use reads the
 /// input: validity joins as `(enabled ∧ write_free) ∨ ¬enabled`.
 #[test]
-#[ignore = "target: ADR 0073 step 3 (ADR 0072 §2: analysis validity joins as (branch ∧ valid) ∨ ¬branch)"]
 fn assumption_join_rejects_the_untaken_branch_input() -> eyre::Result<()> {
     assert_helm_verdicts(
         &assumption_join_schema()?,
@@ -855,40 +849,228 @@ fn helper_calls_in_different_namespaces_are_not_merged() -> eyre::Result<()> {
     )
 }
 
-#[test]
-fn zz_probe() -> eyre::Result<()> {
-    let root = std::path::Path::new("/Volumes/T9/dev/round8-r3b-s3/target/tmp/vb");
-    let mut owned = Vec::new();
-    for entry in walk(root)? {
-        let relative = entry.strip_prefix(root)?.to_string_lossy().to_string();
-        owned.push((relative, std::fs::read_to_string(&entry)?));
-    }
-    let files = owned
-        .iter()
-        .map(|(path, source)| (path.as_str(), source.as_str()))
-        .collect::<Vec<_>>();
-    let session = law_session(&files)?;
-    let path = std::env::var("PROBE_PATH").unwrap_or_else(|_| "ui".to_owned());
-    let contract = session.finalized_contract()?;
-    let evidence = contract
-        .schema_signals()
-        .evidence_for(&helm_schema_core::ValuesPath::parse(&path));
-    println!(
-        "IMPLICATIONS {:#?}",
-        evidence.map(|evidence| &evidence.requirement_implications)
-    );
-    Ok(())
+const AFTER_STRING: &str = indoc! {"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: law
+    data:
+      after: {{ upper .Values.after | quote }}
+"};
+
+/// Step 3 laws: abort survival never guards later facts, analysis validity does (ADR 0072
+/// §2–3). Receipts: `transfer/receipts/<chart>/` of the step-3 lane (`helm template
+/// --kube-version 1.29.0`, Helm v4.2.3).
+fn abort_only_helper_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        r#"after: "x""#,
+        &[r#"{{- include "law.check" . }}"#, "\n", AFTER_STRING],
+        indoc! {r#"
+            {{- define "law.check" -}}
+            {{- if .Capabilities.APIVersions.Has "law.example/v1/Gate" -}}
+            {{- fail "law.example/v1 Gate is not supported" -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    )
 }
 
-fn walk(dir: &std::path::Path) -> eyre::Result<Vec<std::path::PathBuf>> {
-    let mut out = Vec::new();
-    for entry in std::fs::read_dir(dir)? {
-        let path = entry?.path();
-        if path.is_dir() {
-            out.extend(walk(&path)?);
-        } else {
-            out.push(path);
+/// A helper branch whose every exit aborts leaves its other outcome as a survived check: a
+/// later typed use applies whatever the opaque capability test answers (receipt helper-branch).
+#[test]
+fn helper_abort_only_branch_rejects_a_later_typed_input() -> eyre::Result<()> {
+    let schema = abort_only_helper_schema()?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("r1: integer after", json!({ "after": 7 })),
+            ("r2: boolean after", json!({ "after": true })),
+        ],
+        false,
+    )?;
+    assert_helm_verdicts(&schema, &[("a1: string after", json!({ "after": "y" }))], true)
+}
+
+/// An abort-only arm of an `if` in the template itself (receipt abort-only-arm).
+#[test]
+fn abort_only_arm_rejects_a_later_typed_input() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        r#"after: "x""#,
+        &[
+            r#"{{- if .Capabilities.APIVersions.Has "law.example/v1/Gate" }}{{ fail "unsupported" }}{{ end }}"#,
+            "\n",
+            AFTER_STRING,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("r1: integer after", json!({ "after": 7 })),
+            ("r2: boolean after", json!({ "after": true })),
+        ],
+        false,
+    )?;
+    assert_helm_verdicts(&schema, &[("a1: string after", json!({ "after": "y" }))], true)
+}
+
+/// A conditional `tpl` of a program without template actions writes nothing, so the later
+/// typed use applies on both arms (receipt conditional-tpl; RECV2 R-a's `{program: "plain",
+/// after: 7}`).
+#[test]
+fn conditional_action_free_program_keeps_the_later_typed_use() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            enabled: true
+            program: "plain"
+            after: "x"
+        "#},
+        &[
+            "{{- if .Values.enabled }}# {{ tpl .Values.program $ }}{{ end }}\n",
+            AFTER_STRING,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            (
+                "r1: enabled, plain program, integer after",
+                json!({ "enabled": true, "program": "plain", "after": 7 }),
+            ),
+            (
+                "r2: disabled, integer after",
+                json!({ "enabled": false, "program": "", "after": 7 }),
+            ),
+        ],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            (
+                "a1: the program sets after to a string",
+                json!({
+                    "enabled": true,
+                    "program": r#"{{ $_ := set .Values "after" "ok" }}"#,
+                    "after": 7
+                }),
+            ),
+            (
+                "a2: plain program, string after",
+                json!({ "enabled": true, "program": "plain", "after": "y" }),
+            ),
+        ],
+        true,
+    )
+}
+
+const EXCLUSIVE_PAIRS: usize = 20;
+
+fn exclusive_pairs(overrides: &[(&str, bool)], after: Value) -> Value {
+    let mut document = serde_json::Map::new();
+    for index in 1..=EXCLUSIVE_PAIRS {
+        for side in ["a", "b"] {
+            let key = format!("{side}{index}");
+            let value = overrides
+                .iter()
+                .find(|(name, _)| *name == key)
+                .is_some_and(|(_, value)| *value);
+            document.insert(key, Value::Bool(value));
         }
     }
-    Ok(out)
+    document.insert("after".to_owned(), after);
+    Value::Object(document)
+}
+
+/// Twenty earlier files each abort on one exclusive pair. Every later file runs only on
+/// documents that survived all of them, so its typed use carries none of those checks
+/// (receipt cross-file).
+#[test]
+fn cross_file_survival_does_not_guard_a_later_typed_use() -> eyre::Result<()> {
+    let mut values = String::from("after: \"x\"\n");
+    let mut checks = Vec::new();
+    for index in 1..=EXCLUSIVE_PAIRS {
+        values.push_str(&format!("a{index}: false\nb{index}: false\n"));
+        checks.push((
+            format!("templates/check-{index:02}.yaml"),
+            format!(
+                "{{{{- if and .Values.a{index} .Values.b{index} }}}}{{{{ fail \"a{index} and b{index} are exclusive\" }}}}{{{{ end }}}}\n"
+            ),
+        ));
+    }
+    let mut files = vec![
+        ("Chart.yaml", CHART),
+        ("values.yaml", values.as_str()),
+        ("templates/z.yaml", AFTER_STRING),
+    ];
+    files.extend(checks.iter().map(|(path, source)| (path.as_str(), source.as_str())));
+    let schema = law_schema(&files)?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("r1: integer after", exclusive_pairs(&[], json!(7))),
+            ("r2: boolean after", exclusive_pairs(&[("a3", true)], json!(true))),
+            (
+                "r3: an exclusive pair",
+                exclusive_pairs(&[("a3", true), ("b3", true)], json!("y")),
+            ),
+        ],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("a1: string after", exclusive_pairs(&[], json!("y"))),
+            ("a2: one side of a pair", exclusive_pairs(&[("b7", true)], json!("y"))),
+        ],
+        true,
+    )
+}
+
+/// Twenty guarded member reads of one host: their union's diagram is exponential in the pair
+/// order, and exhausting it never removes a rejection (ADR 0072 §10; receipt budget-union).
+#[test]
+fn member_reads_under_exclusive_pairs_keep_every_rejection() -> eyre::Result<()> {
+    let mut values = String::from("x:\n  port: \"v\"\n");
+    let mut template = String::new();
+    for index in 1..=EXCLUSIVE_PAIRS {
+        values.push_str(&format!("a{index}: false\nb{index}: false\n"));
+        template.push_str(&format!(
+            "{{{{- if and .Values.a{index} .Values.b{index} }}}}{{{{ $_ := .Values.x.port }}}}{{{{ end }}}}\n"
+        ));
+    }
+    template.push_str(CONFIG_MAP);
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", values.as_str()),
+        ("templates/cm.yaml", template.as_str()),
+    ])?;
+    let pairs = |overrides: &[(&str, bool)], x: Value| {
+        let mut document = exclusive_pairs(overrides, Value::Null);
+        if let Value::Object(map) = &mut document {
+            map.remove("after");
+            map.insert("x".to_owned(), x);
+        }
+        document
+    };
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("r1: first pair, string host", pairs(&[("a1", true), ("b1", true)], json!("s"))),
+            ("r2: last pair, integer host", pairs(&[("a20", true), ("b20", true)], json!(7))),
+        ],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("a1: no pair, string host", pairs(&[], json!("s"))),
+            (
+                "a2: first pair, map host",
+                pairs(&[("a1", true), ("b1", true)], json!({ "port": "v" })),
+            ),
+        ],
+        true,
+    )
 }

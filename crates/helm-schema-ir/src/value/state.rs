@@ -263,9 +263,6 @@ impl State {
 
     /// The continuation that passed a check whose other outcome aborts the render.
     pub(super) fn survive(&self, test: Rc<FrozenTest>, taken: bool) -> Self {
-        if std::env::var_os("S3_NO_SURVIVE").is_some() {
-            return self.fork(test, taken);
-        }
         self.fork_as(test, taken, super::path::LinkKind::Survival)
     }
 

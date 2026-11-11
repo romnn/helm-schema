@@ -335,9 +335,7 @@ impl Executor<'_> {
             exit.state.leave_scope();
         }
         let mut exits = reconverge(results);
-        if std::env::var_os("S3_NO_REGION_SETTLE").is_none() {
-            settle_exits(&entry, &mut exits);
-        }
+        settle_exits(&entry, &mut exits);
         exits
     }
     #[tracing::instrument(skip_all)]
@@ -1099,10 +1097,13 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
         .collect()
 }
 /// Re-kinds as survival the branch links a region's continuations all took (ADR 0072 §2).
+///
+/// An abort ends the render on its edge's whole runtime region, however partially the edge's
+/// predicate describes that region, so only the flow decides which exits continue.
 pub(super) fn settle_exits(entry: &super::path::Path, exits: &mut [Exit]) {
     let mut paths = exits
         .iter_mut()
-        .filter(|exit| super::output::exit_may_continue(exit))
+        .filter(|exit| !matches!(exit.flow, Flow::Abort(_)))
         .map(|exit| &mut exit.state.active)
         .collect::<Vec<_>>();
     super::path::settle_survival(entry, &mut paths);

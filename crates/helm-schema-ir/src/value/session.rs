@@ -172,9 +172,7 @@ fn execute_file(
         .iter_mut()
         .map(|state| &mut state.active)
         .collect::<Vec<_>>();
-    if std::env::var_os("S3_NO_FILE_SETTLE").is_none() {
-        super::path::settle_survival(&super::path::Path::default(), &mut paths);
-    }
+    super::path::settle_survival(&super::path::Path::default(), &mut paths);
     // Sealing needs completeness and recorded evidence, not execution counters.
     for exit in &mut exits {
         let state = &mut exit.state;
