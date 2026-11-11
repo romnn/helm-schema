@@ -1086,3 +1086,14 @@ field:contract_signal_builder/executed_requirements.rs:ExistingCoverage.body	D	d
 field:contract_signal_builder/executed_requirements.rs:ExistingCoverage.absence	D	derived existing-obligation coverage	one bounded BDD proof before omitting a redundant emitted requirement; no new inference source	keep		decl1 builder ownership audit; binding design review v2 item 4	
 field:value/ordering.rs:Region.fails	D	integer comparison certified-false subsets	per-call fold into an exact decision; never stored	keep		PARSE1 lexical/ordering certificate audit, 2026-11-06	
 field:value/ordering.rs:Region.holds	D	integer comparison certified-true subsets	per-call fold into an exact decision; never stored	keep		PARSE1 lexical/ordering certificate audit, 2026-11-06	
+field:value/path.rs:Divergence.common	G	guard context Divergence.common	fork point of two prefix-linked paths	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:Divergence.left	G	guard context Divergence.left	links one path took after the fork point	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:Divergence.right	G	guard context Divergence.right	links the other path took after the fork point	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:Path.head	G	guard context Path.head	immutable prefix link of branch, survival and assumption conditions (ADR 0072 §2-3)	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:PathLink.edge	G	guard context PathLink.edge	one condition of a prefix-linked path	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:PathLink.parent	G	guard context PathLink.parent	shared prefix of a prefix-linked path	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:PathLink.guard	K	memoized feasibility guard of a path prefix	pure projection of the immutable prefix; shares prefixes across forks	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:PathLink.exported	K	memoized exported guard of a path prefix	pure projection of the immutable prefix; survival never exported	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:PathLink.exported_predicate	K	memoized exported predicate of a path	pure projection of the immutable prefix	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:PathLink.feasible_predicate	K	memoized feasibility predicate of a path	pure projection of the immutable prefix	keep		R3b step 3 conditions, 2026-11-11	
+field:value/path.rs:PathLink.whole_predicate	K	memoized whole-path predicate for abort clauses	pure projection of the immutable prefix	keep		R3b step 3 conditions, 2026-11-11	

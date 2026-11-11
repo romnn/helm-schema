@@ -163,13 +163,13 @@ fn writer_defines() -> DefineIndex {
     defines
 }
 
+/// An unresolved helper may write `$d`. An unknown `tpl` program is analyzed under the
+/// assumption that it holds no template action, so it writes nothing (ADR 0072 §2, §5); the
+/// assumption guards the observation instead (`unknown_tpl_writer_is_an_assumption`).
 #[test]
 fn unresolved_writers_do_not_manufacture_map_membership() -> eyre::Result<()> {
     let db = IrAnalysisDb::new(&writer_defines());
-    for writer in [
-        r"{{ $_ := include (toString .Values.helper) $d }}",
-        r"{{ $_ := tpl (toString .Values.program) $d }}",
-    ] {
+    for writer in [r"{{ $_ := include (toString .Values.helper) $d }}"] {
         for source in [
             format!(
                 r#"{{{{ $d := dict "x" 1 }}}}{{{{ $_ := unset $d "x" }}}}{writer}{{{{ hasKey $d "x" }}}}"#
@@ -207,10 +207,8 @@ fn pure_call_cannot_prove_the_original_ghost_key_abort() {
 #[test]
 fn unresolved_writer_preserves_transitive_input_influences() -> eyre::Result<()> {
     let db = IrAnalysisDb::new(&writer_defines());
-    for writer in [
-        r"{{ $_ := include (toString .Values.helper) $outer }}",
-        r"{{ $_ := tpl (toString .Values.program) $outer }}",
-    ] {
+    let writer = r"{{ $_ := include (toString .Values.helper) $outer }}";
+    {
         let source = format!(
             r#"{{{{ $inner := dict "x" .Values.seed }}}}{{{{ $outer := dict "inner" $inner "replacement" .Values.replacement }}}}{writer}{{{{ $outer.inner.x }}}}"#
         );
@@ -225,6 +223,32 @@ fn unresolved_writer_preserves_transitive_input_influences() -> eyre::Result<()>
         );
         assert!(site.value().identity().is_none());
     }
+    Ok(())
+}
+
+/// Under the assumption that the program holds no template action, the map keeps its
+/// membership and its read keeps its input; the observation is claimed only where `program`
+/// is action-free.
+#[test]
+fn unknown_tpl_writer_is_an_assumption() -> eyre::Result<()> {
+    let db = IrAnalysisDb::new(&writer_defines());
+    let execution = execute_document(
+        r#"{{ $d := dict "x" .Values.seed }}{{ $_ := tpl (toString .Values.program) $d }}{{ $d.x }}"#,
+        Some("templates/test.yaml"),
+        &db,
+    );
+    let site = execution.sites().last().ok_or_eyre("missing output site")?;
+    sim_assert_eq!(
+        have: site.value().identity(),
+        want: Some(&helm_schema_core::ValuesPath::from_segments(["seed"])),
+    );
+    assert!(
+        site.condition()
+            .value_paths()
+            .contains(&helm_schema_core::ValuesPath::from_segments(["program"])),
+        "the observation is not claimed under the program assumption: {:?}",
+        site.condition()
+    );
     Ok(())
 }
 

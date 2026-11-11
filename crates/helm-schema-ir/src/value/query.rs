@@ -538,7 +538,7 @@ impl State {
                 .heap
                 .arena
                 .predicate_memo
-                .may_be_true(self.heap.arena.feasible_path_predicate(&self.active))
+                .may_be_true(self.active.feasible_predicate())
     }
 
     #[tracing::instrument(skip_all, level = "debug", target = "helm_schema_ir::value::read_work")]
@@ -546,7 +546,7 @@ impl State {
         if self.heap.arena.path_guard(&self.active).is_impossible() {
             return Predicate::False;
         }
-        self.heap.arena.exported_path_predicate(&self.active)
+        self.active.exported_predicate()
     }
 
     /// Where the analysis claims this point is reached: every branch, survival and assumption.
@@ -554,7 +554,7 @@ impl State {
         if self.heap.arena.path_guard(&self.active).is_impossible() {
             return Predicate::False;
         }
-        self.heap.arena.whole_path_predicate(&self.active)
+        self.active.whole_predicate()
     }
     pub(super) fn consumed(&self, value: &Value) -> Value {
         let value = self.heap.version.consume(value);

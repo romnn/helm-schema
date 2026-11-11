@@ -43,25 +43,13 @@ fn a_literal_span_retains_its_executed_equality_guard() {
         path: ValuesPath::parse("mode"),
         value: GuardValue::String("left".to_owned()),
     });
-    // A string comparison succeeds only for comparable raw inputs; both text arms keep that domain.
-    let comparable = Predicate::Or(vec![
-        Predicate::from(Guard::Eq {
-            path: ValuesPath::parse("mode"),
-            value: GuardValue::Null,
-        }),
-        Predicate::from(Guard::Absent {
-            path: ValuesPath::parse("mode"),
-        }),
-        Predicate::from(Guard::TypeIs {
-            path: ValuesPath::parse("mode"),
-            schema_type: "string".to_owned(),
-        }),
-    ]);
+    // A string comparison succeeds only for comparable raw inputs. That check is survived, so
+    // the text arms keep only the branch (ADR 0072 §2).
     sim_assert_eq!(
         have: alternatives(&execute(source)),
         want: BTreeSet::from([
-            (Predicate::all(vec![guard.clone(), comparable.clone()]).normalize_boolean(), Some("L".to_owned())),
-            (Predicate::all(vec![guard.negated(), comparable]).normalize_boolean(), Some(String::new())),
+            (guard.clone().normalize_boolean(), Some("L".to_owned())),
+            (guard.negated().normalize_boolean(), Some(String::new())),
         ])
     );
 }

@@ -81,6 +81,64 @@ fn provider_resolution_distinguishes_stringified_scalar_uses() {
     ));
 }
 
+/// Rows compare by their fields and by the Boolean function of their condition.
+fn assert_same_rows(have: &[ContractUse], want: &[ContractUse]) {
+    let memo = helm_schema_core::PredicateMemo::default();
+    let condition = |use_: &ContractUse| {
+        helm_schema_core::Predicate::Or(
+            use_.condition
+                .disjuncts()
+                .iter()
+                .map(|conjunction| {
+                    helm_schema_core::Predicate::And(conjunction.iter().cloned().collect())
+                })
+                .collect(),
+        )
+    };
+    sim_assert_eq!(have: have.len(), want: want.len());
+    for (have, want) in have.iter().zip(want) {
+        let (have_condition, want_condition) = (condition(have), condition(want));
+        sim_assert_eq!(
+            have: [
+                memo.exactly_implies(&have_condition, &want_condition),
+                memo.exactly_implies(&want_condition, &have_condition),
+            ],
+            want: [true, true],
+            "{have_condition:?} vs {want_condition:?}"
+        );
+        let mut have = have.clone();
+        have.condition = want.condition.clone();
+        sim_assert_eq!(have: &have, want: want);
+    }
+}
+
+fn formatted_collection_conditions(
+    path: &helm_schema_core::ValuesPath,
+) -> Vec<helm_schema_core::Predicate> {
+    let mut conditions = ["null", "boolean", "number", "string"]
+        .map(|schema_type| {
+            helm_schema_core::Predicate::from(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.to_owned(),
+            })
+            .negated()
+        })
+        .to_vec();
+    conditions
+        .push(helm_schema_core::Predicate::from(Guard::Absent { path: path.clone() }).negated());
+    conditions.push(
+        helm_schema_core::Predicate::from(Guard::MatchesValue {
+            path: path.clone(),
+            pattern: helm_schema_core::ValuePattern::Array {
+                prefix: Vec::new(),
+                items: None,
+            },
+        })
+        .negated(),
+    );
+    conditions
+}
+
 #[test]
 #[expect(
     clippy::too_many_lines,
@@ -2939,20 +2997,15 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
     let mut written = retained.clone();
     written.source_expr = helm_schema_core::ValuesPath::parse("other");
     written.nil_omitting = false;
-    let host = helm_schema_core::ValuesPath::parse("serviceAccount");
+    // The written row is selected by the `with`, the default and the map host; `set` survives only
+    // a present host, and that check is not part of a row (ADR 0072 §2).
     let common = [
         helm_schema_core::Predicate::truthy_path(""),
         helm_schema_core::Predicate::truthy_path("other"),
         helm_schema_core::Predicate::from(Guard::TypeIs {
-            path: host.clone(),
+            path: helm_schema_core::ValuesPath::parse("serviceAccount"),
             schema_type: "object".to_owned(),
         }),
-        helm_schema_core::Predicate::from(Guard::Eq {
-            path: host.clone(),
-            value: GuardValue::Null,
-        })
-        .negated(),
-        helm_schema_core::Predicate::from(Guard::Absent { path: host }).negated(),
     ];
     let string = vec![helm_schema_core::Predicate::from(Guard::TypeIs {
         path: written.source_expr.clone(),
@@ -2969,7 +3022,7 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
             conditions
         }),
     );
-    sim_assert_eq!(have: rendered_uses, want: vec![written, retained]);
+    assert_same_rows(&rendered_uses, &[written, retained]);
     let target_default_guards = projection
         .uses()
         .iter()
@@ -2979,33 +3032,6 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
         })
         .collect::<Vec<_>>();
     sim_assert_eq!(have: target_default_guards, want: Vec::<Guard>::new());
-}
-
-fn formatted_collection_conditions(
-    path: &helm_schema_core::ValuesPath,
-) -> Vec<helm_schema_core::Predicate> {
-    let mut conditions = ["null", "boolean", "number", "string"]
-        .map(|schema_type| {
-            helm_schema_core::Predicate::from(Guard::TypeIs {
-                path: path.clone(),
-                schema_type: schema_type.to_owned(),
-            })
-            .negated()
-        })
-        .to_vec();
-    conditions
-        .push(helm_schema_core::Predicate::from(Guard::Absent { path: path.clone() }).negated());
-    conditions.push(
-        helm_schema_core::Predicate::from(Guard::MatchesValue {
-            path: path.clone(),
-            pattern: helm_schema_core::ValuePattern::Array {
-                prefix: Vec::new(),
-                items: None,
-            },
-        })
-        .negated(),
-    );
-    conditions
 }
 
 #[test]

@@ -129,8 +129,10 @@ fn dynamic_helper_names_preserve_unknown_output() {
         !outputs.is_empty(),
         "dynamic execution lost its unknown normal alternative"
     );
+    // The name check is survived on the normal outcome, so its output is claimed unguarded
+    // (ADR 0072 §2).
     for (condition, output) in outputs {
-        sim_assert_eq!(have: condition.normalize_boolean(), want: string_name.clone());
+        sim_assert_eq!(have: condition.normalize_boolean(), want: Predicate::True);
         sim_assert_eq!(have: output.exact_text(), want: None);
     }
 }

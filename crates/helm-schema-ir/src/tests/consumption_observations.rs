@@ -182,10 +182,6 @@ fn selected_value_and_ambient_guards_survive_recording() {
             Predicate::from(Guard::Truthy {
                 path: ValuesPath::parse("choose"),
             }),
-            Predicate::from(Guard::TypeIs {
-                path: ValuesPath::parse("choose"),
-                schema_type: "boolean".to_owned(),
-            }),
         ]);
         sim_assert_eq!(have: guard, want: expected.normalize_boolean());
     }

@@ -609,26 +609,20 @@ fn document_local_coalesce_preserves_ordered_candidate_selection() -> eyre::Resu
     let ir = SymbolicIrContext::new(&DefineIndex::new())
         .generate_contract_ir(src)
         .finalize();
-    let string = |path: &str| {
-        Predicate::from(Guard::TypeIs {
-            path: helm_schema_core::ValuesPath::parse(path),
-            schema_type: "string".to_owned(),
-        })
-    };
     let candidates = [
+        // `b64enc` survives only strings; that check is not part of a row's condition, so a
+        // non-string primary selects its row and the render aborts there (ADR 0072 §2).
         (
             "primary",
-            Predicate::all(vec![Predicate::truthy_path("primary"), string("primary")]),
-            [true, false, false, false, false, false],
+            Predicate::truthy_path("primary"),
+            [true, true, true, false, false, false],
             true,
         ),
+        // A falsy fallback selects nil, which `b64enc` survives only as a string: the
+        // fallback row is claimed wherever the primary is falsy.
         (
             "fallback",
-            Predicate::all(vec![
-                Predicate::truthy_path("fallback"),
-                Predicate::truthy_path("primary").negated(),
-                string("fallback"),
-            ]),
+            Predicate::truthy_path("primary").negated(),
             [false, false, false, true, true, true],
             false,
         ),

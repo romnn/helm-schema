@@ -13,6 +13,8 @@
 //! ignored with the ADR 0073 step and ADR 0072 invariant that must turn it
 //! green.
 
+use std::fmt::Write as _;
+
 use color_eyre::eyre;
 use indoc::indoc;
 use serde_json::{Value, json};
@@ -888,7 +890,11 @@ fn helper_abort_only_branch_rejects_a_later_typed_input() -> eyre::Result<()> {
         ],
         false,
     )?;
-    assert_helm_verdicts(&schema, &[("a1: string after", json!({ "after": "y" }))], true)
+    assert_helm_verdicts(
+        &schema,
+        &[("a1: string after", json!({ "after": "y" }))],
+        true,
+    )
 }
 
 /// An abort-only arm of an `if` in the template itself (receipt abort-only-arm).
@@ -911,7 +917,11 @@ fn abort_only_arm_rejects_a_later_typed_input() -> eyre::Result<()> {
         ],
         false,
     )?;
-    assert_helm_verdicts(&schema, &[("a1: string after", json!({ "after": "y" }))], true)
+    assert_helm_verdicts(
+        &schema,
+        &[("a1: string after", json!({ "after": "y" }))],
+        true,
+    )
 }
 
 /// A conditional `tpl` of a program without template actions writes nothing, so the later
@@ -991,7 +1001,7 @@ fn cross_file_survival_does_not_guard_a_later_typed_use() -> eyre::Result<()> {
     let mut values = String::from("after: \"x\"\n");
     let mut checks = Vec::new();
     for index in 1..=EXCLUSIVE_PAIRS {
-        values.push_str(&format!("a{index}: false\nb{index}: false\n"));
+        writeln!(values, "a{index}: false\nb{index}: false")?;
         checks.push((
             format!("templates/check-{index:02}.yaml"),
             format!(
@@ -1004,13 +1014,20 @@ fn cross_file_survival_does_not_guard_a_later_typed_use() -> eyre::Result<()> {
         ("values.yaml", values.as_str()),
         ("templates/z.yaml", AFTER_STRING),
     ];
-    files.extend(checks.iter().map(|(path, source)| (path.as_str(), source.as_str())));
+    files.extend(
+        checks
+            .iter()
+            .map(|(path, source)| (path.as_str(), source.as_str())),
+    );
     let schema = law_schema(&files)?;
     assert_helm_verdicts(
         &schema,
         &[
             ("r1: integer after", exclusive_pairs(&[], json!(7))),
-            ("r2: boolean after", exclusive_pairs(&[("a3", true)], json!(true))),
+            (
+                "r2: boolean after",
+                exclusive_pairs(&[("a3", true)], json!(true)),
+            ),
             (
                 "r3: an exclusive pair",
                 exclusive_pairs(&[("a3", true), ("b3", true)], json!("y")),
@@ -1022,7 +1039,10 @@ fn cross_file_survival_does_not_guard_a_later_typed_use() -> eyre::Result<()> {
         &schema,
         &[
             ("a1: string after", exclusive_pairs(&[], json!("y"))),
-            ("a2: one side of a pair", exclusive_pairs(&[("b7", true)], json!("y"))),
+            (
+                "a2: one side of a pair",
+                exclusive_pairs(&[("b7", true)], json!("y")),
+            ),
         ],
         true,
     )
@@ -1035,10 +1055,11 @@ fn member_reads_under_exclusive_pairs_keep_every_rejection() -> eyre::Result<()>
     let mut values = String::from("x:\n  port: \"v\"\n");
     let mut template = String::new();
     for index in 1..=EXCLUSIVE_PAIRS {
-        values.push_str(&format!("a{index}: false\nb{index}: false\n"));
-        template.push_str(&format!(
-            "{{{{- if and .Values.a{index} .Values.b{index} }}}}{{{{ $_ := .Values.x.port }}}}{{{{ end }}}}\n"
-        ));
+        writeln!(values, "a{index}: false\nb{index}: false")?;
+        writeln!(
+            template,
+            "{{{{- if and .Values.a{index} .Values.b{index} }}}}{{{{ $_ := .Values.x.port }}}}{{{{ end }}}}"
+        )?;
     }
     template.push_str(CONFIG_MAP);
     let schema = law_schema(&[
@@ -1057,8 +1078,14 @@ fn member_reads_under_exclusive_pairs_keep_every_rejection() -> eyre::Result<()>
     assert_helm_verdicts(
         &schema,
         &[
-            ("r1: first pair, string host", pairs(&[("a1", true), ("b1", true)], json!("s"))),
-            ("r2: last pair, integer host", pairs(&[("a20", true), ("b20", true)], json!(7))),
+            (
+                "r1: first pair, string host",
+                pairs(&[("a1", true), ("b1", true)], json!("s")),
+            ),
+            (
+                "r2: last pair, integer host",
+                pairs(&[("a20", true), ("b20", true)], json!(7)),
+            ),
         ],
         false,
     )?;

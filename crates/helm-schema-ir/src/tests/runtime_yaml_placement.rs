@@ -694,10 +694,9 @@ fn an_unknown_body_keeps_resource_diagnostics_without_inventing_placed_fields() 
     sim_assert_eq!(have: contract.schema_signals().observed_resources(), want: &BTreeSet::from([
         helm_schema_core::ResourceObservation {
             resource: helm_schema_core::ResourceRef::concrete("autoscaling/v2beta1".to_owned(), "HorizontalPodAutoscaler".to_owned()),
-            activation: Some(vec![helm_schema_core::ConditionalGuard::TypeIs {
-                path: ValuesPath::parse("name"),
-                schema_type: "string".to_owned(),
-            }]),
+            // `trunc` survives only a string name; that check does not activate the resource
+            // (ADR 0072 §2).
+            activation: Some(Vec::new()),
         }
     ]));
     // The truncated name is placed as opaque text (no slot demand reaches `name`); the unknown

@@ -224,12 +224,11 @@ impl Executor<'_> {
                     .then(|| arguments.first())
                     .flatten()
                     .filter(|_| function == "tpl");
-                if let Some(program) = program {
-                    // An unknown program is analyzed under the assumption that it writes
-                    // nothing: no template action, so facts below are claimed only there
-                    // (ADR 0072 §2, §5).
-                    state.assume_action_free(program);
-                } else if !read_only_inputs {
+                // An unknown program is analyzed under the assumption that it writes nothing:
+                // facts below are claimed only where it holds no template action (ADR 0072 §2,
+                // §5). Where that cannot be stated, its effect is still an unknown write.
+                let assumed = program.is_some_and(|program| state.assume_action_free(program));
+                if !assumed && !read_only_inputs {
                     super::operations::invalidate(&mut state);
                 }
                 let value = unknown_helper_text(influences);

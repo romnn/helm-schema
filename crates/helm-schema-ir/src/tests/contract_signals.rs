@@ -239,24 +239,8 @@ fn sibling_adoption_uses_the_target_branch_window() -> eyre::Result<()> {
         !evidence.conditional_overlays.is_empty(),
         "inner keeps its overlay"
     );
-    // Together the overlays cover exactly the window where `required` passes (inner neither empty,
-    // nil nor absent); the kind arms of the slot partition that domain.
-    let required = |path: &str| {
-        Predicate::Or(vec![
-            Predicate::from(helm_schema_core::Guard::Eq {
-                path: conditional_path(path),
-                value: GuardValue::string(""),
-            }),
-            Predicate::from(helm_schema_core::Guard::Eq {
-                path: conditional_path(path),
-                value: helm_schema_core::GuardValue::Null,
-            }),
-            Predicate::from(helm_schema_core::Guard::Absent {
-                path: conditional_path(path),
-            }),
-        ])
-        .negated()
-    };
+    // Together the overlays cover exactly the window: `required` is survived there, so it is not
+    // part of an overlay's guard (ADR 0072 §2); the kind arms of the slot partition the window.
     crate::tests::guard_oracle::assert_equivalent(
         &Predicate::Or(
             evidence
@@ -276,7 +260,6 @@ fn sibling_adoption_uses_the_target_branch_window() -> eyre::Result<()> {
         &Predicate::all(vec![
             Predicate::truthy_path("b"),
             Predicate::truthy_path("a").negated(),
-            required("inner"),
         ]),
         &crate::tests::guard_oracle::representatives(&[]),
     )?;

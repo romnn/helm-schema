@@ -1274,7 +1274,9 @@ fn comparison_walk(
 
 fn comparison_push(state: &mut State, test: Rc<super::FrozenTest>, taken: bool) {
     if test.constant_outcome() != Some(taken) {
-        state.active.push_branch(super::DecisionEdge { test, taken });
+        state
+            .active
+            .push_branch(super::DecisionEdge { test, taken });
     }
 }
 

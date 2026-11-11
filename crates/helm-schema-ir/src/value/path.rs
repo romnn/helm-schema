@@ -68,7 +68,7 @@ enum View {
 }
 
 #[derive(Debug)]
-pub(super) struct Link {
+pub(super) struct PathLink {
     parent: Path,
     edge: DecisionEdge,
     kind: LinkKind,
@@ -85,7 +85,7 @@ pub(super) struct Link {
     whole_predicate: OnceCell<Predicate>,
 }
 
-impl Drop for Link {
+impl Drop for PathLink {
     fn drop(&mut self) {
         // Long chains drop iteratively instead of recursing once per link.
         let mut parent = self.parent.head.take();
@@ -98,7 +98,7 @@ impl Drop for Link {
     }
 }
 
-impl Link {
+impl PathLink {
     pub(super) fn edge(&self) -> &DecisionEdge {
         &self.edge
     }
@@ -117,7 +117,7 @@ impl Link {
 /// One program point's chain of conditions; the empty path is the render's root.
 #[derive(Clone, Debug, Default)]
 pub(super) struct Path {
-    head: Option<Rc<Link>>,
+    head: Option<Rc<PathLink>>,
 }
 
 impl PartialEq for Path {
@@ -151,8 +151,8 @@ impl From<Vec<DecisionEdge>> for Path {
 /// The fork point of two paths and the links each took after it, in root-to-leaf order.
 pub(super) struct Divergence<'a> {
     pub(super) common: Path,
-    pub(super) left: Vec<&'a Link>,
-    pub(super) right: Vec<&'a Link>,
+    pub(super) left: Vec<&'a PathLink>,
+    pub(super) right: Vec<&'a PathLink>,
 }
 
 impl Path {
@@ -174,9 +174,15 @@ impl Path {
     }
 
     /// The path extended by one condition.
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::counters",
+        name = "path_link"
+    )]
     pub(super) fn pushed(&self, edge: DecisionEdge, kind: LinkKind) -> Self {
         Self {
-            head: Some(Rc::new(Link {
+            head: Some(Rc::new(PathLink {
                 parent: self.clone(),
                 edge,
                 kind,
@@ -227,7 +233,7 @@ impl Path {
     }
 
     /// The links in root-to-leaf order.
-    pub(super) fn links(&self) -> Vec<&Link> {
+    pub(super) fn links(&self) -> Vec<&PathLink> {
         let mut links = Vec::with_capacity(self.len());
         let mut cursor = self.head.as_deref();
         while let Some(link) = cursor {
@@ -265,7 +271,7 @@ impl Path {
         self.all_exact(|link| link.kind.is_exported())
     }
 
-    fn all_exact(&self, considered: impl Fn(&Link) -> bool) -> bool {
+    fn all_exact(&self, considered: impl Fn(&PathLink) -> bool) -> bool {
         let mut cursor = self.head.as_deref();
         while let Some(link) = cursor {
             if considered(link) && link.edge.test.coverage != Coverage::Exact {
@@ -325,12 +331,16 @@ impl super::Arena {
     /// The runtime guard of the branches and survivals on the path: what feasibility and value
     /// refinement may assume.
     pub(super) fn path_guard(&self, path: &Path) -> RuntimeGuard {
-        Self::link_guard(path, View::Feasibility, &mut |guard, edge| self.conjoin_edge(guard, edge))
+        Self::link_guard(path, View::Feasibility, &mut |guard, edge| {
+            self.conjoin_edge(guard, edge)
+        })
     }
 
     /// The runtime guard exported with a fact: branches and assumptions, never survival.
     pub(super) fn exported_path_guard(&self, path: &Path) -> RuntimeGuard {
-        Self::link_guard(path, View::Exported, &mut |guard, edge| self.conjoin_edge(guard, edge))
+        Self::link_guard(path, View::Exported, &mut |guard, edge| {
+            self.conjoin_edge(guard, edge)
+        })
     }
 
     /// [`Self::path_guard`] while the decision store is already borrowed.
@@ -388,24 +398,27 @@ impl super::Arena {
         }
         base
     }
+}
 
+impl Path {
     /// The possible predicate of the exported links: the condition attached to recorded reads.
-    pub(super) fn exported_path_predicate(&self, path: &Path) -> Predicate {
-        Self::link_predicate(path, View::Exported)
+    pub(super) fn exported_predicate(&self) -> Predicate {
+        self.predicate(View::Exported)
     }
 
     /// The possible predicate of every link: where the analysis claims that the point is
     /// reached.
-    pub(super) fn whole_path_predicate(&self, path: &Path) -> Predicate {
-        Self::link_predicate(path, View::Whole)
+    pub(super) fn whole_predicate(&self) -> Predicate {
+        self.predicate(View::Whole)
     }
 
     /// The possible predicate of the branches and survivals: what feasibility may assume.
-    pub(super) fn feasible_path_predicate(&self, path: &Path) -> Predicate {
-        Self::link_predicate(path, View::Feasibility)
+    pub(super) fn feasible_predicate(&self) -> Predicate {
+        self.predicate(View::Feasibility)
     }
 
-    fn link_predicate(path: &Path, view: View) -> Predicate {
+    fn predicate(&self, view: View) -> Predicate {
+        let path = self;
         let Some(head) = path.head.as_ref() else {
             return Predicate::True;
         };
@@ -435,6 +448,8 @@ impl super::Arena {
 /// need not carry the link (ADR 0072 §2). A path that does not extend `entry` makes the set
 /// incomplete, and then nothing is re-kinded.
 pub(super) fn settle_survival(entry: &Path, paths: &mut [&mut Path]) {
+    // A trie over the links below the entry: node ids, child counts and paths ending there.
+    type Key = (usize, bool, LinkKind);
     let depth = entry.len();
     if paths
         .iter()
@@ -442,8 +457,6 @@ pub(super) fn settle_survival(entry: &Path, paths: &mut [&mut Path]) {
     {
         return;
     }
-    // A trie over the links below the entry: node ids, child counts and paths ending there.
-    type Key = (usize, bool, LinkKind);
     let mut children = std::collections::HashMap::<(usize, Key), usize>::new();
     let mut fanout = vec![0_usize];
     let mut ends = vec![false];

@@ -5,7 +5,7 @@ use std::rc::{Rc, Weak};
 use ahash::{AHashMap, AHashSet};
 use helm_schema_core::{Conjunction, Predicate, PredicateKind};
 
-use super::path::{Divergence, Link, LinkKind, Path};
+use super::path::{Divergence, LinkKind, Path, PathLink};
 use super::{Arena, Coverage, DecisionEdge, FrozenTest};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -163,7 +163,6 @@ impl std::fmt::Debug for GuardQueries {
             .finish_non_exhaustive()
     }
 }
-
 
 #[derive(Debug)]
 pub(super) enum CachedGuard {
@@ -869,6 +868,12 @@ impl DecisionStore {
         self.applications.insert(key, CachedGuard::new(result));
     }
 
+    #[tracing::instrument(
+        skip_all,
+        level = "debug",
+        target = "helm_schema_ir::counters",
+        name = "guard_bound"
+    )]
     fn deferred_choice(
         &mut self,
         condition: RuntimeGuard,
@@ -1435,6 +1440,8 @@ impl Arena {
     /// disjunction of their branches is the joined branch. Validity joins as
     /// `(reach_left ∧ valid_left) ∨ (reach_right ∧ valid_right)` and is never dropped. The
     /// disjunction of the whole tails is the joined survival, which refines feasibility only.
+    /// Each view joins as `ITE(decision, left, right)`: the union of the tails when they are
+    /// disjoint, and each source path gated by an independent choice when they overlap.
     #[tracing::instrument(skip_all)]
     pub(super) fn join_paths(&self, left: &Path, right: &Path) -> super::state::ContinuationJoin {
         let Divergence {
@@ -1443,50 +1450,8 @@ impl Arena {
             right: right_tail,
         } = left.diverge(right);
         let mut store = self.guards.borrow_mut();
+        let (decision, taken) = self.join_decision(&mut store, &left_tail, &right_tail);
         let mut work = GuardWorkBudget::new(MAX_PROJECTION_WORK);
-        // Which continuation a document takes depends on its branches and survivals only.
-        let left_edges = tail_edges(&left_tail, LinkKind::is_feasibility);
-        let right_edges = tail_edges(&right_tail, LinkKind::is_feasibility);
-        let left_guard = store.conjunction(&left_edges, &self.next_decision);
-        let right_guard = store.conjunction(&right_edges, &self.next_decision);
-        let opposite = left_edges
-            .first()
-            .zip(right_edges.first())
-            .filter(|(left, right)| left.test == right.test && left.taken != right.taken);
-        let source = if let Some((left, _)) = opposite {
-            Some(DecisionEdge {
-                test: Rc::clone(&left.test),
-                taken: left.taken,
-            })
-        } else if store
-            .apply(
-                Operation::And,
-                &left_guard,
-                &right_guard,
-                &self.next_decision,
-                &mut work,
-            )
-            .is_impossible()
-        {
-            Some(DecisionEdge {
-                test: self.guard_test(&mut store, left_guard.clone()),
-                taken: true,
-            })
-        } else {
-            None
-        };
-        let (decision, taken) = if let Some(DecisionEdge { test, taken }) = source {
-            (test, taken)
-        } else {
-            // Overlapping abstract paths can carry different outcomes for the same input.
-            // Keep both using an independent runtime choice, gated by each source path.
-            (
-                self.decision(Predicate::False, Predicate::False, Coverage::Partial),
-                true,
-            )
-        };
-        // Each view joins as ITE(decision, left, right): the union of the tails when they are
-        // disjoint, and each source path gated by an independent choice when they overlap.
         let selector = store.edge(
             &DecisionEdge {
                 test: Rc::clone(&decision),
@@ -1495,98 +1460,101 @@ impl Arena {
             &self.next_decision,
             &mut work,
         );
+        let mut join = |kept: fn(LinkKind) -> bool, with_reach: bool| {
+            let [left, right] = [&left_tail, &right_tail].map(|tail| {
+                let condition = store.conjunction(&tail_edges(tail, kept), &self.next_decision);
+                if with_reach {
+                    let reach = store.conjunction(
+                        &tail_edges(tail, |kind| kind == LinkKind::Branch),
+                        &self.next_decision,
+                    );
+                    store.apply(
+                        Operation::And,
+                        &reach,
+                        &condition,
+                        &self.next_decision,
+                        &mut work,
+                    )
+                } else {
+                    condition
+                }
+            });
+            store.choice(&selector, &left, &right, &self.next_decision, &mut work)
+        };
+        let reach = join(|kind| kind == LinkKind::Branch, false);
+        let has = |kind: LinkKind| {
+            left_tail
+                .iter()
+                .chain(&right_tail)
+                .any(|link| link.kind() == kind)
+        };
+        let valid = has(LinkKind::Assume).then(|| join(|kind| kind == LinkKind::Assume, true));
+        let survival = has(LinkKind::Survival).then(|| join(LinkKind::is_feasibility, false));
         let mut active = common;
-        let reach_left = store.conjunction(
-            &tail_edges(&left_tail, |kind| kind == LinkKind::Branch),
-            &self.next_decision,
-        );
-        let reach_right = store.conjunction(
-            &tail_edges(&right_tail, |kind| kind == LinkKind::Branch),
-            &self.next_decision,
-        );
-        let reach = store.choice(
-            &selector,
-            &reach_left,
-            &reach_right,
-            &self.next_decision,
-            &mut work,
-        );
-        let known = self.path_guard_in(&mut store, &active);
-        let reach = self.guard_test(&mut store, reach);
-        if reach.constant_outcome() != Some(true) && known.implies_test(&reach) != Some(true) {
-            active.push(
-                DecisionEdge {
-                    test: reach,
-                    taken: true,
-                },
-                LinkKind::Branch,
-            );
-        }
-        let assumes = |tail: &[&Link]| tail.iter().any(|link| link.kind() == LinkKind::Assume);
-        if assumes(&left_tail) || assumes(&right_tail) {
-            let mut valid = Vec::with_capacity(2);
-            for (reach, tail) in [(&reach_left, &left_tail), (&reach_right, &right_tail)] {
-                let assumed = store.conjunction(
-                    &tail_edges(tail, |kind| kind == LinkKind::Assume),
-                    &self.next_decision,
-                );
-                valid.push(store.apply(
-                    Operation::And,
-                    reach,
-                    &assumed,
-                    &self.next_decision,
-                    &mut work,
-                ));
-            }
-            let [valid_left, valid_right] = <[RuntimeGuard; 2]>::try_from(valid)
-                .unwrap_or([RuntimeGuard::False, RuntimeGuard::False]);
-            let valid = store.choice(
-                &selector,
-                &valid_left,
-                &valid_right,
-                &self.next_decision,
-                &mut work,
-            );
-            let exported = self.exported_path_guard_in(&mut store, &active);
-            let valid = self.guard_test(&mut store, valid);
-            if valid.constant_outcome() != Some(true) && exported.implies_test(&valid) != Some(true)
-            {
-                active.push(
-                    DecisionEdge {
-                        test: valid,
-                        taken: true,
-                    },
-                    LinkKind::Assume,
-                );
-            }
-        }
-        let survives = |tail: &[&Link]| tail.iter().any(|link| link.kind() == LinkKind::Survival);
-        if survives(&left_tail) || survives(&right_tail) {
-            let survival = store.choice(
-                &selector,
-                &left_guard,
-                &right_guard,
-                &self.next_decision,
-                &mut work,
-            );
-            let known = self.path_guard_in(&mut store, &active);
-            let survival = self.guard_test(&mut store, survival);
-            if survival.constant_outcome() != Some(true)
-                && known.implies_test(&survival) != Some(true)
-            {
-                active.push(
-                    DecisionEdge {
-                        test: survival,
-                        taken: true,
-                    },
-                    LinkKind::Survival,
-                );
+        for (guard, kind) in [
+            (Some(reach), LinkKind::Branch),
+            (valid, LinkKind::Assume),
+            (survival, LinkKind::Survival),
+        ] {
+            let Some(guard) = guard else {
+                continue;
+            };
+            // An assumption is dropped only when the exported prefix implies it.
+            let known = if kind == LinkKind::Assume {
+                self.exported_path_guard_in(&mut store, &active)
+            } else {
+                self.path_guard_in(&mut store, &active)
+            };
+            let test = self.guard_test(&mut store, guard);
+            if test.constant_outcome() != Some(true) && known.implies_test(&test) != Some(true) {
+                active.push(DecisionEdge { test, taken: true }, kind);
             }
         }
         super::state::ContinuationJoin {
             decision,
             active,
             taken,
+        }
+    }
+
+    /// The test that selects the left tail's values at a join: an opposite first edge, the left
+    /// tail itself when the tails are disjoint, or an independent choice when they overlap.
+    /// Which continuation a document takes depends on its branches and survivals only.
+    fn join_decision(
+        &self,
+        store: &mut DecisionStore,
+        left_tail: &[&PathLink],
+        right_tail: &[&PathLink],
+    ) -> (Rc<FrozenTest>, bool) {
+        let left_edges = tail_edges(left_tail, LinkKind::is_feasibility);
+        let right_edges = tail_edges(right_tail, LinkKind::is_feasibility);
+        if let Some((left, _)) = left_edges
+            .first()
+            .zip(right_edges.first())
+            .filter(|(left, right)| left.test == right.test && left.taken != right.taken)
+        {
+            return (Rc::clone(&left.test), left.taken);
+        }
+        let left_guard = store.conjunction(&left_edges, &self.next_decision);
+        let right_guard = store.conjunction(&right_edges, &self.next_decision);
+        let disjoint = store
+            .apply(
+                Operation::And,
+                &left_guard,
+                &right_guard,
+                &self.next_decision,
+                &mut GuardWorkBudget::new(MAX_PROJECTION_WORK),
+            )
+            .is_impossible();
+        if disjoint {
+            (self.guard_test(store, left_guard), true)
+        } else {
+            // Overlapping abstract paths can carry different outcomes for the same input.
+            // Keep both using an independent runtime choice, gated by each source path.
+            (
+                self.decision(Predicate::False, Predicate::False, Coverage::Partial),
+                true,
+            )
         }
     }
 
@@ -1676,7 +1644,7 @@ impl Arena {
     }
 }
 
-fn tail_edges(tail: &[&Link], kept: impl Fn(LinkKind) -> bool) -> Vec<DecisionEdge> {
+fn tail_edges(tail: &[&PathLink], kept: impl Fn(LinkKind) -> bool) -> Vec<DecisionEdge> {
     tail.iter()
         .filter(|link| kept(link.kind()))
         .map(|link| link.edge().clone())

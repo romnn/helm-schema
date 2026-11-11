@@ -198,9 +198,11 @@ fn direct_abort_control_is_exact() {
 /// A values-guarded fail preserves the exact abort and surviving-output predicates.
 #[test]
 fn guarded_abort_preserves_alternatives() {
+    // The arm that only aborts leaves `not x` as a survived check, so the text after it is
+    // claimed unguarded (ADR 0072 §2).
     sim_assert_eq!(have: run("{{ if .Values.x }}{{ fail \"boom\" }}{{ end }}\n"), want: Rendered {
         abort: Predicate::truthy_path("x"),
-        text: vec![RenderedText { condition: Predicate::truthy_path("x").negated(), text: Some("\n".to_owned()) }],
+        text: vec![RenderedText { condition: Predicate::True, text: Some("\n".to_owned()) }],
     });
 }
 

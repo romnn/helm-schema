@@ -439,7 +439,7 @@ fn or_with_equality_preserves_typed_alternative() {
                     value: GuardValue::string("prod"),
                 }],
             ],
-        }, comparison_normality("mode", "string")],
+        }],
     );
 }
 
@@ -495,7 +495,7 @@ fn eq_with_string_literal() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("value"),
-        }, comparison_normality("X", "string")],
+        }],
     );
 }
 
@@ -506,7 +506,7 @@ fn eq_with_string_literal_containing_phantom_path() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string(".Values.fake"),
-        }, comparison_normality("X", "string")],
+        }],
     );
 }
 
@@ -517,7 +517,7 @@ fn eq_with_bool_literal_preserves_exact_comparison() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("enabled"),
             value: GuardValue::Bool(false),
-        }, comparison_normality("enabled", "boolean")],
+        }],
     );
 }
 
@@ -528,7 +528,7 @@ fn eq_with_int_literal_preserves_exact_comparison() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("replicas"),
             value: GuardValue::Int(3),
-        }, comparison_normality("replicas", "integer")],
+        }],
     );
 }
 
@@ -564,7 +564,7 @@ fn ne_with_string_literal_emits_not_eq() {
         want: vec![Guard::NotEq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("value"),
-        }, comparison_normality("X", "string")],
+        }],
     );
 }
 
@@ -575,7 +575,7 @@ fn not_eq_literal_projects_to_not_eq() {
         want: vec![Guard::NotEq {
             path: helm_schema_core::ValuesPath::parse("mode"),
             value: GuardValue::string("disabled"),
-        }, comparison_normality("mode", "string")],
+        }],
     );
 }
 
@@ -586,7 +586,7 @@ fn not_ne_literal_projects_to_eq() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("mode"),
             value: GuardValue::string("disabled"),
-        }, comparison_normality("mode", "string")],
+        }],
     );
 }
 
@@ -751,7 +751,7 @@ fn eq_value_preserves_literal_dot_star_substring() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string("match.*foo"),
-        }, comparison_normality("X", "string")],
+        }],
     );
 }
 
@@ -762,7 +762,7 @@ fn eq_value_preserves_dot_values_substring_inside_string() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("X"),
             value: GuardValue::string(".Values.fake"),
-        }, comparison_normality("X", "string")],
+        }],
     );
 }
 
@@ -775,7 +775,7 @@ fn alias_comparison_preserves_typed_predicates() {
         want: vec![Guard::Eq {
             path: helm_schema_core::ValuesPath::parse("service.type"),
             value: GuardValue::string("ClusterIP"),
-        }, comparison_normality("service.type", "string")],
+        }],
     );
 }
 
@@ -786,14 +786,11 @@ fn output_meta_comparison_preserves_typed_predicates() -> eyre::Result<()> {
         "(coalesce .Values.auth.username .Values.global.postgresql.auth.username)".to_owned(),
     )]);
 
-    // Only the first truthy candidate is compared; incompatible selected types abort.
+    // Only the first truthy candidate is compared. Incompatible selected types abort, and that
+    // survived check is not part of the branch condition (ADR 0072 §2).
     let selected_non_postgres = |path: &str| {
         Predicate::all(vec![
             Predicate::truthy_path(path),
-            Predicate::from(Guard::TypeIs {
-                path: helm_schema_core::ValuesPath::parse(path),
-                schema_type: "string".to_owned(),
-            }),
             Predicate::from(Guard::NotEq {
                 path: helm_schema_core::ValuesPath::parse(path),
                 value: GuardValue::string("postgres"),
@@ -1110,24 +1107,6 @@ fn type_descriptor_over_a_selection_chain_decodes_each_selected_arm() -> eyre::R
         );
     }
     Ok(())
-}
-
-fn comparison_normality(path: &str, schema_type: &str) -> Guard {
-    Guard::AnyOf {
-        alternatives: vec![
-            vec![Guard::Eq {
-                path: helm_schema_core::ValuesPath::parse(path),
-                value: GuardValue::Null,
-            }],
-            vec![Guard::Absent {
-                path: helm_schema_core::ValuesPath::parse(path),
-            }],
-            vec![Guard::TypeIs {
-                path: helm_schema_core::ValuesPath::parse(path),
-                schema_type: schema_type.to_owned(),
-            }],
-        ],
-    }
 }
 
 fn coalesce_document(

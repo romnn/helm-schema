@@ -80,12 +80,12 @@ pub(super) fn record_executed_requirements(
         if !matches!(key.domain, ConsumptionDomain::Known { .. }) {
             continue;
         }
-        tracing::debug!(
-            target: "helm_schema_ir::bounds",
-            path = ?key.path,
-            occurrences = occurrences.len(),
-            "fold each requirement occurrence on its own allowance"
-        );
+        let _bound = tracing::debug_span!(
+            target: "helm_schema_ir::counters",
+            "requirement_bound",
+            occurrences = occurrences.len()
+        )
+        .entered();
         for occurrence in occurrences {
             if let Some(folded) = fold(
                 &[occurrence],

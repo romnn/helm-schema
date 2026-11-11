@@ -334,9 +334,7 @@ impl Executor<'_> {
         for exit in &mut results {
             exit.state.leave_scope();
         }
-        let mut exits = reconverge(results);
-        settle_exits(&entry, &mut exits);
-        exits
+        settled(&entry, reconverge(results))
     }
     #[tracing::instrument(skip_all)]
     fn range(
@@ -1096,6 +1094,11 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
         })
         .collect()
 }
+fn settled(entry: &super::path::Path, mut exits: Vec<Exit>) -> Vec<Exit> {
+    settle_exits(entry, &mut exits);
+    exits
+}
+
 /// Re-kinds as survival the branch links a region's continuations all took (ADR 0072 §2).
 ///
 /// An abort ends the render on its edge's whole runtime region, however partially the edge's

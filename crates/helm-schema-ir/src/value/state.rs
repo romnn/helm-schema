@@ -234,8 +234,8 @@ impl State {
     }
 
     /// Claims the facts below only where `program` holds no template action, so running it
-    /// writes nothing.
-    pub(super) fn assume_action_free(&mut self, program: &Value) {
+    /// writes nothing. Returns false, adding nothing, when no such documents can be stated.
+    pub(super) fn assume_action_free(&mut self, program: &Value) -> bool {
         let mut remaining = 512;
         let action_free = super::text_actions::action_free(
             &self.heap.freeze(program),
@@ -243,6 +243,10 @@ impl State {
             &self.heap.arena.predicate_memo,
             &mut remaining,
         );
+        if action_free == helm_schema_core::Predicate::False || action_free.contains_approximation()
+        {
+            return false;
+        }
         let negated = action_free.negated();
         let test = self
             .heap
@@ -254,6 +258,7 @@ impl State {
                 super::path::LinkKind::Assume,
             );
         }
+        true
     }
 
     /// The continuation that took one outcome of a template branch.

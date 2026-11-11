@@ -821,9 +821,30 @@ fn type_test_uses_the_structural_value_instead_of_its_influences() {
     sim_assert_eq!(have: observe(prefix, r#"kindIs "map" $obj"#).truth(), want: Some(Predicate::True));
 }
 
+/// The subject is `value` only where `enabled` selects it; `ternary` survives only a boolean
+/// `enabled`, so on every surviving document the test is exactly that selection.
 #[test]
-fn invalid_kind_requires_one_exact_subject_identity() {
-    sim_assert_eq!(have: observe("", r#"kindIs "invalid" (ternary .Values.value "fallback" .Values.enabled)"#).truth(), want: None);
+fn invalid_kind_of_a_selected_subject_tests_its_selection() {
+    let expected = Predicate::all(vec![
+        truthy("enabled"),
+        Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: ValuesPath::parse("value"),
+                value: GuardValue::Null,
+            }),
+            Predicate::from(Guard::Absent {
+                path: ValuesPath::parse("value"),
+            }),
+        ]),
+    ])
+    .normalize_boolean();
+    let truth = observe(
+        "",
+        r#"kindIs "invalid" (ternary .Values.value "fallback" .Values.enabled)"#,
+    )
+    .truth()
+    .map(Predicate::normalize_boolean);
+    sim_assert_eq!(have: truth, want: Some(expected));
 }
 
 #[test]
@@ -1205,12 +1226,10 @@ fn literal_and_string_set_default_primaries_record_exact_fallback_reachability()
     for (expression, selected) in [
         (r#""" | default .Values.omega"#, Predicate::True),
         (r#""x" | default .Values.omega"#, Predicate::False),
+        // `ternary` survives only a boolean condition; that check is not part of the selection.
         (
             r#"ternary "" "" .Values.choose | default .Values.omega"#,
-            Predicate::from(Guard::TypeIs {
-                path: ValuesPath::parse("choose"),
-                schema_type: "boolean".to_owned(),
-            }),
+            Predicate::True,
         ),
         (
             r#"ternary "x" "y" .Values.choose | default .Values.omega"#,

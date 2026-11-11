@@ -1289,7 +1289,7 @@ impl RuntimeCondition {
             return Predicate::False;
         }
         // Preserve each frozen test's partial-coverage envelope at the observation boundary.
-        let domain = self.arena.exported_path_predicate(&self.ambient);
+        let domain = self.ambient.exported_predicate();
         match self.restricted_test() {
             None => domain,
             Some(admitted) => self.arena.predicate_memo.normalize(Predicate::all(vec![
@@ -1378,10 +1378,9 @@ impl super::State {
             self.output_widened = true;
             return Vec::new();
         }
-        self.observation_count = self.observation_count.restrict(
-            &self.heap.arena.path_guard(&self.active),
-            &self.heap.arena,
-        );
+        self.observation_count = self
+            .observation_count
+            .restrict(&self.heap.arena.path_guard(&self.active), &self.heap.arena);
         let Ok((slots, rejected)) = self.reserve_count(
             &self.observation_count,
             self.sites.len() + self.text_sites.len(),
@@ -1397,10 +1396,9 @@ impl super::State {
     pub(super) fn invocations_complete(&self) -> bool {
         self.invocation_records_complete
             && !self.invocation_count.is_exhausted()
-            && !self.invocation_count.overflow_under(
-                &self.heap.arena.path_guard(&self.active),
-                &self.heap.arena,
-            )
+            && !self
+                .invocation_count
+                .overflow_under(&self.heap.arena.path_guard(&self.active), &self.heap.arena)
     }
 
     pub(super) fn reserve_invocation(&mut self) -> Vec<BudgetSlot> {
@@ -1408,10 +1406,9 @@ impl super::State {
             self.invocation_records_complete = false;
             return Vec::new();
         }
-        self.invocation_count = self.invocation_count.restrict(
-            &self.heap.arena.path_guard(&self.active),
-            &self.heap.arena,
-        );
+        self.invocation_count = self
+            .invocation_count
+            .restrict(&self.heap.arena.path_guard(&self.active), &self.heap.arena);
         let Ok((slots, _)) = self.reserve_count(&self.invocation_count, self.invocations.len())
         else {
             self.invocation_count.exhaust();
@@ -1480,10 +1477,9 @@ impl super::State {
             part: TextPart::Bytes(bytes.to_owned()),
         });
         if !self.output_widened
-            && self.output.is_widened_under(
-                &self.heap.arena.path_guard(&self.active),
-                &self.heap.arena,
-            )
+            && self
+                .output
+                .is_widened_under(&self.heap.arena.path_guard(&self.active), &self.heap.arena)
         {
             self.output_widened = true;
         }
@@ -1531,10 +1527,9 @@ impl super::State {
             });
         }
         if !self.output_widened
-            && self.output.is_widened_under(
-                &self.heap.arena.path_guard(&self.active),
-                &self.heap.arena,
-            )
+            && self
+                .output
+                .is_widened_under(&self.heap.arena.path_guard(&self.active), &self.heap.arena)
         {
             self.output_widened = true;
         }

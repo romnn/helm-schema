@@ -977,9 +977,15 @@ fn conditional_parameter_failures_reconverge_surviving_states() -> eyre::Result<
                 .collect(),
         )
         .normalize_boolean();
+        // The survived checks restrict feasibility only; the exported path carries none of them
+        // (ADR 0072 §2).
         sim_assert_eq!(
-            have: normal.first().map(|exit| exit.state.path_predicate().normalize_boolean()),
+            have: normal.first().map(|exit| exit.state.active.feasible_predicate().normalize_boolean()),
             want: Some(success),
+        );
+        sim_assert_eq!(
+            have: normal.first().map(|exit| exit.state.path_predicate()),
+            want: Some(Predicate::True),
         );
         if count <= 2 {
             let expected = Predicate::Or(failed);

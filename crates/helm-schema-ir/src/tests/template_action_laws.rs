@@ -330,7 +330,8 @@ fn quoting_raw_values_keeps_their_opener_condition_and_nil_omission() -> eyre::R
 }
 
 #[test]
-fn literal_openers_execute_tpl_and_unconditional_root_tpl_still_invalidates() -> eyre::Result<()> {
+fn literal_openers_execute_tpl_and_an_unconditional_root_tpl_is_assumed_action_free()
+-> eyre::Result<()> {
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_initial_release(
         indoc! {r#"
@@ -344,9 +345,21 @@ fn literal_openers_execute_tpl_and_unconditional_root_tpl_still_invalidates() ->
         &db,
     );
     sim_assert_eq!(have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(), want: vec![Some("written".to_owned())]);
+    // An unknown root program is assumed to hold no template action: the later read keeps its
+    // input, claimed only where `program` is action-free (ADR 0072 §2, §5).
     let execution = execute_initial_release(r"{{ tpl .Values.program $ }}{{ .Values.after }}", &db);
     let site = execution.sites().last().ok_or_eyre("missing final read")?;
-    sim_assert_eq!(have: site.value().identity(), want: None);
+    sim_assert_eq!(
+        have: site.value().identity(),
+        want: Some(&helm_schema_core::ValuesPath::parse("after")),
+    );
+    assert!(
+        site.condition()
+            .value_paths()
+            .contains(&helm_schema_core::ValuesPath::parse("program")),
+        "the read is not claimed under the program assumption: {:?}",
+        site.condition()
+    );
     Ok(())
 }
 

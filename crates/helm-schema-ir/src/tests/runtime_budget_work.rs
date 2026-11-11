@@ -1673,8 +1673,17 @@ fn deferred_query_exhaustion_is_memoized_and_deep_guards_drop_iteratively() {
         }
     }
     let before = arena.guards.borrow().queries.compatibilities.borrow().len();
+    // The bounded search exhausts on the chain; the canonical form composes it into its atom.
+    let searched = guard.satisfiable(
+        &RuntimeGuard::True,
+        true,
+        true,
+        None,
+        &mut super::GuardWorkBudget::new(super::MAX_PROJECTION_WORK),
+    );
+    sim_assert_eq!(have: searched, want: None);
     for _ in 0..2 {
-        sim_assert_eq!(have: guard.compatible(true, &RuntimeGuard::True, true), want: None);
+        sim_assert_eq!(have: guard.compatible(true, &RuntimeGuard::True, true), want: Some(true));
         sim_assert_eq!(have: arena.guards.borrow().queries.compatibilities.borrow().len(), want: before + 1);
         assert!(!guard.is_impossible());
     }
@@ -1745,8 +1754,10 @@ fn exhausted_guard_queries_match_fresh_results_in_shuffled_order() {
         }
     }
     let [_, deep] = &guards;
-    sim_assert_eq!(have: deep.possible_atom_uncached(test.id, true, true), want: None);
-    sim_assert_eq!(have: deep.compatible_uncached(true, deep, true), want: None);
+    // The canonical form of the chain is its one atom, so every answer is exact.
+    sim_assert_eq!(have: deep.possible_atom_uncached(test.id, true, true), want: Some(true));
+    sim_assert_eq!(have: deep.possible_atom_uncached(test.id, false, true), want: Some(false));
+    sim_assert_eq!(have: deep.compatible_uncached(true, deep, true), want: Some(true));
     // Goal order determines whether the contradiction is reached before exhaustion.
     let check = |left: &RuntimeGuard, right: &RuntimeGuard| {
         let fresh = left.compatible_uncached(true, right, true);
@@ -1765,12 +1776,12 @@ fn exhausted_guard_queries_match_fresh_results_in_shuffled_order() {
         }
     }
     sim_assert_eq!(have: deep.compatible(true, &RuntimeGuard::False, true), want: Some(false));
-    sim_assert_eq!(have: RuntimeGuard::False.compatible(true, deep, true), want: None);
-    // Dropping a cache entry must reproduce the same conservative answer.
+    sim_assert_eq!(have: RuntimeGuard::False.compatible(true, deep, true), want: Some(false));
+    // Dropping a cache entry must reproduce the same answer.
     queries.atoms.borrow_mut().clear();
     queries.compatibilities.borrow_mut().clear();
-    sim_assert_eq!(have: deep.possible_atom(test.id, true, true), want: None);
-    sim_assert_eq!(have: deep.compatible(true, deep, true), want: None);
+    sim_assert_eq!(have: deep.possible_atom(test.id, true, true), want: Some(true));
+    sim_assert_eq!(have: deep.compatible(true, deep, true), want: Some(true));
 }
 
 #[test]
@@ -1968,8 +1979,9 @@ fn local_guard_facts_are_proved_before_expanding_ambient_history() {
         &arena.next_decision,
     );
     drop(store);
-    // The ambient condition alone exceeds the allowance, but local facts need no traversal of it.
-    sim_assert_eq!(have: ambient.compatible(true, &RuntimeGuard::True, true), want: None);
+    // The ambient chain alone exceeds the search allowance; its canonical form is one atom, and
+    // local facts need no traversal of it either way.
+    sim_assert_eq!(have: ambient.compatible(true, &RuntimeGuard::True, true), want: Some(true));
     let implied = live.implies_test(&local);
     let impossible = dead.is_impossible();
     sim_assert_eq!(have: implied, want: Some(true));

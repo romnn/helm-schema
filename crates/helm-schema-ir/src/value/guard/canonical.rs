@@ -25,7 +25,7 @@ const TRUE: u32 = 1;
 /// One internal node: the input decision it tests (larger decisions nearer the root, the order
 /// the decision store builds in) and its two cofactors.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-struct Node {
+struct FormNode {
     decision: u64,
     no: u32,
     yes: u32,
@@ -33,8 +33,8 @@ struct Node {
 
 #[derive(Default)]
 pub(super) struct CanonicalGuards {
-    nodes: Vec<Node>,
-    unique: AHashMap<Node, u32>,
+    nodes: Vec<FormNode>,
+    unique: AHashMap<FormNode, u32>,
     /// The form of each runtime guard node by its id; `None` when its allowance ran out.
     forms: AHashMap<u64, Option<u32>>,
 }
@@ -47,7 +47,7 @@ struct Polar {
 }
 
 impl CanonicalGuards {
-    fn node(&self, form: u32) -> Option<Node> {
+    fn node(&self, form: u32) -> Option<FormNode> {
         let index = usize::try_from(form.checked_sub(2)?).ok()?;
         self.nodes.get(index).copied()
     }
@@ -67,7 +67,7 @@ impl CanonicalGuards {
         if no == yes {
             return no;
         }
-        let node = Node { decision, no, yes };
+        let node = FormNode { decision, no, yes };
         if let Some(form) = self.unique.get(&node) {
             return *form;
         }
@@ -169,7 +169,7 @@ impl CanonicalGuards {
             let RuntimeGuard::Branch(node) = guard else {
                 continue;
             };
-            // Node ids repeat across contexts, so the context is checked before the memo.
+            // FormNode ids repeat across contexts, so the context is checked before the memo.
             if !std::ptr::eq(std::rc::Rc::as_ptr(&node.queries), context) {
                 return None;
             }
