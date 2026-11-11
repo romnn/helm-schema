@@ -1052,7 +1052,10 @@ fn cross_file_survival_does_not_guard_a_later_typed_use() -> eyre::Result<()> {
 /// order, and exhausting it never removes a rejection (ADR 0072 §10; receipt budget-union).
 #[test]
 fn member_reads_under_exclusive_pairs_keep_every_rejection() -> eyre::Result<()> {
-    let mut values = String::from("x:\n  port: \"v\"\n");
+    let mut values = String::from(indoc! {r#"
+        x:
+          port: "v"
+    "#});
     let mut template = String::new();
     for index in 1..=EXCLUSIVE_PAIRS {
         writeln!(values, "a{index}: false\nb{index}: false")?;
