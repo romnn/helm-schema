@@ -1070,6 +1070,15 @@ impl State {
                     .unwrap_or(field);
                 self.consumed(&field_value(field, &unknown, &Value::nil()))
             }
+            // A nil map reads every key as missing.
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Map {
+                        view: _,
+                        target: None,
+                    },
+                origin: _,
+            }) => Value::nil().with_influences(value.inputs()),
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Map {
