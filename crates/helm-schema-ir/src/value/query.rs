@@ -1028,31 +1028,7 @@ impl State {
                         target,
                     },
                 origin: _,
-            }) => {
-                let unknown = Value {
-                    node: Rc::new(ValueNode::Leaf(Leaf {
-                        datum: Datum::Scalar {
-                            go_type: ScalarType::String,
-                            content: None,
-                        },
-                        origin: super::Origin {
-                            derivation: None,
-                            identity: None,
-                            influences: self.heap.freeze(&value).inputs(),
-                        },
-                    })),
-                };
-                target.as_ref().map_or_else(
-                    || Value::string(""),
-                    |id| {
-                        self.consumed(&field_value(
-                            self.heap.version.field(id, key),
-                            &unknown,
-                            &Value::string(""),
-                        ))
-                    },
-                )
-            }
+            }) => self.string_map_field(&value, target.as_ref(), key),
             ValueNode::Leaf(Leaf {
                 datum: _,
                 origin:
@@ -1103,6 +1079,38 @@ impl State {
             }) => Value::influenced(value.inputs()),
         })
     }
+    /// A key of a `map[string]string`: a string, empty when missing.
+    fn string_map_field(
+        &mut self,
+        value: &Value,
+        target: Option<&super::ObjectId>,
+        key: &str,
+    ) -> Value {
+        let unknown = Value {
+            node: Rc::new(ValueNode::Leaf(Leaf {
+                datum: Datum::Scalar {
+                    go_type: ScalarType::String,
+                    content: None,
+                },
+                origin: super::Origin {
+                    derivation: None,
+                    identity: None,
+                    influences: self.heap.freeze(value).inputs(),
+                },
+            })),
+        };
+        target.map_or_else(
+            || Value::string(""),
+            |id| {
+                self.consumed(&field_value(
+                    self.heap.version.field(id, key),
+                    &unknown,
+                    &Value::string(""),
+                ))
+            },
+        )
+    }
+
     fn unknown_map_child(
         &self,
         value: &Value,
