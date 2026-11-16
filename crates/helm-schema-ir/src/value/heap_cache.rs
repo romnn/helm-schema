@@ -333,7 +333,8 @@ fn shared_inputs(answer: Option<&Rc<ObjectVersion>>) -> Option<&Rc<BTreeSet<Valu
         } => Some(inputs),
         ObjectData::Map {
             fields: _,
-            remainder: Remainder::Closed | Remainder::Open | Remainder::Input,
+            remainder:
+                Remainder::Closed | Remainder::Open | Remainder::Input | Remainder::Layered(_),
         }
         | ObjectData::Strings(_)
         | ObjectData::Opaque { reachable: _ } => None,

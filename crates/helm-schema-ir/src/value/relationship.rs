@@ -900,6 +900,16 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             known: Vec::new(),
             unknown: Predicate::False,
         };
+        // A pristine input known not to be a map is a value, not a view of its input region:
+        // later writes to the region's maps cannot change it.
+        let scalar_copy = members.is_empty()
+            && matches!(
+                datum,
+                Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::InputNonMap,
+                    aliases: _,
+                })
+            );
         if let Some(path) = &path {
             let mut source = path.clone();
             for key in members {
@@ -911,7 +921,12 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 }
                 source.to_mut().push(key.clone());
             }
-            if let Some(omitted_members) = self.omissions(&source, heap) {
+            let omitted = if scalar_copy {
+                Some(BTreeSet::new())
+            } else {
+                self.omissions(&source, heap)
+            };
+            if let Some(omitted_members) = omitted {
                 if !self.charge(1) {
                     return Relationships::unknown();
                 }

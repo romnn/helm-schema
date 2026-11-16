@@ -659,7 +659,7 @@ impl CoverageProjection {
             }
             Some(ObjectData::Map {
                 fields: _,
-                remainder: Remainder::Open,
+                remainder: Remainder::Open | Remainder::Layered(_),
             }) => self.input_object(object, budget)?,
             Some(
                 ObjectData::Map {
@@ -691,7 +691,10 @@ impl CoverageProjection {
                     multiplicity: *multiplicity,
                     inputs: match remainder {
                         Remainder::Unknown { inputs } => Some(Rc::clone(inputs)),
-                        Remainder::Closed | Remainder::Input | Remainder::Open => None,
+                        Remainder::Closed
+                        | Remainder::Input
+                        | Remainder::Open
+                        | Remainder::Layered(_) => None,
                     },
                 },
                 Some(ObjectVersion {

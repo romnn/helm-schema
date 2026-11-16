@@ -1615,7 +1615,9 @@ fn merge_of_values_paths_forms_ordered_layers() {
         "mergeOverwrite (.Values.legacy | default dict) (.Values.preferred | default dict)",
     ] {
         let result = observe("", expression);
-        sim_assert_eq!(have: result.paths(), want: paths(&["", "preferred", "legacy"]));
+        // The merged map depends on its operands only; the values root came from the havoc an
+        // unrepresented merge used to leave (step 4a).
+        sim_assert_eq!(have: result.paths(), want: paths(&["preferred", "legacy"]));
     }
     let prefix =
         r#"{{ $preferred := dict "key" "preferred" }}{{ $legacy := dict "key" "legacy" }}"#;

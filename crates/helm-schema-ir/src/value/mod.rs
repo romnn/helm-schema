@@ -21,6 +21,7 @@ mod input_writes;
 mod invoke;
 mod json_query;
 pub(crate) mod kinds;
+mod layers;
 mod lexical;
 mod namespace;
 mod operations;
@@ -404,6 +405,12 @@ struct Arena {
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
     requirement_scope: RefCell<String>,
     requirement_identity: consumption::RequirementScope,
+    /// Whether any object has a layered remainder; reads skip derivation until one does.
+    layered: Cell<bool>,
+    /// The object a `deepCopy` allocates for each copied map member, by (copy, key).
+    copy_children: RefCell<BTreeMap<(ObjectId, String), ObjectId>>,
+    /// The storage each derived object starts from: the baseline of a join that lacks it.
+    derived: RefCell<BTreeMap<ObjectId, Rc<ObjectVersion>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -510,7 +517,12 @@ enum Remainder {
     Closed,
     Open,
     Input,
-    Unknown { inputs: Rc<BTreeSet<ValuesPath>> },
+    Unknown {
+        inputs: Rc<BTreeSet<ValuesPath>>,
+    },
+    /// Unwritten keys read through a lazy construction over an open key set (`deepCopy`,
+    /// `merge`), in Go's order.
+    Layered(Rc<layers::Layers>),
 }
 
 #[derive(Clone, Debug)]

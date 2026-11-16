@@ -475,7 +475,9 @@ impl Remainder {
     pub(super) fn missing(&self) -> Field {
         match self {
             Self::Closed => Field::Absent,
-            Self::Open | Self::Input | Self::Unknown { inputs: _ } => Field::Unknown,
+            Self::Open | Self::Input | Self::Unknown { inputs: _ } | Self::Layered(_) => {
+                Field::Unknown
+            }
         }
     }
 }
@@ -775,6 +777,9 @@ fn join_map_data(
         (Remainder::Unknown { inputs }, Remainder::Open | Remainder::Closed | Remainder::Input)
         | (Remainder::Open | Remainder::Closed | Remainder::Input, Remainder::Unknown { inputs }) => {
             Remainder::Unknown { inputs }
+        }
+        (yes @ Remainder::Layered(_), no) | (yes, no @ Remainder::Layered(_)) => {
+            super::layers::join_remainders(decision, &yes, &no).unwrap_or(Remainder::Open)
         }
         (Remainder::Closed, Remainder::Closed) => Remainder::Closed,
         (Remainder::Input, Remainder::Input) => Remainder::Input,

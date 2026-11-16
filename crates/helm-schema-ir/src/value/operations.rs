@@ -108,7 +108,11 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
         "pick" | "omit" => Ok(select_map(input.function, input.arguments, state)),
         "pluck" => Ok(pluck(input.arguments, state)),
         "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
-            return merge(input.arguments, state, input.function.contains("Overwrite"));
+            return Ok(merge(
+                input.arguments,
+                state,
+                input.function.contains("Overwrite"),
+            ));
         }
         "slice" | "mustSlice" => slice(input.arguments, state),
         "keys" => {
@@ -427,6 +431,11 @@ fn transfer_write_map(input: TransferInput<'_>, state: &mut State) -> Result<Val
         invalidate(state);
         return Ok(Value::influenced(influences));
     };
+    // `set` and `unset` abort on a non-map receiver, so only a receiver's map arm writes.
+    let first = super::layers::map_operand(&first).unwrap_or(first);
+    if super::layers::known_non_map(&first) {
+        return Err(AbortReason::Type);
+    }
     let Some(id) = state.map_target(&first) else {
         return if matches!(
             first.node.as_ref(),
@@ -1788,6 +1797,7 @@ fn copy(
                     )
                 })
                 .collect();
+            let remainder = state.copy_remainder(&frozen, &remainder);
             let target = state.heap.allocate(
                 ObjectData::Map {
                     fields: Rc::new(copied),
@@ -1888,7 +1898,11 @@ fn copy_unstructured(
             .identity()
             .is_some_and(|path| path.segments().next().is_none())
         {
-            state.heap.map(Remainder::Open)
+            state
+                .copy_open_map(value)
+                .unwrap_or_else(|| state.heap.map(Remainder::Open))
+        } else if let Some(copy) = state.copy_open_map(value) {
+            copy
         } else {
             Value::influenced(influences.clone())
         }
@@ -2381,342 +2395,59 @@ fn slice(arguments: &[Value], state: &mut State) -> Result<Value, AbortReason> {
     })
 }
 
-fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Result<Value, TransferDemand> {
+fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
     let influences = inputs(arguments, state);
     let Some(first) = arguments.first() else {
-        return Ok(Value::influenced(influences));
+        return Value::influenced(influences);
     };
-    let nil_destination = matches!(
-        first.node.as_ref(),
-        ValueNode::Leaf(Leaf {
-            datum: Datum::Map {
-                target: None,
-                view: _
-            },
-            origin: _,
-        })
-    );
-    let mut destination = first.clone();
     if arguments.len() == 1 {
-        return Ok(interface_map_view(first, state));
+        return interface_map_view(first, state);
     }
-    if arguments
-        .iter()
-        .skip(1)
-        .any(|value| map_fields(value, state).is_none())
-    {
-        invalidate(state);
-        return Ok(Value::influenced(influences));
-    }
-    if nil_destination
-        && arguments.iter().skip(1).all(|value| {
-            matches!(
-                value.node.as_ref(),
-                ValueNode::Leaf(Leaf {
-                    datum: Datum::Map {
-                        target: None,
-                        view: _
-                    },
-                    origin: _,
-                })
-            )
-        })
-    {
-        return Ok(Value::with_influences(
+    let nil_map = |value: &Value| {
+        matches!(
+            value.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Map {
+                    target: None,
+                    view: _
+                },
+                origin: _,
+            })
+        )
+    };
+    let nil_destination = nil_map(first);
+    if nil_destination && arguments.iter().skip(1).all(nil_map) {
+        return Value::with_influences(
             Value::leaf(Datum::Map {
                 view: MapType::Interface,
                 target: None,
             }),
-            influences.clone(),
-        ));
+            influences,
+        );
     }
-    let scalar_overwrite = state.map_target(&destination).is_some_and(|target| {
-        can_overwrite_scalar_sources(&destination, &target, arguments, state, overwrite)
-    });
-    let mut graph = BTreeSet::new();
-    let disjoint = scalar_overwrite
-        || disjoint_map_keys(arguments, state)
-        || std::iter::once(&destination)
-            .chain(arguments.iter().skip(1))
-            .try_fold(true, |disjoint, value| {
-                if disjoint {
-                    disjoint_closed_graph(value, state, &mut graph, 0)
-                } else {
-                    Ok(false)
-                }
-            })?;
-    if nil_destination {
-        destination = state.heap.map(Remainder::Closed);
-    }
+    let destination = if nil_destination {
+        state.heap.map(Remainder::Closed)
+    } else {
+        first.clone()
+    };
     let Some(target) = state.map_target(&destination) else {
         invalidate(state);
-        return Ok(Value::influenced(influences));
+        return Value::influenced(influences);
     };
-    if scalar_overwrite {
-        if !overwrite_scalar_sources(&target, arguments, state) {
-            return Ok(Value::influenced(influences));
-        }
-        return Ok(interface_map_view(&destination, state));
-    }
-    if !disjoint {
-        // Mergo walks map keys in unspecified order; aliased paths can interfere through the heap.
-        let frozen = state.heap.freeze(&Value::sequence(arguments.to_vec()));
-        let mut affected = arguments.to_vec();
-        affected.push(destination.clone());
-        widen_operands(&affected, state);
-        return Ok(interface_map_view(&destination, state).derived(
-            frozen,
-            super::relationship::ValueOperation::Merge { overwrite },
-        ));
-    }
     for source in arguments.iter().skip(1) {
-        if !merge_maps(&target, source, state, overwrite, 0) {
+        // A source sharing the destination's object would be walked while it changes.
+        let shared = state
+            .map_target(source)
+            .is_some_and(|object| object == target);
+        if shared || !state.merge_into(&target, source, overwrite, 0) {
             let mut affected = arguments.to_vec();
             affected.push(destination.clone());
             widen_operands(&affected, state);
             break;
         }
     }
-    Ok(interface_map_view(&destination, state))
-}
-
-// With disjoint root keys Mergo only inserts fields; it never traverses their aliased values.
-fn disjoint_map_keys(arguments: &[Value], state: &State) -> bool {
-    let mut keys = BTreeSet::new();
-    let mut objects = BTreeSet::new();
-    for value in arguments {
-        let ValueNode::Leaf(Leaf {
-            datum:
-                Datum::Map {
-                    target: Some(id),
-                    view: _,
-                },
-            origin: _,
-        }) = value.node.as_ref()
-        else {
-            return false;
-        };
-        if !objects.insert(id) {
-            return false;
-        }
-        let Some(object) = state.heap.version.object(id) else {
-            return false;
-        };
-        let ObjectVersion {
-            data:
-                ObjectData::Map {
-                    fields,
-                    remainder: Remainder::Closed,
-                },
-            multiplicity: super::Multiplicity::Singleton,
-            revision: _,
-        } = object.as_ref()
-        else {
-            return false;
-        };
-        for (key, field) in fields.iter() {
-            if !matches!(field, Field::Present(_) | Field::Absent) || !keys.insert(key.clone()) {
-                return false;
-            }
-        }
-    }
-    true
-}
-
-fn disjoint_closed_graph(
-    value: &Value,
-    state: &State,
-    objects: &mut BTreeSet<super::ObjectId>,
-    depth: usize,
-) -> Result<bool, TransferDemand> {
-    if depth > 32 {
-        return Ok(false);
-    }
-    let value = selected_member(value, state);
-    Ok(match value.node.as_ref() {
-        ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-            Datum::Text(_)
-            | Datum::Scalar {
-                go_type: _,
-                content: _,
-            }
-            | Datum::Map {
-                view: _,
-                target: None,
-            } => true,
-            Datum::Map {
-                view: _,
-                target: Some(id),
-            } => {
-                if !objects.insert(id.clone()) {
-                    return Ok(false);
-                }
-                let storage = state.heap.version.object(id);
-                let Some(ObjectVersion {
-                    data:
-                        ObjectData::Map {
-                            fields,
-                            remainder: Remainder::Closed,
-                        },
-                    revision: _,
-                    multiplicity: super::Multiplicity::Singleton,
-                }) = storage.as_deref()
-                else {
-                    return Ok(false);
-                };
-                fields.values().try_fold(true, |disjoint, field| {
-                    if !disjoint {
-                        return Ok(false);
-                    }
-                    match if matches!(
-                        field,
-                        Field::Select {
-                            decision: _,
-                            yes: _,
-                            no: _
-                        }
-                    ) {
-                        state.consumed_field(field)
-                    } else {
-                        field.clone()
-                    } {
-                        Field::Absent => Ok(true),
-                        Field::Present(value) => {
-                            disjoint_closed_graph(&value, state, objects, depth + 1)
-                        }
-                        Field::Select {
-                            decision,
-                            yes: _,
-                            no: _,
-                        } => Err(TransferDemand::Choice(decision)),
-                        Field::Unknown => Ok(false),
-                    }
-                })?
-            }
-            Datum::Sequence(sequence) => sequence
-                .storage
-                .iter()
-                .flat_map(|items| items.iter())
-                .try_fold(true, |disjoint, value| {
-                    if disjoint {
-                        disjoint_closed_graph(value, state, objects, depth + 1)
-                    } else {
-                        Ok(false)
-                    }
-                })?,
-            Datum::Strings(slice) => objects.insert(slice.backing.clone()),
-            Datum::Slot {
-                backing: _,
-                index: _,
-            }
-            | Datum::Unknown(_) => false,
-        },
-        ValueNode::Select {
-            decision,
-            yes: _,
-            no: _,
-        } => return Err(TransferDemand::Choice(Rc::clone(decision))),
-    })
-}
-
-fn merge_maps(
-    target: &super::ObjectId,
-    source: &Value,
-    state: &mut State,
-    overwrite: bool,
-    depth: usize,
-) -> bool {
-    if depth > 32 {
-        return false;
-    }
-    let Some(source) = map_fields(source, state) else {
-        return false;
-    };
-    let Some(ObjectVersion {
-        data:
-            ObjectData::Map {
-                fields,
-                remainder: Remainder::Closed,
-            },
-        revision: _,
-        multiplicity: super::Multiplicity::Singleton,
-    }) = state
-        .heap
-        .version
-        .object(target)
-        .map(|object| object.as_ref().clone())
-    else {
-        return false;
-    };
-    for (key, field) in source.fields {
-        let source = match field {
-            Field::Absent => continue,
-            Field::Present(value) => value,
-            Field::Select {
-                decision: _,
-                yes: _,
-                no: _,
-            }
-            | Field::Unknown => return false,
-        };
-        if !overwrite
-            && matches!(
-                source.node.as_ref(),
-                ValueNode::Leaf(Leaf {
-                    datum: Datum::Scalar {
-                        go_type: super::ScalarType::Invalid | super::ScalarType::Nil,
-                        content: _
-                    },
-                    origin: _,
-                })
-            )
-        {
-            continue;
-        }
-        let destination = match fields.get(&key) {
-            Some(Field::Present(value)) => Some(selected_member(value, state)),
-            Some(Field::Absent) | None => None,
-            Some(
-                Field::Select {
-                    decision: _,
-                    yes: _,
-                    no: _,
-                }
-                | Field::Unknown,
-            ) => return false,
-        };
-        if let Some(destination) = destination {
-            if let (
-                ValueNode::Leaf(Leaf {
-                    datum:
-                        Datum::Map {
-                            target: Some(nested),
-                            view: _,
-                        },
-                    origin: _,
-                }),
-                ValueNode::Leaf(Leaf {
-                    datum: Datum::Map { target: _, view: _ },
-                    origin: _,
-                }),
-            ) = (destination.node.as_ref(), source.node.as_ref())
-            {
-                if !merge_maps(nested, &source, state, overwrite, depth + 1) {
-                    return false;
-                }
-                continue;
-            }
-            if !overwrite {
-                match state.truth(&destination) {
-                    Some(true) => continue,
-                    Some(false) => {}
-                    None => return false,
-                }
-            }
-        }
-        state.heap.write(target, &key, Field::Present(source));
-    }
-    true
+    // The merged map is influenced by every operand, not only by its destination.
+    interface_map_view(&destination, state).with_influences(influences)
 }
 
 pub(super) fn widen_operands(arguments: &[Value], state: &mut State) {
@@ -2862,84 +2593,6 @@ fn unknown_decoded(
                 influences,
             },
         })),
-    }
-}
-
-fn closed_scalar_source(value: &Value, state: &State, remaining: &mut usize) -> bool {
-    let storage = match value.node.as_ref() {
-        ValueNode::Leaf(Leaf {
-            datum: Datum::Map {
-                view: _,
-                target: None,
-            },
-            origin: _,
-        }) => return true,
-        ValueNode::Leaf(Leaf {
-            datum:
-                Datum::Map {
-                    view: _,
-                    target: Some(id),
-                },
-            origin: _,
-        }) => state.heap.version.object(id),
-        ValueNode::Leaf(Leaf {
-            datum: _,
-            origin: _,
-        })
-        | ValueNode::Select {
-            decision: _,
-            yes: _,
-            no: _,
-        } => return false,
-    };
-    let Some(ObjectVersion {
-        revision: _,
-        multiplicity: super::Multiplicity::Singleton,
-        data:
-            ObjectData::Map {
-                fields,
-                remainder: Remainder::Closed,
-            },
-    }) = storage.as_deref()
-    else {
-        return false;
-    };
-    fields.values().all(|field| match field {
-        Field::Absent => true,
-        Field::Present(value) => immutable_scalar(value, remaining),
-        Field::Unknown
-        | Field::Select {
-            decision: _,
-            yes: _,
-            no: _,
-        } => false,
-    })
-}
-
-fn immutable_scalar(value: &Value, remaining: &mut usize) -> bool {
-    if *remaining == 0 {
-        return false;
-    }
-    *remaining -= 1;
-    match value.node.as_ref() {
-        ValueNode::Leaf(Leaf {
-            datum:
-                Datum::Text(_)
-                | Datum::Scalar {
-                    go_type: _,
-                    content: _,
-                },
-            origin: _,
-        }) => true,
-        ValueNode::Select {
-            decision: _,
-            yes,
-            no,
-        } => immutable_scalar(yes, remaining) && immutable_scalar(no, remaining),
-        ValueNode::Leaf(Leaf {
-            datum: _,
-            origin: _,
-        }) => false,
     }
 }
 
@@ -3239,33 +2892,6 @@ fn interface_map_view(first: &Value, state: &mut State) -> Value {
     Value::with_influences(view, state.heap.freeze(first).inputs())
 }
 
-fn overwrite_scalar_sources(
-    target: &super::ObjectId,
-    arguments: &[Value],
-    state: &mut State,
-) -> bool {
-    for source in arguments.iter().skip(1) {
-        let Some(source) = map_fields(source, state) else {
-            return false;
-        };
-        for (key, field) in source.fields {
-            match field {
-                Field::Absent => {}
-                Field::Present(value) => {
-                    state.heap.write(target, &key, Field::Present(value));
-                }
-                Field::Unknown
-                | Field::Select {
-                    decision: _,
-                    yes: _,
-                    no: _,
-                } => return false,
-            }
-        }
-    }
-    true
-}
-
 fn mutation_targets(
     value: &Value,
     pending: &mut Vec<Value>,
@@ -3317,44 +2943,4 @@ fn mutation_targets(
         },
     }
     false
-}
-
-fn can_overwrite_scalar_sources(
-    destination: &Value,
-    target: &super::ObjectId,
-    arguments: &[Value],
-    state: &State,
-    overwrite: bool,
-) -> bool {
-    let concrete_destination = matches!(
-        destination.node.as_ref(),
-        ValueNode::Leaf(Leaf {
-            datum: Datum::Map {
-                target: Some(_),
-                view: _
-            },
-            origin: _,
-        })
-    ) || destination
-        .identity()
-        .is_some_and(|path| path.segments().next().is_none());
-    let singleton_destination = matches!(
-        state.heap.version.object(target).as_deref(),
-        Some(ObjectVersion {
-            revision: _,
-            multiplicity: super::Multiplicity::Singleton,
-            data: ObjectData::Map {
-                fields: _,
-                remainder: _
-            },
-        })
-    );
-    let mut remaining = 128;
-    overwrite
-        && concrete_destination
-        && singleton_destination
-        && arguments
-            .iter()
-            .skip(1)
-            .all(|source| closed_scalar_source(source, state, &mut remaining))
 }

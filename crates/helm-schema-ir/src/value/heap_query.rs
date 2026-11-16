@@ -656,15 +656,21 @@ impl HeapVersion {
         }
         let input_path = version.input_paths.get(object);
         let original_input = input_path.is_some();
+        let derived = self
+            .arena
+            .upgrade()
+            .and_then(|arena| arena.derived.borrow().get(object).cloned());
         let baseline = if yes_object.is_none() || no_object.is_none() {
-            input_path.as_ref().map(|_| {
-                Rc::new(ObjectVersion {
-                    revision: version.id,
-                    multiplicity: Multiplicity::Singleton,
-                    data: ObjectData::Map {
-                        fields: Rc::new(BTreeMap::new()),
-                        remainder: Remainder::Input,
-                    },
+            derived.or_else(|| {
+                input_path.as_ref().map(|_| {
+                    Rc::new(ObjectVersion {
+                        revision: version.id,
+                        multiplicity: Multiplicity::Singleton,
+                        data: ObjectData::Map {
+                            fields: Rc::new(BTreeMap::new()),
+                            remainder: Remainder::Input,
+                        },
+                    })
                 })
             })
         } else {

@@ -309,7 +309,9 @@ fn absent_custom_root_field_is_false_until_set() {
 #[test]
 fn composite_truthiness_is_faithful_only_when_its_exact_decoder_succeeds() {
     let undecodable_merge = "(merge .Values.base .Values.__unknown_fixture)".to_owned();
-    let undecodable_selection = "(coalesce .Values.primary .Values.__unknown_fixture)".to_owned();
+    // A selection over a runtime program's output; a selection over plain inputs decodes
+    // exactly once no earlier merge havocs the heap (step 4a).
+    let undecodable_selection = "(coalesce .Values.primary (tpl .Values.program .))".to_owned();
     let bindings = HashMap::from([
         (
             "context".to_string(),

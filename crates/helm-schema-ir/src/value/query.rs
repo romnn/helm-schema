@@ -989,13 +989,19 @@ impl State {
     pub(super) fn field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
         super::hosts::file_field(&value, key, self).unwrap_or_else(|| match value.node.as_ref() {
+            // A selector on an input that is not a map aborts, or reads nothing when it is
+            // missing: it reaches no object.
             ValueNode::Leaf(Leaf {
                 datum:
                     Datum::Unknown(super::UnknownValue {
                         types: super::TypeCoverage::InputNonMap,
                         aliases: _,
-                    })
-                    | Datum::Text(_)
+                    }),
+                origin: _,
+            }) => Value::invalid().with_influences(value.inputs()),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Text(_)
                     | Datum::Scalar {
                         go_type: _,
                         content: _,
@@ -1048,14 +1054,12 @@ impl State {
                         influences: _,
                     },
             }) => {
-                let id = self
-                    .heap
-                    .arena
-                    .input_objects
-                    .borrow()
-                    .get(path)
-                    .map(|backing| backing.object.clone());
+                let id = self.layered_input(path);
                 let (field, unknown) = self.read_field(id.as_ref(), Some(path), key);
+                let field = id
+                    .as_ref()
+                    .and_then(|id| self.layered_field(id, key))
+                    .unwrap_or(field);
                 self.consumed(&field_value(field, &unknown, &Value::nil()))
             }
             ValueNode::Leaf(Leaf {
@@ -1068,6 +1072,7 @@ impl State {
             }) => {
                 let path = self.heap.arena.input_paths.borrow().get(id).cloned();
                 let (field, unknown) = self.read_field(Some(id), path.as_ref(), key);
+                let field = self.layered_field(id, key).unwrap_or(field);
                 let unknown = if field_needs_unknown(&field) {
                     self.unknown_map_child(&value, path.as_ref(), key, unknown)
                 } else {
@@ -1290,6 +1295,72 @@ impl State {
         let value = self.consumed(value);
         truth_test(self, &value, &mut budget)
     }
+    /// The heap object of the input map at `path`, allocated on first use. Its unwritten keys
+    /// read the input, through the merge layers its parent passed down (ADR 0072 §1).
+    pub(super) fn input_object(&mut self, path: &ValuesPath) -> super::ObjectId {
+        let remainder = self
+            .derived_input_remainder(path)
+            .unwrap_or(super::Remainder::Input);
+        let existing = self
+            .heap
+            .arena
+            .input_objects
+            .borrow()
+            .get(path)
+            .map(|backing| backing.object.clone());
+        if let Some(id) = existing {
+            if !self.heap.version.has_allocated_object(&id) {
+                let storage = super::ObjectVersion {
+                    revision: self.heap.arena.snapshot(),
+                    multiplicity: super::Multiplicity::Singleton,
+                    data: ObjectData::Map {
+                        fields: Rc::new(BTreeMap::default()),
+                        remainder,
+                    },
+                };
+                self.remember_derived(&id, &storage);
+                self.heap.register_storage(id.clone(), storage);
+            }
+            return id;
+        }
+        let data = ObjectData::Map {
+            fields: Rc::new(BTreeMap::default()),
+            remainder,
+        };
+        let id = self
+            .heap
+            .allocate(data.clone(), super::Multiplicity::Singleton);
+        self.remember_derived(
+            &id,
+            &super::ObjectVersion {
+                revision: self.heap.arena.snapshot(),
+                multiplicity: super::Multiplicity::Singleton,
+                data,
+            },
+        );
+        self.heap.arena.input_objects.borrow_mut().insert(
+            path.clone(),
+            super::InputBacking {
+                object: id.clone(),
+                map_type: {
+                    let object = if path.segments().next().is_none() {
+                        Predicate::True
+                    } else {
+                        Predicate::from(Guard::TypeIs {
+                            path: path.clone(),
+                            schema_type: "object".to_owned(),
+                        })
+                    };
+                    self.heap
+                        .arena
+                        .decision(object.clone(), object.negated(), Coverage::Exact)
+                },
+            },
+        );
+        self.heap.register_input(id.clone(), path.clone());
+        id
+    }
+
     pub(super) fn map_target(&mut self, value: &Value) -> Option<super::ObjectId> {
         let value = self.consumed(value);
         match value.node.as_ref() {
@@ -1309,59 +1380,8 @@ impl State {
                 || matches!(types, super::TypeCoverage::Unresolved)
                     && path.segments().next().is_none() =>
             {
-                let existing = self
-                    .heap
-                    .arena
-                    .input_objects
-                    .borrow()
-                    .get(path)
-                    .map(|backing| backing.object.clone());
-                if let Some(id) = existing {
-                    if !self.heap.version.has_allocated_object(&id) {
-                        self.heap.register_storage(
-                            id.clone(),
-                            super::ObjectVersion {
-                                revision: self.heap.arena.snapshot(),
-                                multiplicity: super::Multiplicity::Singleton,
-                                data: ObjectData::Map {
-                                    fields: Rc::new(BTreeMap::default()),
-                                    remainder: super::Remainder::Input,
-                                },
-                            },
-                        );
-                    }
-                    return Some(id);
-                }
-                let id = self.heap.allocate(
-                    ObjectData::Map {
-                        fields: Rc::new(BTreeMap::default()),
-                        remainder: super::Remainder::Input,
-                    },
-                    super::Multiplicity::Singleton,
-                );
-                self.heap.arena.input_objects.borrow_mut().insert(
-                    path.clone(),
-                    super::InputBacking {
-                        object: id.clone(),
-                        map_type: {
-                            let object = if path.segments().next().is_none() {
-                                Predicate::True
-                            } else {
-                                Predicate::from(Guard::TypeIs {
-                                    path: path.clone(),
-                                    schema_type: "object".to_owned(),
-                                })
-                            };
-                            self.heap.arena.decision(
-                                object.clone(),
-                                object.negated(),
-                                Coverage::Exact,
-                            )
-                        },
-                    },
-                );
-                self.heap.register_input(id.clone(), path.clone());
-                Some(id)
+                let path = path.clone();
+                Some(self.input_object(&path))
             }
             ValueNode::Leaf(Leaf {
                 datum:
@@ -1448,6 +1468,17 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
             .arena
             .decision(condition.clone(), condition.negated(), Coverage::Exact);
     }
+    if let ValueNode::Leaf(Leaf {
+        datum: Datum::Map {
+            target: Some(id),
+            view: _,
+        },
+        origin: _,
+    }) = value.node.as_ref()
+        && let Some(test) = state.layered_truth(id)
+    {
+        return test;
+    }
     if let Some(length) = state.map_length_of_consumed(value) {
         return truth_test(state, &length, budget);
     }
@@ -1504,6 +1535,25 @@ fn field_needs_unknown(field: &Field) -> bool {
             yes,
             no,
         } => field_needs_unknown(yes) || field_needs_unknown(no),
+    }
+}
+
+/// The inputs a map remainder reads beyond its fields: an unknown region's paths, or the values
+/// layered keys read from.
+fn remainder_inputs(
+    remainder: &super::Remainder,
+    seen: &mut AHashSet<*const BTreeSet<ValuesPath>>,
+    inputs: &mut BTreeSet<ValuesPath>,
+    values: &mut Vec<Value>,
+) {
+    match remainder {
+        super::Remainder::Unknown { inputs: known } => {
+            if seen.insert(Rc::as_ptr(known)) {
+                inputs.extend(known.iter().cloned());
+            }
+        }
+        super::Remainder::Layered(layers) => values.extend(layers.source_values().cloned()),
+        super::Remainder::Closed | super::Remainder::Open | super::Remainder::Input => {}
     }
 }
 
@@ -1642,6 +1692,7 @@ impl FrozenValue {
                 super::Remainder::Closed | super::Remainder::Input | super::Remainder::Open => {
                     Some((None, 2))
                 }
+                super::Remainder::Layered(_) => None,
             },
             ObjectData::Strings(slots) if slots.is_empty() => Some((None, 2)),
             ObjectData::Opaque {
@@ -1744,11 +1795,7 @@ impl FrozenValue {
                 };
                 match &object.data {
                     ObjectData::Map { fields, remainder } => {
-                        if let super::Remainder::Unknown { inputs: known } = remainder
-                            && seen_input_sets.insert(Rc::as_ptr(known))
-                        {
-                            inputs.extend(known.iter().cloned());
-                        }
+                        remainder_inputs(remainder, &mut seen_input_sets, &mut inputs, &mut values);
                         for field in fields.values() {
                             if !field_inputs_with_budget(field, &mut values, budget) {
                                 return BTreeSet::from([ValuesPath::default()]);
@@ -2048,9 +2095,14 @@ impl State {
     }
     pub(super) fn get_field(&mut self, value: &Value, key: &str) -> Value {
         let value = self.consumed(value);
-        let stored = matches!(value.node.as_ref(), ValueNode::Leaf(_))
-            .then(|| self.lookup_field(&value, key))
-            .flatten();
+        let layered = self.layered_member(&value, key);
+        let stored = if let Some(field) = layered {
+            Some(self.consumed_field(&field))
+        } else {
+            matches!(value.node.as_ref(), ValueNode::Leaf(_))
+                .then(|| self.lookup_field(&value, key))
+                .flatten()
+        };
         if let Some(field) = &stored
             && !field_needs_unknown(field)
         {
@@ -2147,6 +2199,9 @@ impl State {
                 self.field_presence(yes, key),
                 self.field_presence(no, key),
             );
+        }
+        if let Some(field) = self.layered_member(&value, key) {
+            return self.layered_presence(&field);
         }
         let field = self.lookup_field(&value, key);
         let path = match &field {

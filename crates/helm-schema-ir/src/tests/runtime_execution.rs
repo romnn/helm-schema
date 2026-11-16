@@ -271,15 +271,51 @@ fn text_budget_neighbors_preserve_prior_exact_text_and_widen_the_suffix() {
     }
 }
 
+/// The write to the copy never makes the original read `new`: the render aborts exactly where
+/// Helm 4.2.3 does (receipts `r_copy_alias`: `x: a` and `{}` render; `x: new` fails, `x: 7`
+/// fails `eq`, a deleted or non-map `obj` fails `set`).
 #[test]
 fn deep_copy_of_an_unmaterialized_input_cannot_alias_the_original() {
+    use helm_schema_core::{Guard, GuardValue, ValuesPath};
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_document(
         r#"{{ $copy := deepCopy .Values.obj }}{{ $_ := set $copy "x" "new" }}{{ if eq .Values.obj.x "new" }}{{ fail "bad" }}{{ end }}"#,
         None,
         &db,
     );
-    sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::False);
+    let obj = ValuesPath::parse("obj");
+    let x = ValuesPath::parse("obj.x");
+    let new = Predicate::from(Guard::Eq {
+        path: x.clone(),
+        value: GuardValue::String("new".to_owned()),
+    });
+    let map = Predicate::from(Guard::TypeIs {
+        path: obj,
+        schema_type: "object".to_owned(),
+    });
+    sim_assert_eq!(
+        have: execution.abort_predicate(),
+        want: Predicate::Or(vec![
+            new.clone(),
+            Predicate::And(vec![
+                map.clone(),
+                Predicate::Not(Box::new(new.clone())),
+                Predicate::Not(Box::new(Predicate::from(Guard::Eq {
+                    path: x.clone(),
+                    value: GuardValue::Null,
+                }))),
+                Predicate::Not(Box::new(Predicate::from(Guard::Absent { path: x.clone() }))),
+                Predicate::Not(Box::new(Predicate::from(Guard::TypeIs {
+                    path: x,
+                    schema_type: "string".to_owned(),
+                }))),
+            ]),
+            Predicate::And(vec![
+                Predicate::Not(Box::new(new)),
+                Predicate::Not(Box::new(map)),
+            ]),
+        ])
+    );
 }
 
 #[test]

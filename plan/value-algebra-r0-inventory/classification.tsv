@@ -1097,3 +1097,11 @@ field:value/path.rs:PathLink.exported	K	memoized exported guard of a path prefix
 field:value/path.rs:PathLink.exported_predicate	K	memoized exported predicate of a path	pure projection of the immutable prefix	keep		R3b step 3 conditions, 2026-11-11	
 field:value/path.rs:PathLink.feasible_predicate	K	memoized feasibility predicate of a path	pure projection of the immutable prefix	keep		R3b step 3 conditions, 2026-11-11	
 field:value/path.rs:PathLink.whole_predicate	K	memoized whole-path predicate for abort clauses	pure projection of the immutable prefix	keep		R3b step 3 conditions, 2026-11-11	
+field:value/layers.rs:Layers.base	R	layered remainder base: closed, the object's input path, or a frozen copy source (ADR 0072 §1)	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
+field:value/layers.rs:Layers.merges	R	merge layers applied over a layered remainder, oldest first (mergo v1.0.1 per key)	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
+field:value/layers.rs:MergeLayer.explicit	R	keys a merge resolved eagerly; its lazy layer does not apply to them	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
+field:value/layers.rs:MergeLayer.guard	R	branch outcomes under which a joined merge layer applies	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
+field:value/layers.rs:MergeLayer.source	R	merge source map frozen at the merge (call-time scalars, live nested aliases)	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
+field:value/mod.rs:Arena.derived	K	initial storage of a derived object (layered input child, deepCopy member) used as a join baseline	arena-scoped canonical identity/cache, no independent semantic evaluation	keep		R3b step 4a heap, 2026-11-16	
+variant:value/layers.rs:Base::Copy	R	deepCopy source frozen at the copy; nested maps read as separate copy objects	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
+variant:value/mod.rs:Remainder::Layered	R	unwritten keys read through deepCopy/merge layers over an open key set	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	

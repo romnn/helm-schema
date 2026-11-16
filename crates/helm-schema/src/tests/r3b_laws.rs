@@ -4,7 +4,8 @@
 //! verdict real Helm 4.2.3 gives them (`helm template --kube-version 1.29.0`,
 //! confirmed by the pinned helmsweep driver). The receipts (chart, user values
 //! file, Helm output) are kept per law under the step-1 lane's
-//! `transfer/receipts/<law>/`. Documents are the values Helm validates: the
+//! `transfer/receipts/<law>/`, and for the laws marked step 4a under the step-4
+//! lane's `transfer/receipts/<law>/`. Documents are the values Helm validates: the
 //! user file coalesced over the chart defaults, with null deletion of declared
 //! keys and globals copied into each dependency instance.
 //!
@@ -326,7 +327,6 @@ fn merge_destination_accepts_documents_whose_merged_member_is_a_string() -> eyre
 
 /// (b) Which operand the merged member comes from decides the demand.
 #[test]
-#[ignore = "target: ADR 0073 step 4 (ADR 0072 §1/§4: merge effect with a relational pullback)"]
 fn merge_destination_rejects_an_integer_merged_member() -> eyre::Result<()> {
     assert_helm_verdicts(
         &merge_destination_schema()?,
@@ -391,12 +391,262 @@ fn deep_copy_accepts_a_string_input() -> eyre::Result<()> {
 
 /// (b) The write to the deep copy does not repair the input.
 #[test]
-#[ignore = "target: ADR 0073 step 4 (ADR 0072 §1: deepCopy separates nested maps)"]
 fn deep_copy_rejects_an_integer_input() -> eyre::Result<()> {
     assert_helm_verdicts(
         &nested_copy_schema("deepCopy .Values.a")?,
         &[(
             "b12: the copy's write does not reach the input",
+            json!({ "a": { "inner": { "x": 7 } } }),
+        )],
+        false,
+    )
+}
+
+fn merge_nested_alias_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            dst:
+              inner: {}
+            src:
+              inner:
+                x: "a"
+        "#},
+        &[
+            indoc! {r"
+                {{- $alias := .Values.dst.inner }}
+                {{- $_ := merge .Values.dst .Values.src }}
+            "},
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  x: {{ upper $alias.x | quote }}
+            "},
+        ],
+        "",
+    )
+}
+
+/// (b, step 4a) `merge` recurses into the destination's own nested map, so an alias taken
+/// before the merge sees the merged member (receipts `m_nested_alias`).
+#[test]
+fn merge_writes_reach_an_earlier_nested_alias() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_nested_alias_schema()?,
+        &[(
+            "m1: the source string reaches the alias",
+            json!({ "dst": { "inner": {} }, "src": { "inner": { "x": "b" } } }),
+        )],
+        true,
+    )
+}
+
+/// (b, step 4a) The alias reads the merged integer, or the destination's own integer.
+#[test]
+fn merge_writes_reject_an_integer_through_an_earlier_nested_alias() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_nested_alias_schema()?,
+        &[
+            (
+                "m2: the source integer reaches the alias",
+                json!({ "dst": { "inner": {} }, "src": { "inner": { "x": 7 } } }),
+            ),
+            (
+                "m3: the destination integer is kept",
+                json!({ "dst": { "inner": { "x": 7 } }, "src": { "inner": { "x": "a" } } }),
+            ),
+        ],
+        false,
+    )
+}
+
+fn merge_source_alias_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            dst: {}
+            src:
+              inner:
+                x: "a"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $_ := merge .Values.dst .Values.src }}
+                {{- $_ := set .Values.src.inner "x" "ok" }}
+            "#},
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  x: {{ upper .Values.dst.inner.x | quote }}
+            "},
+        ],
+        "",
+    )
+}
+
+/// (b, step 4a) A source map the destination lacks is assigned by reference: a later write
+/// through the source reaches the destination (receipts `m_source_alias`).
+#[test]
+fn merge_assigns_a_missing_member_map_by_reference() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_source_alias_schema()?,
+        &[(
+            "m4: the source integer is overwritten through the alias",
+            json!({ "dst": {}, "src": { "inner": { "x": 7 } } }),
+        )],
+        true,
+    )
+}
+
+/// (b, step 4a) A destination map of its own is merged into, not replaced by the source.
+#[test]
+fn merge_keeps_a_destination_map_of_its_own() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_source_alias_schema()?,
+        &[(
+            "m5: the destination map keeps its integer",
+            json!({ "dst": { "inner": { "x": 7 } }, "src": { "inner": { "x": "a" } } }),
+        )],
+        false,
+    )
+}
+
+/// (b, step 4a) `merge` replaces an empty destination member and skips a deleted source
+/// member (receipts `m_empty_and_nil`).
+#[test]
+fn merge_replaces_only_empty_destination_members() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_destination_schema()?,
+        &[
+            (
+                "m6: an integer zero is empty and takes the source string",
+                json!({ "dst": { "x": 0 }, "src": { "x": "a" } }),
+            ),
+            (
+                "m9: a deleted source member keeps the destination string",
+                json!({ "dst": { "x": "b" }, "src": {} }),
+            ),
+        ],
+        true,
+    )
+}
+
+/// (b, step 4a) The member `merge` leaves in the destination is the one consumed.
+#[test]
+fn merge_rejects_the_integer_it_leaves_in_the_destination() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_destination_schema()?,
+        &[
+            (
+                "m7: an empty string takes the source integer",
+                json!({ "dst": { "x": "" }, "src": { "x": 7 } }),
+            ),
+            (
+                "m8: a deleted source member keeps the destination integer",
+                json!({ "dst": { "x": 7 }, "src": {} }),
+            ),
+        ],
+        false,
+    )
+}
+
+fn merge_overwrite_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            dst: {}
+            src:
+              x: "a"
+        "#},
+        &[
+            "{{- $_ := mergeOverwrite .Values.dst .Values.src }}\n",
+            CONFIG_MAP,
+            indoc! {r#"
+                data:
+                  x: {{ upper (default "d" .Values.dst.x) | quote }}
+            "#},
+        ],
+        "",
+    )
+}
+
+/// (b, step 4a) `mergeOverwrite` writes every present source member, empty ones too
+/// (receipts `m_overwrite`).
+#[test]
+fn merge_overwrite_accepts_documents_whose_source_replaces_an_integer() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_overwrite_schema()?,
+        &[
+            (
+                "o2: the source string replaces the integer",
+                json!({ "dst": { "x": 7 }, "src": { "x": "a" } }),
+            ),
+            (
+                "o3: the empty source string replaces the integer",
+                json!({ "dst": { "x": 7 }, "src": { "x": "" } }),
+            ),
+        ],
+        true,
+    )
+}
+
+/// (b, step 4a) An overwriting source integer, or a deleted source member, leaves an integer.
+#[test]
+fn merge_overwrite_rejects_the_integer_it_leaves() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merge_overwrite_schema()?,
+        &[
+            (
+                "o1: the source integer overwrites the string",
+                json!({ "dst": { "x": "b" }, "src": { "x": 7 } }),
+            ),
+            (
+                "o4: a deleted source member keeps the integer",
+                json!({ "dst": { "x": 7 }, "src": {} }),
+            ),
+        ],
+        false,
+    )
+}
+
+fn copy_occurrences_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            a:
+              inner:
+                x: "a"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $one := deepCopy .Values.a }}
+                {{- $two := deepCopy .Values.a }}
+                {{- $_ := set $one.inner "x" "ok" }}
+            "#},
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  x: {{ upper $two.inner.x | quote }}
+            "},
+        ],
+        "",
+    )
+}
+
+/// (b, step 4a) Each `deepCopy` is separate: one copy's write does not reach another
+/// (receipts `c_copy_occurrences`).
+#[test]
+fn deep_copies_are_separate_per_occurrence() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &copy_occurrences_schema()?,
+        &[("c1: string x", json!({ "a": { "inner": { "x": "b" } } }))],
+        true,
+    )
+}
+
+/// (b, step 4a) The second copy still reads the input's integer.
+#[test]
+fn deep_copies_reject_an_integer_another_copy_overwrote() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &copy_occurrences_schema()?,
+        &[(
+            "c2: the other copy's write does not repair the input",
             json!({ "a": { "inner": { "x": 7 } } }),
         )],
         false,

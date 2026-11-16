@@ -2827,7 +2827,9 @@ impl<'a> LexicalTransfers<'a> {
     ) -> Option<Predicate> {
         match remainder {
             super::Remainder::Closed => Some(Predicate::True),
-            super::Remainder::Open | super::Remainder::Unknown { inputs: _ } => None,
+            super::Remainder::Open
+            | super::Remainder::Unknown { inputs: _ }
+            | super::Remainder::Layered(_) => None,
             super::Remainder::Input => {
                 let path = self.input_paths.get(target)?;
                 let keys = fields
