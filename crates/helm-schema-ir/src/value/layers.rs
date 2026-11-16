@@ -20,6 +20,22 @@ use super::{
 /// Nested merges deeper than this stop recursing and leave the member unknown.
 const MAX_MERGE_DEPTH: usize = 32;
 
+/// Steps one member merge may take before it reads unknown (shared choices multiply).
+const MAX_MERGE_WORK: usize = 1024;
+
+/// Layers one object keeps; past it the object's unwritten keys widen to unknown (ADR 0072 §10).
+const MAX_LAYERS: usize = 64;
+
+/// Whether a layer list stays within its bound, counting the widening when it does not.
+fn within_layer_bound(merges: &[MergeLayer]) -> bool {
+    if merges.len() <= MAX_LAYERS {
+        return true;
+    }
+    let _bound =
+        tracing::debug_span!(target: "helm_schema_ir::counters", "merge_layer_bound").entered();
+    false
+}
+
 /// How an object resolves a key it has not written.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Layers {
@@ -36,6 +52,8 @@ enum Base {
     Input,
     /// The key reads a copy of this map's member, frozen at the copy.
     Copy(FrozenValue),
+    /// The key set and members are unknown (a decoded map of unknown text, a widened map).
+    Unknown(Rc<BTreeSet<ValuesPath>>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -77,6 +95,7 @@ impl State {
         let Layers { base, merges } = layers;
         let mut field = match base {
             Base::Closed => Field::Absent,
+            Base::Unknown(_) => Field::Unknown,
             Base::Input => path.map_or(Field::Unknown, |path| {
                 let mut child = path.clone();
                 child.push(key);
@@ -99,7 +118,7 @@ impl State {
             }
             let member = self.member_at(source, key);
             let merged = self.merge_field(field.clone(), member, *overwrite);
-            field = guarded(guard, merged, &field);
+            field = bounded_member(guarded(guard, merged, &field));
         }
         field
     }
@@ -204,6 +223,7 @@ impl State {
                 let Layers { base, merges } = layers.as_ref();
                 let mut field = match base {
                     Base::Closed => Field::Absent,
+                    Base::Unknown(_) => Field::Unknown,
                     Base::Input => heap.input_paths.get(id).map_or(Field::Unknown, |path| {
                         let mut child = path.clone();
                         child.push(key);
@@ -226,7 +246,7 @@ impl State {
                     }
                     let member = self.member_of(&source.heap, &source.value, key, depth + 1);
                     let merged = self.merge_field(field.clone(), member, *overwrite);
-                    field = guarded(guard, merged, &field);
+                    field = bounded_member(guarded(guard, merged, &field));
                 }
                 field
             }
@@ -240,17 +260,38 @@ impl State {
     /// destination keeps its own. With overwrite, an absent source member leaves the destination,
     /// a nil one is written, two maps merge in place and anything else is replaced.
     fn merge_field(&self, destination: Field, source: Field, overwrite: bool) -> Field {
+        let mut budget = MAX_MERGE_WORK;
+        let field = self.merge_within(destination, source, overwrite, &mut budget);
+        if budget == 0 {
+            let _bound =
+                tracing::debug_span!(target: "helm_schema_ir::counters", "merge_field_bound")
+                    .entered();
+        }
+        field
+    }
+
+    fn merge_within(
+        &self,
+        destination: Field,
+        source: Field,
+        overwrite: bool,
+        budget: &mut usize,
+    ) -> Field {
+        let Some(remaining) = budget.checked_sub(1) else {
+            return Field::Unknown;
+        };
+        *budget = remaining;
         match (destination, source) {
             (destination, Field::Absent) => destination,
             (destination, Field::Select { decision, yes, no }) => Field::select(
                 decision,
-                self.merge_field(destination.clone(), yes.as_ref().clone(), overwrite),
-                self.merge_field(destination, no.as_ref().clone(), overwrite),
+                self.merge_within(destination.clone(), yes.as_ref().clone(), overwrite, budget),
+                self.merge_within(destination, no.as_ref().clone(), overwrite, budget),
             ),
             (Field::Select { decision, yes, no }, source) => Field::select(
                 decision,
-                self.merge_field(yes.as_ref().clone(), source.clone(), overwrite),
-                self.merge_field(no.as_ref().clone(), source, overwrite),
+                self.merge_within(yes.as_ref().clone(), source.clone(), overwrite, budget),
+                self.merge_within(no.as_ref().clone(), source, overwrite, budget),
             ),
             (Field::Unknown, Field::Unknown | Field::Present(_))
             | (Field::Absent | Field::Present(_), Field::Unknown) => Field::Unknown,
@@ -258,12 +299,18 @@ impl State {
                 if let ValueNode::Select { decision, yes, no } = source.node.as_ref() {
                     return Field::select(
                         Rc::clone(decision),
-                        self.merge_field(
+                        self.merge_within(
                             destination.clone(),
                             Field::Present(yes.clone()),
                             overwrite,
+                            budget,
                         ),
-                        self.merge_field(destination, Field::Present(no.clone()), overwrite),
+                        self.merge_within(
+                            destination,
+                            Field::Present(no.clone()),
+                            overwrite,
+                            budget,
+                        ),
                     );
                 }
                 if let Field::Present(value) = &destination
@@ -271,15 +318,17 @@ impl State {
                 {
                     return Field::select(
                         Rc::clone(decision),
-                        self.merge_field(
+                        self.merge_within(
                             Field::Present(yes.clone()),
                             Field::Present(source.clone()),
                             overwrite,
+                            budget,
                         ),
-                        self.merge_field(
+                        self.merge_within(
                             Field::Present(no.clone()),
                             Field::Present(source),
                             overwrite,
+                            budget,
                         ),
                     );
                 }
@@ -691,14 +740,15 @@ impl State {
                     !matches!(remainder, Remainder::Closed),
                 ))
             }
+            // An input map, or a map of unknown content: any key may follow.
             ValueNode::Leaf(Leaf {
-                datum: Datum::Unknown(UnknownValue { types, aliases: _ }),
-                origin,
-            }) if origin.identity.is_some()
-                && matches!(types, TypeCoverage::Unresolved | TypeCoverage::Map(_)) =>
-            {
-                Some((BTreeSet::new(), true))
-            }
+                datum:
+                    Datum::Unknown(UnknownValue {
+                        types: TypeCoverage::Unresolved | TypeCoverage::Map(_),
+                        aliases: _,
+                    }),
+                origin: _,
+            }) => Some((BTreeSet::new(), true)),
             ValueNode::Leaf(Leaf {
                 datum: _,
                 origin: _,
@@ -732,9 +782,19 @@ impl State {
             Remainder::Layered(layers) => {
                 let mut layers = layers.as_ref().clone();
                 layers.merges.push(layer.clone());
+                if !within_layer_bound(&layers.merges) {
+                    return false;
+                }
                 layers
             }
-            Remainder::Open | Remainder::Unknown { inputs: _ } => return false,
+            Remainder::Open => Layers {
+                base: Base::Unknown(Rc::default()),
+                merges: vec![layer.clone()],
+            },
+            Remainder::Unknown { inputs } => Layers {
+                base: Base::Unknown(Rc::clone(inputs)),
+                merges: vec![layer.clone()],
+            },
         };
         let mut storage = storage.as_ref().clone();
         storage.data = ObjectData::Map {
@@ -749,8 +809,7 @@ impl State {
             if layer.explicit.contains(&key) {
                 continue;
             }
-            let member = self.member_at(&layer.source, &key);
-            let Field::Present(member) = member else {
+            let Some(member) = field_as_value(self.member_at(&layer.source, &key)) else {
                 continue;
             };
             if self.map_test(&member).constant_outcome() == Some(false) {
@@ -828,6 +887,7 @@ impl State {
         let Layers { base, merges } = layers;
         let base = match base {
             Base::Closed => return None,
+            Base::Unknown(inputs) => Base::Unknown(Rc::clone(inputs)),
             Base::Input => Base::Input,
             Base::Copy(source) => {
                 let Field::Present(member) = self.member_at(source, key) else {
@@ -840,10 +900,7 @@ impl State {
             .iter()
             .filter(|layer| !layer.explicit.contains(key))
             .filter_map(|layer| {
-                let member = self.member_at(&layer.source, key);
-                let Field::Present(member) = member else {
-                    return None;
-                };
+                let member = field_as_value(self.member_at(&layer.source, key))?;
                 (self.map_test(&member).constant_outcome() != Some(false)).then(|| MergeLayer {
                     source: FrozenValue::at(Rc::clone(&layer.source.heap), member),
                     overwrite: layer.overwrite,
@@ -1115,11 +1172,19 @@ impl State {
 }
 
 impl Layers {
+    /// The inputs an unknown base still depends on.
+    pub(super) fn unknown_inputs(&self) -> Option<&Rc<BTreeSet<ValuesPath>>> {
+        match &self.base {
+            Base::Unknown(inputs) => Some(inputs),
+            Base::Closed | Base::Input | Base::Copy(_) => None,
+        }
+    }
+
     /// The values this object reads its unwritten keys from.
     pub(super) fn source_values(&self) -> impl Iterator<Item = &Value> {
         let Self { base, merges } = self;
         let base = match base {
-            Base::Closed | Base::Input => None,
+            Base::Closed | Base::Input | Base::Unknown(_) => None,
             Base::Copy(source) => Some(&source.value),
         };
         base.into_iter()
@@ -1175,7 +1240,14 @@ pub(super) fn join_remainders(
             merges: Vec::new(),
         }),
         Remainder::Layered(layers) => Some(layers.as_ref().clone()),
-        Remainder::Open | Remainder::Unknown { inputs: _ } => None,
+        Remainder::Open => Some(Layers {
+            base: Base::Unknown(Rc::default()),
+            merges: Vec::new(),
+        }),
+        Remainder::Unknown { inputs } => Some(Layers {
+            base: Base::Unknown(Rc::clone(inputs)),
+            merges: Vec::new(),
+        }),
     };
     let yes = as_layers(yes)?;
     let no = as_layers(no)?;
@@ -1198,10 +1270,12 @@ pub(super) fn join_remainders(
             merges.push(layer);
         }
     }
-    Some(Remainder::Layered(Rc::new(Layers {
-        base: yes.base,
-        merges,
-    })))
+    within_layer_bound(&merges).then(|| {
+        Remainder::Layered(Rc::new(Layers {
+            base: yes.base,
+            merges,
+        }))
+    })
 }
 
 /// Whether a value is certainly not a map: a write into it aborts the render.
@@ -1340,6 +1414,7 @@ impl State {
         let Layers { base, merges } = layers.as_ref();
         let base = match base {
             Base::Closed => Predicate::False,
+            Base::Unknown(_) => return None,
             Base::Input => Predicate::from(Guard::Truthy {
                 path: self.heap.version.input_paths.get(object)?.clone(),
             }),
@@ -1423,5 +1498,69 @@ fn map_truth(value: &Value) -> Option<Predicate> {
             yes: _,
             no: _,
         } => None,
+    }
+}
+
+/// A member as a value: absent is no member, an unknown member reads unknown at every key, and
+/// alternative members keep their decisions (a missing arm reads as Go's invalid value).
+fn field_as_value(field: Field) -> Option<Value> {
+    match field {
+        Field::Absent => None,
+        Field::Present(value) => Some(value),
+        Field::Unknown => Some(Value::unknown()),
+        Field::Select { decision, yes, no } => Some(Value::select(
+            decision,
+            field_as_value(yes.as_ref().clone()).unwrap_or_else(Value::invalid),
+            field_as_value(no.as_ref().clone()).unwrap_or_else(Value::invalid),
+        )),
+    }
+}
+
+/// Alternatives one merged member keeps; past it the member reads unknown (ADR 0072 §10).
+const MAX_MEMBER_ALTERNATIVES: usize = 64;
+
+/// A merged member within its alternative bound, or unknown with the widening counted.
+fn bounded_member(field: Field) -> Field {
+    let mut remaining = MAX_MEMBER_ALTERNATIVES;
+    if field_fits(&field, &mut remaining) {
+        return field;
+    }
+    let _bound =
+        tracing::debug_span!(target: "helm_schema_ir::counters", "merge_member_bound").entered();
+    Field::Unknown
+}
+
+fn field_fits(field: &Field, remaining: &mut usize) -> bool {
+    match field {
+        Field::Absent | Field::Unknown => take_one(remaining),
+        Field::Present(value) => value_fits(value, remaining),
+        Field::Select {
+            decision: _,
+            yes,
+            no,
+        } => field_fits(yes, remaining) && field_fits(no, remaining),
+    }
+}
+
+fn value_fits(value: &Value, remaining: &mut usize) -> bool {
+    match value.node.as_ref() {
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => take_one(remaining),
+        ValueNode::Select {
+            decision: _,
+            yes,
+            no,
+        } => value_fits(yes, remaining) && value_fits(no, remaining),
+    }
+}
+
+fn take_one(remaining: &mut usize) -> bool {
+    if let Some(left) = remaining.checked_sub(1) {
+        *remaining = left;
+        true
+    } else {
+        false
     }
 }

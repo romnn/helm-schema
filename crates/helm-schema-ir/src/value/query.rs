@@ -756,11 +756,12 @@ impl State {
                             .get(path)
                             .and_then(|backing| frozen.heap.object(&backing.object))
                             .is_some_and(|object| {
+                                // A merged input map is still the input's own object.
                                 !matches!(
                                     &object.data,
                                     ObjectData::Map {
                                         fields,
-                                        remainder: super::Remainder::Input
+                                        remainder: super::Remainder::Input | super::Remainder::Layered(_)
                                     } if fields.is_empty() || matches!(operation, RequirementKind::MapArgument { .. })
                                 )
                             })
@@ -875,13 +876,20 @@ impl State {
         id: &super::ObjectId,
         allow_known_fields: bool,
     ) -> Option<ValuesPath> {
-        if !matches!(
-            frozen.heap.object(id).as_deref().map(|object| &object.data),
+        // A map argument demands only that the input is a map, which a merged input object
+        // still is.
+        let pristine = match frozen.heap.object(id).as_deref().map(|object| &object.data) {
             Some(ObjectData::Map {
                 fields,
-                remainder: super::Remainder::Input
-            }) if fields.is_empty() || allow_known_fields
-        ) {
+                remainder: super::Remainder::Input,
+            }) => fields.is_empty() || allow_known_fields,
+            Some(ObjectData::Map {
+                fields: _,
+                remainder: super::Remainder::Layered(_),
+            }) => allow_known_fields,
+            _ => false,
+        };
+        if !pristine {
             return None;
         }
         self.heap.arena.input_paths.borrow().get(id).cloned()
@@ -1552,7 +1560,14 @@ fn remainder_inputs(
                 inputs.extend(known.iter().cloned());
             }
         }
-        super::Remainder::Layered(layers) => values.extend(layers.source_values().cloned()),
+        super::Remainder::Layered(layers) => {
+            if let Some(known) = layers.unknown_inputs()
+                && seen.insert(Rc::as_ptr(known))
+            {
+                inputs.extend(known.iter().cloned());
+            }
+            values.extend(layers.source_values().cloned());
+        }
         super::Remainder::Closed | super::Remainder::Open | super::Remainder::Input => {}
     }
 }
