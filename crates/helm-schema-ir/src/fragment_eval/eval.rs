@@ -5,14 +5,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use helm_schema_core::{
     GuardDnf, Predicate, ValuesPath, dynamic_mapping_value_path, sequence_item_path,
 };
-use helm_schema_syntax::{ScalarStyle, Span, YamlNodeKind};
+use helm_schema_syntax::{ScalarStyle, YamlNodeKind};
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::contract::ContractIr;
 use crate::resource_identity::PlacedResource;
 use crate::value::yaml::PayloadShape;
 
-use crate::value::yaml::{PlacedDocument, PlacedTerm};
+use crate::value::yaml::{NodeIx, PlacedDocument, PlacedTerm};
 use crate::value::{DocumentExecution, Observation, ObservationId, RenderedContainerUse};
 use crate::{ContractProvenance, ContractUse, SourceSpan, ValueKind, YamlPath};
 
@@ -121,34 +121,34 @@ impl<'a> Projection<'a, '_> {
 
     fn node(
         &self,
-        index: usize,
+        index: NodeIx,
         path: &YamlPath,
         ambient: &Predicate,
         contract: &mut Vec<ContractUse>,
     ) {
-        let Some(node) = self.document.ownership.nodes.get(index) else {
+        let Some(kind) = self.document.kind(index) else {
             return;
         };
         // Literal siblings still enter their parent's overwrite proof but cannot emit rows.
-        if !self.document.terms(node.span).any(|term| term.placeholder) {
+        if !self.document.has_hole(index) {
             return;
         }
         let guard = self.db.predicate_memo().normalize(Predicate::all(vec![
             ambient.clone(),
             self.document.condition.clone(),
-            self.document.selection_guard(node.span),
+            self.document.selection_guard(index),
         ]));
         if guard == Predicate::False {
             return;
         }
-        let rows = self.serialized(node.span, path, &guard);
+        let rows = self.serialized(index, path, &guard);
         if !rows.is_empty() {
             for row in rows {
                 contract.push(row);
             }
             return;
         }
-        match node.kind {
+        match kind {
             YamlNodeKind::Mapping | YamlNodeKind::FlowMapping => {
                 self.mapping(index, path, &guard, contract);
             }
@@ -164,10 +164,10 @@ impl<'a> Projection<'a, '_> {
                 }
             }
             YamlNodeKind::Scalar(style) => {
-                self.scalar(node.span, style, false, path, &guard, contract);
+                self.scalar(index, style, false, path, &guard, contract);
             }
             YamlNodeKind::BlockScalar => {
-                self.scalar(node.span, ScalarStyle::Plain, true, path, &guard, contract);
+                self.scalar(index, ScalarStyle::Plain, true, path, &guard, contract);
             }
             YamlNodeKind::Pair
             | YamlNodeKind::FlowPair
@@ -176,21 +176,15 @@ impl<'a> Projection<'a, '_> {
         }
     }
 
-    fn keys(&self, pair: usize) -> Option<usize> {
+    fn keys(&self, pair: NodeIx) -> Option<NodeIx> {
         self.document
             .children(pair)
             .iter()
-            .find(|index| {
-                self.document
-                    .ownership
-                    .nodes
-                    .get(**index)
-                    .is_some_and(|node| node.key)
-            })
+            .find(|index| self.document.is_key(**index))
             .copied()
     }
 
-    fn literal_key(&self, index: usize) -> Option<String> {
+    fn literal_key(&self, index: NodeIx) -> Option<String> {
         self.document.literal_key(index).map(str::to_owned)
     }
 
@@ -201,7 +195,7 @@ impl<'a> Projection<'a, '_> {
     )]
     fn mapping(
         &self,
-        index: usize,
+        index: NodeIx,
         path: &YamlPath,
         ambient: &Predicate,
         contract: &mut Vec<ContractUse>,
@@ -210,8 +204,8 @@ impl<'a> Projection<'a, '_> {
         let mut payloads = pairs
             .iter()
             .filter_map(|pair| {
-                let span = self.document.ownership.nodes.get(*pair)?.span;
-                let rows = self.serialized(span, path, ambient);
+                self.document.kind(*pair)?;
+                let rows = self.serialized(*pair, path, ambient);
                 (!rows.is_empty()).then_some((*pair, rows))
             })
             .collect::<BTreeMap<_, _>>();
@@ -223,8 +217,7 @@ impl<'a> Projection<'a, '_> {
         let active = payloads
             .keys()
             .filter_map(|index| {
-                let node = self.document.ownership.nodes.get(*index)?;
-                let placement = self.document.serialization(node.span)?;
+                let placement = self.document.serialization(*index)?;
                 let mut remaining = self.remaining.get();
                 let guard = placement.term.execution_guard(
                     self.execution,
@@ -236,7 +229,7 @@ impl<'a> Projection<'a, '_> {
                     *index,
                     self.db.predicate_memo().normalize(Predicate::all(vec![
                         self.document.condition.clone(),
-                        self.document.selection_guard(placement.term.range),
+                        self.document.term_selection_guard(&placement.term),
                         guard,
                     ])),
                 ))
@@ -284,13 +277,7 @@ impl<'a> Projection<'a, '_> {
             };
             let survives = self.db.predicate_memo().normalize(Predicate::all(vec![
                 ambient.clone(),
-                self.document
-                    .ownership
-                    .nodes
-                    .get(key)
-                    .map_or(Predicate::False, |node| {
-                        self.document.placement_guard(node.span)
-                    }),
+                self.document.placement_guard(key),
                 survivors.get(pair).cloned().unwrap_or(Predicate::False),
             ]));
             for child in self
@@ -306,9 +293,9 @@ impl<'a> Projection<'a, '_> {
 
     fn mapping_survivors(
         &self,
-        pairs: &[usize],
-        payloads: &BTreeMap<usize, Predicate>,
-    ) -> BTreeMap<usize, Predicate> {
+        pairs: &[NodeIx],
+        payloads: &BTreeMap<NodeIx, Predicate>,
+    ) -> BTreeMap<NodeIx, Predicate> {
         let mut known = BTreeMap::<String, Predicate>::new();
         let mut unknown = Predicate::False;
         let mut any = Predicate::False;
@@ -317,10 +304,7 @@ impl<'a> Projection<'a, '_> {
         for pair in pairs.iter().rev() {
             let active = self
                 .keys(*pair)
-                .and_then(|key| self.document.ownership.nodes.get(key))
-                .map_or(Predicate::False, |node| {
-                    self.document.selection_guard(node.span)
-                });
+                .map_or(Predicate::False, |key| self.document.selection_guard(key));
             if let Some(payload) = payloads.get(pair) {
                 later_payloads.push((*pair, payload));
             } else if let Some(key) = self.keys(*pair).and_then(|key| self.literal_key(key)) {
@@ -355,11 +339,8 @@ impl<'a> Projection<'a, '_> {
         survivors
     }
 
-    fn payload_member_absent(&self, pair: usize, key: &str) -> Predicate {
-        let Some(node) = self.document.ownership.nodes.get(pair) else {
-            return Predicate::False;
-        };
-        let Some(placement) = self.document.serialization(node.span) else {
+    fn payload_member_absent(&self, pair: NodeIx, key: &str) -> Predicate {
+        let Some(placement) = self.document.serialization(pair) else {
             return Predicate::False;
         };
         let Some(alternatives) = placement.term.frozen_alternatives() else {
@@ -377,8 +358,8 @@ impl<'a> Projection<'a, '_> {
         self.db.predicate_memo().normalize(Predicate::Or(guards))
     }
 
-    fn serialized(&self, span: Span, path: &YamlPath, ambient: &Predicate) -> Vec<ContractUse> {
-        let Some(placement) = self.document.serialization(span) else {
+    fn serialized(&self, node: NodeIx, path: &YamlPath, ambient: &Predicate) -> Vec<ContractUse> {
+        let Some(placement) = self.document.serialization(node) else {
             return Vec::new();
         };
         let term = &placement.term;
@@ -407,7 +388,7 @@ impl<'a> Projection<'a, '_> {
                         guard.clone(),
                         occurrence.clone(),
                         arm.condition,
-                        self.document.placement_guard(term.range),
+                        self.document.term_placement_guard(term),
                     ]));
                     captures
                         .entry(key)
@@ -426,9 +407,9 @@ impl<'a> Projection<'a, '_> {
                     guard.clone(),
                     occurrence.clone(),
                     arm.condition.clone(),
-                    self.document.placement_guard(term.range),
+                    self.document.term_placement_guard(term),
                 ];
-                if !member && self.document.flow_context(span) && !arm.flow_node {
+                if !member && self.document.flow_context(node) && !arm.flow_node {
                     if !arm.omitted_members.is_empty() {
                         continue;
                     }
@@ -436,7 +417,7 @@ impl<'a> Projection<'a, '_> {
                 }
                 if !member && placement.shape == PayloadShape::Scalar {
                     conditions.push(arm.scalar_condition());
-                    if !self.document.block_value(span) {
+                    if !self.document.block_value(node) {
                         conditions.push(arm.flow_condition());
                     }
                 }
@@ -457,11 +438,11 @@ impl<'a> Projection<'a, '_> {
                     .into_iter()
                     .map(|key| (key, Vec::new()))
                     .collect();
-                rows.extend(self.stamped_serialized(row, &placement, span));
+                rows.extend(self.stamped_serialized(row, &placement, node));
             }
         }
         for ((_, target), (graph, condition)) in captures {
-            rows.extend(self.captured(graph, term, span, &YamlPath(target), &condition));
+            rows.extend(self.captured(graph, term, node, &YamlPath(target), &condition));
         }
         rows.retain(|row| !row.condition.is_never());
         rows
@@ -471,7 +452,7 @@ impl<'a> Projection<'a, '_> {
         &self,
         mut row: ContractUse,
         placement: &crate::value::yaml::PlacedSerialization<'_>,
-        span: Span,
+        node: NodeIx,
     ) -> Vec<ContractUse> {
         let term = &placement.term;
         let mut result = Vec::new();
@@ -488,7 +469,7 @@ impl<'a> Projection<'a, '_> {
                     }),
                 ]),
             );
-            result.extend(self.stamp(items, term, span, None));
+            result.extend(self.stamp(items, term, node, None));
             row.condition = self.guard(&row.condition, &placement.peers.negated());
             if let Some(last) = row.path.0.pop() {
                 if let Some(parent) = last.strip_suffix("[*]") {
@@ -500,7 +481,7 @@ impl<'a> Projection<'a, '_> {
                 }
             }
         }
-        result.extend(self.stamp(row, term, span, None));
+        result.extend(self.stamp(row, term, node, None));
         result
     }
 
@@ -508,7 +489,7 @@ impl<'a> Projection<'a, '_> {
         &self,
         graph: &std::rc::Rc<crate::value::TextBuffer>,
         outer: &PlacedTerm<'_>,
-        span: Span,
+        node: NodeIx,
         path: &YamlPath,
         ambient: &Predicate,
     ) -> Vec<ContractUse> {
@@ -549,7 +530,7 @@ impl<'a> Projection<'a, '_> {
                     for mut row in contract {
                         row.path.0.splice(0..0, path.0.iter().cloned());
                         row.condition = self.guard(&row.condition, ambient);
-                        result.extend(self.stamp(row, outer, span, None));
+                        result.extend(self.stamp(row, outer, node, None));
                     }
                 });
         }
@@ -577,25 +558,25 @@ impl<'a> Projection<'a, '_> {
     )]
     fn scalar(
         &self,
-        span: Span,
+        node: NodeIx,
         style: ScalarStyle,
         suppressed: bool,
         path: &YamlPath,
         ambient: &Predicate,
         contract: &mut Vec<ContractUse>,
     ) {
-        let terms = self.document.terms(span).collect::<Vec<_>>();
-        let symbolic = terms.iter().filter(|term| term.placeholder).count();
-        for term in terms.iter().filter(|term| term.placeholder) {
+        let terms = self.document.holes(node);
+        let symbolic = terms.len();
+        for term in &terms {
             let context = term.context().collect::<BTreeSet<_>>();
             if !self.visible(term, &context) {
                 continue;
             }
             let whole = symbolic == 1
-                && term.range == span
+                && self.document.covers(term, node)
                 && style == ScalarStyle::Plain
                 && !suppressed
-                && self.document.block_value(span);
+                && self.document.block_value(node);
             let (kind, path) = scalar_placement(whole, suppressed, path);
             let mut occurrences = BTreeSet::new();
             for id in term.occurrences().filter(|id| !context.contains(id)) {
@@ -639,7 +620,7 @@ impl<'a> Projection<'a, '_> {
                                 if kind == ValueKind::PartialScalar {
                                     Predicate::True
                                 } else {
-                                    self.document.placement_guard(span)
+                                    self.document.placement_guard(node)
                                 },
                             ]),
                             None,
@@ -649,7 +630,7 @@ impl<'a> Projection<'a, '_> {
                         row.stringified = true;
                         row.digest = policy.digest;
                         row.nil_omitting = policy.nil_omitting;
-                        contract.extend(self.stamp_scalar(row, term, span, id, whole));
+                        contract.extend(self.stamp_scalar(row, term, node, id, whole));
                     }
                     if whole {
                         for RenderedContainerUse {
@@ -665,12 +646,12 @@ impl<'a> Projection<'a, '_> {
                                 GuardDnf::from_conjunction([
                                     condition.clone(),
                                     selected,
-                                    self.document.placement_guard(span),
+                                    self.document.placement_guard(node),
                                 ]),
                                 None,
                                 std::iter::empty(),
                             );
-                            contract.extend(self.stamp_scalar(row, term, span, id, whole));
+                            contract.extend(self.stamp_scalar(row, term, node, id, whole));
                         }
                     }
                 }
@@ -682,14 +663,14 @@ impl<'a> Projection<'a, '_> {
         &self,
         mut row: ContractUse,
         term: &PlacedTerm<'_>,
-        span: Span,
+        node: NodeIx,
         id: ObservationId,
         whole: bool,
     ) -> Vec<ContractUse> {
         if whole {
             row.plain_scalar_placement = helm_schema_core::PlainScalarPlacement::BlockValue;
         }
-        self.stamp(row, term, span, Some(id))
+        self.stamp(row, term, node, Some(id))
     }
 
     fn guard(&self, condition: &GuardDnf, guard: &Predicate) -> GuardDnf {
@@ -708,7 +689,7 @@ impl<'a> Projection<'a, '_> {
         &self,
         mut row: ContractUse,
         term: &PlacedTerm<'_>,
-        span: Span,
+        node: NodeIx,
         occurrence: Option<ObservationId>,
     ) -> Vec<ContractUse> {
         let provenance = term
@@ -739,23 +720,20 @@ impl<'a> Projection<'a, '_> {
         row.provenance.extend(provenance);
         row.provenance.sort();
         row.provenance.dedup();
-        let resources = self
-            .resources
-            .iter()
-            .filter(|resource| resource.span.start <= span.start && span.end <= resource.span.end)
-            .collect::<Vec<_>>();
-        let smallest = resources
-            .iter()
-            .map(|resource| resource.span.end.saturating_sub(resource.span.start))
-            .min();
-        if resources.is_empty() {
+        let innermost = self.document.innermost(
+            node,
+            &self
+                .resources
+                .iter()
+                .map(|resource| resource.node)
+                .collect::<Vec<_>>(),
+        );
+        if innermost.is_empty() {
             return vec![row];
         }
-        resources
-            .into_iter()
-            .filter(|resource| {
-                Some(resource.span.end.saturating_sub(resource.span.start)) == smallest
-            })
+        self.resources
+            .iter()
+            .filter(|resource| innermost.contains(&resource.node))
             .map(|resource| {
                 let mut row = row.clone();
                 row.condition = self.guard(&row.condition, &resource.condition);

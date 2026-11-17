@@ -4,12 +4,13 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
 use helm_schema_core::Predicate;
-use helm_schema_syntax::{ScalarStyle, Span, YamlNode, YamlNodeKind};
+use helm_schema_syntax::{ScalarStyle, YamlNodeKind};
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::observed_facts::ObservedFacts;
 use crate::resource_identity::PlacedResource;
-use crate::value::yaml::{PlacedDocument, PlacedTerm};
+use crate::value::yaml::placed_document_support::literal_text;
+use crate::value::yaml::{NodeIx, Piece, PlacedDocument, PlacedTerm};
 use crate::value::{DocumentExecution, ExecutedSite, RenderedContainerUse};
 use crate::value::{Observation, ObservationId};
 use crate::{ContractProvenance, SourceSpan, ValueKind};
@@ -85,15 +86,7 @@ fn inspect_execution(
                         resource: resource.resource.clone(),
                     }),
             );
-        let mut children = vec![Vec::new(); document.ownership.nodes.len()];
-        let mut roots = Vec::new();
-        for (index, node) in document.ownership.nodes.iter().enumerate() {
-            if let Some(parent) = node.parent.and_then(|parent| children.get_mut(parent)) {
-                parent.push(index);
-            } else {
-                roots.push(index);
-            }
-        }
+        let roots = document.roots().collect::<Vec<_>>();
         let projection = Projection {
             document,
             execution,
@@ -101,7 +94,6 @@ fn inspect_execution(
             source_offset,
             db,
             resources,
-            children,
         };
         for index in roots {
             root.extend(projection.node(index));
@@ -122,7 +114,6 @@ struct Projection<'a> {
     source_offset: usize,
     db: &'a IrAnalysisDb,
     resources: Vec<PlacedResource>,
-    children: Vec<Vec<usize>>,
 }
 
 struct KeyArm {
@@ -152,17 +143,10 @@ impl Projection<'_> {
             .collect()
     }
 
-    fn node(&self, index: usize) -> Guarded<AbstractFragment> {
-        let Some(node) = self.document.ownership.nodes.get(index) else {
+    fn node(&self, index: NodeIx) -> Guarded<AbstractFragment> {
+        let Some(kind) = self.document.kind(index) else {
             return Guarded::empty();
         };
-        let YamlNode {
-            parent: _,
-            kind,
-            key: _,
-            span,
-            pieces: _,
-        } = *node;
         if matches!(
             kind,
             YamlNodeKind::Mapping
@@ -170,13 +154,13 @@ impl Projection<'_> {
                 | YamlNodeKind::Sequence
                 | YamlNodeKind::FlowSequence
                 | YamlNodeKind::Scalar(ScalarStyle::Plain)
-        ) && let Some(mut result) = self.serialized_pair(span)
+        ) && let Some(mut result) = self.serialized_pair(index)
         {
             result.guard_all(&self.document.condition, self.db.predicate_memo());
             return result;
         }
         if kind == YamlNodeKind::Item
-            && let Some(mut result) = self.serialized_items(span)
+            && let Some(mut result) = self.serialized_items(index)
         {
             result.guard_all(&self.document.condition, self.db.predicate_memo());
             return result;
@@ -184,7 +168,7 @@ impl Projection<'_> {
         let mut result = match kind {
             YamlNodeKind::Document | YamlNodeKind::Item => {
                 let mut result = Guarded::empty();
-                for child in self.children.get(index).into_iter().flatten() {
+                for child in self.document.children(index) {
                     result.extend(self.node(*child));
                 }
                 result
@@ -192,17 +176,16 @@ impl Projection<'_> {
             YamlNodeKind::Mapping | YamlNodeKind::FlowMapping => self.mapping(index),
             YamlNodeKind::Sequence | YamlNodeKind::FlowSequence => {
                 let items = self
-                    .children
-                    .get(index)
-                    .into_iter()
-                    .flatten()
+                    .document
+                    .children(index)
+                    .iter()
                     .map(|child| self.node(*child))
                     .filter(|item| !item.is_empty())
                     .collect();
                 Guarded::unconditional(AbstractFragment::Sequence(Sequence { items }))
             }
-            YamlNodeKind::Scalar(style) => self.scalar(span, style, false),
-            YamlNodeKind::BlockScalar => self.scalar(span, ScalarStyle::Plain, true),
+            YamlNodeKind::Scalar(style) => self.scalar(index, style, false),
+            YamlNodeKind::BlockScalar => self.scalar(index, ScalarStyle::Plain, true),
             YamlNodeKind::Pair
             | YamlNodeKind::FlowPair
             | YamlNodeKind::Comment
@@ -210,35 +193,29 @@ impl Projection<'_> {
         };
         result.guard_all(&self.document.condition, self.db.predicate_memo());
         result.guard_all(
-            &self.document.selection_guard(span),
+            &self.document.selection_guard(index),
             self.db.predicate_memo(),
         );
         result
     }
 
-    fn mapping(&self, index: usize) -> Guarded<AbstractFragment> {
+    fn mapping(&self, index: NodeIx) -> Guarded<AbstractFragment> {
         let mut mapping = Mapping::default();
-        let pairs = self
-            .children
-            .get(index)
-            .into_iter()
-            .flatten()
-            .copied()
-            .collect::<Vec<_>>();
+        let pairs = self.document.children(index).to_vec();
         let mut serialized = pairs
             .iter()
             .filter_map(|pair| {
-                let node = self.document.ownership.nodes.get(*pair)?;
-                self.serialized_pair(node.span).map(|value| (*pair, value))
+                self.document.kind(*pair)?;
+                self.serialized_pair(*pair).map(|value| (*pair, value))
             })
             .collect::<BTreeMap<_, _>>();
         let last_serialized = serialized.keys().next_back().copied();
         let multiple_serialized = serialized.len() > 1;
         for pair in &pairs {
-            let Some(pair_node) = self.document.ownership.nodes.get(*pair) else {
+            let Some(pair_kind) = self.document.kind(*pair) else {
                 continue;
             };
-            if !matches!(pair_node.kind, YamlNodeKind::Pair | YamlNodeKind::FlowPair) {
+            if !matches!(pair_kind, YamlNodeKind::Pair | YamlNodeKind::FlowPair) {
                 continue;
             }
             if let Some(mut value) = serialized.remove(pair) {
@@ -264,16 +241,10 @@ impl Projection<'_> {
                 });
                 continue;
             }
-            let children = self.children.get(*pair).into_iter().flatten();
+            let children = self.document.children(*pair).iter();
             let Some(key) = children
                 .clone()
-                .find(|child| {
-                    self.document
-                        .ownership
-                        .nodes
-                        .get(**child)
-                        .is_some_and(|node| node.key)
-                })
+                .find(|child| self.document.is_key(**child))
                 .copied()
             else {
                 continue;
@@ -328,22 +299,15 @@ impl Projection<'_> {
         }
     }
 
-    fn later_member_keys(&self, pairs: &[usize], pair: usize) -> Option<BTreeSet<String>> {
+    fn later_member_keys(&self, pairs: &[NodeIx], pair: NodeIx) -> Option<BTreeSet<String>> {
         let mut omitted = BTreeSet::new();
         let mut complete = true;
         for later in pairs.iter().filter(|later| **later > pair) {
             let key = self
-                .children
-                .get(*later)
-                .into_iter()
-                .flatten()
-                .find(|child| {
-                    self.document
-                        .ownership
-                        .nodes
-                        .get(**child)
-                        .is_some_and(|node| node.key)
-                });
+                .document
+                .children(*later)
+                .iter()
+                .find(|child| self.document.is_key(**child));
             let Some(key) = key else {
                 continue;
             };
@@ -358,15 +322,15 @@ impl Projection<'_> {
         complete.then_some(omitted)
     }
 
-    fn serialized_pair(&self, span: Span) -> Option<Guarded<AbstractFragment>> {
-        let placement = self.document.serialization(span)?;
+    fn serialized_pair(&self, node: NodeIx) -> Option<Guarded<AbstractFragment>> {
+        let placement = self.document.serialization(node)?;
         let term = placement.term;
         let scalar = placement.shape == crate::value::yaml::PayloadShape::Scalar;
         let alternatives = term.frozen_alternatives()?;
         let mut result = Guarded::empty();
         for (guard, value) in alternatives {
             for mut arm in self.payload(value) {
-                if self.document.flow_context(span) && !arm.flow_node {
+                if self.document.flow_context(node) && !arm.flow_node {
                     if !arm.omitted_members.is_empty() {
                         continue;
                     }
@@ -375,7 +339,7 @@ impl Projection<'_> {
                 }
                 if scalar {
                     let mut conditions = vec![arm.scalar_condition()];
-                    if !self.document.block_value(span) {
+                    if !self.document.block_value(node) {
                         conditions.push(arm.flow_condition());
                     }
                     conditions.push(arm.condition);
@@ -384,18 +348,18 @@ impl Projection<'_> {
                 let mut fragment = super::lower::lower_serialized_payload(&arm);
                 fragment.guard_all(&guard, self.db.predicate_memo());
                 fragment.guard_all(
-                    &self.document.placement_guard(term.range),
+                    &self.document.term_placement_guard(&term),
                     self.db.predicate_memo(),
                 );
-                self.stamp(&mut fragment, &term, span, None);
+                self.stamp(&mut fragment, &term, node, None);
                 result.extend(fragment);
             }
         }
         (!result.is_empty()).then_some(result)
     }
 
-    fn serialized_items(&self, span: Span) -> Option<Guarded<AbstractFragment>> {
-        let placement = self.document.serialization(span)?;
+    fn serialized_items(&self, node: NodeIx) -> Option<Guarded<AbstractFragment>> {
+        let placement = self.document.serialization(node)?;
         if !placement.sequence {
             return None;
         }
@@ -407,38 +371,33 @@ impl Projection<'_> {
                     super::lower::lower_serialized_items(&arm, self.db.predicate_memo());
                 fragment.guard_all(&guard, self.db.predicate_memo());
                 fragment.guard_all(
-                    &self.document.placement_guard(term.range),
+                    &self.document.term_placement_guard(&term),
                     self.db.predicate_memo(),
                 );
-                self.stamp(&mut fragment, &term, span, None);
+                self.stamp(&mut fragment, &term, node, None);
                 result.extend(fragment);
             }
         }
         (!result.is_empty()).then_some(result)
     }
 
-    fn keys(&self, index: usize) -> Vec<KeyArm> {
-        let Some(node) = self.document.ownership.nodes.get(index) else {
+    fn keys(&self, index: NodeIx) -> Vec<KeyArm> {
+        if self.document.kind(index).is_none() {
             return Vec::new();
-        };
-        if self.document.terms(node.span).all(|term| !term.placeholder) {
-            return self
-                .document
-                .ownership
-                .skeleton
-                .text
-                .get(node.span.start..node.span.end)
+        }
+        if !self.document.has_hole(index) {
+            return literal_text(&self.document, index)
                 .and_then(|text| helm_schema_syntax::parse_yaml_key(&format!("{text}:")))
                 .map(|key| {
                     vec![KeyArm {
-                        condition: self.document.placement_guard(node.span),
+                        condition: self.document.placement_guard(index),
                         key: EntryKey::Literal(key),
                     }]
                 })
                 .unwrap_or_default();
         }
         let mut keys = Vec::new();
-        for (condition, fragment) in self.scalar(node.span, ScalarStyle::Plain, false).arms {
+        for (condition, fragment) in self.scalar(index, ScalarStyle::Plain, false).arms {
             let parts = match fragment {
                 AbstractFragment::Scalar(scalar) => scalar.parts,
                 AbstractFragment::Splice(splice) => vec![StringPart::Splice(splice)],
@@ -457,17 +416,20 @@ impl Projection<'_> {
 
     fn scalar(
         &self,
-        span: Span,
+        node: NodeIx,
         style: ScalarStyle,
         suppressed: bool,
     ) -> Guarded<AbstractFragment> {
-        let terms = self.document.terms(span).collect::<Vec<_>>();
-        let symbolic = terms.iter().filter(|term| term.placeholder).count();
+        let pieces = self.document.pieces(node).unwrap_or_default();
+        let symbolic = pieces
+            .iter()
+            .filter(|piece| matches!(piece, Piece::Hole(_)))
+            .count();
         let mut result = Guarded::empty();
-        for term in &terms {
-            if !term.placeholder {
+        for (position, piece) in pieces.iter().enumerate() {
+            let Piece::Hole(term) = piece else {
                 continue;
-            }
+            };
             let context = term.context().collect::<BTreeSet<_>>();
             let visible = if context.is_empty() {
                 term.occurrences()
@@ -481,10 +443,10 @@ impl Projection<'_> {
                 continue;
             }
             let whole = symbolic == 1
-                && term.range == span
+                && self.document.covers(term, node)
                 && style == ScalarStyle::Plain
                 && !suppressed
-                && self.document.block_value(span);
+                && self.document.block_value(node);
             let kind = if whole {
                 ValueKind::Scalar
             } else {
@@ -508,10 +470,9 @@ impl Projection<'_> {
                         continue;
                     };
                     found = true;
-                    let mut fragment =
-                        self.emission(site, kind, suppressed, &terms, span, term.range);
+                    let mut fragment = self.emission(site, kind, suppressed, &pieces, position);
                     fragment.guard_all(&guard, self.db.predicate_memo());
-                    self.stamp(&mut fragment, term, span, Some(id));
+                    self.stamp(&mut fragment, term, node, Some(id));
                     result.extend(fragment);
                 }
             }
@@ -521,17 +482,12 @@ impl Projection<'_> {
                         parts: vec![StringPart::Taint(TaintPart::abstaining(term.inputs()))],
                         suppressed,
                     }));
-                self.stamp(&mut fragment, term, span, None);
+                self.stamp(&mut fragment, term, node, None);
                 result.extend(fragment);
             }
         }
         if symbolic == 0
-            && let Some(text) = self
-                .document
-                .ownership
-                .skeleton
-                .text
-                .get(span.start..span.end)
+            && let Some(text) = literal_text(&self.document, node)
         {
             result.arms.push((
                 Predicate::True,
@@ -542,7 +498,7 @@ impl Projection<'_> {
             ));
         }
         result.guard_all(
-            &self.document.placement_guard(span),
+            &self.document.placement_guard(node),
             self.db.predicate_memo(),
         );
         result
@@ -553,9 +509,8 @@ impl Projection<'_> {
         site: &ExecutedSite,
         kind: ValueKind,
         suppressed: bool,
-        terms: &[PlacedTerm<'_>],
-        span: Span,
-        emission: Span,
+        pieces: &[Piece<'_>],
+        emission: usize,
     ) -> Guarded<AbstractFragment> {
         let mut fragment = if kind == ValueKind::Scalar {
             site.scalar_view()
@@ -588,18 +543,15 @@ impl Projection<'_> {
                     .map(|(condition, parts)| {
                         let mut before = Vec::new();
                         let mut after = Vec::new();
-                        for literal in terms.iter().filter(|term| !term.placeholder) {
-                            let start = literal.range.start.max(span.start);
-                            let end = literal.range.end.min(span.end);
-                            if let Some(text) =
-                                self.document.ownership.skeleton.text.get(start..end)
-                            {
-                                let literal = StringPart::Text(BTreeSet::from([text.to_owned()]));
-                                if end <= emission.start {
-                                    before.push(literal);
-                                } else {
-                                    after.push(literal);
-                                }
+                        for (position, piece) in pieces.iter().enumerate() {
+                            let Piece::Literal(text) = piece else {
+                                continue;
+                            };
+                            let literal = StringPart::Text(BTreeSet::from([(*text).to_owned()]));
+                            if position < emission {
+                                before.push(literal);
+                            } else {
+                                after.push(literal);
                             }
                         }
                         before.extend(parts);
@@ -644,7 +596,7 @@ impl Projection<'_> {
         &self,
         fragment: &mut Guarded<AbstractFragment>,
         term: &PlacedTerm<'_>,
-        span: Span,
+        node: NodeIx,
         occurrence: Option<ObservationId>,
     ) {
         let provenance = term
@@ -672,12 +624,15 @@ impl Projection<'_> {
                     Vec::new(),
                 ))
             });
-        let resources = self
-            .resources
-            .iter()
-            .filter(|resource| resource.span.start <= span.start && span.end <= resource.span.end)
-            .collect::<Vec<_>>();
-        if resources.is_empty() {
+        let innermost = self.document.innermost(
+            node,
+            &self
+                .resources
+                .iter()
+                .map(|resource| resource.node)
+                .collect::<Vec<_>>(),
+        );
+        if innermost.is_empty() {
             let facts = Some(Rc::new(SiteFacts {
                 resource: None,
                 path_prefix: Vec::new(),
@@ -687,13 +642,11 @@ impl Projection<'_> {
             return;
         }
         let mut output = Guarded::empty();
-        let smallest = resources
+        for resource in self
+            .resources
             .iter()
-            .map(|resource| resource.span.end.saturating_sub(resource.span.start))
-            .min();
-        for resource in resources.into_iter().filter(|resource| {
-            Some(resource.span.end.saturating_sub(resource.span.start)) == smallest
-        }) {
+            .filter(|resource| innermost.contains(&resource.node))
+        {
             let mut contribution = fragment.clone();
             contribution.guard_all(&resource.condition, self.db.predicate_memo());
             let facts = Some(Rc::new(SiteFacts {

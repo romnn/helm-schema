@@ -126,6 +126,7 @@ pub(super) struct Layout {
     terms: Vec<NodeRef>,
     placeholders: usize,
     invalid: Predicate,
+    /// Whether skeleton offsets map back to template source.
     source_mapped: bool,
 }
 
@@ -143,8 +144,18 @@ struct DocumentLayout {
 
 #[derive(Debug, Default)]
 struct IndexedNode {
-    children: Vec<usize>,
+    children: Vec<NodeIx>,
     literal_key: std::cell::OnceCell<Option<String>>,
+}
+
+/// A node of a placed YAML document.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct NodeIx(usize);
+
+/// A literal run or a hole of a placed scalar, in output order.
+pub(crate) enum Piece<'a> {
+    Literal(&'a str),
+    Hole(PlacedTerm<'a>),
 }
 
 #[derive(Clone, Debug)]
@@ -155,15 +166,14 @@ struct PrefixBoundary {
 
 pub(crate) struct PlacedDocument<'a> {
     pub(crate) condition: Predicate,
-    pub(crate) ownership: &'a YamlOwnership,
+    ownership: &'a YamlOwnership,
     layout: &'a Layout,
     document: &'a DocumentLayout,
 }
 
 pub(crate) struct PlacedTerm<'a> {
-    pub(crate) range: Span,
-    pub(crate) placeholder: bool,
-    pub(crate) source_offset: Option<usize>,
+    range: Span,
+    placeholder: bool,
     node: &'a NodeRef,
 }
 
@@ -321,28 +331,109 @@ impl<'a> PlacedDocument<'a> {
                 .collect::<Vec<_>>();
             for (index, node) in self.ownership.nodes.iter().enumerate() {
                 if let Some(parent) = node.parent.and_then(|parent| nodes.get_mut(parent)) {
-                    parent.children.push(index);
+                    parent.children.push(NodeIx(index));
                 }
             }
             nodes
         })
     }
 
-    pub(crate) fn children(&self, index: usize) -> &[usize] {
+    fn span(&self, node: NodeIx) -> Option<Span> {
+        self.ownership.nodes.get(node.0).map(|node| node.span)
+    }
+
+    pub(crate) fn children(&self, node: NodeIx) -> &[NodeIx] {
         self.indexed_nodes()
-            .get(index)
+            .get(node.0)
             .map_or(&[], |node| node.children.as_slice())
     }
 
-    pub(crate) fn roots(&self) -> impl Iterator<Item = usize> + '_ {
+    pub(crate) fn roots(&self) -> impl Iterator<Item = NodeIx> + '_ {
         self.ownership
             .nodes
             .iter()
             .enumerate()
-            .filter_map(|(index, node)| node.parent.is_none().then_some(index))
+            .filter_map(|(index, node)| node.parent.is_none().then_some(NodeIx(index)))
     }
 
-    pub(crate) fn literal_key(&self, index: usize) -> Option<&str> {
+    pub(crate) fn nodes(&self) -> impl Iterator<Item = NodeIx> + use<> {
+        (0..self.ownership.nodes.len()).map(NodeIx)
+    }
+
+    pub(crate) fn parent(&self, node: NodeIx) -> Option<NodeIx> {
+        self.ownership.nodes.get(node.0)?.parent.map(NodeIx)
+    }
+
+    pub(crate) fn kind(&self, node: NodeIx) -> Option<YamlNodeKind> {
+        self.ownership.nodes.get(node.0).map(|node| node.kind)
+    }
+
+    pub(crate) fn is_key(&self, node: NodeIx) -> bool {
+        self.ownership
+            .nodes
+            .get(node.0)
+            .is_some_and(|node| node.key)
+    }
+
+    /// Whether any hole renders inside `node`.
+    pub(crate) fn has_hole(&self, node: NodeIx) -> bool {
+        self.span(node)
+            .is_some_and(|span| self.terms(span).any(|term| term.placeholder))
+    }
+
+    /// The holes rendered inside `node`, in output order.
+    pub(crate) fn holes(&self, node: NodeIx) -> Vec<PlacedTerm<'a>> {
+        self.span(node).map_or_else(Vec::new, |span| {
+            self.terms(span).filter(|term| term.placeholder).collect()
+        })
+    }
+
+    /// The literal runs and holes of `node`'s source text, clipped to the node.
+    pub(crate) fn pieces(&self, node: NodeIx) -> Option<Vec<Piece<'a>>> {
+        let span = self.span(node)?;
+        let mut pieces = Vec::new();
+        for term in self.terms(span) {
+            if term.placeholder {
+                pieces.push(Piece::Hole(term));
+            } else {
+                let start = term.range.start.max(span.start);
+                let end = term.range.end.min(span.end);
+                pieces.push(Piece::Literal(
+                    self.ownership.skeleton.text.get(start..end)?,
+                ));
+            }
+        }
+        Some(pieces)
+    }
+
+    /// Whether `term` renders exactly the whole of `node`.
+    pub(crate) fn covers(&self, term: &PlacedTerm<'_>, node: NodeIx) -> bool {
+        self.span(node) == Some(term.range)
+    }
+
+    /// The candidates that enclose `inner` most closely.
+    pub(crate) fn innermost(&self, inner: NodeIx, candidates: &[NodeIx]) -> BTreeSet<NodeIx> {
+        let Some(inner) = self.span(inner) else {
+            return BTreeSet::new();
+        };
+        let enclosing = candidates
+            .iter()
+            .filter_map(|candidate| Some((*candidate, self.span(*candidate)?)))
+            .filter(|(_, outer)| outer.start <= inner.start && inner.end <= outer.end)
+            .collect::<Vec<_>>();
+        let smallest = enclosing
+            .iter()
+            .map(|(_, outer)| outer.end.saturating_sub(outer.start))
+            .min();
+        enclosing
+            .into_iter()
+            .filter(|(_, outer)| Some(outer.end.saturating_sub(outer.start)) == smallest)
+            .map(|(candidate, _)| candidate)
+            .collect()
+    }
+
+    pub(crate) fn literal_key(&self, node: NodeIx) -> Option<&str> {
+        let index = node.0;
         let node = self.ownership.nodes.get(index)?;
         self.indexed_nodes()
             .get(index)?
@@ -363,12 +454,17 @@ impl<'a> PlacedDocument<'a> {
 
     pub(crate) fn completion_guard(&self) -> Predicate {
         let end = self.ownership.skeleton.text.len();
-        self.placement_guard(Span::new(end, end))
+        self.span_placement_guard(Span::new(end, end))
     }
-    pub(crate) fn block_value(&self, span: Span) -> bool {
-        block_value(self.ownership, span)
+    pub(crate) fn block_value(&self, node: NodeIx) -> bool {
+        self.span(node)
+            .is_some_and(|span| block_value(self.ownership, span))
     }
-    pub(crate) fn flow_context(&self, span: Span) -> bool {
+    pub(crate) fn flow_context(&self, node: NodeIx) -> bool {
+        self.span(node)
+            .is_some_and(|span| self.span_flow_context(span))
+    }
+    fn span_flow_context(&self, span: Span) -> bool {
         self.ownership
             .nodes
             .iter()
@@ -388,7 +484,7 @@ impl<'a> PlacedDocument<'a> {
             })
     }
 
-    pub(crate) fn terms(&self, span: Span) -> impl Iterator<Item = PlacedTerm<'a>> {
+    fn terms(&self, span: Span) -> impl Iterator<Item = PlacedTerm<'a>> {
         let segments = &self.ownership.skeleton.segments;
         let start = segments.partition_point(|segment| segment.range.end <= span.start);
         segments
@@ -409,11 +505,6 @@ impl<'a> PlacedDocument<'a> {
                 Some(PlacedTerm {
                     range,
                     placeholder,
-                    source_offset: (self.layout.source_mapped
-                        && node.indentation == 0
-                        && !placeholder)
-                        .then(|| (range.start + self.document.offset).checked_sub(node.start))
-                        .flatten(),
                     node,
                 })
             })
@@ -424,12 +515,33 @@ impl<'a> PlacedDocument<'a> {
         level = "debug",
         target = "helm_schema_ir::value::placement_queries"
     )]
-    pub(crate) fn selection_guard(&self, span: Span) -> Predicate {
+    fn span_selection_guard(&self, span: Span) -> Predicate {
         selection_guard(&self.document.selections, span)
     }
 
-    pub(crate) fn placement_guard(&self, span: Span) -> Predicate {
-        Predicate::all(vec![self.selection_guard(span), self.prefix_guard(span)])
+    fn span_placement_guard(&self, span: Span) -> Predicate {
+        Predicate::all(vec![
+            self.span_selection_guard(span),
+            self.prefix_guard(span),
+        ])
+    }
+
+    pub(crate) fn selection_guard(&self, node: NodeIx) -> Predicate {
+        self.span(node)
+            .map_or(Predicate::False, |span| self.span_selection_guard(span))
+    }
+
+    pub(crate) fn placement_guard(&self, node: NodeIx) -> Predicate {
+        self.span(node)
+            .map_or(Predicate::False, |span| self.span_placement_guard(span))
+    }
+
+    pub(crate) fn term_selection_guard(&self, term: &PlacedTerm<'_>) -> Predicate {
+        self.span_selection_guard(term.range)
+    }
+
+    pub(crate) fn term_placement_guard(&self, term: &PlacedTerm<'_>) -> Predicate {
+        self.span_placement_guard(term.range)
     }
 
     #[tracing::instrument(
@@ -1673,7 +1785,6 @@ impl LayoutBuilder<'_> {
         let term = PlacedTerm {
             range: segment.range,
             placeholder: true,
-            source_offset: None,
             node: reference,
         };
         let Some(alternatives) = term.frozen_alternatives() else {
@@ -3360,7 +3471,6 @@ fn block_scalar_boundary(
         let term = PlacedTerm {
             range: segment.range,
             placeholder: true,
-            source_offset: None,
             node: reference,
         };
         let Some(alternatives) = term.frozen_alternatives() else {
@@ -3698,6 +3808,10 @@ fn invalid_states(
 #[path = "../tests/runtime_output_layout.rs"]
 mod tests;
 
+#[cfg(test)]
+#[path = "../tests/placed_document_support.rs"]
+pub(crate) mod placed_document_support;
+
 #[derive(Clone, Copy, Debug)]
 enum SerializedDecoding {
     Annotations,
@@ -3937,7 +4051,8 @@ impl<'a> PlacedDocument<'a> {
         level = "debug",
         target = "helm_schema_ir::value::placement_queries"
     )]
-    pub(crate) fn serialization(&self, span: Span) -> Option<PlacedSerialization<'a>> {
+    pub(crate) fn serialization(&self, node: NodeIx) -> Option<PlacedSerialization<'a>> {
+        let span = self.span(node)?;
         let site = self.document.serializations.iter().find(|site| {
             self.ownership
                 .nodes
@@ -3948,7 +4063,6 @@ impl<'a> PlacedDocument<'a> {
             term: PlacedTerm {
                 range: site.range,
                 placeholder: true,
-                source_offset: None,
                 node: self.layout.terms.get(site.piece)?,
             },
             shape: site.shape,
@@ -4029,7 +4143,6 @@ fn serialization_transfer(
     let term = PlacedTerm {
         range: site.range,
         placeholder: true,
-        source_offset: None,
         node: terms.get(site.piece)?,
     };
     let alternatives = term.frozen_alternatives()?;

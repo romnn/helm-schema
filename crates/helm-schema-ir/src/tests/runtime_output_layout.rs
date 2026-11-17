@@ -563,7 +563,6 @@ fn exhausted_shared_occurrence_queries_remain_unknown() {
     let term = super::PlacedTerm {
         range: Span::new(0, 8),
         placeholder: true,
-        source_offset: None,
         node: &node,
     };
     sim_assert_eq!(have: term.occurrence_guard(id), want: None);

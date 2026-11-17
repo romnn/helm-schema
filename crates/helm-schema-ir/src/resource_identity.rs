@@ -3,13 +3,13 @@
 use helm_schema_core::{
     Guard, GuardValue, KindBranch, Predicate, PredicateKind, PredicateMemo, ResourceRef, ValuesPath,
 };
-use helm_schema_syntax::{Span, YamlNodeKind};
+use helm_schema_syntax::YamlNodeKind;
 
 use crate::value::DocumentExecution;
-use crate::value::yaml::PlacedDocument;
+use crate::value::yaml::{NodeIx, Piece, PlacedDocument};
 
 pub(crate) struct PlacedResource {
-    pub(crate) span: Span,
+    pub(crate) node: NodeIx,
     pub(crate) condition: Predicate,
     pub(crate) resource: ResourceRef,
     pub(crate) path_prefix: Vec<String>,
@@ -22,9 +22,9 @@ struct NamedValue {
 
 #[derive(Default)]
 struct HeaderNodes {
-    kind: Vec<usize>,
-    api_version: Vec<usize>,
-    items: Vec<usize>,
+    kind: Vec<NodeIx>,
+    api_version: Vec<NodeIx>,
+    items: Vec<NodeIx>,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -55,44 +55,33 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         }
     }
 
-    fn roots(&self) -> impl Iterator<Item = usize> + '_ {
-        self.document
-            .ownership
-            .nodes
-            .iter()
-            .enumerate()
-            .filter_map(|(index, node)| {
-                (matches!(node.kind, YamlNodeKind::Mapping | YamlNodeKind::FlowMapping)
-                    && node
-                        .parent
-                        .and_then(|parent| self.document.ownership.nodes.get(parent))
-                        .is_some_and(|parent| parent.kind == YamlNodeKind::Document))
-                .then_some(index)
-            })
+    fn roots(&self) -> impl Iterator<Item = NodeIx> + '_ {
+        self.document.nodes().filter(|index| {
+            self.mapping_node(*index)
+                && self
+                    .document
+                    .parent(*index)
+                    .and_then(|parent| self.document.kind(parent))
+                    == Some(YamlNodeKind::Document)
+        })
     }
 
-    fn headers(&self, mapping: usize) -> HeaderNodes {
+    fn headers(&self, mapping: NodeIx) -> HeaderNodes {
         let mut headers = HeaderNodes::default();
         for pair in self.document.children(mapping) {
             let children = self.document.children(*pair);
-            let Some(key) = children.iter().copied().find(|index| {
-                self.document
-                    .ownership
-                    .nodes
-                    .get(*index)
-                    .is_some_and(|node| node.key)
-            }) else {
+            let Some(key) = children
+                .iter()
+                .copied()
+                .find(|index| self.document.is_key(*index))
+            else {
                 continue;
             };
             let Some(key) = self.document.literal_key(key) else {
                 continue;
             };
             let value = children.iter().copied().find(|index| {
-                self.document
-                    .ownership
-                    .nodes
-                    .get(*index)
-                    .is_some_and(|node| !node.key)
+                self.document.kind(*index).is_some() && !self.document.is_key(*index)
             });
             match key {
                 "kind" => headers.kind.extend(value),
@@ -106,14 +95,14 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
 
     fn mapping(
         &self,
-        index: usize,
+        index: NodeIx,
         ambient: &Predicate,
         path_prefix: &[String],
         resources: &mut Vec<PlacedResource>,
     ) {
-        let Some(mapping) = self.document.ownership.nodes.get(index) else {
+        if self.document.kind(index).is_none() {
             return;
-        };
+        }
         let HeaderNodes {
             kind,
             api_version,
@@ -150,14 +139,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                 }
                 if kind == "List" && version == "v1" {
                     for items in &items {
-                        let selected = self
-                            .document
-                            .ownership
-                            .nodes
-                            .get(*items)
-                            .map_or(Predicate::False, |node| {
-                                self.document.placement_guard(node.span)
-                            });
+                        let selected = self.document.placement_guard(*items);
                         self.list_items(
                             *items,
                             &self
@@ -179,7 +161,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                     .into_iter()
                     .collect();
                 resources.push(PlacedResource {
-                    span: mapping.span,
+                    node: index,
                     condition,
                     resource: ResourceRef {
                         api_version: version.clone(),
@@ -198,7 +180,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
 
     fn list_items(
         &self,
-        items: usize,
+        items: NodeIx,
         condition: &Predicate,
         path_prefix: &[String],
         resources: &mut Vec<PlacedResource>,
@@ -218,30 +200,27 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         }
     }
 
-    fn mapping_node(&self, index: usize) -> bool {
-        self.document
-            .ownership
-            .nodes
-            .get(index)
-            .is_some_and(|node| {
-                matches!(node.kind, YamlNodeKind::Mapping | YamlNodeKind::FlowMapping)
-            })
+    fn mapping_node(&self, index: NodeIx) -> bool {
+        matches!(
+            self.document.kind(index),
+            Some(YamlNodeKind::Mapping | YamlNodeKind::FlowMapping)
+        )
     }
 
-    fn selected_names(&self, indices: &[usize]) -> Vec<NamedValue> {
+    fn selected_names(&self, indices: &[NodeIx]) -> Vec<NamedValue> {
         let mut names = Vec::new();
         let mut remaining = Predicate::True;
         for index in indices.iter().rev().take(128) {
-            let Some(node) = self.document.ownership.nodes.get(*index) else {
+            if self.document.kind(*index).is_none() {
                 continue;
-            };
-            let active = self.document.selection_guard(node.span);
+            }
+            let active = self.document.selection_guard(*index);
             for mut name in self.names(*index).unwrap_or_default() {
                 name.condition = self.memo.normalize(Predicate::all(vec![
                     name.condition,
                     remaining.clone(),
                     active.clone(),
-                    self.document.placement_guard(node.span),
+                    self.document.placement_guard(*index),
                 ]));
                 if name.condition != Predicate::False {
                     names.push(name);
@@ -255,12 +234,11 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         names
     }
 
-    fn names(&self, index: usize) -> Option<Vec<NamedValue>> {
-        let node = self.document.ownership.nodes.get(index)?;
-        if !matches!(node.kind, YamlNodeKind::Scalar(_)) {
+    fn names(&self, index: NodeIx) -> Option<Vec<NamedValue>> {
+        if !matches!(self.document.kind(index)?, YamlNodeKind::Scalar(_)) {
             return None;
         }
-        scalar_names(self.document, self.execution, node.span, &self.memo)
+        scalar_names(self.document, self.execution, index, &self.memo)
     }
 }
 
@@ -302,24 +280,22 @@ fn selector_path(predicate: &Predicate, kind: &str, memo: &PredicateMemo) -> Opt
 fn scalar_names(
     document: &PlacedDocument<'_>,
     execution: &DocumentExecution,
-    span: Span,
+    node: NodeIx,
     memo: &PredicateMemo,
 ) -> Option<Vec<NamedValue>> {
     let mut before = String::new();
     let mut after = String::new();
     let mut hole = None;
-    for term in document.terms(span) {
-        let start = term.range.start.max(span.start);
-        let end = term.range.end.min(span.end);
-        if term.placeholder {
-            if hole.is_some() {
-                return None;
+    for piece in document.pieces(node)? {
+        match piece {
+            Piece::Hole(term) => {
+                if hole.is_some() {
+                    return None;
+                }
+                hole = Some(term.frozen_alternatives()?);
             }
-            hole = Some(term.frozen_alternatives()?);
-        } else if hole.is_some() {
-            after.push_str(document.ownership.skeleton.text.get(start..end)?);
-        } else {
-            before.push_str(document.ownership.skeleton.text.get(start..end)?);
+            Piece::Literal(text) if hole.is_some() => after.push_str(text),
+            Piece::Literal(text) => before.push_str(text),
         }
     }
     let Some(value) = hole else {

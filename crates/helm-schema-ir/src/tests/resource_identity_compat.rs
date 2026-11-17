@@ -3,7 +3,8 @@ use helm_schema_core::{Guard, HelperBranchBody, PredicateKind, ValuesPath};
 use helm_schema_syntax::TemplatedDocument;
 
 use super::*;
-use crate::value::Observation;
+use crate::value::yaml::placed_document_support::{same_extent, source_span, terms};
+use helm_schema_syntax::Span;
 use std::collections::BTreeSet;
 
 struct ResourceCase {
@@ -31,32 +32,26 @@ pub(crate) fn collect_resource_spans(
             let headers = projection.headers(index);
             if let Some(kind) = headers.kind.last().copied()
                 && projection.names(kind).is_none_or(|names| names.is_empty())
-                && let Some(mapping) = document.ownership.nodes.get(index)
-                && let Some(span) = source_span(&document, mapping.span, execution, source_path)
+                && let Some(span) = source_span(&document, index, execution, source_path)
             {
                 unresolved.push(span);
             }
         }
         for PlacedResource {
-            span,
+            node,
             condition,
             resource,
             path_prefix,
         } in placed_resources(&document, execution)
         {
-            let kind_emissions = document
-                .ownership
-                .nodes
-                .iter()
-                .enumerate()
-                .filter(|(_, node)| node.span == span)
-                .flat_map(|(index, _)| projection.headers(index).kind)
-                .filter_map(|index| document.ownership.nodes.get(index))
-                .flat_map(|node| document.terms(node.span))
+            let kind_emissions = same_extent(&document, node)
+                .into_iter()
+                .flat_map(|index| projection.headers(index).kind)
+                .flat_map(|kind| terms(&document, kind))
                 .filter(|term| term.frozen_alternatives().is_some())
                 .flat_map(|term| term.occurrences().map(|id| id.span).collect::<Vec<_>>())
                 .collect::<BTreeSet<_>>();
-            let Some(span) = source_span(&document, span, execution, source_path) else {
+            let Some(span) = source_span(&document, node, execution, source_path) else {
                 continue;
             };
             let case = ResourceCase {
@@ -305,28 +300,25 @@ pub(crate) fn executed_scalar_body(
     if matches!(conditional, HelperBranchBody::Nested { .. })
         || execution.placed_documents().all(|document| {
             document
-                .ownership
-                .nodes
-                .iter()
-                .all(|node| !matches!(node.kind, YamlNodeKind::Mapping))
+                .nodes()
+                .all(|node| !matches!(document.kind(node), Some(YamlNodeKind::Mapping)))
         })
     {
         return conditional;
     }
     let mut names = Vec::new();
     for document in execution.placed_documents() {
-        for node in &document.ownership.nodes {
-            if !matches!(node.kind, YamlNodeKind::Scalar(_)) {
+        for node in document.nodes() {
+            if !matches!(document.kind(node), Some(YamlNodeKind::Scalar(_))) {
                 continue;
             }
-            let Some(source) = source_span(&document, node.span, execution, source_path) else {
+            let Some(source) = source_span(&document, node, execution, source_path) else {
                 continue;
             };
             if source.start < span.start || span.end < source.end {
                 continue;
             }
-            let Some(arms) = scalar_names(&document, execution, node.span, &PredicateMemo::new())
-            else {
+            let Some(arms) = scalar_names(&document, execution, node, &PredicateMemo::new()) else {
                 return HelperBranchBody::literals(Vec::new());
             };
             for NamedValue { condition: _, text } in arms {
@@ -337,55 +329,4 @@ pub(crate) fn executed_scalar_body(
         }
     }
     HelperBranchBody::literals(names)
-}
-fn source_span(
-    document: &PlacedDocument<'_>,
-    span: Span,
-    execution: &DocumentExecution,
-    source_path: Option<&str>,
-) -> Option<Span> {
-    let mut result: Option<Span> = None;
-    for term in document.terms(span) {
-        let mut context = term.context().peekable();
-        let ids = if context.peek().is_some() {
-            context.collect::<Vec<_>>()
-        } else {
-            term.occurrences().collect()
-        };
-        for id in ids {
-            for observation in execution.observations(id) {
-                let source = match observation {
-                    Observation::Text(site) if site.source_path() == source_path => {
-                        let source = site.span();
-                        if let Some(offset) = term.source_offset
-                            && source.end.saturating_sub(source.start) == site.bytes().len()
-                        {
-                            Span::new(
-                                source.start
-                                    + offset
-                                    + span
-                                        .start
-                                        .max(term.range.start)
-                                        .saturating_sub(term.range.start),
-                                source.start
-                                    + offset
-                                    + span
-                                        .end
-                                        .min(term.range.end)
-                                        .saturating_sub(term.range.start),
-                            )
-                        } else {
-                            source
-                        }
-                    }
-                    Observation::Value(site) if site.source_path() == source_path => site.span(),
-                    Observation::Text(_) | Observation::Value(_) => continue,
-                };
-                result = Some(result.map_or(source, |range| {
-                    Span::new(range.start.min(source.start), range.end.max(source.end))
-                }));
-            }
-        }
-    }
-    result
 }
