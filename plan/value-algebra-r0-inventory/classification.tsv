@@ -1107,3 +1107,9 @@ variant:value/layers.rs:Base::Copy	R	deepCopy source frozen at the copy; nested 
 variant:value/mod.rs:Remainder::Layered	R	unwritten keys read through deepCopy/merge layers over an open key set	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
 variant:value/layers.rs:Base::Unknown	R	layered remainder over an open or unknown key set, keeping its dependency inputs	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-16	
 alias:value/layers.rs:Outcomes	R	branch outcomes under which a merge or its layer applies	private canonical heap map representation	keep		R3b step 4a heap, 2026-11-17	
+field:value/text_dag.rs:TextParts.tail	R	last chunk of a persistent rendered-part sequence shared by forks and captures	private canonical value/runtime representation	keep		R3b step 7a1 persistent output, 2026-11-17	
+field:value/text_dag.rs:TextChunk.prev	R	earlier chunk of a persistent rendered-part sequence	private canonical value/runtime representation	keep		R3b step 7a1 persistent output, 2026-11-17	
+field:value/text_dag.rs:TextChunk.parts	R	rendered parts appended to one chunk while no clone holds it	private canonical value/runtime representation	keep		R3b step 7a1 persistent output, 2026-11-17	
+alias:value/text_dag.rs:Item	R	borrowed rendered part yielded in output order	private canonical value/runtime representation	keep		R3b step 7a1 persistent output, 2026-11-17	
+alias:value/text_dag.rs:IntoIter	R	output-order iteration over the persistent chunks	private canonical value/runtime representation	keep		R3b step 7a1 persistent output, 2026-11-17	
+variant:value/yaml.rs:Piece::Hole	D	hole of a placed scalar in output order	derived ownership view over the sealed placement	R3b		R3b step 7a2 placement interface, 2026-11-17	
