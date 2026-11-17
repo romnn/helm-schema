@@ -1,0 +1,172 @@
+package yaml
+
+import "reflect"
+
+// ProbeMark exposes the character marks maintained by the pinned reader.
+type ProbeMark struct {
+	Index  int `json:"index"`
+	Line   int `json:"line"`
+	Column int `json:"column"`
+}
+
+// ProbeEvent exposes a parser event before the decode layer consumes it.
+type ProbeEvent struct {
+	Kind     string    `json:"kind"`
+	Start    ProbeMark `json:"start"`
+	End      ProbeMark `json:"end"`
+	Anchor   string    `json:"anchor,omitempty"`
+	Tag      string    `json:"tag,omitempty"`
+	Value    string    `json:"value,omitempty"`
+	Style    string    `json:"style,omitempty"`
+	Implicit bool      `json:"implicit"`
+}
+
+// ProbeError exposes the pinned error class and decode.go's displayed line.
+type ProbeError struct {
+	Kind    string `json:"kind"`
+	Line    int    `json:"line"`
+	Message string `json:"message"`
+}
+
+// ReaderProbe records precisely the events consumed for the first document.
+type ReaderProbe struct {
+	Events []ProbeEvent `json:"events"`
+	End    *ProbeMark   `json:"end"`
+	Error  *ProbeError  `json:"error"`
+}
+
+// ProbeReader calls parserc.go's entry point without changing any parser source.
+func ProbeReader(data []byte) ReaderProbe {
+	return probeReader(data, true)
+}
+
+// ProbeReaderTree observes the same parser without retaining event contents.
+func ProbeReaderTree(data []byte) ReaderProbe {
+	return probeReader(data, false)
+}
+
+func probeReader(data []byte, events bool) ReaderProbe {
+	var parser yaml_parser_t
+	yaml_parser_initialize(&parser)
+	defer yaml_parser_delete(&parser)
+	if len(data) == 0 {
+		data = []byte{'\n'}
+	}
+	yaml_parser_set_input_string(&parser, data)
+	result := ReaderProbe{}
+	if events {
+		result.Events = make([]ProbeEvent, 0)
+	}
+	for {
+		var event yaml_event_t
+		if !yaml_parser_parse(&parser, &event) {
+			result.Error = probeFailure(&parser, parser.problem)
+			return result
+		}
+		if events {
+			result.Events = append(result.Events, probeEvent(event))
+		}
+		if event.typ == yaml_DOCUMENT_END_EVENT || event.typ == yaml_STREAM_END_EVENT {
+			end := probeMark(event.end_mark)
+			result.End = &end
+			yaml_event_delete(&event)
+			return result
+		}
+		yaml_event_delete(&event)
+	}
+}
+
+func probeMark(mark yaml_mark_t) ProbeMark {
+	return ProbeMark{Index: mark.index, Line: mark.line, Column: mark.column}
+}
+
+func probeEvent(event yaml_event_t) ProbeEvent {
+	out := ProbeEvent{
+		Start: probeMark(event.start_mark), End: probeMark(event.end_mark),
+		Anchor: string(event.anchor), Tag: string(event.tag), Value: string(event.value), Implicit: event.implicit,
+	}
+	switch event.typ {
+	case yaml_STREAM_START_EVENT:
+		out.Kind = "stream_start"
+	case yaml_STREAM_END_EVENT:
+		out.Kind = "stream_end"
+	case yaml_DOCUMENT_START_EVENT:
+		out.Kind = "document_start"
+	case yaml_DOCUMENT_END_EVENT:
+		out.Kind = "document_end"
+	case yaml_ALIAS_EVENT:
+		out.Kind = "alias"
+	case yaml_SCALAR_EVENT:
+		out.Kind = "scalar"
+		switch event.scalar_style() {
+		case yaml_PLAIN_SCALAR_STYLE:
+			out.Style = "plain"
+		case yaml_SINGLE_QUOTED_SCALAR_STYLE:
+			out.Style = "single_quoted"
+		case yaml_DOUBLE_QUOTED_SCALAR_STYLE:
+			out.Style = "double_quoted"
+		case yaml_LITERAL_SCALAR_STYLE:
+			out.Style = "literal"
+		case yaml_FOLDED_SCALAR_STYLE:
+			out.Style = "folded"
+		}
+	case yaml_SEQUENCE_START_EVENT:
+		out.Kind = "sequence_start"
+	case yaml_SEQUENCE_END_EVENT:
+		out.Kind = "sequence_end"
+	case yaml_MAPPING_START_EVENT:
+		out.Kind = "mapping_start"
+	case yaml_MAPPING_END_EVENT:
+		out.Kind = "mapping_end"
+	}
+	return out
+}
+
+// ProbeUnmarshalError observes yaml.go:137-154 at the actual decode failure.
+// The public Unmarshal result remains the source of the harness's decoded value.
+func ProbeUnmarshalError(data []byte) (result *ProbeError) {
+	p := newParser(data)
+	defer p.destroy()
+	defer func() {
+		if failure := recover(); failure != nil {
+			if recovered, ok := failure.(yamlError); ok {
+				result = probeFailure(&p.parser, recovered.err.Error())
+			} else {
+				panic(failure)
+			}
+		}
+	}()
+	d := newDecoder(false)
+	n := p.parse()
+	if n != nil {
+		var value interface{}
+		d.unmarshal(n, reflect.ValueOf(&value).Elem())
+	}
+	if len(d.terrors) > 0 {
+		return probeFailure(&p.parser, (&TypeError{d.terrors}).Error())
+	}
+	return nil
+}
+
+// probeFailure follows decode.go:111-124's displayed-line convention.
+func probeFailure(parser *yaml_parser_t, message string) *ProbeError {
+	kind := "decode"
+	switch parser.error {
+	case yaml_READER_ERROR:
+		kind = "reader"
+	case yaml_SCANNER_ERROR:
+		kind = "scanner"
+	case yaml_PARSER_ERROR:
+		kind = "parser"
+	}
+	line := 0
+	if parser.problem_mark.line != 0 {
+		line = parser.problem_mark.line
+		if parser.error == yaml_SCANNER_ERROR {
+			line++
+		}
+	} else if parser.context_mark.line != 0 {
+		line = parser.context_mark.line
+	}
+	return &ProbeError{Kind: kind, Line: line, Message: message}
+}

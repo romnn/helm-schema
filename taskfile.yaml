@@ -238,6 +238,41 @@ tasks:
           printf '%s\n' "$version" | grep -qxF "$line" || { echo "helmsweep version lacks: $line" >&2; exit 1; }
         done
 
+  build:goyamlsweep:
+    desc: "build the separately pinned YAML differential oracle"
+    dir: "{{.ROOT_DIR}}/tools/goyamlsweep"
+    vars:
+      BUILD_TMP:
+        sh: echo "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-build-tmp"
+      TEMP_ENV: GOTMPDIR="{{.BUILD_TMP}}" TMPDIR="{{.BUILD_TMP}}" TMP="{{.BUILD_TMP}}" TEMP="{{.BUILD_TMP}}"
+    env:
+      GOTOOLCHAIN: local
+    cmds:
+      - mkdir -p "{{.BUILD_TMP}}"
+      - >-
+        test "$({{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go env GOVERSION)" = "go{{.HELMSWEEP_GO}}"
+        || { echo "goyamlsweep needs go{{.HELMSWEEP_GO}}" >&2; exit 1; }
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go run ./stage "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-build"'
+      - >-
+        cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-build" && {{.TEMP_ENV}} CGO_ENABLED=0
+        mise exec go@{{.HELMSWEEP_GO}} -- go build -trimpath -buildvcs=false -ldflags "{{.HELMSWEEP_LDFLAGS}}"
+        -o "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep{{exeExt}}" .
+      - '"${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep{{exeExt}}" version'
+
+  test:goyamlsweep:
+    desc: "test the staged YAML differential oracle"
+    deps: [build:goyamlsweep]
+    dir: "{{.ROOT_DIR}}/tools/goyamlsweep"
+    vars:
+      TEST_TMP:
+        sh: echo "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-test-tmp"
+      TEMP_ENV: GOTMPDIR="{{.TEST_TMP}}" TMPDIR="{{.TEST_TMP}}" TMP="{{.TEST_TMP}}" TEMP="{{.TEST_TMP}}"
+    env:
+      GOTOOLCHAIN: local
+    cmds:
+      - mkdir -p "{{.TEST_TMP}}"
+      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go test ./...
+
   test:helmsweep:
     desc: "lint, race-test and format-check the helmsweep driver against the patched Helm"
     dir: "{{.ROOT_DIR}}/tools/helmsweep"
@@ -270,6 +305,8 @@ tasks:
     cmds:
       # The Helm adjudication renders in resident helmsweep servers.
       - task: build:helmsweep
+      # YAML differential laws use their own executable to preserve the adjudication cache identity.
+      - task: build:goyamlsweep
       # Generate or verify every registered artifact before the tests consume the dump.
       # A stale manifest fails verification and the consuming tests.
       - cargo run -p helm-schema-test-support --bin corpus_generation -- --{{if .CORPUS_VERIFY}}verify{{else}}out{{end}} "{{.CORPUS_ARTIFACTS}}"{{if and (not .CORPUS_VERIFY) .CORPUS_JOBS}} --jobs {{.CORPUS_JOBS}}{{end}}
@@ -371,6 +408,7 @@ tasks:
       - cargo lint --workspace --all-features {{.CLI_ARGS}}
       - task: lint:ast-grep
       - task: lint:go
+      - task: lint:goyamlsweep
 
   lint:go:
     desc: "lint and format-check Go sources against the patched Helm"
@@ -388,6 +426,23 @@ tasks:
       - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go run ./stage "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
       - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- golangci-lint fmt --diff --config "{{.ROOT_DIR}}/.golangci.yaml" *.go
       - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- golangci-lint run --config "{{.ROOT_DIR}}/.golangci.yaml" ./...
+
+  lint:goyamlsweep:
+    desc: "lint and format-check the separate YAML oracle"
+    dir: "{{.ROOT_DIR}}/tools/goyamlsweep"
+    vars:
+      LINT_TMP:
+        sh: echo "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-lint-tmp"
+      TEMP_ENV: GOTMPDIR="{{.LINT_TMP}}" TMPDIR="{{.LINT_TMP}}" TMP="{{.LINT_TMP}}" TEMP="{{.LINT_TMP}}"
+    env:
+      GOTOOLCHAIN: local
+    cmds:
+      - mkdir -p "{{.LINT_TMP}}"
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- golangci-lint fmt --diff --config "{{.ROOT_DIR}}/.golangci.yaml" ./stage'
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- golangci-lint run --config "{{.ROOT_DIR}}/.golangci.yaml" ./stage'
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go run ./stage "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-build"'
+      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- golangci-lint fmt --diff --config "{{.ROOT_DIR}}/.golangci.yaml" *.go
+      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/goyamlsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- golangci-lint run --config "{{.ROOT_DIR}}/.golangci.yaml" ./...
 
   lint:fc:
     desc: "lint cargo workspace for all combinations of features"

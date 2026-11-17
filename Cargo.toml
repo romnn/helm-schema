@@ -5,6 +5,7 @@ members = [
   "crates/test-util",
   "crates/helm-schema-template-grammar",
   "crates/helm-schema-core",
+  "crates/helm-schema-goyaml",
   "crates/helm-schema",
   "crates/helm-schema-syntax",
   "crates/helm-schema-ast",
@@ -33,6 +34,9 @@ opt-level = 3
 # unoptimized/enabled while making generation fast enough for interactive
 # runs; `"*"` covers external dependencies (serde_json, tree-sitter, ...).
 [profile.dev.package."*"]
+opt-level = 2
+
+[profile.dev.package.helm-schema-goyaml]
 opt-level = 2
 
 [profile.dev.package.helm-schema-core]
