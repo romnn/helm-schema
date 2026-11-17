@@ -210,9 +210,7 @@ impl<'a> PlacedTerm<'a> {
                         return None;
                     }
                     for (branch, guard) in [(no, when_false), (yes, when_true)] {
-                        let Some(node) = branch.parts.single() else {
-                            return None;
-                        };
+                        let node = branch.parts.single()?;
                         pending
                             .push((Predicate::all(vec![condition.clone(), guard.clone()]), node));
                     }
