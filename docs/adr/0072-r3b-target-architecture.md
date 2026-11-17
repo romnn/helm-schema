@@ -1,6 +1,7 @@
 # 0072. R3b target architecture: values as terms, three kinds of condition, one owner per operation, one render
 
-Status: Accepted (2026-11-10; the user asked for a first-principles redesign; the orchestrator decided after two
+Status: Accepted (2026-11-10; amended 2026-11-17 after a direction check: §2 validity atoms, §5 effect log,
+.Release.Namespace policy. The user asked for a first-principles redesign; the orchestrator decided after two
 independent reviews)
 Date: 2026-11-10 (schema-bug-hunt-v1 round 8)
 
@@ -59,6 +60,12 @@ behind that executor to the following. Each invariant names the cluster it makes
      writes nothing".
    - At a join, reachability returns to the fork point. Validity is joined as
      `(branch ∧ valid_then) ∨ (¬branch ∧ valid_else)`. An assumption is not a proof of survival and is never dropped.
+   - A validity assumption is never the decision of a `Phi` in a value, a heap field or a guard (amended
+     2026-11-17). The world where it fails yields no fact, so it is not executed and has no arm.
+     - Each unknown effect creates one atom, `reach ⇒ ok`. `reach` is the path that ran the effect; `ok` is the
+       condition under which it changed nothing. Atoms therefore join by conjunction.
+     - A fact's validity is the set of atoms from effects that precede its reads and reach what it read. It is
+       conjoined once, at the fact.
    (A)
 
 3. **One shared condition DAG.**
@@ -85,10 +92,15 @@ behind that executor to the following. Each invariant names the cluster it makes
 
 5. **Unknown code is an effect, not a world.**
    - A `tpl` on a non-literal program does not fork execution.
-   - Its effect on the heap is `Phi(write_free(program), heap, havoc_reachable(heap))`:
-     - `write_free` is a validity condition on the input string;
-     - `havoc_reachable` widens only objects reachable from the program's context;
-     - frozen snapshots and unreachable objects keep their facts.
+   - Its effect is an entry in the heap's effect log: its validity atom (`write_free`, a condition on the input
+     string) and the objects reachable from its context (amended 2026-11-17).
+     - No object is widened and no binding changes.
+     - A read taken after the entry from a reached object is valid under the atom. Frozen snapshots, earlier
+       reads and unreached objects are unaffected.
+     - Until terms carry read versions (step 4c), the path carries the atom from the effect onward, which
+       over-approximates the same set.
+     - Where `write_free` cannot be stated, the atom is an unstatable assumption: facts under it are not exported,
+       and a counter shows it. It is never a widening.
    - Template namespace cloning, `include`/`tpl` rebinding and return boundaries follow Helm's engine. (B)
 
 6. **Loops are transfers, not certificates.**
@@ -156,8 +168,14 @@ behind that executor to the following. Each invariant names the cluster it makes
     memoization obligations stand.
   - [0014](0014-six-phase-pipeline-with-one-typed-artifact-per-phase.md): phase boundaries are unchanged.
 - **Policy decisions:**
-  - `.Release.Namespace` stays caller-supplied text. Kubernetes namespace rules apply only where the context
-    guarantees an installable namespace or a destination demands them (`value/hosts.rs:284`).
+  - `.Release.Namespace` is environment text in the Kubernetes namespace language: an RFC 1123 label of 1 to 63
+    bytes (amended 2026-11-17; this replaces "caller-supplied text").
+    - Helm does not check the namespace; the cluster does. A release that cannot be installed is outside what the
+      schema speaks for.
+    - Its value stays unknown, and no constraint or guard on values is derived from it. The emitted schema
+      records the assumption.
+    - Acceptance is adjudicated under two namespaces in that language. A verdict that differs between them
+      depends on the environment, so the document is accepted.
   - Per-document hole guards keep the exact shared representation. No flattening option is added without a proof.
 - **CPU:** CPU ≤ main is a requirement, not a consequence. Every step measures it per chart under ADR
   [0064](0064-performance-measurement-protocol.md). Counters are tracked from the first step: diagram nodes,

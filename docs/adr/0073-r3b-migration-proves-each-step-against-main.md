@@ -77,8 +77,13 @@ showed that ordering lets step-local losses through as new false acceptances.
 
 - The FA gap closes in larger steps, each one attributable. Progress is reported as the share of the 98,149 FA
   documents closed and the share of main's tests passing, per step.
-- The first two steps are small and independent, so they can run in parallel. Step 2 is expected to close G20 and
-  part of the declared-default class.
+- The first two steps are small and independent, so they can run in parallel.
+- Step 2 is expected to close G20 and to remove false rejections. It is not expected to close the declared-default
+  class (amended 2026-11-17).
+  - Of the class's 10,957 documents (census `parity-producers.md`), 7,743 close on main only through object and
+    inherited typing that ADR 0043 forbids. They close through provider and template demands in steps 4 to 7.
+  - The scalar remainder closes as steps 4b, 5, 6 and 7 deliver opaque-use evidence to the seam.
+  - The census row "observed use only" is re-measured after each of those steps.
 - Some lane closures are re-earned later than a lane merge would have delivered them, and fixtures move at steps 2,
   3, 4, 7 and 8. Each move needs a full preview before adoption.
 - The schedule estimate (ten to twelve builder-weeks) is speculative. It is re-estimated after step 3, from measured
