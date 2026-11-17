@@ -208,12 +208,12 @@ fn live_document_group_shares_one_fresh_lint_observation_and_keeps_origins() -> 
         .filter(|record| record.stage.starts_with("lint-") && record.input_bytes == payload_bytes)
         .map(|record| record.stage.as_str())
         .collect();
-    sim_assert_eq!(have: payload_lints, want: vec!["lint-baseline", "lint-candidate", "lint-schema-free"]);
-    // Defaults are observed once; the three distinct contexts remain separate observations.
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 1);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-candidate").count(), want: 1);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 5);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 5);
+    sim_assert_eq!(have: payload_lints, want: vec!["lint-baseline", "lint-candidate", "lint-schema-free", "lint-baseline", "lint-candidate", "lint-schema-free"]);
+    // Each namespace observes defaults once and keeps the three distinct contexts separate.
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 2);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-candidate").count(), want: 2);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 10);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 10);
 
     // Nondeterministic controls are observed again with each independent payload group.
     for result in super::adjudicate_probe_group(&live, group, Some(&kubernetes)) {
@@ -221,10 +221,10 @@ fn live_document_group_shares_one_fresh_lint_observation_and_keeps_origins() -> 
         sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
     }
     let invocations = chart.invocations();
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 2);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-candidate").count(), want: 2);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 10);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 10);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 4);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-candidate").count(), want: 4);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 20);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 20);
     Ok(())
 }
 
@@ -279,7 +279,7 @@ fn retained_controls_reload_large_observations_from_evidence() -> eyre::Result<(
             removed += 1;
         }
     }
-    sim_assert_eq!(have: removed, want: 1);
+    sim_assert_eq!(have: removed, want: 2);
     let second = super::adjudicate_probe_group(&live, &[0], Some(&kubernetes))
         .pop()
         .ok_or_eyre("outcome absent")?;
@@ -354,8 +354,8 @@ fn live_group_control_failure_affects_only_its_applicable_document() -> eyre::Re
         .chart(&live.path)
         .map_err(|err| eyre::eyre!("{err}"))?;
     let invocations = chart.invocations();
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 4);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 4);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 8);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 8);
     Ok(())
 }
 
@@ -394,7 +394,7 @@ fn live_group_payload_controls_share_only_exact_values_bytes() -> eyre::Result<(
             .map_err(|err| eyre::eyre!("{err}"))?;
         let invocations = chart.invocations();
         // Compact payload and context share one observation; pretty payload bytes do not.
-        let expected = if pretty { 5 } else { 2 };
+        let expected = if pretty { 10 } else { 4 };
         sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: expected);
         sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: expected);
     }
@@ -444,8 +444,8 @@ fn repeated_deterministic_documents_keep_fresh_decode_evidence() -> eyre::Result
     // The deterministic lint is reusable, but each independent adjudication owns its decoder files.
     sim_assert_eq!(have: directories.len(), want: 2);
     let invocations = chart.invocations();
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 1);
-    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 4);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 2);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 8);
     Ok(())
 }
 
@@ -510,14 +510,14 @@ fn live_document_groups_keep_exact_bytes_versions_and_template_probes_separate()
         .chart(&live.path)
         .map_err(|err| eyre::eyre!("{err}"))?;
     // Concurrent nondeterministic groups observe their own controls.
-    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "render").count(), want: 8);
+    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "render").count(), want: 16);
     for result in super::adjudicate_probe_group(&live, &[4], Some(&kubernetes)) {
         let (verdict, _) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
         sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
     }
     // Another Kubernetes version requires its own payload, defaults, and applicable context.
-    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "render").count(), want: 11);
-    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "lint-schema-free").count(), want: 11);
+    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "render").count(), want: 22);
+    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "lint-schema-free").count(), want: 22);
     Ok(())
 }
 

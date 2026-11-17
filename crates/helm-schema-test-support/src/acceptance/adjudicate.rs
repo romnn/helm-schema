@@ -17,7 +17,8 @@ use super::screen::{LintSchemas, ScreenedDocument, ScreenedProbe};
 use super::{AdjudicatedProbe, AdjudicationFailure, LiveChart, elapsed_ms};
 use crate::helm::adjudication::{
     CoalescedValues, DefaultsComparison, HelmLintProbe, HelmProbe, LintProbeRequest,
-    OfflineKubernetesValidator, PinnedHelmChart, UnusableControl,
+    OfflineKubernetesValidator, PinnedHelmChart, RENDER_NAMESPACE, SECOND_RENDER_NAMESPACE,
+    UnusableControl, is_oracle_namespace,
 };
 use crate::helm::invocation::{HelmExecution, Replay, preserve_failure};
 use crate::helm::lint::{LintClassification, LintErrorKind, classify_lint};
@@ -99,6 +100,7 @@ pub struct GroupObservations<'a> {
     payload: Arc<Mutex<InputObservations>>,
     controls: &'a ControlObservations,
     fresh_controls: ControlObservations,
+    second_namespace: Option<Box<Self>>,
 }
 
 /// Evidence paths for replayable controls of one immutable chart, engine, and environment.
@@ -109,6 +111,7 @@ pub struct ControlObservations {
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 struct ControlInput {
+    namespace: String,
     values_sha256: String,
     kubernetes_version: String,
 }
@@ -127,18 +130,35 @@ impl<'a> GroupObservations<'a> {
         lint: Arc<HelmLintProbe>,
         controls: &'a ControlObservations,
     ) -> Self {
+        Self::from_input(
+            chart,
+            &document.kubernetes_version,
+            &document.values_file,
+            lint,
+            controls,
+        )
+    }
+
+    fn from_input(
+        chart: &'a PinnedHelmChart,
+        kubernetes_version: &'a str,
+        values_file: &'a [u8],
+        lint: Arc<HelmLintProbe>,
+        controls: &'a ControlObservations,
+    ) -> Self {
         let payload = Arc::new(Mutex::new(InputObservations {
             lint: Some(lint.evidence_dir.clone()),
             rendered: None,
         }));
         Self {
             chart,
-            kubernetes_version: &document.kubernetes_version,
-            values_file: &document.values_file,
+            kubernetes_version,
+            values_file,
             lint,
             payload,
             controls,
             fresh_controls: ControlObservations::default(),
+            second_namespace: None,
         }
     }
 
@@ -158,6 +178,7 @@ impl<'a> GroupObservations<'a> {
         Arc::clone(
             controls
                 .entry(ControlInput {
+                    namespace: self.chart.namespace().to_owned(),
                     values_sha256: sha256_hex(bytes),
                     kubernetes_version: self.kubernetes_version.to_owned(),
                 })
@@ -235,6 +256,49 @@ pub fn adjudicate_lint_flip(
 ///
 /// Returns an error when the document cannot be judged; an [`OracleFinding`] says what it means.
 pub fn adjudicate_lint_observation(
+    probe: &ScreenedProbe,
+    document: &ScreenedDocument,
+    schemas: &LintSchemas,
+    kubernetes: &OfflineKubernetesValidator,
+    observations: &mut GroupObservations<'_>,
+) -> eyre::Result<(HelmFlipVerdict, PathBuf)> {
+    let first = adjudicate_lint_observation_in_namespace(
+        probe,
+        document,
+        schemas,
+        kubernetes,
+        observations,
+    );
+    if observations.second_namespace.is_none() {
+        let chart = observations.chart.second_namespace();
+        let lint = chart.adjudicate_lint(&LintProbeRequest {
+            values: &document.values_file,
+            kubernetes_version: &document.kubernetes_version,
+            baseline_schema: &schemas.baseline,
+            candidate_schema: &schemas.candidate,
+        })?;
+        observations.second_namespace = Some(Box::new(GroupObservations::from_input(
+            chart,
+            observations.kubernetes_version,
+            observations.values_file,
+            lint,
+            observations.controls,
+        )));
+    }
+    let second = adjudicate_lint_observation_in_namespace(
+        probe,
+        document,
+        schemas,
+        kubernetes,
+        observations
+            .second_namespace
+            .as_mut()
+            .ok_or_eyre("missing second namespace observations")?,
+    );
+    combine_namespace_verdicts(first, second)
+}
+
+fn adjudicate_lint_observation_in_namespace(
     probe: &ScreenedProbe,
     document: &ScreenedDocument,
     schemas: &LintSchemas,
@@ -844,6 +908,8 @@ pub enum HelmFlipVerdict {
     /// Helm renders, but a new or changed resource has no decidable schema,
     /// for the reasons listed.
     LooseningWithUncertainKubernetes(Vec<String>),
+    /// The namespaces disagree on acceptance; the values schema must accept.
+    EnvironmentDependentAcceptance(Vec<String>),
     /// The candidate accepts a document Helm aborts on.
     CandidateAcceptsHelmAborts,
     /// The candidate accepts a document whose render adds a Kubernetes violation.
@@ -1150,6 +1216,29 @@ pub fn declared_types_attribution(
     Ok(())
 }
 
+/// Adjudicates every live exact-template flip under both fixed namespaces.
+///
+/// # Errors
+///
+/// Returns an error for failed observations or a candidate rejection without an environment-independent proof.
+pub fn adjudicate_flip(
+    chart: &PinnedHelmChart,
+    overlay: &serde_json::Value,
+    profiles: &ProfileSchemas,
+    kubernetes: &OfflineKubernetesValidator,
+    annotation: Option<&DeclaredTypesAnnotation>,
+) -> eyre::Result<(HelmFlipVerdict, PathBuf)> {
+    let first = adjudicate_flip_in_namespace(chart, overlay, profiles, kubernetes, annotation);
+    let second = adjudicate_flip_in_namespace(
+        chart.second_namespace(),
+        overlay,
+        profiles,
+        kubernetes,
+        annotation,
+    );
+    combine_namespace_verdicts(first, second)
+}
+
 /// Adjudicates `overlay` with Helm and Kubernetes, returning the verdict and
 /// the probe's evidence directory.
 #[expect(
@@ -1159,7 +1248,7 @@ pub fn declared_types_attribution(
 /// # Errors
 ///
 /// Returns an error when Helm cannot run or the flip cannot be judged; an [`OracleFinding`] says what it means.
-pub fn adjudicate_flip(
+fn adjudicate_flip_in_namespace(
     chart: &PinnedHelmChart,
     overlay: &serde_json::Value,
     profiles: &ProfileSchemas,
@@ -1279,6 +1368,134 @@ pub fn adjudicate_flip(
         finding(kind, reason).wrap_err(format!("{reason}; evidence={}", evidence.display()))
     })?;
     Ok((verdict, probe.evidence_dir))
+}
+
+/// Exact roster reason for a document whose acceptance depends on the environment.
+pub const NAMESPACE_UNCERTAINTY: &str =
+    "environment-dependent acceptance: oracle verdict differs between release namespaces";
+
+/// Classifies only namespaces inside the oracle language; invalid text has no verdict.
+pub(crate) fn namespace_disagreement(
+    first_namespace: &str,
+    first_accepts: bool,
+    second_namespace: &str,
+    second_accepts: bool,
+) -> eyre::Result<bool> {
+    eyre::ensure!(
+        is_oracle_namespace(first_namespace) && is_oracle_namespace(second_namespace),
+        "release namespace is outside the oracle's RFC 1123 label language"
+    );
+    Ok(first_accepts != second_accepts)
+}
+
+fn oracle_accepts(verdict: &HelmFlipVerdict) -> Option<bool> {
+    match verdict {
+        HelmFlipVerdict::Collapsed
+        | HelmFlipVerdict::LooseningWithUncertainKubernetes(_)
+        | HelmFlipVerdict::EnvironmentDependentAcceptance(_) => None,
+        HelmFlipVerdict::TighteningMatchedLintRejection
+        | HelmFlipVerdict::CandidateAcceptsLintRejects
+        | HelmFlipVerdict::TighteningMatchedHelmAbort
+        | HelmFlipVerdict::TighteningMatchedKubernetesRejection
+        | HelmFlipVerdict::CandidateAcceptsHelmAborts
+        | HelmFlipVerdict::CandidateAcceptsKubernetesRejects
+        | HelmFlipVerdict::UninformativeBaselineFalseAcceptance(_) => Some(false),
+        HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy
+        | HelmFlipVerdict::LooseningMatchedLintValidation
+        | HelmFlipVerdict::LooseningMatchedKubernetesValidation
+        | HelmFlipVerdict::LooseningMatchedDefaultsViolations => Some(true),
+    }
+}
+
+fn observed_accepts(result: &eyre::Result<(HelmFlipVerdict, PathBuf)>) -> Option<bool> {
+    match result {
+        Ok((verdict, _)) => oracle_accepts(verdict),
+        Err(err) if FailureKind::of(err) == FailureKind::UnattributedRejection => Some(true),
+        Err(_) => None,
+    }
+}
+
+pub(crate) fn combine_namespace_verdicts(
+    first: eyre::Result<(HelmFlipVerdict, PathBuf)>,
+    second: eyre::Result<(HelmFlipVerdict, PathBuf)>,
+) -> eyre::Result<(HelmFlipVerdict, PathBuf)> {
+    if first
+        .as_ref()
+        .err()
+        .is_some_and(|err| FailureKind::of(err) == FailureKind::Infrastructure)
+    {
+        return first;
+    }
+    if second
+        .as_ref()
+        .err()
+        .is_some_and(|err| FailureKind::of(err) == FailureKind::Infrastructure)
+    {
+        return second;
+    }
+    let directory = first
+        .as_ref()
+        .ok()
+        .or_else(|| second.as_ref().ok())
+        .map(|(_, path)| path);
+    if let Some(directory) = directory {
+        std::fs::write(
+            directory.join("namespace-verdicts.json"),
+            serde_json::to_vec_pretty(&json!({
+                "namespaces": [RENDER_NAMESPACE, SECOND_RENDER_NAMESPACE],
+                "first": format!("{first:?}"), "second": format!("{second:?}"),
+            }))?,
+        )?;
+    }
+    let disagreement = match (observed_accepts(&first), observed_accepts(&second)) {
+        (Some(first), Some(second)) => {
+            namespace_disagreement(RENDER_NAMESPACE, first, SECOND_RENDER_NAMESPACE, second)?
+        }
+        _ => false,
+    };
+    if disagreement {
+        // A tightening has a rejection verdict or an unattributed-rejection error in one arm.
+        let candidate_rejects = [&first, &second].iter().any(|result| match result {
+            Ok((verdict, _)) => matches!(
+                verdict,
+                HelmFlipVerdict::TighteningMatchedLintRejection
+                    | HelmFlipVerdict::TighteningMatchedHelmAbort
+                    | HelmFlipVerdict::TighteningMatchedKubernetesRejection
+                    | HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy
+            ),
+            Err(err) => FailureKind::of(err) == FailureKind::UnattributedRejection,
+        });
+        if candidate_rejects {
+            let evidence = directory.map(|directory| preserve_failure(directory));
+            let reason = format!("{NAMESPACE_UNCERTAINTY}; candidate must accept");
+            return Err(
+                finding(FailureKind::UnattributedRejection, &reason).wrap_err(format!(
+                    "{reason}; evidence={}",
+                    evidence.as_deref().map_or_else(
+                        || "unavailable".to_string(),
+                        |path| path.display().to_string(),
+                    )
+                )),
+            );
+        }
+        let (_, evidence) = first?;
+        return Ok((
+            HelmFlipVerdict::EnvironmentDependentAcceptance(vec![
+                NAMESPACE_UNCERTAINTY.to_string(),
+            ]),
+            evidence,
+        ));
+    }
+    // A failed observation or uncertain second environment cannot certify a matched flip.
+    let (second_verdict, second_evidence) = second?;
+    let (first_verdict, first_evidence) = first?;
+    if oracle_accepts(&first_verdict).is_some()
+        && oracle_accepts(&second_verdict).is_none()
+        && second_verdict != HelmFlipVerdict::Collapsed
+    {
+        return Ok((second_verdict, second_evidence));
+    }
+    Ok((first_verdict, first_evidence))
 }
 
 /// Exact input bytes and the ordered applicable controls, including the defaults control.

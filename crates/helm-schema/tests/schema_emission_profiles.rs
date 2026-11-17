@@ -569,6 +569,38 @@ fn uncertain_loosening_is_not_matched_by_the_render() {
     assert!(validate_helm_adjudication_coverage(&coverage, &[], &[]).is_err());
 }
 
+#[test]
+fn namespace_uncertainty_requires_an_exact_undecided_roster_row() -> eyre::Result<()> {
+    use lint_adjudication::NAMESPACE_UNCERTAINTY;
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.charts_adjudicated.insert("chart".to_string());
+    coverage.record_verdict(
+        HelmFlipVerdict::EnvironmentDependentAcceptance(vec![NAMESPACE_UNCERTAINTY.to_string()]),
+        "chart: payload <- true".to_string(),
+        None,
+    );
+    assert!(validate_helm_adjudication_coverage(&coverage, &[], &[]).is_err());
+    let row = KnownUndecidedAcceptances {
+        chart: "chart",
+        uncertain: &[NAMESPACE_UNCERTAINTY],
+        probes: &[Probe {
+            path: "payload",
+            value: "true",
+        }],
+    };
+    validate_helm_adjudication_coverage(&coverage, &[], &[row])?;
+    let wrong = KnownUndecidedAcceptances {
+        chart: "chart",
+        uncertain: &["environment-dependent acceptance"],
+        probes: &[Probe {
+            path: "payload",
+            value: "true",
+        }],
+    };
+    assert!(validate_helm_adjudication_coverage(&coverage, &[], &[wrong]).is_err());
+    Ok(())
+}
+
 /// The undecided roster lists an accepted cell only with the exact
 /// uncertainty the adjudicator reported for it, and a listed cell of an
 /// adjudicated chart that is no longer undecided alike must be removed.
@@ -2705,6 +2737,7 @@ fn an_unlisted_false_acceptance_reports_a_bundle_that_reproduces_it() -> eyre::R
     let values = std::fs::read(bundle.join("values.json"))?;
     runner.template(
         &helm_invocation::TemplateRequest {
+            namespace: "default",
             chart: &tree,
             values: &values,
             kubernetes_version,

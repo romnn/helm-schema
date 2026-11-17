@@ -1,17 +1,18 @@
-//! Accepted documents whose render Helm produces and the pinned evidence
-//! cannot decide, that the battery knows.
+//! Accepted documents the pinned Kubernetes evidence cannot decide, or whose
+//! oracle acceptance depends on the release namespace, that the battery knows.
 //!
 //! Each accepted render Kubernetes cannot decide is listed with the exact
 //! uncertainty the adjudicator reports. The battery fails on a cell missing
 //! from the roster and on an entry that is no longer undecided alike, which
 //! must be removed. Rows are adjudicated against the same baseline as the
 //! false-acceptance roster (`ROSTER_BASELINE`).
+//! Namespace disagreements use exactly `NAMESPACE_UNCERTAINTY` from the shared
+//! adjudicator: "environment-dependent acceptance: oracle verdict differs between release namespaces".
 
 use crate::known_false_acceptances::{ContextSelector, ContextTransport, Probe};
 
-/// The known accepted cells of one chart that Helm renders and whose
-/// changed resources the pinned evidence cannot decide, for the same
-/// reasons.
+/// The known accepted cells of one chart left undecided for identical Kubernetes
+/// or namespace-dependent reasons.
 pub(crate) struct KnownUndecidedAcceptances {
     pub(crate) chart: &'static str,
     /// Every uncertainty the adjudicator reports for each listed cell,

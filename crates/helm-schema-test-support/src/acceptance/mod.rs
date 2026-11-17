@@ -108,8 +108,8 @@ pub struct HelmAdjudicationCoverage {
     /// exactly a declared default's type assertion on a path no template
     /// reads, which the `annotate` authoring policy accepts.
     pub tightenings_attributed_to_declared_types: Vec<String>,
-    /// Accepted cells Helm renders whose changed resources Kubernetes cannot
-    /// decide.
+    /// Accepted cells with undecidable Kubernetes evidence or namespace-dependent
+    /// oracle acceptance.
     pub loosenings_with_uncertain_kubernetes: Vec<ObservedUndecidedAcceptance>,
     /// Exact contextual identities actually examined by live adjudication.
     #[serde(skip)]
@@ -141,12 +141,12 @@ pub struct ObservedFalseAcceptance {
     pub evidence: Option<PathBuf>,
 }
 
-/// An accepted cell Kubernetes cannot decide, to be matched by the roster.
+/// An acceptance undecided by Kubernetes or dependent on the namespace, matched exactly by the roster.
 #[derive(Debug, Serialize)]
 pub struct ObservedUndecidedAcceptance {
     /// `chart: probe` of the cell.
     pub case: String,
-    /// Why Kubernetes cannot decide, as reported.
+    /// The exact Kubernetes or environment uncertainty, as reported.
     pub uncertain: Vec<String>,
     #[serde(skip)]
     /// The cell's evidence directory.
@@ -204,7 +204,8 @@ impl HelmAdjudicationCoverage {
                 self.loosenings_matched_defaults_violations += 1;
                 true
             }
-            HelmFlipVerdict::LooseningWithUncertainKubernetes(uncertain) => {
+            HelmFlipVerdict::LooseningWithUncertainKubernetes(uncertain)
+            | HelmFlipVerdict::EnvironmentDependentAcceptance(uncertain) => {
                 self.loosenings_with_uncertain_kubernetes
                     .push(ObservedUndecidedAcceptance {
                         case,

@@ -36,6 +36,24 @@ use crate::helm::invocation::{
 };
 use crate::helm::kubernetes_version::chart_kubernetes_version;
 
+/// The battery's ordinary release namespace.
+pub const RENDER_NAMESPACE: &str = "default";
+
+/// A maximal RFC 1123 label exercising digits, hyphens and the length boundary.
+pub const SECOND_RENDER_NAMESPACE: &str =
+    "n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n0-n01";
+
+/// Whether text belongs to the namespace language covered by the oracle.
+#[must_use]
+pub fn is_oracle_namespace(namespace: &str) -> bool {
+    let bytes = namespace.as_bytes();
+    let alphanumeric = |byte: &u8| byte.is_ascii_lowercase() || byte.is_ascii_digit();
+    (1..=63).contains(&bytes.len())
+        && bytes.first().is_some_and(alphanumeric)
+        && bytes.last().is_some_and(alphanumeric)
+        && bytes.iter().all(|byte| alphanumeric(byte) || *byte == b'-')
+}
+
 /// A defaults or context Kubernetes control the oracle cannot use: its
 /// render holds resources no pinned schema decides, or new assertions
 /// versus the defaults. The pinned oracle cannot decide such a document;
@@ -151,6 +169,8 @@ struct DefaultsFailure {
 pub struct PinnedHelmChart {
     /// The Helm every execution of this chart runs on.
     runner: &'static HelmRunner,
+    namespace: &'static str,
+    second_namespace: OnceLock<Box<Self>>,
     evidence_dir: PathBuf,
     render_chart: PreparedTree,
     coalesce_chart: PreparedTree,
@@ -166,9 +186,9 @@ pub struct PinnedHelmChart {
     /// Successful harness executions shared across document kinds in this process.
     lint_probes: Mutex<BTreeMap<LintProbeKey, Arc<HelmLintProbe>>>,
     /// Every Helm child this chart's adjudication ran, in execution order.
-    invocations: Mutex<Vec<InvocationRecord>>,
+    invocations: Arc<Mutex<Vec<InvocationRecord>>>,
     /// The largest peak resident set size among those children.
-    peak_child_rss: AtomicU64,
+    peak_child_rss: Arc<AtomicU64>,
 }
 
 impl PinnedHelmChart {
@@ -203,6 +223,10 @@ impl PinnedHelmChart {
         chart_path: &Path,
         select_version: bool,
     ) -> eyre::Result<Self> {
+        eyre::ensure!(
+            is_oracle_namespace(RENDER_NAMESPACE) && is_oracle_namespace(SECOND_RENDER_NAMESPACE),
+            "fixed render namespace is outside the oracle's RFC 1123 label language"
+        );
         // Retain successful and failed cases so a verdict remains reproducible.
         let evidence_dir = ScratchDir::new("adjudication")?.keep();
         eprintln!("Helm adjudication evidence: {}", evidence_dir.display());
@@ -262,6 +286,8 @@ impl PinnedHelmChart {
         )?;
         Ok(Self {
             runner,
+            namespace: RENDER_NAMESPACE,
+            second_namespace: OnceLock::new(),
             evidence_dir,
             render_chart,
             coalesce_chart,
@@ -270,8 +296,36 @@ impl PinnedHelmChart {
             defaults_controls: Mutex::new(BTreeMap::new()),
             lint_trees: Mutex::new(BTreeMap::new()),
             lint_probes: Mutex::new(BTreeMap::new()),
-            invocations: Mutex::new(Vec::new()),
-            peak_child_rss: AtomicU64::new(0),
+            invocations: Arc::new(Mutex::new(Vec::new())),
+            peak_child_rss: Arc::new(AtomicU64::new(0)),
+        })
+    }
+
+    /// The release namespace used by this chart and all its controls.
+    #[must_use]
+    pub const fn namespace(&self) -> &'static str {
+        self.namespace
+    }
+
+    /// Shares immutable chart inputs and telemetry, with independent namespace-bound controls.
+    #[must_use]
+    pub fn second_namespace(&self) -> &Self {
+        self.second_namespace.get_or_init(|| {
+            Box::new(Self {
+                runner: self.runner,
+                namespace: SECOND_RENDER_NAMESPACE,
+                second_namespace: OnceLock::new(),
+                evidence_dir: self.evidence_dir.clone(),
+                render_chart: self.render_chart.clone(),
+                coalesce_chart: self.coalesce_chart.clone(),
+                kubernetes_version: self.kubernetes_version,
+                render_cacheability: self.render_cacheability.clone(),
+                defaults_controls: Mutex::new(BTreeMap::new()),
+                lint_trees: Mutex::new(BTreeMap::new()),
+                lint_probes: Mutex::new(BTreeMap::new()),
+                invocations: Arc::clone(&self.invocations),
+                peak_child_rss: Arc::clone(&self.peak_child_rss),
+            })
         })
     }
 
@@ -366,6 +420,7 @@ impl PinnedHelmChart {
             &self.coalesce_chart,
             &evidence_dir,
             kubernetes_version,
+            self.namespace,
         )?;
         self.record(&record);
         let rendered = run_helm(
@@ -375,6 +430,7 @@ impl PinnedHelmChart {
             stage,
             kubernetes_version,
             &self.render_cacheability,
+            self.namespace,
         )?;
         self.record(&rendered.record);
         // Rendering coalesces the same values first, so it cannot survive a coalescence abort.
@@ -462,6 +518,7 @@ impl PinnedHelmChart {
         fs::write(evidence_dir.join("values.json"), values)?;
         let execution = self.runner.lint(
             &TemplateRequest {
+                namespace: self.namespace,
                 chart: &self.render_chart,
                 values,
                 kubernetes_version,
@@ -509,6 +566,7 @@ impl PinnedHelmChart {
     ) -> eyre::Result<HelmExecution> {
         let execution = self.runner.lint(
             &TemplateRequest {
+                namespace: self.namespace,
                 chart,
                 values: request.values,
                 kubernetes_version: request.kubernetes_version,
@@ -559,6 +617,7 @@ fn coalesce_in(
     chart: &PreparedTree,
     case: &Path,
     kubernetes_version: &str,
+    namespace: &str,
 ) -> eyre::Result<(Option<CoalescedValues>, InvocationRecord)> {
     // The template-free copy renders only the fixed values dump, a chart of ours.
     let output = run_helm(
@@ -568,6 +627,7 @@ fn coalesce_in(
         "coalesce",
         kubernetes_version,
         &Cacheability::trusted(Replay::Cacheable),
+        namespace,
     )?;
     if !output.success() {
         return Ok((None, output.record));
@@ -599,9 +659,11 @@ fn run_helm(
     stage: &str,
     kubernetes_version: &str,
     cacheability: &Cacheability,
+    namespace: &str,
 ) -> eyre::Result<HelmExecution> {
     let values = fs::read(case.join("values.json"))?;
     let request = TemplateRequest {
+        namespace,
         chart,
         values: &values,
         kubernetes_version,
@@ -1948,6 +2010,7 @@ pub fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre::Result
     // The decoder chart is fixed; its documents are part of its content.
     let values = fs::read(case.join("values.json"))?;
     let request = TemplateRequest {
+        namespace: RENDER_NAMESPACE,
         chart: &chart,
         values: &values,
         kubernetes_version,

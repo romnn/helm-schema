@@ -249,6 +249,7 @@ fn render(
     let case = ScratchDir::new("helm_invocation")?;
     let execution = runner.template(
         &TemplateRequest {
+            namespace: "default",
             chart,
             values: values.as_bytes(),
             kubernetes_version,
@@ -282,6 +283,7 @@ fn lint(
     let case = ScratchDir::new("helm_invocation")?;
     runner.lint(
         &TemplateRequest {
+            namespace: "default",
             chart,
             values: values.as_bytes(),
             kubernetes_version,
@@ -514,6 +516,7 @@ fn replays_are_accounted_apart_from_executions() -> eyre::Result<()> {
         let case = ScratchDir::new("helm_invocation")?;
         let execution = runner.template(
             &TemplateRequest {
+                namespace: "default",
                 chart: &chart,
                 values: br#"{"value": "a"}"#,
                 kubernetes_version: "1.29.0",
@@ -693,6 +696,7 @@ fn abnormal_executions_are_harness_failures() -> eyre::Result<()> {
         }
         let case = ScratchDir::new("helm_invocation")?;
         let request = TemplateRequest {
+            namespace: "default",
             chart: &chart,
             values: br#"{"value": "a"}"#,
             kubernetes_version: "1.29.0",
@@ -878,6 +882,7 @@ fn a_changed_helm_executable_is_a_harness_failure() -> eyre::Result<()> {
     let program = fake_helm(programs.path(), "exit 1")?;
     let runner = HelmRunner::with_program(root.path(), true, program.clone())?;
     let request = TemplateRequest {
+        namespace: "default",
         chart: &chart,
         values: br#"{"value": "a"}"#,
         kubernetes_version: "1.29.0",
@@ -1156,6 +1161,7 @@ fn resident_lint_and_template_keep_separate_replay_entries() -> eyre::Result<()>
     let policy = render_cacheability(chart.path())?;
     let case = ScratchDir::new("helm_invocation")?;
     let request = TemplateRequest {
+        namespace: "default",
         chart: &chart,
         values: b"{}",
         kubernetes_version: "1.29.0",
@@ -1320,6 +1326,7 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
             )?;
             let chart = publish_chart(&runner, "value: default\n")?;
             let request = TemplateRequest {
+                namespace: "default",
                 chart: &chart,
                 values: br#"{"value": "a"}"#,
                 kubernetes_version: "1.29.0",

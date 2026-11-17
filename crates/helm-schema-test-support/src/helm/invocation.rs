@@ -354,6 +354,8 @@ pub struct TemplateRequest<'a> {
     pub chart: &'a PreparedTree,
     /// The exact bytes Helm reads through `-f`.
     pub values: &'a [u8],
+    /// Helm's `--namespace`, included in the invocation identity.
+    pub namespace: &'a str,
     /// Helm's `--kube-version`.
     pub kubernetes_version: &'a str,
 }
@@ -679,9 +681,10 @@ impl HelmRunner {
         let values = utf8(&values_path)?;
 
         let home = self.root.join("home");
-        let environment = self.environment()?;
+        let environment = self.namespace_environment(request.namespace)?;
         let call = HelmCall {
             operation,
+            namespace: request.namespace.to_string(),
             chart: chart.to_string(),
             kubernetes_version: request.kubernetes_version.to_string(),
             values: values.to_string(),
@@ -738,6 +741,7 @@ impl HelmRunner {
         let record_path = case.join(format!("{stage}{INVOCATION_RECORD_SUFFIX}"));
         let mut record_json = serde_json::json!({
             "chart": call.chart,
+            "namespace": call.namespace,
             "values": call.values,
             "kubernetes_version": call.kubernetes_version,
             "request": invocation,
@@ -939,6 +943,16 @@ impl HelmRunner {
         Ok(environment)
     }
 
+    fn namespace_environment(&self, namespace: &str) -> eyre::Result<Vec<(String, String)>> {
+        let mut environment = self.environment()?;
+        // cli.New reads this at each command; resident processes keep one namespace for life.
+        if namespace != super::adjudication::RENDER_NAMESPACE {
+            environment.push(("HELM_NAMESPACE".to_string(), namespace.to_string()));
+            environment.sort();
+        }
+        Ok(environment)
+    }
+
     /// Writes `bytes` to its content address and returns that path and hash.
     #[tracing::instrument(skip_all, fields(bytes = bytes.len()))]
     fn publish_input(&self, bytes: &[u8]) -> eyre::Result<(PathBuf, String)> {
@@ -976,6 +990,7 @@ enum HelmOperation {
 /// One local Helm command whose arguments also identify its resident request.
 struct HelmCall {
     operation: HelmOperation,
+    namespace: String,
     chart: String,
     kubernetes_version: String,
     values: String,
@@ -984,8 +999,8 @@ struct HelmCall {
 impl HelmCall {
     /// The CLI's arguments, which the key binds for either engine.
     fn arguments(&self) -> Vec<String> {
-        if matches!(self.operation, HelmOperation::Lint) {
-            return [
+        let mut arguments = if matches!(self.operation, HelmOperation::Lint) {
+            vec![
                 "lint",
                 &self.chart,
                 "--kube-version",
@@ -993,21 +1008,23 @@ impl HelmCall {
                 "-f",
                 &self.values,
             ]
-            .map(str::to_string)
-            .to_vec();
+        } else {
+            vec![
+                "template",
+                RELEASE_NAME,
+                &self.chart,
+                "--kube-version",
+                &self.kubernetes_version,
+                "--skip-schema-validation",
+                "-f",
+                &self.values,
+            ]
+        };
+        // Default requests retain the exact argument vector of the existing replay store.
+        if self.namespace != super::adjudication::RENDER_NAMESPACE {
+            arguments.extend(["--namespace", &self.namespace]);
         }
-        [
-            "template",
-            RELEASE_NAME,
-            &self.chart,
-            "--kube-version",
-            &self.kubernetes_version,
-            "--skip-schema-validation",
-            "-f",
-            &self.values,
-        ]
-        .map(str::to_string)
-        .to_vec()
+        arguments.into_iter().map(str::to_string).collect()
     }
 }
 
@@ -1037,6 +1054,7 @@ struct ResidentPool {
 struct Resident {
     child: Child,
     stdin: ChildStdin,
+    namespace: String,
     answers: mpsc::Receiver<std::io::Result<String>>,
     next_id: u64,
     held_bytes: u64,
@@ -1060,10 +1078,15 @@ impl ResidentPool {
         stage: &str,
         timeout: Duration,
     ) -> eyre::Result<(StoredResult, Vec<u8>, Vec<u8>, u64)> {
-        let idle = lock(&self.idle).pop();
+        let idle = {
+            let mut idle = lock(&self.idle);
+            idle.iter()
+                .rposition(|server| server.namespace == call.namespace)
+                .map(|index| idle.remove(index))
+        };
         let mut resident = match idle {
             Some(resident) => resident,
-            None => Resident::start(runner)?,
+            None => Resident::start(runner, &call.namespace)?,
         };
         let stdout_path = case.join(format!("{stage}.yaml"));
         let stderr_path = case.join(format!("{stage}.stderr"));
@@ -1118,10 +1141,10 @@ impl ResidentPool {
 
 impl Resident {
     #[tracing::instrument(skip_all, fields(command = "serve"))]
-    fn start(runner: &HelmRunner) -> eyre::Result<Self> {
+    fn start(runner: &HelmRunner, namespace: &str) -> eyre::Result<Self> {
         let mut child = Command::new(&runner.program)
             .env_clear()
-            .envs(runner.environment()?)
+            .envs(runner.namespace_environment(namespace)?)
             .current_dir(&runner.root)
             .arg("serve")
             .stdin(Stdio::piped())
@@ -1147,6 +1170,7 @@ impl Resident {
         Ok(Self {
             child,
             stdin,
+            namespace: namespace.to_string(),
             answers,
             next_id: 0,
             held_bytes: 0,

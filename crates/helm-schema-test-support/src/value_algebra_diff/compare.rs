@@ -143,7 +143,8 @@ fn verdict_answer(verdict: &HelmFlipVerdict) -> (OracleAnswer, Option<bool>) {
         | HelmFlipVerdict::LooseningMatchedDefaultsViolations => {
             (OracleAnswer::Accepts, Some(true))
         }
-        HelmFlipVerdict::LooseningWithUncertainKubernetes(_) => {
+        HelmFlipVerdict::LooseningWithUncertainKubernetes(_)
+        | HelmFlipVerdict::EnvironmentDependentAcceptance(_) => {
             (OracleAnswer::Undecided, Some(true))
         }
         HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy => {

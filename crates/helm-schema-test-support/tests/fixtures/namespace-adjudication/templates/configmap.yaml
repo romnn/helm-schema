@@ -1,0 +1,10 @@
+{{- if and (kindIs "string" .Values.payload) (eq .Values.payload "split") (eq .Release.Namespace "default") }}
+{{- fail "payload depends on the release namespace" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namespace-adjudication
+  namespace: {{ .Release.Namespace }}
+data:
+  payload: {{ .Values.payload | upper | quote }}

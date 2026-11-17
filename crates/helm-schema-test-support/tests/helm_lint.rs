@@ -7,6 +7,13 @@ use helm_schema_test_support::helm::lint::{
 use serde::Deserialize;
 use test_util::prelude::sim_assert_eq;
 
+#[cfg(unix)]
+use helm_schema_test_support::helm::invocation::{
+    Cacheability, HelmRunner, InvocationRequest, LINT_TIMEOUT, Outcome, TemplateRequest,
+};
+#[cfg(unix)]
+use std::{fs, os::unix::fs::PermissionsExt as _};
+
 #[derive(Deserialize)]
 struct Fixture {
     name: String,
@@ -64,11 +71,6 @@ fn lint_errors_retain_each_rules_document_and_diagnostic() -> eyre::Result<()> {
 #[cfg(unix)]
 #[test]
 fn lint_uses_cli_identity_schema_validation_and_its_own_replay_key() -> eyre::Result<()> {
-    use helm_schema_test_support::helm::invocation::{
-        Cacheability, HelmRunner, InvocationRequest, LINT_TIMEOUT, Outcome, TemplateRequest,
-    };
-    use std::fs;
-    use std::os::unix::fs::PermissionsExt as _;
     let scratch = test_util::scratch::ScratchDir::new("lint-invocation")?;
     let program = scratch.path().join("helm");
     fs::write(
@@ -99,6 +101,7 @@ fn lint_uses_cli_identity_schema_validation_and_its_own_replay_key() -> eyre::Re
     let case = scratch.path().join("case");
     fs::create_dir(&case)?;
     let request = TemplateRequest {
+        namespace: "default",
         chart: &chart,
         values: b"{}",
         kubernetes_version: "1.35.0",
@@ -108,6 +111,7 @@ fn lint_uses_cli_identity_schema_validation_and_its_own_replay_key() -> eyre::Re
     let lint = runner.lint(&request, &case, "lint", &policy)?;
     let replay = runner.lint(&request, &case, "lint-again", &policy)?;
     assert_ne!(lint.record.key, rendered.record.key);
+    check_namespace_replay(&runner, &request, &case, &policy)?;
     sim_assert_eq!(have: replay.record.outcome, want: Outcome::Replayed);
     sim_assert_eq!(have: LINT_TIMEOUT.as_secs(), want: 1200);
     let record: serde_json::Value =
@@ -168,5 +172,111 @@ fn lint_uses_cli_identity_schema_validation_and_its_own_replay_key() -> eyre::Re
         eyre::bail!("changed lint executable was accepted");
     };
     assert!(err.to_string().contains("changed during the run"), "{err}");
+    Ok(())
+}
+
+#[cfg(unix)]
+fn check_namespace_replay(
+    runner: &helm_schema_test_support::helm::invocation::HelmRunner,
+    request: &helm_schema_test_support::helm::invocation::TemplateRequest<'_>,
+    case: &std::path::Path,
+    policy: &helm_schema_test_support::helm::invocation::Cacheability,
+) -> eyre::Result<()> {
+    let first = runner.template(request, case, "namespace-first", policy)?;
+    let first_lint = runner.lint(request, case, "namespace-first-lint", policy)?;
+    check_pre_namespace_key(case, "namespace-first", request)?;
+    check_pre_namespace_key(case, "namespace-first-lint", request)?;
+    sim_assert_eq!(have: first.record.outcome, want: Outcome::Replayed);
+    sim_assert_eq!(have: first_lint.record.outcome, want: Outcome::Replayed);
+    let second_request = TemplateRequest {
+        namespace: "second-namespace",
+        ..*request
+    };
+    let second = runner.template(&second_request, case, "namespace-second", policy)?;
+    let second_lint = runner.lint(&second_request, case, "namespace-second-lint", policy)?;
+    assert_ne!(second.record.key, first.record.key);
+    assert_ne!(second_lint.record.key, first_lint.record.key);
+    let replay = runner.template(&second_request, case, "namespace-second-replay", policy)?;
+    sim_assert_eq!(have: replay.record.outcome, want: Outcome::Replayed);
+    Ok(())
+}
+
+#[cfg(unix)]
+fn check_pre_namespace_key(
+    case: &std::path::Path,
+    stage: &str,
+    request: &TemplateRequest<'_>,
+) -> eyre::Result<()> {
+    use color_eyre::eyre::OptionExt as _;
+    use sha2::{Digest as _, Sha256};
+    use std::fmt::Write as _;
+    let record: serde_json::Value =
+        serde_json::from_slice(&fs::read(case.join(format!("{stage}.invocation.json")))?)?;
+    let mut before: InvocationRequest = serde_json::from_value(
+        record
+            .get("request")
+            .ok_or_eyre("missing recorded invocation")?
+            .clone(),
+    )?;
+    let lint = stage.ends_with("lint");
+    let values = before
+        .arguments
+        .last()
+        .cloned()
+        .ok_or_eyre("missing values path")?;
+    before.arguments = if lint {
+        vec![
+            "lint".into(),
+            request.chart.path().to_string_lossy().into_owned(),
+            "--kube-version".into(),
+            request.kubernetes_version.into(),
+            "-f".into(),
+            values,
+        ]
+    } else {
+        vec![
+            "template".into(),
+            "adjudication".into(),
+            request.chart.path().to_string_lossy().into_owned(),
+            "--kube-version".into(),
+            request.kubernetes_version.into(),
+            "--skip-schema-validation".into(),
+            "-f".into(),
+            values,
+        ]
+    };
+    let home = format!("{}/home", before.working_directory);
+    let temporary = format!("{}/tmp", before.working_directory);
+    before.environment = vec![
+        ("HELM_CACHE_HOME".into(), format!("{home}/cache")),
+        ("HELM_CONFIG_HOME".into(), format!("{home}/config")),
+        ("HELM_DATA_HOME".into(), format!("{home}/data")),
+        ("HOME".into(), home),
+        ("LC_ALL".into(), "C".into()),
+        ("TEMP".into(), temporary.clone()),
+        ("TMP".into(), temporary.clone()),
+        ("TMPDIR".into(), temporary),
+        ("TZ".into(), "UTC".into()),
+    ];
+    before.format = "helm-schema/helm-invocation/v4".into();
+    let bytes = serde_json::to_vec_pretty(&before)?;
+    // Freeze the original length-prefixed v4 key computation independently of the new runner.
+    let mut hash = Sha256::new();
+    for field in [
+        b"helm-schema/helm-invocation/v4".as_slice(),
+        bytes.as_slice(),
+    ] {
+        hash.update(u64::try_from(field.len())?.to_le_bytes());
+        hash.update(field);
+    }
+    let mut before_key = String::with_capacity(64);
+    for byte in hash.finalize() {
+        write!(before_key, "{byte:02x}")?;
+    }
+    let after_key = record
+        .pointer("/record/key")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_eyre("missing invocation key")?;
+    sim_assert_eq!(have: after_key, want: before_key.as_str());
     Ok(())
 }
