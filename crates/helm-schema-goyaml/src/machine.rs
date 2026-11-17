@@ -3,7 +3,7 @@
 use crate::parser::{Parser, ParserControl};
 use crate::reader::ByteReader;
 use crate::scanner::{Scanner, ScannerControl};
-use crate::types::{Error, ErrorKind, Event, EventKind, Mark};
+use crate::types::{Error, ErrorKind, Event, EventKind, Mark, Token};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 enum Outcome {
@@ -53,6 +53,17 @@ impl Validator {
     }
 }
 
+/// One unit of syntax a [`Reader`] delivers, in the order the parser consumes it.
+///
+/// Every token reaches the observer before the events its consumption produces.
+#[derive(Clone, Copy, Debug)]
+pub enum Syntax<'a> {
+    /// A scanner token (`yamlh.go:183-229`).
+    Token(&'a Token),
+    /// A parser event (`yamlh.go:283-386`).
+    Event(&'a Event),
+}
+
 /// A clonable suspended reader of the first YAML document.
 ///
 /// Characters reach the scanner immediately.
@@ -85,15 +96,15 @@ impl Reader {
     /// Steps the scanner immediately with one Unicode symbol.
     ///
     /// Ports `readerc.go:91` and `parserc.go:62`, with the raw validator kept separately.
-    /// The sink receives provisional events; an error rejects the whole document.
+    /// The observer receives provisional tokens and events; an error rejects the whole document.
     ///
     /// # Errors
     ///
     /// Returns the pinned diagnostic once its raw window or EOF commits the outcome.
-    pub fn step(
+    pub fn step_syntax(
         &mut self,
         character: char,
-        sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+        observer: &mut impl FnMut(Syntax<'_>) -> Result<(), Error>,
     ) -> Result<(), Error> {
         if self.validator.committed.is_some() {
             return self.validator.result();
@@ -108,7 +119,7 @@ impl Reader {
             }
         }
         let mut encoded = [0; 4];
-        self.push_bytes(character.encode_utf8(&mut encoded).as_bytes(), sink)
+        self.push_bytes_syntax(character.encode_utf8(&mut encoded).as_bytes(), observer)
     }
 
     /// Supplies bytes in any partition, retaining only an incomplete UTF prefix.
@@ -119,10 +130,10 @@ impl Reader {
     /// # Errors
     ///
     /// Returns the pinned diagnostic when a complete raw window commits it.
-    pub fn push_bytes(
+    pub fn push_bytes_syntax(
         &mut self,
         input: &[u8],
-        sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+        observer: &mut impl FnMut(Syntax<'_>) -> Result<(), Error>,
     ) -> Result<(), Error> {
         self.validator.result()?;
         for &byte in input {
@@ -136,7 +147,7 @@ impl Reader {
                     Ok(characters) => {
                         for character in characters {
                             self.decoded_seen += 1;
-                            self.scan_character(character, sink);
+                            self.scan_character(character, observer);
                         }
                     }
                     Err(err) => self.validator.invalid = Some(err),
@@ -144,7 +155,7 @@ impl Reader {
             }
             if self.validator.phase == 512 {
                 self.scanner.close_buffer(self.decoded_seen);
-                self.drain(sink);
+                self.drain(observer);
                 self.validator.commit()?;
                 if self.validator.committed.is_none() {
                     self.validator.phase = self.bytes.pending_len();
@@ -162,15 +173,15 @@ impl Reader {
     /// # Errors
     ///
     /// Returns incomplete UTF, scanner, parser or event-consumer failures in Go's order.
-    pub fn finish(
+    pub fn finish_syntax(
         &mut self,
-        sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+        observer: &mut impl FnMut(Syntax<'_>) -> Result<(), Error>,
     ) -> Result<(), Error> {
         if self.validator.committed.is_some() {
             return self.validator.result();
         }
         if !self.input_seen {
-            self.step('\n', sink)?;
+            self.step_syntax('\n', observer)?;
         }
         if self.validator.pending.is_some() || self.validator.invalid.is_some() {
             return self.validator.commit();
@@ -179,21 +190,61 @@ impl Reader {
             Ok(characters) => {
                 for character in characters {
                     self.decoded_seen += 1;
-                    self.scan_character(character, sink);
+                    self.scan_character(character, observer);
                 }
             }
             Err(err) => self.validator.invalid = Some(err),
         }
         self.scanner.close_buffer(self.decoded_seen);
         self.scanner.finish_input();
-        self.drain(sink);
+        self.drain(observer);
         if self.validator.active() {
             match self.parser.finish() {
-                Ok(events) => self.deliver(&events, sink),
+                Ok(events) => self.deliver(&events, observer),
                 Err(err) => self.validator.pending = Some(Outcome::Failed(err)),
             }
         }
         self.validator.commit()
+    }
+
+    /// Steps the scanner immediately with one Unicode symbol.
+    ///
+    /// The sink receives provisional events; an error rejects the whole document.
+    ///
+    /// # Errors
+    ///
+    /// Returns the pinned diagnostic once its raw window or EOF commits the outcome.
+    pub fn step(
+        &mut self,
+        character: char,
+        sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+    ) -> Result<(), Error> {
+        self.step_syntax(character, &mut events_only(sink))
+    }
+
+    /// Supplies bytes in any partition, retaining only an incomplete UTF prefix.
+    ///
+    /// # Errors
+    ///
+    /// Returns the pinned diagnostic when a complete raw window commits it.
+    pub fn push_bytes(
+        &mut self,
+        input: &[u8],
+        sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+    ) -> Result<(), Error> {
+        self.push_bytes_syntax(input, &mut events_only(sink))
+    }
+
+    /// Supplies EOF and commits the first document's provisional outcome.
+    ///
+    /// # Errors
+    ///
+    /// Returns incomplete UTF, scanner, parser or event-consumer failures in Go's order.
+    pub fn finish(
+        &mut self,
+        sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+    ) -> Result<(), Error> {
+        self.finish_syntax(&mut events_only(sink))
     }
 
     /// Reports a first-document completion whose raw window has been validated.
@@ -260,34 +311,44 @@ impl Reader {
     fn scan_character(
         &mut self,
         character: char,
-        sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+        observer: &mut impl FnMut(Syntax<'_>) -> Result<(), Error>,
     ) {
         if self.validator.active() {
             self.scanner.push_input(character);
-            self.drain(sink);
+            self.drain(observer);
         }
     }
 
     /// Requests tokens in Go's pull order (`parserc.go:46-60`).
-    fn drain(&mut self, sink: &mut impl FnMut(&Event) -> Result<(), Error>) {
+    fn drain(&mut self, observer: &mut impl FnMut(Syntax<'_>) -> Result<(), Error>) {
         while self.validator.active() {
             match self.scanner.next_token() {
-                Ok(Some(token)) => match self.parser.push(token) {
-                    Ok(events) => self.deliver(&events, sink),
-                    Err(err) => self.validator.pending = Some(Outcome::Failed(err)),
-                },
+                Ok(Some(token)) => {
+                    if let Err(err) = observer(Syntax::Token(&token)) {
+                        self.validator.pending = Some(Outcome::Failed(err));
+                        break;
+                    }
+                    match self.parser.push(token) {
+                        Ok(events) => self.deliver(&events, observer),
+                        Err(err) => self.validator.pending = Some(Outcome::Failed(err)),
+                    }
+                }
                 Ok(None) => break,
                 Err(err) => self.validator.pending = Some(Outcome::Failed(err)),
             }
         }
     }
 
-    fn deliver(&mut self, events: &[Event], sink: &mut impl FnMut(&Event) -> Result<(), Error>) {
+    fn deliver(
+        &mut self,
+        events: &[Event],
+        observer: &mut impl FnMut(Syntax<'_>) -> Result<(), Error>,
+    ) {
         for event in events {
             if !self.validator.active() {
                 break;
             }
-            if let Err(err) = sink(event) {
+            if let Err(err) = observer(Syntax::Event(event)) {
                 self.validator.pending = Some(Outcome::Failed(err));
                 break;
             }
@@ -299,5 +360,15 @@ impl Reader {
                 self.validator.pending = Some(Outcome::Done);
             }
         }
+    }
+}
+
+/// Adapts an event sink to a syntax observer that ignores tokens.
+fn events_only(
+    sink: &mut impl FnMut(&Event) -> Result<(), Error>,
+) -> impl FnMut(Syntax<'_>) -> Result<(), Error> + '_ {
+    move |syntax| match syntax {
+        Syntax::Token(_) => Ok(()),
+        Syntax::Event(event) => sink(event),
     }
 }

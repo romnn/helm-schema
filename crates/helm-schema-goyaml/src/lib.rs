@@ -16,8 +16,8 @@ pub mod stages;
 mod types;
 
 pub use decode::{Document, Entry, Target, Value, decode_events, read_document, to_json};
-pub use machine::{Reader, ReaderControl};
-pub use types::{Error, ErrorKind, Event, EventKind, Mark, ScalarStyle};
+pub use machine::{Reader, ReaderControl, Syntax};
+pub use types::{Error, ErrorKind, Event, EventKind, Mark, ScalarStyle, Token, TokenKind};
 
 /// Reads and decodes the first YAML document (`yaml.go:137-160`, `decode.go:170-178`).
 ///

@@ -72,7 +72,7 @@ pub enum ScalarStyle {
 
 /// A scanner token (`yamlh.go:183-281`).
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub(crate) struct Token {
+pub struct Token {
     /// Token payload.
     pub kind: TokenKind,
     /// First character.
@@ -83,7 +83,7 @@ pub(crate) struct Token {
 
 /// A token's grammatical role (`yamlh.go:183-229`).
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub(crate) enum TokenKind {
+pub enum TokenKind {
     /// Beginning of the stream.
     StreamStart,
     /// End of the stream.
