@@ -288,10 +288,10 @@ fn allocation_collapse_preserves_a_reserved_occurrence_and_its_snapshots() -> ey
     let installed = state.heap.allocate_at(
         Some(&id),
         ObjectData::Map {
-            fields: Rc::new(BTreeMap::from([(
-                "new".to_owned(),
-                Field::Present(Value::string("current")),
-            )])),
+            fields: Rc::new(
+                (BTreeMap::from([("new".to_owned(), Field::Present(Value::string("current")))]))
+                    .into(),
+            ),
             remainder: Remainder::Closed,
         },
         Multiplicity::Singleton,
@@ -344,10 +344,9 @@ fn allocation_collapse_keeps_aliases_in_the_unknown_write_region() -> eyre::Resu
         }
         let parent_id = state.heap.allocate(
             ObjectData::Map {
-                fields: Rc::new(BTreeMap::from([(
-                    "child".to_owned(),
-                    Field::Present(child.clone()),
-                )])),
+                fields: Rc::new(
+                    (BTreeMap::from([("child".to_owned(), Field::Present(child.clone()))])).into(),
+                ),
                 remainder: Remainder::Closed,
             },
             Multiplicity::Singleton,

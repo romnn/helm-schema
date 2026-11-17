@@ -7,7 +7,7 @@
 //! layers and resolves each key when it is read. A nested map receives its share of the layers
 //! when it is first used as an object, so an alias taken before the merge sees the merge.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 use helm_schema_core::{Guard, Predicate, ValuesPath};
@@ -1045,7 +1045,7 @@ impl State {
             revision: self.heap.arena.snapshot(),
             multiplicity: Multiplicity::Singleton,
             data: ObjectData::Map {
-                fields: Rc::new(BTreeMap::new()),
+                fields: Rc::default(),
                 remainder: Remainder::Layered(Rc::new(Layers {
                     base: Base::Copy(source),
                     merges: Vec::new(),
@@ -1362,6 +1362,7 @@ pub(super) fn join_remainders(
     decision: &Rc<FrozenTest>,
     yes: &Remainder,
     no: &Remainder,
+    budget: &mut super::work::WorkBudget,
 ) -> Option<Remainder> {
     let as_layers = |remainder: &Remainder| match remainder {
         Remainder::Closed => Some(Layers {
@@ -1384,18 +1385,24 @@ pub(super) fn join_remainders(
     };
     let yes = as_layers(yes)?;
     let no = as_layers(no)?;
-    if yes.base != no.base {
+    if !budget.charge(yes.merges.len() + no.merges.len() + 1)
+        || !equal_bases(&yes.base, &no.base, budget)?
+    {
         return None;
     }
-    let shared = yes
-        .merges
-        .iter()
-        .zip(&no.merges)
-        .take_while(|(yes, no)| yes == no)
-        .count();
+    let mut shared = 0;
+    for (yes, no) in yes.merges.iter().zip(&no.merges) {
+        if !equal_merges(yes, no, budget)? {
+            break;
+        }
+        shared += 1;
+    }
     let mut merges = yes.merges.get(..shared)?.to_vec();
     for (arm, taken) in [(&yes, true), (&no, false)] {
         for layer in arm.merges.get(shared..)? {
+            if !budget.charge(layer.guard.len() + 1) {
+                return None;
+            }
             let mut layer = layer.clone();
             layer.guard = std::iter::once((Rc::clone(decision), taken))
                 .chain(layer.guard.iter().cloned())
@@ -1778,4 +1785,108 @@ impl State {
         }
         Some(objects)
     }
+}
+
+pub(super) fn equal_remainders(
+    yes: &Remainder,
+    no: &Remainder,
+    budget: &mut super::work::WorkBudget,
+) -> Option<bool> {
+    if !budget.charge(1) {
+        return None;
+    }
+    Some(match yes {
+        Remainder::Closed => matches!(no, Remainder::Closed),
+        Remainder::Input => matches!(no, Remainder::Input),
+        Remainder::Open => matches!(no, Remainder::Open),
+        Remainder::Unknown { inputs: yes } => {
+            let Remainder::Unknown { inputs: no } = no else {
+                return Some(false);
+            };
+            if !budget.charge(yes.len() + no.len()) {
+                return None;
+            }
+            yes == no
+        }
+        Remainder::Layered(yes) => {
+            let Remainder::Layered(no) = no else {
+                return Some(false);
+            };
+            if Rc::ptr_eq(yes, no) {
+                return Some(true);
+            }
+            let Layers { base, merges } = yes.as_ref();
+            let Layers {
+                base: other_base,
+                merges: other_merges,
+            } = no.as_ref();
+            if merges.len() != other_merges.len() || !equal_bases(base, other_base, budget)? {
+                return Some(false);
+            }
+            for (yes, no) in merges.iter().zip(other_merges) {
+                if !equal_merges(yes, no, budget)? {
+                    return Some(false);
+                }
+            }
+            true
+        }
+    })
+}
+
+fn equal_bases(yes: &Base, no: &Base, budget: &mut super::work::WorkBudget) -> Option<bool> {
+    if !budget.charge(1) {
+        return None;
+    }
+    Some(match yes {
+        Base::Closed => matches!(no, Base::Closed),
+        Base::Input => matches!(no, Base::Input),
+        Base::Copy(yes) => {
+            let Base::Copy(no) = no else {
+                return Some(false);
+            };
+            super::heap_equality::frozen(yes, no, budget)?
+        }
+        Base::Unknown(yes_inputs, yes_aliases) => {
+            let Base::Unknown(no_inputs, no_aliases) = no else {
+                return Some(false);
+            };
+            if !budget.charge(
+                yes_inputs.len()
+                    + no_inputs.len()
+                    + super::heap_equality::reach_work(yes_aliases)
+                    + super::heap_equality::reach_work(no_aliases),
+            ) {
+                return None;
+            }
+            yes_inputs == no_inputs && yes_aliases == no_aliases
+        }
+    })
+}
+
+fn equal_merges(
+    yes: &MergeLayer,
+    no: &MergeLayer,
+    budget: &mut super::work::WorkBudget,
+) -> Option<bool> {
+    let MergeLayer {
+        source,
+        overwrite,
+        explicit,
+        guard,
+    } = yes;
+    let MergeLayer {
+        source: other_source,
+        overwrite: other_overwrite,
+        explicit: other_explicit,
+        guard: other_guard,
+    } = no;
+    if !budget.charge(explicit.len() + other_explicit.len() + guard.len() + other_guard.len() + 1) {
+        return None;
+    }
+    Some(
+        overwrite == other_overwrite
+            && explicit == other_explicit
+            && guard == other_guard
+            && super::heap_equality::frozen(source, other_source, budget)?,
+    )
 }

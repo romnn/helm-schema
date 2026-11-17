@@ -258,7 +258,7 @@ pub(super) fn begin_file(
     let template_id = state.heap.allocate_at(
         Some(&occurrence.template),
         ObjectData::Map {
-            fields: Rc::new(std::collections::BTreeMap::from([
+            fields: Rc::new(super::ObjectFields::from_iter([
                 (
                     "Name".to_owned(),
                     Field::Present(Value::string(source_path)),

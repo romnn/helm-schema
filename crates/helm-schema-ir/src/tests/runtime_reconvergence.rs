@@ -337,81 +337,21 @@ struct StorageGrowth {
 }
 
 fn storage_growth(version: &crate::value::HeapVersion) -> StorageGrowth {
-    use crate::value::{HeapNode, ObjectData, Reach};
-    let mut pending = vec![version];
-    let mut nodes = std::collections::BTreeSet::new();
-    let mut objects = std::collections::BTreeSet::new();
-    let mut inputs = std::collections::BTreeSet::new();
+    use crate::value::ObjectData;
     let mut payload = 0;
-    while let Some(version) = pending.pop() {
-        if !nodes.insert(version.id.ordinal) {
-            continue;
-        }
-        match &version.node {
-            HeapNode::Empty => {}
-            HeapNode::Registration { parent, paths: _ } => pending.push(parent),
-            HeapNode::Install {
-                parent,
-                object: _,
-                storage,
-                kind: _,
-            } => {
-                pending.push(parent);
-                if !objects.insert(Rc::as_ptr(storage)) {
-                    continue;
-                }
-                match &storage.data {
-                    ObjectData::Map {
-                        fields,
-                        remainder: _,
-                    } => payload += fields.len(),
-                    ObjectData::Strings(slots) => payload += slots.len(),
-                    ObjectData::Opaque { reachable: _ } => payload += 1,
-                    ObjectData::Widened { inputs: known } => {
-                        if inputs.insert(Rc::as_ptr(known)) {
-                            payload += known.len();
-                        }
-                    }
-                }
-            }
-            HeapNode::Write {
-                parent,
-                object: _,
-                key: _,
-                field: _,
-            }
-            | HeapNode::WriteSlot {
-                parent,
-                object: _,
-                index: _,
-                value: _,
-            } => {
-                pending.push(parent);
-                payload += 1;
-            }
-            HeapNode::UnknownWrite {
-                parent,
-                objects,
-                inputs: known,
-            } => {
-                pending.push(parent);
-                if inputs.insert(Rc::as_ptr(known)) {
-                    payload += known.len();
-                }
-                payload += match objects {
-                    Reach::Bounded(objects) => objects.len(),
-                    Reach::Top => 1,
-                };
-            }
-            HeapNode::Join {
-                decision: _,
-                yes,
-                no,
-            } => pending.extend([yes.as_ref(), no.as_ref()]),
-        }
-    }
+    version.store.visit(|_, storage| {
+        payload += match &storage.data {
+            ObjectData::Map {
+                fields,
+                remainder: _,
+            } => fields.len(),
+            ObjectData::Strings(slots) => slots.len(),
+            ObjectData::Opaque { reachable: _ } => 1,
+            ObjectData::Widened { inputs } => inputs.len(),
+        };
+    });
     StorageGrowth {
-        nodes: nodes.len(),
+        nodes: version.store.len(),
         payload,
     }
 }
@@ -447,28 +387,24 @@ fn successive_unknown_templates_keep_one_normal_continuation() -> eyre::Result<(
 }
 
 #[test]
-fn heap_query_exhaustion_never_reuses_a_cached_freshness_proof() -> eyre::Result<()> {
+fn persistent_heap_reads_keep_the_last_write_without_a_freshness_cache() -> eyre::Result<()> {
     let mut state = State::new(Value::nil());
     let map = state.heap.map(Remainder::Closed);
     let object = state.map_target(&map).ok_or_eyre("map missing")?;
     state
         .heap
         .write(&object, "x", Field::Present(Value::string("before")));
-    let _precise = state
+    let first = state
         .heap
         .version
         .object(&object)
         .ok_or_eyre("object missing")?;
-    let exhausted = state
+    let second = state
         .heap
         .version
-        .object_with_budget(&object, 0)
-        .ok_or_eyre("exhaustion dropped the object")?;
-    sim_assert_eq!(have: exhausted.multiplicity, want: crate::value::Multiplicity::Summary);
-    assert!(matches!(
-        exhausted.data,
-        crate::value::ObjectData::Widened { inputs: _ }
-    ));
+        .object(&object)
+        .ok_or_eyre("object missing")?;
+    assert!(Rc::ptr_eq(&first, &second));
     sim_assert_eq!(have: state.heap.version.field(&object, "x"), want: Field::Present(Value::string("before")));
     Ok(())
 }
@@ -493,7 +429,7 @@ fn frozen_heap_queries_survive_the_live_session_owner() -> eyre::Result<()> {
 }
 
 #[test]
-fn borrowed_heap_views_pin_fields_after_cache_eviction_and_later_writes() -> eyre::Result<()> {
+fn borrowed_heap_views_pin_fields_after_later_writes() -> eyre::Result<()> {
     let mut state = State::new(Value::nil());
     let map = state.heap.map(Remainder::Closed);
     let object = state.map_target(&map).ok_or_eyre("map missing")?;
@@ -506,8 +442,7 @@ fn borrowed_heap_views_pin_fields_after_cache_eviction_and_later_writes() -> eyr
         .borrowed_object(&object)
         .ok_or_eyre("borrowed view missing")?;
 
-    // The frozen root pins its derived fields independently of the evictable lookup cache.
-    *state.heap.arena.heap_queries.borrow_mut() = crate::value::heap_cache::ObjectCache::default();
+    // The frozen root pins fields independently of later writes and the live arena.
     state
         .heap
         .write(&object, "x", Field::Present(Value::string("after")));
@@ -529,7 +464,7 @@ fn borrowed_heap_views_pin_fields_after_cache_eviction_and_later_writes() -> eyr
 }
 
 #[test]
-fn exhausted_provenance_queries_do_not_publish_partial_cache_entries() -> eyre::Result<()> {
+fn persistent_heap_keeps_known_writes_over_unknown_provenance() -> eyre::Result<()> {
     use crate::value::ObjectData;
     use helm_schema_core::ValuesPath;
     use std::collections::BTreeSet;
@@ -545,15 +480,6 @@ fn exhausted_provenance_queries_do_not_publish_partial_cache_entries() -> eyre::
         "next",
         Field::Present(Value::input(ValuesPath::parse("y"))),
     );
-    let partial = state
-        .heap
-        .version
-        .object_with_budget(&object, 4)
-        .ok_or_eyre("exhaustion dropped storage")?;
-    let ObjectData::Widened { inputs } = &partial.data else {
-        eyre::bail!("exhaustion established precision");
-    };
-    assert!(inputs.contains(&ValuesPath::default()));
     let complete = state
         .heap
         .version
@@ -563,10 +489,10 @@ fn exhausted_provenance_queries_do_not_publish_partial_cache_entries() -> eyre::
     sim_assert_eq!(
         have: &complete.data,
         want: &ObjectData::Map {
-            fields: Rc::new(std::collections::BTreeMap::from([(
+            fields: Rc::new((std::collections::BTreeMap::from([(
                 "next".to_owned(),
                 Field::Present(Value::input(ValuesPath::parse("y"))),
-            )])),
+            )])).into()),
             remainder: Remainder::Unknown {
                 inputs: Rc::new(BTreeSet::from([ValuesPath::parse("x")])),
             },
@@ -576,16 +502,13 @@ fn exhausted_provenance_queries_do_not_publish_partial_cache_entries() -> eyre::
 }
 
 #[test]
-fn frozen_object_enumeration_reports_budget_exhaustion() -> eyre::Result<()> {
+fn frozen_object_enumeration_is_exact_after_the_owner_drops() {
     let frozen = {
         let mut state = State::new(Value::nil());
         let map = state.heap.map(Remainder::Closed);
         state.heap.freeze(&map)
     };
-    let mut budget = crate::value::heap_query::QueryBudget::new(0);
-    sim_assert_eq!(have: frozen.heap.query_object_ids(&mut budget), want: None);
-    sim_assert_eq!(have: frozen.heap.object_ids().ok_or_eyre("complete roster missing")?.len(), want: 1);
-    Ok(())
+    sim_assert_eq!(have: frozen.heap.object_ids().len(), want: 1);
 }
 
 #[test]
@@ -711,18 +634,18 @@ fn unrelated_history_does_not_spend_a_members_query_budget() -> eyre::Result<()>
     let stored = state
         .heap
         .version
-        .object_with_budget(&target, 64)
+        .object(&target)
         .ok_or_eyre("stored map missing")?;
-    sim_assert_eq!(have: &stored.data, want: &ObjectData::Map { fields: Rc::new(BTreeMap::from([("x".to_owned(), Field::Present(Value::string("before")))])), remainder: Remainder::Closed });
+    sim_assert_eq!(have: &stored.data, want: &ObjectData::Map { fields: Rc::new((BTreeMap::from([("x".to_owned(), Field::Present(Value::string("before")))])).into()), remainder: Remainder::Closed });
     state
         .heap
         .write(&target, "x", Field::Present(Value::string("after")));
     let stored = state
         .heap
         .version
-        .object_with_budget(&target, 64)
+        .object(&target)
         .ok_or_eyre("written map missing")?;
-    sim_assert_eq!(have: &stored.data, want: &ObjectData::Map { fields: Rc::new(BTreeMap::from([("x".to_owned(), Field::Present(Value::string("after")))])), remainder: Remainder::Closed });
+    sim_assert_eq!(have: &stored.data, want: &ObjectData::Map { fields: Rc::new((BTreeMap::from([("x".to_owned(), Field::Present(Value::string("after")))])).into()), remainder: Remainder::Closed });
     sim_assert_eq!(have: before.read_field("x").present().ok_or_eyre("frozen member missing")?.exact_text(), want: Some("before".to_owned()));
     Ok(())
 }
@@ -772,13 +695,13 @@ fn allocation_counts_do_not_mistake_an_implicit_input_view_for_installed_storage
             revision: state.heap.arena.snapshot(),
             multiplicity: Multiplicity::Singleton,
             data: ObjectData::Map {
-                fields: Rc::new(std::collections::BTreeMap::default()),
+                fields: Rc::default(),
                 remainder: Remainder::Input,
             },
         },
     );
     sim_assert_eq!(have: state.heap.version.object_count(), want: before + 1);
-    sim_assert_eq!(have: state.heap.version.object_count(), want: state.heap.version.object_ids().expect("bounded test object roster").len());
+    sim_assert_eq!(have: state.heap.version.object_count(), want: state.heap.version.object_ids().len());
     Ok(())
 }
 
@@ -794,7 +717,7 @@ fn unknown_write_queries_do_not_reconstruct_discarded_storage() -> eyre::Result<
         .collect::<BTreeMap<_, _>>();
     let target = state.heap.allocate(
         ObjectData::Map {
-            fields: Rc::new(fields),
+            fields: Rc::new((fields).into()),
             remainder: Remainder::Closed,
         },
         Multiplicity::Singleton,
@@ -817,7 +740,7 @@ fn unknown_write_queries_do_not_reconstruct_discarded_storage() -> eyre::Result<
     let object = state
         .heap
         .version
-        .object_with_budget(&target, 64)
+        .object(&target)
         .ok_or_eyre("object missing")?;
     sim_assert_eq!(have: object.as_ref(), want: &ObjectVersion {
         revision: state.heap.version.id,
@@ -905,14 +828,14 @@ fn joined_frozen_yaml_can_query_another_join_without_reentering_the_union_cache(
             .decision(predicate.clone(), predicate.negated(), Coverage::Exact);
     state.heap.join(&decision, &yes, &no)?;
 
-    // Selecting the YAML value queries the still-uncached inner heap join.
+    // Selecting the YAML value preserves the frozen inner join.
     let object = state
         .heap
         .version
         .object(&outer_id)
         .ok_or_eyre("joined outer map missing")?;
     sim_assert_eq!(have: &object.data, want: &ObjectData::Map {
-        fields: Rc::new(BTreeMap::from([("value".to_owned(), Field::select(decision, Field::Present(yaml), Field::Present(Value::string("safe"))))])),
+        fields: Rc::new((BTreeMap::from([("value".to_owned(), Field::select(decision, Field::Present(yaml), Field::Present(Value::string("safe"))))])).into()),
         remainder: Remainder::Closed,
     });
     Ok(())
@@ -921,7 +844,7 @@ fn joined_frozen_yaml_can_query_another_join_without_reentering_the_union_cache(
 #[test]
 fn seeded_object_inputs_follow_unknown_aliases_and_cycles_without_a_live_arena() -> eyre::Result<()>
 {
-    use crate::value::heap_query::QueryBudget;
+    use crate::value::work::WorkBudget;
     use crate::value::{Datum, FrozenValue, Reach, TypeCoverage, UnknownValue};
     use helm_schema_core::ValuesPath;
     use std::collections::BTreeSet;
@@ -959,13 +882,13 @@ fn seeded_object_inputs_follow_unknown_aliases_and_cycles_without_a_live_arena()
         .ok_or_eyre("stored root missing")?;
     let heap = Rc::clone(&state.heap.version);
     drop(state);
-    sim_assert_eq!(have: FrozenValue::object_inputs(&heap, &root_id, &storage, &mut QueryBudget::new(65_536)), want: BTreeSet::from([ValuesPath::parse("source")]));
-    sim_assert_eq!(have: FrozenValue::object_inputs(&heap, &root_id, &storage, &mut QueryBudget::new(0)), want: BTreeSet::from([ValuesPath::default()]));
+    sim_assert_eq!(have: FrozenValue::object_inputs(&heap, &root_id, &storage, &mut WorkBudget::new(65_536)), want: BTreeSet::from([ValuesPath::parse("source")]));
+    sim_assert_eq!(have: FrozenValue::object_inputs(&heap, &root_id, &storage, &mut WorkBudget::new(0)), want: BTreeSet::from([ValuesPath::default()]));
     Ok(())
 }
 
 #[test]
-fn an_absent_join_arm_does_not_spend_the_other_arms_query_budget() -> eyre::Result<()> {
+fn an_absent_join_arm_keeps_the_other_arms_exact_contents() -> eyre::Result<()> {
     use crate::value::{Heap, ObjectData};
     use std::collections::{BTreeMap, BTreeSet};
 
@@ -995,10 +918,10 @@ fn an_absent_join_arm_does_not_spend_the_other_arms_query_budget() -> eyre::Resu
     heap.join(&decision, &yes, &no)?;
     let storage = heap
         .version
-        .object_with_budget(&target, 64)
+        .object(&target)
         .ok_or_eyre("joined object missing")?;
     sim_assert_eq!(have: &storage.data, want: &ObjectData::Map {
-        fields: Rc::new(BTreeMap::from([("saved".to_owned(), Field::Present(Value::string("before")))])),
+        fields: Rc::new((BTreeMap::from([("saved".to_owned(), Field::Present(Value::string("before")))])).into()),
         remainder: Remainder::Closed,
     });
     Ok(())
@@ -1007,7 +930,7 @@ fn an_absent_join_arm_does_not_spend_the_other_arms_query_budget() -> eyre::Resu
 #[test]
 fn provenance_memo_separates_snapshots_and_alias_modes_and_never_caches_exhaustion()
 -> eyre::Result<()> {
-    use crate::value::heap_query::QueryBudget;
+    use crate::value::work::WorkBudget;
     use crate::value::{Datum, Reach, TypeCoverage, UnknownValue};
     use helm_schema_core::ValuesPath;
     use std::collections::BTreeSet;
@@ -1034,10 +957,10 @@ fn provenance_memo_separates_snapshots_and_alias_modes_and_never_caches_exhausti
         }))),
     );
     let old = state.heap.freeze(&root);
-    sim_assert_eq!(have: old.collect_inputs_with_budget(true, &mut QueryBudget::new(2)), want: BTreeSet::from([ValuesPath::default()]));
+    sim_assert_eq!(have: old.collect_inputs_with_budget(true, &mut WorkBudget::new(2)), want: BTreeSet::from([ValuesPath::default()]));
     sim_assert_eq!(have: old.inputs(), want: BTreeSet::new());
     sim_assert_eq!(have: old.reachable_inputs(), want: BTreeSet::from([ValuesPath::parse("before")]));
-    sim_assert_eq!(have: old.collect_inputs_with_budget(true, &mut QueryBudget::new(0)), want: BTreeSet::from([ValuesPath::default()]));
+    sim_assert_eq!(have: old.collect_inputs_with_budget(true, &mut WorkBudget::new(0)), want: BTreeSet::from([ValuesPath::default()]));
     state.heap.write(
         &child_id,
         "value",
@@ -1049,7 +972,7 @@ fn provenance_memo_separates_snapshots_and_alias_modes_and_never_caches_exhausti
     let new = state.heap.freeze(&root);
     sim_assert_eq!(have: new.reachable_inputs(), want: BTreeSet::from([ValuesPath::parse("after")]));
     sim_assert_eq!(have: old.reachable_inputs(), want: BTreeSet::from([ValuesPath::parse("before")]));
-    *state.heap.arena.input_queries.borrow_mut() = crate::value::heap_cache::InputCache::default();
+    *state.heap.arena.input_queries.borrow_mut() = crate::value::input_cache::InputCache::default();
     sim_assert_eq!(have: old.reachable_inputs(), want: BTreeSet::from([ValuesPath::parse("before")]));
     let arena = Rc::downgrade(&state.heap.arena);
     drop(state);
@@ -1061,11 +984,11 @@ fn provenance_memo_separates_snapshots_and_alias_modes_and_never_caches_exhausti
 #[test]
 fn terminal_object_provenance_keeps_exact_work_and_does_not_invent_input_identity()
 -> eyre::Result<()> {
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeSet;
 
     use helm_schema_core::ValuesPath;
 
-    use crate::value::heap_query::QueryBudget;
+    use crate::value::work::WorkBudget;
     use crate::value::{FrozenValue, Multiplicity, ObjectData, Reach};
 
     struct Case {
@@ -1078,7 +1001,7 @@ fn terminal_object_provenance_keeps_exact_work_and_does_not_invent_input_identit
         .into_iter()
         .map(|remainder| Case {
             data: ObjectData::Map {
-                fields: Rc::new(BTreeMap::new()),
+                fields: Rc::default(),
                 remainder,
             },
             inputs: BTreeSet::new(),
@@ -1088,13 +1011,14 @@ fn terminal_object_provenance_keeps_exact_work_and_does_not_invent_input_identit
     cases.extend([
         Case {
             data: ObjectData::Map {
-                fields: Rc::new(BTreeMap::new()),
+                fields: Rc::default(),
                 remainder: Remainder::Unknown {
                     inputs: Rc::new(inputs.clone()),
                 },
             },
             inputs: inputs.clone(),
-            work: 2,
+            // Two root/storage visits and the two known input paths.
+            work: 4,
         },
         Case {
             data: ObjectData::Strings(Vec::new()),
@@ -1126,11 +1050,11 @@ fn terminal_object_provenance_keeps_exact_work_and_does_not_invent_input_identit
         let storage = heap.object(&object).ok_or_eyre("object missing")?;
         drop(state);
         for allowance in 0..=work {
-            let mut budget = QueryBudget::new(allowance);
+            let mut budget = WorkBudget::new(allowance);
             sim_assert_eq!(have: FrozenValue::object_inputs(&heap, &object, &storage, &mut budget), want: BTreeSet::from([ValuesPath::default()]));
             sim_assert_eq!(have: budget.is_exhausted(), want: true);
         }
-        let mut budget = QueryBudget::new(work + 1);
+        let mut budget = WorkBudget::new(work + 1);
         sim_assert_eq!(have: FrozenValue::object_inputs(&heap, &object, &storage, &mut budget), want: inputs);
         sim_assert_eq!(have: budget.remaining, want: 1);
         sim_assert_eq!(have: budget.is_exhausted(), want: false);

@@ -8,16 +8,17 @@ pub(crate) use consumption::{
 mod eval;
 mod guard;
 mod heap;
-mod heap_cache;
-mod heap_coverage;
-mod heap_headers;
-mod heap_index;
-mod heap_query;
+mod heap_equality;
+mod heap_regions;
+mod heap_select;
+mod heap_snapshot;
+mod heap_store;
+mod heap_transfer;
 mod helpers;
 mod history;
 mod hosts;
+mod input_cache;
 mod input_paths;
-mod input_writes;
 mod invoke;
 mod json_query;
 pub(crate) mod kinds;
@@ -47,6 +48,7 @@ mod text_dag;
 mod text_prefix;
 pub(crate) mod use_policy;
 mod window_exits;
+mod work;
 #[cfg(test)]
 #[path = "../tests/runtime_write_certificate.rs"]
 mod write_certificate;
@@ -363,7 +365,7 @@ struct DecisionEdge {
     taken: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct ObjectId {
     ordinal: u64,
 }
@@ -382,16 +384,13 @@ struct InputBacking {
 /// Forks share only the allocator; immutable versions own every semantic fact.
 #[derive(Debug, Default)]
 struct Arena {
+    live_versions: Rc<Cell<usize>>,
     guards: RefCell<guard::DecisionStore>,
     frames: RefCell<BTreeMap<state::FrameLayout, u64>>,
     exact_decisions: RefCell<AHashMap<guard::ExactDecisionKey, std::rc::Weak<FrozenTest>>>,
     empty_snapshot: std::cell::OnceCell<Rc<HeapVersion>>,
-    heap_queries: RefCell<heap_cache::ObjectCache>,
-    object_answers: RefCell<heap_query::ObjectAnswers>,
-    input_queries: RefCell<heap_cache::InputCache>,
-    widened_queries: RefCell<heap_cache::WidenedCache>,
+    input_queries: RefCell<input_cache::InputCache>,
     input_unions: RefCell<heap::InputUnions>,
-    coverage_queries: RefCell<heap_coverage::CoverageProjection>,
     next_object: Cell<u64>,
     next_snapshot: Cell<u64>,
     next_decision: Cell<u64>,
@@ -421,42 +420,30 @@ struct Heap {
 }
 
 struct HeapVersion {
+    live_versions: Rc<Cell<usize>>,
     id: SnapshotId,
-    allocations: heap_headers::AllocationIndex,
+    store: heap_store::Store,
     arena: std::rc::Weak<Arena>,
     input_paths: Rc<input_paths::InputPaths>,
-    node: HeapNode,
-    index: heap_index::HeapIndex,
-    borrowed_objects: heap_query::BorrowedObjects,
 }
 
 #[derive(Debug)]
-enum HeapNode {
-    Empty,
-    Registration {
-        parent: Rc<HeapVersion>,
-        paths: Rc<input_paths::InputPaths>,
-    },
+enum HeapUpdate {
     Install {
-        parent: Rc<HeapVersion>,
         object: ObjectId,
         storage: Rc<ObjectVersion>,
-        kind: InstallKind,
     },
     Write {
-        parent: Rc<HeapVersion>,
         object: ObjectId,
         key: String,
         field: Field,
     },
     WriteSlot {
-        parent: Rc<HeapVersion>,
         object: ObjectId,
         index: usize,
         value: Value,
     },
     UnknownWrite {
-        parent: Rc<HeapVersion>,
         objects: Reach,
         inputs: Rc<BTreeSet<ValuesPath>>,
     },
@@ -467,18 +454,14 @@ enum HeapNode {
     },
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum InstallKind {
-    Baseline,
-    Mutation,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct ObjectVersion {
     revision: SnapshotId,
     multiplicity: Multiplicity,
     data: ObjectData,
 }
+
+type ObjectFields = imbl::GenericOrdMap<String, Field, imbl::shared_ptr::RcK>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Multiplicity {
@@ -489,7 +472,7 @@ enum Multiplicity {
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum ObjectData {
     Map {
-        fields: Rc<BTreeMap<String, Field>>,
+        fields: Rc<ObjectFields>,
         remainder: Remainder,
     },
     Strings(Vec<Value>),

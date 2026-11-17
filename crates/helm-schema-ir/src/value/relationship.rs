@@ -991,7 +991,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
     fn overlay(
         &mut self,
         view: &mut Relationships<'a>,
-        fields: &'a BTreeMap<String, Field>,
+        fields: &'a super::ObjectFields,
         heap: &'a HeapVersion,
         depth: usize,
     ) {

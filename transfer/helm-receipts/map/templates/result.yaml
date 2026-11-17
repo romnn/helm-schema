@@ -1,0 +1,7 @@
+{{- $m := dict -}}{{- range until 25000 -}}{{- $_ := set $m "x" "exact" -}}{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: store-map
+data:
+  result: {{ $m.x | quote }}

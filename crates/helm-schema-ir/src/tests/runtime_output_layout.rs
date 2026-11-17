@@ -712,7 +712,7 @@ fn lexical_transfers_keep_every_cached_key_alive() -> eyre::Result<()> {
     };
     let mut lexical = LexicalTransfers::new(&input_paths, &input_objects);
 
-    let mut state = State::new(Value::nil());
+    let state = State::new(Value::nil());
     let value = state.heap.freeze(&Value::input(ValuesPath::parse("value")));
     let node_owners = Rc::strong_count(&value.value.node);
     lexical.value(&value, LexicalState::PlainStart, &memo);

@@ -32,9 +32,8 @@ impl super::Heap {
 }
 
 impl super::HeapVersion {
-    pub(super) fn object_ids(&self) -> Option<BTreeSet<super::ObjectId>> {
-        self.query_object_ids(&mut super::heap_query::QueryBudget::new(65_536))
-            .map(|objects| objects.into_iter().collect())
+    pub(super) fn object_ids(&self) -> BTreeSet<super::ObjectId> {
+        self.store.objects().into_iter().collect()
     }
 }
 
@@ -201,7 +200,6 @@ fn frozen_scalars_do_not_retain_unrelated_heap_versions() -> eyre::Result<()> {
     let id = heap
         .version
         .object_ids()
-        .expect("bounded test object roster")
         .into_iter()
         .next()
         .ok_or_eyre("map allocation missing")?;
@@ -345,7 +343,7 @@ fn object_and_field_caps_keep_older_frozen_versions() -> eyre::Result<()> {
     for _ in 0..4200 {
         heap.map(Remainder::Closed);
     }
-    sim_assert_eq!(have: heap.version.object_ids().expect("bounded test object roster").len(), want: 4097);
+    sim_assert_eq!(have: heap.version.object_ids().len(), want: 4097);
     let saved = frozen
         .read_field("saved")
         .present()
@@ -414,7 +412,6 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
         .heap
         .version
         .object_ids()
-        .expect("bounded test object roster")
         .into_iter()
         .filter_map(|id| state.heap.version.object(&id))
     {
@@ -456,7 +453,6 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
         .heap
         .version
         .object_ids()
-        .expect("bounded test object roster")
         .into_iter()
         .filter_map(|id| state.heap.version.object(&id).map(|storage| (id, storage)))
     {
@@ -502,7 +498,7 @@ fn joining_widened_objects_shares_the_union_of_branch_inputs() -> eyre::Result<(
         .map(|_| {
             heap.allocate(
                 ObjectData::Map {
-                    fields: Rc::new(std::collections::BTreeMap::default()),
+                    fields: Rc::default(),
                     remainder: Remainder::Closed,
                 },
                 Multiplicity::Singleton,
@@ -1072,7 +1068,7 @@ fn allocation_budget_counts_classes_in_the_current_heap_version() -> eyre::Resul
         .object(id)
         .ok_or_eyre("allocated object missing")?;
     sim_assert_eq!(have: object.multiplicity, want: super::Multiplicity::Singleton);
-    sim_assert_eq!(have: heap.version.object_ids().expect("bounded test object roster").len(), want: 1);
+    sim_assert_eq!(have: heap.version.object_ids().len(), want: 1);
     assert!(heap.arena.aggregate_summary.get().is_none());
     Ok(())
 }

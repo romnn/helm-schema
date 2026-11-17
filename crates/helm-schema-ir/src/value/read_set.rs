@@ -180,21 +180,7 @@ impl ReadSet {
                 roots.sort_unstable_by_key(|root| root.id.ordinal);
                 roots.dedup_by_key(|root| root.id.ordinal);
                 if let Some(first) = roots.first() {
-                    if let Some(arena) = first.arena.upgrade() {
-                        arena.coverage_queries.borrow_mut().project(
-                            condition,
-                            &first.input_paths,
-                            &roots,
-                            &mut reads,
-                        );
-                    } else {
-                        super::heap_coverage::CoverageProjection::new().project(
-                            condition,
-                            &first.input_paths,
-                            &roots,
-                            &mut reads,
-                        );
-                    }
+                    super::heap_regions::project(condition, &first.input_paths, &roots, &mut reads);
                 }
             }
             reads.root

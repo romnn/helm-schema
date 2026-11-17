@@ -479,17 +479,13 @@ impl State {
 }
 
 pub(super) fn value_join_fits(yes: &Value, no: &Value) -> bool {
-    value_join_fits_with_budget(
-        yes,
-        no,
-        &mut super::heap_query::QueryBudget::new(usize::MAX),
-    )
+    value_join_fits_with_budget(yes, no, &mut super::work::WorkBudget::new(usize::MAX))
 }
 
 pub(super) fn value_join_fits_with_budget(
     yes: &Value,
     no: &Value,
-    budget: &mut super::heap_query::QueryBudget,
+    budget: &mut super::work::WorkBudget,
 ) -> bool {
     if Rc::ptr_eq(&yes.node, &no.node) {
         return true;

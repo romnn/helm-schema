@@ -2177,7 +2177,7 @@ fn fresh_map(
     let MapFields { fields, remainder } = map;
     let target = state.heap.allocate(
         ObjectData::Map {
-            fields: Rc::new(fields),
+            fields: Rc::new(fields.into()),
             remainder,
         },
         super::Multiplicity::Singleton,
@@ -2716,7 +2716,7 @@ fn string_map(
 ) -> Value {
     let target = state.heap.allocate(
         ObjectData::Map {
-            fields: Rc::new(fields),
+            fields: Rc::new(fields.into()),
             remainder,
         },
         super::Multiplicity::Singleton,

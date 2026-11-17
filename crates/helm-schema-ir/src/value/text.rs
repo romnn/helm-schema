@@ -228,6 +228,20 @@ impl FrozenText {
     }
 
     pub(super) fn projected(&self, original: &Value, outcome: &Outcome<'_>) -> Value {
+        self.projected_with_budget(
+            original,
+            outcome,
+            &mut super::work::WorkBudget::new(usize::MAX),
+        )
+        .unwrap_or_else(|| original.clone())
+    }
+
+    pub(super) fn projected_with_budget(
+        &self,
+        original: &Value,
+        outcome: &Outcome<'_>,
+        budget: &mut super::work::WorkBudget,
+    ) -> Option<Value> {
         if matches!(
             self.0.as_ref(),
             TextTerm::Resolved { .. }
@@ -236,11 +250,15 @@ impl FrozenText {
                     ..
                 }
         ) {
-            return original.clone();
+            return Some(original.clone());
         }
         // Exhaustion publishes no partial frontier that later queries could refine again.
-        self.project(original, outcome, &mut 4096)
-            .unwrap_or_else(|| original.clone())
+        let projected = self.project(original, outcome, &mut 4096, budget);
+        if budget.is_exhausted() {
+            None
+        } else {
+            Some(projected.unwrap_or_else(|| original.clone()))
+        }
     }
 
     fn project(
@@ -248,16 +266,42 @@ impl FrozenText {
         original: &Value,
         outcome: &Outcome<'_>,
         remaining: &mut usize,
+        budget: &mut super::work::WorkBudget,
     ) -> Option<Value> {
-        match resolve(&self.0, outcome, remaining) {
-            Ok(text) if !serialized_term(&self.0, outcome, &mut 1024) => Some(Value::string(&text)),
-            Ok(text) => Some(Value::frozen_text(
-                TextTerm::Resolved {
-                    term: Rc::clone(&self.0),
-                    literal: helm_schema_core::GuardValue::String(text),
-                },
-                original.inputs(),
-            )),
+        let before = *remaining;
+        let resolved = resolve(&self.0, outcome, remaining);
+        if !budget.charge(before - *remaining + 1) {
+            return None;
+        }
+        match resolved {
+            Ok(text) => {
+                let mut serialized_work = 1024;
+                let serialized = serialized_term(&self.0, outcome, &mut serialized_work);
+                if !budget.charge(1024 - serialized_work + text.len()) {
+                    return None;
+                }
+                if !serialized {
+                    return Some(Value::string(&text));
+                }
+                let origin_work = match original.node.as_ref() {
+                    ValueNode::Leaf(Leaf { datum: _, origin }) => origin.influences.len() + 1,
+                    ValueNode::Select {
+                        decision: _,
+                        yes: _,
+                        no: _,
+                    } => return None,
+                };
+                if !budget.charge(origin_work) {
+                    return None;
+                }
+                Some(Value::frozen_text(
+                    TextTerm::Resolved {
+                        term: Rc::clone(&self.0),
+                        literal: helm_schema_core::GuardValue::String(text),
+                    },
+                    original.inputs(),
+                ))
+            }
             Err(Unresolved::Unknown) => Some(original.clone()),
             Err(Unresolved::Exhausted) => None,
             Err(Unresolved::Choice(decision)) => {
@@ -272,11 +316,12 @@ impl FrozenText {
                             }
                         },
                         remaining,
+                        budget,
                     )
                 };
                 let yes = branch(true)?;
                 let no = branch(false)?;
-                Some(choice(&decision, yes, no))
+                super::heap_select::choice(&decision, yes, no, budget)
             }
         }
     }
@@ -645,20 +690,6 @@ pub(super) fn buffer_text(
         }
     }
     Ok(text)
-}
-
-// Unknown leaves retain the original graph; specializing it again here would recurse.
-fn choice(decision: &Rc<super::FrozenTest>, yes: Value, no: Value) -> Value {
-    if yes == no {
-        return yes;
-    }
-    Value {
-        node: Rc::new(ValueNode::Select {
-            decision: Rc::clone(decision),
-            yes,
-            no,
-        }),
-    }
 }
 
 pub(super) fn bounded_replace(text: &str, from: &str, to: &str, limit: usize) -> Option<String> {

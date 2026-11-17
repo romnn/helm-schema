@@ -2931,7 +2931,7 @@ impl<'a> LexicalTransfers<'a> {
     fn map_guard(
         &self,
         target: &super::ObjectId,
-        fields: &BTreeMap<String, super::Field>,
+        fields: &super::ObjectFields,
         remainder: &super::Remainder,
     ) -> Option<Predicate> {
         match remainder {

@@ -7,47 +7,9 @@ use helm_schema_core::ValuesPath;
 use std::rc::Rc;
 
 use super::{
-    Arena, Datum, Field, FrozenTest, FrozenValue, Heap, HeapNode, HeapVersion, Leaf, MapType,
+    Arena, Datum, Field, FrozenTest, FrozenValue, Heap, HeapUpdate, HeapVersion, Leaf, MapType,
     Multiplicity, ObjectData, ObjectId, ObjectVersion, Remainder, SnapshotId, Value, ValueNode,
 };
-
-impl HeapNode {
-    pub(super) fn parents(&self) -> impl Iterator<Item = &Rc<HeapVersion>> {
-        let (first, second) = match self {
-            Self::Empty => (None, None),
-            Self::Registration { parent, paths: _ }
-            | Self::Install {
-                parent,
-                object: _,
-                storage: _,
-                kind: _,
-            }
-            | Self::Write {
-                parent,
-                object: _,
-                key: _,
-                field: _,
-            }
-            | Self::WriteSlot {
-                parent,
-                object: _,
-                index: _,
-                value: _,
-            }
-            | Self::UnknownWrite {
-                parent,
-                objects: _,
-                inputs: _,
-            } => (Some(parent), None),
-            Self::Join {
-                decision: _,
-                yes,
-                no,
-            } => (Some(yes), Some(no)),
-        };
-        first.into_iter().chain(second)
-    }
-}
 
 impl Arena {
     pub(super) fn object(&self) -> ObjectId {
@@ -83,20 +45,16 @@ impl Heap {
         });
         let id = arena.snapshot();
         let input_paths = Rc::clone(&arena.input_paths.borrow());
-        let heap = Self {
+        Self {
             version: Rc::new(HeapVersion {
+                live_versions: super::heap_snapshot::track_version(&arena.live_versions),
                 id,
-                allocations: super::heap_headers::AllocationIndex::default(),
+                store: super::heap_store::Store::default(),
                 arena: Rc::downgrade(&arena),
                 input_paths,
-                node: HeapNode::Empty,
-                index: super::heap_index::HeapIndex::default(),
-                borrowed_objects: super::heap_query::BorrowedObjects::default(),
             }),
             arena,
-        };
-        super::stage0_diagnostics::heap(&heap.version);
-        heap
+        }
     }
 
     #[tracing::instrument(skip_all)]
@@ -136,6 +94,7 @@ impl Heap {
         };
         let data = if let Some(reason) = reason {
             tracing::debug!(?reason, "widen object");
+            tracing::debug_span!(target: "helm_schema_ir::counters::heap_store", "object_widened", reason = ?reason).in_scope(|| {});
             ObjectData::Widened {
                 inputs: Rc::new(self.data_inputs(&data)),
             }
@@ -163,13 +122,7 @@ impl Heap {
             {
                 inputs.extend(old.iter().cloned());
             }
-            let kind = if self.version.has_allocated_object(&id) {
-                super::InstallKind::Mutation
-            } else {
-                super::InstallKind::Baseline
-            };
-            self.install_with_kind(
-                kind,
+            self.install(
                 id.clone(),
                 ObjectVersion {
                     revision: self.arena.snapshot(),
@@ -182,13 +135,7 @@ impl Heap {
             return id;
         }
         let id = occurrence.cloned().unwrap_or_else(|| self.arena.object());
-        let kind = if existing {
-            super::InstallKind::Mutation
-        } else {
-            super::InstallKind::Baseline
-        };
-        self.install_with_kind(
-            kind,
+        self.install(
             id.clone(),
             ObjectVersion {
                 revision: self.arena.snapshot(),
@@ -202,7 +149,7 @@ impl Heap {
     pub(super) fn map(&mut self, remainder: Remainder) -> Value {
         let target = self.allocate(
             ObjectData::Map {
-                fields: Rc::new(BTreeMap::new()),
+                fields: Rc::default(),
                 remainder,
             },
             Multiplicity::Singleton,
@@ -213,20 +160,16 @@ impl Heap {
         })
     }
 
-    fn advance(&mut self, node: HeapNode) {
+    fn advance(&mut self, node: &HeapUpdate) {
         let id = self.arena.snapshot();
-        let allocations = super::heap_headers::AllocationIndex::for_node(&node);
-        let index = super::heap_index::HeapIndex::for_node(&node, &self.arena.input_paths.borrow());
+        let store = super::heap_store::Store::advance(&self.version, node, id, &self.arena);
         self.version = Rc::new(HeapVersion {
+            live_versions: super::heap_snapshot::track_version(&self.arena.live_versions),
             id,
-            allocations,
+            store,
             arena: Rc::downgrade(&self.arena),
             input_paths: Rc::clone(&self.arena.input_paths.borrow()),
-            node,
-            index,
-            borrowed_objects: super::heap_query::BorrowedObjects::default(),
         });
-        super::stage0_diagnostics::heap(&self.version);
     }
 
     pub(super) fn register_input(&mut self, object: ObjectId, path: ValuesPath) {
@@ -247,39 +190,20 @@ impl Heap {
         if Rc::ptr_eq(&paths, &self.version.input_paths) {
             return Rc::clone(&self.version);
         }
-        let node = HeapNode::Registration {
-            parent: Rc::clone(&self.version),
-            paths: Rc::clone(&paths),
-        };
         let id = self.arena.snapshot();
-        let index = super::heap_index::HeapIndex::for_node(&node, &paths);
-        let version = Rc::new(HeapVersion {
+        Rc::new(HeapVersion {
+            live_versions: super::heap_snapshot::track_version(&self.arena.live_versions),
             id,
-            allocations: self.version.allocations.clone(),
+            store: self.version.store.clone(),
             arena: Rc::downgrade(&self.arena),
             input_paths: paths,
-            node,
-            index,
-            borrowed_objects: super::heap_query::BorrowedObjects::default(),
-        });
-        super::stage0_diagnostics::heap(&version);
-        version
+        })
     }
 
     pub(super) fn install(&mut self, id: ObjectId, object: ObjectVersion) {
-        self.install_with_kind(super::InstallKind::Mutation, id, object);
-    }
-
-    pub(super) fn register_storage(&mut self, id: ObjectId, object: ObjectVersion) {
-        self.install_with_kind(super::InstallKind::Baseline, id, object);
-    }
-
-    fn install_with_kind(&mut self, kind: super::InstallKind, id: ObjectId, object: ObjectVersion) {
-        self.advance(HeapNode::Install {
-            parent: Rc::clone(&self.version),
+        self.advance(&HeapUpdate::Install {
             object: id,
             storage: Rc::new(object),
-            kind,
         });
     }
 
@@ -298,18 +222,31 @@ impl Heap {
         }
         let field = match object.multiplicity {
             Multiplicity::Singleton => value,
-            Multiplicity::Summary => Field::select(
-                self.arena.decision(
+            Multiplicity::Summary => {
+                let decision = self.arena.decision(
                     helm_schema_core::Predicate::False,
                     helm_schema_core::Predicate::False,
                     super::Coverage::Partial,
-                ),
-                value,
-                self.version.field(id, key),
-            ),
+                );
+                let mut budget = super::work::WorkBudget::new(super::work::OBJECT_WORK);
+                let previous = self.version.field(id, key);
+                let selected = field_join_fits(&value, &previous, &mut budget)
+                    .then(|| {
+                        super::heap_select::field(&decision, value.clone(), previous, &mut budget)
+                    })
+                    .flatten();
+                let Some(field) = selected else {
+                    let added = ObjectData::Map {
+                        fields: Rc::new(super::ObjectFields::from_iter([(key.to_owned(), value)])),
+                        remainder: Remainder::Closed,
+                    };
+                    self.widen_written_object(id, &object, &added);
+                    return true;
+                };
+                field
+            }
         };
-        self.advance(HeapNode::Write {
-            parent: Rc::clone(&self.version),
+        self.advance(&HeapUpdate::Write {
             object: id.clone(),
             key: key.to_owned(),
             field,
@@ -329,18 +266,24 @@ impl Heap {
         };
         let value = match object.multiplicity {
             Multiplicity::Singleton => value,
-            Multiplicity::Summary => Value::select(
-                self.arena.decision(
+            Multiplicity::Summary => {
+                let decision = self.arena.decision(
                     helm_schema_core::Predicate::False,
                     helm_schema_core::Predicate::False,
                     super::Coverage::Partial,
-                ),
-                value,
-                slot.clone(),
-            ),
+                );
+                let mut budget = super::work::WorkBudget::new(super::work::OBJECT_WORK);
+                let selected = super::state::value_join_fits_with_budget(&value, slot, &mut budget)
+                    .then(|| super::heap_select::value(&decision, &value, slot, &mut budget))
+                    .flatten();
+                let Some(selected) = selected else {
+                    self.widen_written_object(id, &object, &ObjectData::Strings(vec![value]));
+                    return true;
+                };
+                selected
+            }
         };
-        self.advance(HeapNode::WriteSlot {
-            parent: Rc::clone(&self.version),
+        self.advance(&HeapUpdate::WriteSlot {
             object: id.clone(),
             index,
             value,
@@ -350,11 +293,28 @@ impl Heap {
 
     pub(super) fn unknown_write(&mut self, inputs: Rc<BTreeSet<ValuesPath>>) {
         let objects = super::Reach::Top;
-        self.advance(HeapNode::UnknownWrite {
-            parent: Rc::clone(&self.version),
-            objects,
-            inputs,
-        });
+        self.advance(&HeapUpdate::UnknownWrite { objects, inputs });
+    }
+
+    fn widen_written_object(
+        &mut self,
+        id: &ObjectId,
+        previous: &ObjectVersion,
+        added: &ObjectData,
+    ) {
+        let mut inputs = self.data_inputs(&previous.data);
+        inputs.extend(self.data_inputs(added));
+        tracing::debug_span!(target: "helm_schema_ir::counters::heap_store", "object_widened", reason = "summary_write_bound", object = id.ordinal).in_scope(|| {});
+        self.install(
+            id.clone(),
+            ObjectVersion {
+                revision: self.arena.snapshot(),
+                multiplicity: previous.multiplicity,
+                data: ObjectData::Widened {
+                    inputs: Rc::new(inputs),
+                },
+            },
+        );
     }
 
     #[tracing::instrument(skip_all)]
@@ -365,17 +325,14 @@ impl Heap {
         } else {
             Rc::clone(self.arena.empty_snapshot.get_or_init(|| {
                 let id = self.arena.snapshot();
-                let version = Rc::new(HeapVersion {
+
+                Rc::new(HeapVersion {
+                    live_versions: super::heap_snapshot::track_version(&self.arena.live_versions),
                     id,
-                    allocations: super::heap_headers::AllocationIndex::default(),
+                    store: super::heap_store::Store::default(),
                     arena: Rc::downgrade(&self.arena),
                     input_paths: Rc::clone(&self.arena.input_paths.borrow()),
-                    node: HeapNode::Empty,
-                    index: super::heap_index::HeapIndex::default(),
-                    borrowed_objects: super::heap_query::BorrowedObjects::default(),
-                });
-                super::stage0_diagnostics::heap(&version);
-                version
+                })
             }))
         };
         FrozenValue::at(heap, value)
@@ -496,7 +453,7 @@ impl Heap {
         if Rc::ptr_eq(&yes.version, &no.version) {
             self.version = Rc::clone(&yes.version);
         } else {
-            self.advance(HeapNode::Join {
+            self.advance(&HeapUpdate::Join {
                 decision: Rc::clone(decision),
                 yes: Rc::clone(&yes.version),
                 no: Rc::clone(&no.version),
@@ -600,7 +557,7 @@ pub(super) fn join_data(
     yes: &ObjectData,
     no: &ObjectData,
     input_unions: Option<&RefCell<InputUnions>>,
-    budget: &mut super::heap_query::QueryBudget,
+    budget: &mut super::work::WorkBudget,
 ) -> Result<ObjectData, JoinError> {
     match (yes, no) {
         (
@@ -621,21 +578,7 @@ pub(super) fn join_data(
             budget,
         )),
         (ObjectData::Strings(yes), ObjectData::Strings(no)) if yes.len() == no.len() => {
-            if yes
-                .iter()
-                .zip(no)
-                .any(|(yes, no)| !super::state::value_join_fits_with_budget(yes, no, budget))
-            {
-                return Ok(ObjectData::Widened {
-                    inputs: Rc::default(),
-                });
-            }
-            Ok(ObjectData::Strings(
-                yes.iter()
-                    .zip(no)
-                    .map(|(yes, no)| Value::select(Rc::clone(decision), yes.clone(), no.clone()))
-                    .collect(),
-            ))
+            Ok(join_slots(decision, yes, no, budget))
         }
         (ObjectData::Widened { inputs: yes }, ObjectData::Widened { inputs: no }) => {
             Ok(ObjectData::Widened {
@@ -663,6 +606,13 @@ pub(super) fn join_data(
             inputs: Rc::clone(inputs),
         }),
         (ObjectData::Opaque { reachable: yes }, ObjectData::Opaque { reachable: no }) => {
+            if !budget.charge(
+                super::heap_equality::reach_work(yes) + super::heap_equality::reach_work(no),
+            ) {
+                return Ok(ObjectData::Widened {
+                    inputs: Rc::default(),
+                });
+            }
             Ok(ObjectData::Opaque {
                 reachable: match (yes, no) {
                     (super::Reach::Bounded(yes), super::Reach::Bounded(no)) => {
@@ -699,17 +649,45 @@ pub(super) fn join_data(
     }
 }
 
+fn join_slots(
+    decision: &Rc<FrozenTest>,
+    yes: &[Value],
+    no: &[Value],
+    budget: &mut super::work::WorkBudget,
+) -> ObjectData {
+    if yes
+        .iter()
+        .zip(no)
+        .any(|(yes, no)| !super::state::value_join_fits_with_budget(yes, no, budget))
+    {
+        return ObjectData::Widened {
+            inputs: Rc::default(),
+        };
+    }
+    let Some(slots) = yes
+        .iter()
+        .zip(no)
+        .map(|(yes, no)| super::heap_select::value(decision, yes, no, budget))
+        .collect::<Option<Vec<_>>>()
+    else {
+        return ObjectData::Widened {
+            inputs: Rc::default(),
+        };
+    };
+    ObjectData::Strings(slots)
+}
+
 pub(super) fn join_input_sets(
     yes: &Rc<BTreeSet<ValuesPath>>,
     no: &Rc<BTreeSet<ValuesPath>>,
     input_unions: Option<&RefCell<InputUnions>>,
-    budget: &mut super::heap_query::QueryBudget,
+    budget: &mut super::work::WorkBudget,
 ) -> Rc<BTreeSet<ValuesPath>> {
-    if Rc::ptr_eq(yes, no) {
-        return Rc::clone(yes);
-    }
     if !budget.charge(yes.len() + no.len()) {
         return Rc::new(BTreeSet::from([ValuesPath::default()]));
+    }
+    if Rc::ptr_eq(yes, no) {
+        return Rc::clone(yes);
     }
     if let Some(input_unions) = input_unions {
         input_unions.borrow_mut().union(yes, no)
@@ -733,11 +711,11 @@ fn union_inputs(
 
 fn join_map_data(
     decision: &Rc<FrozenTest>,
-    yes: &BTreeMap<String, Field>,
+    yes: &super::ObjectFields,
     yes_remainder: Remainder,
-    no: &BTreeMap<String, Field>,
+    no: &super::ObjectFields,
     no_remainder: Remainder,
-    budget: &mut super::heap_query::QueryBudget,
+    budget: &mut super::work::WorkBudget,
 ) -> ObjectData {
     let keys = yes
         .keys()
@@ -763,15 +741,17 @@ fn join_map_data(
                 inputs: Rc::default(),
             };
         }
-        fields.insert(
-            key.clone(),
-            Field::select(Rc::clone(decision), yes_field, no_field),
-        );
+        let Some(field) = super::heap_select::field(decision, yes_field, no_field, budget) else {
+            return ObjectData::Widened {
+                inputs: Rc::default(),
+            };
+        };
+        fields.insert(key.clone(), field);
     }
     let remainder = match (yes_remainder, no_remainder) {
         (Remainder::Unknown { inputs: yes }, Remainder::Unknown { inputs: no }) => {
             Remainder::Unknown {
-                inputs: Rc::new(yes.union(&no).cloned().collect()),
+                inputs: join_input_sets(&yes, &no, None, budget),
             }
         }
         (Remainder::Unknown { inputs }, Remainder::Open | Remainder::Closed | Remainder::Input)
@@ -779,7 +759,7 @@ fn join_map_data(
             Remainder::Unknown { inputs }
         }
         (yes @ Remainder::Layered(_), no) | (yes, no @ Remainder::Layered(_)) => {
-            super::layers::join_remainders(decision, &yes, &no).unwrap_or(Remainder::Open)
+            super::layers::join_remainders(decision, &yes, &no, budget).unwrap_or(Remainder::Open)
         }
         (Remainder::Closed, Remainder::Closed) => Remainder::Closed,
         (Remainder::Input, Remainder::Input) => Remainder::Input,
@@ -789,18 +769,18 @@ fn join_map_data(
         | (Remainder::Closed, Remainder::Input) => Remainder::Open,
     };
     ObjectData::Map {
-        fields: Rc::new(fields),
+        fields: Rc::new(fields.into()),
         remainder,
     }
 }
 
 impl Heap {
     pub(super) fn data_inputs(&self, data: &ObjectData) -> BTreeSet<ValuesPath> {
-        super::heap_query::data_inputs(&self.version, data)
+        super::heap_snapshot::data_inputs(&self.version, data)
     }
 }
 
-fn field_join_fits(yes: &Field, no: &Field, budget: &mut super::heap_query::QueryBudget) -> bool {
+fn field_join_fits(yes: &Field, no: &Field, budget: &mut super::work::WorkBudget) -> bool {
     if let (Field::Present(yes), Field::Present(no)) = (yes, no)
         && Rc::ptr_eq(&yes.node, &no.node)
     {
@@ -857,4 +837,13 @@ fn field_join_fits(yes: &Field, no: &Field, budget: &mut super::heap_query::Quer
         }
     }
     true
+}
+
+impl std::fmt::Debug for HeapVersion {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("HeapVersion")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
 }

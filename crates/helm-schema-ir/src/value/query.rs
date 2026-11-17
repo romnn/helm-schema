@@ -5,7 +5,7 @@ use super::{
 };
 use ahash::AHashSet;
 use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::rc::Rc;
 
 #[derive(Clone, Copy)]
@@ -925,7 +925,7 @@ impl State {
                 && !field_inputs_with_budget(
                     &field,
                     &mut members,
-                    &mut super::heap_query::QueryBudget::new(65_536),
+                    &mut super::work::WorkBudget::new(65_536),
                 )
             {
                 return Value::influenced(value.inputs());
@@ -1339,17 +1339,17 @@ impl State {
                     revision: self.heap.arena.snapshot(),
                     multiplicity: super::Multiplicity::Singleton,
                     data: ObjectData::Map {
-                        fields: Rc::new(BTreeMap::default()),
+                        fields: Rc::default(),
                         remainder,
                     },
                 };
                 self.remember_derived(&id, &storage);
-                self.heap.register_storage(id.clone(), storage);
+                self.heap.install(id.clone(), storage);
             }
             return id;
         }
         let data = ObjectData::Map {
-            fields: Rc::new(BTreeMap::default()),
+            fields: Rc::default(),
             remainder,
         };
         let id = self
@@ -1563,30 +1563,31 @@ fn field_needs_unknown(field: &Field) -> bool {
     }
 }
 
-/// The inputs a map remainder reads beyond its fields: an unknown region's paths, or the values
-/// layered keys read from.
+/// Collects a map remainder's dependencies, charging inputs independently of pointer sharing.
 fn remainder_inputs(
     remainder: &super::Remainder,
     seen: &mut AHashSet<*const BTreeSet<ValuesPath>>,
     inputs: &mut BTreeSet<ValuesPath>,
     values: &mut Vec<Value>,
-) {
-    match remainder {
-        super::Remainder::Unknown { inputs: known } => {
-            if seen.insert(Rc::as_ptr(known)) {
-                inputs.extend(known.iter().cloned());
-            }
-        }
+    budget: &mut super::work::WorkBudget,
+) -> bool {
+    let known = match remainder {
+        super::Remainder::Unknown { inputs } => Some(inputs),
         super::Remainder::Layered(layers) => {
-            if let Some(known) = layers.unknown_inputs()
-                && seen.insert(Rc::as_ptr(known))
-            {
-                inputs.extend(known.iter().cloned());
-            }
             values.extend(layers.source_values().cloned());
+            layers.unknown_inputs()
         }
-        super::Remainder::Closed | super::Remainder::Open | super::Remainder::Input => {}
+        super::Remainder::Closed | super::Remainder::Open | super::Remainder::Input => None,
+    };
+    if let Some(known) = known {
+        if !budget.charge(known.len()) {
+            return false;
+        }
+        if seen.insert(Rc::as_ptr(known)) {
+            inputs.extend(known.iter().cloned());
+        }
     }
+    true
 }
 
 fn field_value(field: Field, unknown: &Value, absent: &Value) -> Value {
@@ -1625,14 +1626,14 @@ impl FrozenValue {
     fn collect_inputs(&self, include_unknown_aliases: bool) -> BTreeSet<ValuesPath> {
         self.collect_inputs_with_budget(
             include_unknown_aliases,
-            &mut super::heap_query::QueryBudget::new(65_536),
+            &mut super::work::WorkBudget::new(65_536),
         )
     }
 
     pub(super) fn collect_inputs_with_budget(
         &self,
         include_unknown_aliases: bool,
-        budget: &mut super::heap_query::QueryBudget,
+        budget: &mut super::work::WorkBudget,
     ) -> BTreeSet<ValuesPath> {
         if let ValueNode::Leaf(Leaf { datum, origin }) = self.value.node.as_ref()
             && (matches!(
@@ -1681,7 +1682,7 @@ impl FrozenValue {
         } else {
             None
         };
-        let key = super::heap_cache::InputQueryKey {
+        let key = super::input_cache::InputQueryKey {
             version: self.heap.id.ordinal,
             value: Rc::as_ptr(&self.value.node),
             include_unknown_aliases,
@@ -1689,12 +1690,14 @@ impl FrozenValue {
         if let Some(arena) = &arena
             && let Some(entry) = arena.input_queries.borrow_mut().get(&key)
         {
-            return if budget.charge(entry.inputs.len() + 1) {
-                entry.inputs.clone()
-            } else {
-                BTreeSet::from([ValuesPath::default()])
-            };
+            // Reuse must preserve the cold traversal's charge and terminal exhaustion check.
+            if !budget.charge(entry.work) || budget.remaining == 0 {
+                budget.exhaust();
+                return BTreeSet::from([ValuesPath::default()]);
+            }
+            return entry.inputs.clone();
         }
+        let remaining = budget.remaining;
         let inputs = Self::collect_seeded_inputs(
             &self.heap,
             InputRoot::Value(&self.value),
@@ -1704,10 +1707,12 @@ impl FrozenValue {
         if !budget.is_exhausted()
             && let Some(arena) = arena
         {
-            arena
-                .input_queries
-                .borrow_mut()
-                .insert(key, &self.value.node, &inputs);
+            arena.input_queries.borrow_mut().insert(
+                key,
+                &self.value.node,
+                &inputs,
+                remaining - budget.remaining,
+            );
         }
         inputs
     }
@@ -1716,11 +1721,13 @@ impl FrozenValue {
         heap: &Rc<super::HeapVersion>,
         object: &super::ObjectId,
         storage: &Rc<super::ObjectVersion>,
-        budget: &mut super::heap_query::QueryBudget,
+        budget: &mut super::work::WorkBudget,
     ) -> BTreeSet<ValuesPath> {
         let terminal = match &storage.data {
             ObjectData::Map { fields, remainder } if fields.is_empty() => match remainder {
-                super::Remainder::Unknown { inputs } => Some((Some(inputs), 2)),
+                super::Remainder::Unknown { inputs } => {
+                    Some((Some(inputs), inputs.len().saturating_add(2)))
+                }
                 super::Remainder::Closed | super::Remainder::Input | super::Remainder::Open => {
                     Some((None, 2))
                 }
@@ -1760,7 +1767,7 @@ impl FrozenValue {
         heap: &super::HeapVersion,
         root: InputRoot<'_>,
         include_unknown_aliases: bool,
-        budget: &mut super::heap_query::QueryBudget,
+        budget: &mut super::work::WorkBudget,
     ) -> BTreeSet<ValuesPath> {
         let mut inputs = BTreeSet::new();
         let mut values = Vec::new();
@@ -1807,7 +1814,6 @@ impl FrozenValue {
                     &mut values,
                     &mut objects,
                     &mut expanded_render_graph,
-                    budget,
                 );
             }
             while let Some(id) = objects.pop() {
@@ -1820,14 +1826,22 @@ impl FrozenValue {
                 let storage = if known.as_ref().is_some_and(|known| known.object == id) {
                     known.take().map(|known| known.storage)
                 } else {
-                    heap.query_object(&id, budget)
+                    heap.object(&id)
                 };
                 let Some(object) = storage else {
                     continue;
                 };
                 match &object.data {
                     ObjectData::Map { fields, remainder } => {
-                        remainder_inputs(remainder, &mut seen_input_sets, &mut inputs, &mut values);
+                        if !remainder_inputs(
+                            remainder,
+                            &mut seen_input_sets,
+                            &mut inputs,
+                            &mut values,
+                            budget,
+                        ) {
+                            return BTreeSet::from([ValuesPath::default()]);
+                        }
                         for field in fields.values() {
                             if !field_inputs_with_budget(field, &mut values, budget) {
                                 return BTreeSet::from([ValuesPath::default()]);
@@ -1836,20 +1850,16 @@ impl FrozenValue {
                     }
                     ObjectData::Strings(slots) => values.extend(slots.iter().cloned()),
                     ObjectData::Widened { inputs: known } => {
+                        if !budget.charge(known.len()) {
+                            return BTreeSet::from([ValuesPath::default()]);
+                        }
                         if seen_input_sets.insert(Rc::as_ptr(known)) {
-                            if !budget.charge(known.len()) {
-                                return BTreeSet::from([ValuesPath::default()]);
-                            }
                             inputs.extend(known.iter().cloned());
                         }
                     }
-                    ObjectData::Opaque { reachable } => extend_aliases(
-                        reachable,
-                        heap,
-                        &mut objects,
-                        &mut expanded_render_graph,
-                        budget,
-                    ),
+                    ObjectData::Opaque { reachable } => {
+                        extend_aliases(reachable, heap, &mut objects, &mut expanded_render_graph);
+                    }
                 }
             }
         }
@@ -2366,18 +2376,13 @@ fn extend_aliases(
     heap: &super::HeapVersion,
     objects: &mut Vec<super::ObjectId>,
     expanded_render_graph: &mut bool,
-    budget: &mut super::heap_query::QueryBudget,
 ) {
     match aliases {
         super::Reach::Bounded(ids) => objects.extend(ids.iter().cloned()),
         super::Reach::Top => {
             if !*expanded_render_graph {
                 *expanded_render_graph = true;
-                if let Some(ids) = heap.query_object_ids(budget) {
-                    objects.extend(ids);
-                } else {
-                    budget.exhaust();
-                }
+                objects.extend(heap.store.objects());
             }
         }
     }
@@ -2385,7 +2390,7 @@ fn extend_aliases(
 fn field_inputs_with_budget(
     field: &Field,
     values: &mut Vec<Value>,
-    budget: &mut super::heap_query::QueryBudget,
+    budget: &mut super::work::WorkBudget,
 ) -> bool {
     match field {
         Field::Present(value) => {
@@ -2554,7 +2559,6 @@ fn collect_value_children(
     values: &mut Vec<Value>,
     objects: &mut Vec<super::ObjectId>,
     expanded_render_graph: &mut bool,
-    budget: &mut super::heap_query::QueryBudget,
 ) {
     match value.node.as_ref() {
         ValueNode::Select {
@@ -2593,7 +2597,7 @@ fn collect_value_children(
             Datum::Unknown(super::UnknownValue { types: _, aliases }) => {
                 // Mutation reachability does not describe the value's input provenance.
                 if include_unknown_aliases {
-                    extend_aliases(aliases, heap, objects, expanded_render_graph, budget);
+                    extend_aliases(aliases, heap, objects, expanded_render_graph);
                 }
             }
             Datum::Text(_)
