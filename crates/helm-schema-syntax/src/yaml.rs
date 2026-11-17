@@ -519,29 +519,32 @@ struct Tree {
     drafts: Vec<Draft>,
 }
 
-impl Tree {
-    /// Adds the first document of one read; returns its end mark, or `None` for a stream
-    /// without a document.
-    fn document(
-        &mut self,
-        (tokens, events): &(Vec<Token>, Vec<Event>),
-        at: &impl Fn(Mark) -> usize,
-        text: &str,
-    ) -> Result<Option<Mark>, LayoutUncertainty> {
-        // Collection openers in token order, per start offset: `true` for flow style.
+/// Where one read's tokens put collection openers, block entries and trivia.
+struct TokenIndex {
+    /// Collection openers per start offset, in token order: mapping and flow style.
+    openers: std::collections::BTreeMap<usize, Vec<(bool, bool)>>,
+    /// Block entry `-` indicators in token order.
+    entries: std::vec::IntoIter<(usize, usize)>,
+    /// Every token's extent.
+    spans: Vec<(usize, usize)>,
+}
+
+impl TokenIndex {
+    fn new(tokens: &[Token], at: &impl Fn(Mark) -> usize) -> Self {
         let mut openers: std::collections::BTreeMap<usize, Vec<(bool, bool)>> =
             std::collections::BTreeMap::new();
         let mut entries = Vec::new();
-        let mut spans = Vec::new();
+        let mut spans = Vec::with_capacity(tokens.len());
         for Token { kind, start, end } in tokens {
-            let (mapping, flow) = match kind {
+            let span = (at(*start), at(*end));
+            spans.push(span);
+            let opener = match kind {
                 TokenKind::BlockMappingStart => (true, false),
                 TokenKind::FlowMappingStart => (true, true),
                 TokenKind::BlockSequenceStart => (false, false),
                 TokenKind::FlowSequenceStart => (false, true),
                 TokenKind::BlockEntry => {
-                    entries.push((at(*start), at(*end)));
-                    spans.push((at(*start), at(*end)));
+                    entries.push(span);
                     continue;
                 }
                 TokenKind::StreamStart
@@ -559,15 +562,45 @@ impl Tree {
                 | TokenKind::Alias(_)
                 | TokenKind::Anchor(_)
                 | TokenKind::Tag(..)
-                | TokenKind::Scalar { .. } => {
-                    spans.push((at(*start), at(*end)));
-                    continue;
-                }
+                | TokenKind::Scalar { .. } => continue,
             };
-            spans.push((at(*start), at(*end)));
-            openers.entry(at(*start)).or_default().push((mapping, flow));
+            openers.entry(span.0).or_default().push(opener);
         }
-        let mut entries = entries.into_iter();
+        Self {
+            openers,
+            entries: entries.into_iter(),
+            spans,
+        }
+    }
+
+    /// Consumes the opener of a mapping or sequence starting at `start`; `Some(true)` when it
+    /// is a flow bracket.
+    fn flow(&mut self, start: usize, mapping: bool) -> Option<bool> {
+        let openers = self.openers.get_mut(&start)?;
+        let index = openers.iter().position(|(kind, _)| *kind == mapping)?;
+        Some(openers.remove(index).1)
+    }
+}
+
+/// Anchors, tags and aliases are interpretations the layout does not resolve.
+fn untagged(anchor: &str, tag: &str) -> Result<(), LayoutUncertainty> {
+    if anchor.is_empty() && tag.is_empty() {
+        Ok(())
+    } else {
+        Err(LayoutUncertainty::TagOrAlias)
+    }
+}
+
+impl Tree {
+    /// Adds the first document of one read; returns its end mark, or `None` for a stream
+    /// without a document.
+    fn document(
+        &mut self,
+        (tokens, events): &(Vec<Token>, Vec<Event>),
+        at: &impl Fn(Mark) -> usize,
+        text: &str,
+    ) -> Result<Option<Mark>, LayoutUncertainty> {
+        let mut index = TokenIndex::new(tokens, at);
         let mut stack: Vec<Frame> = Vec::new();
         let mut document = None;
         for Event { kind, start, end } in events {
@@ -588,7 +621,7 @@ impl Tree {
                         self.extend(marker, end_offset);
                     }
                     self.extend(node, end_offset);
-                    self.comments(node, &spans, text);
+                    self.comments(node, &index.spans, text);
                     return Ok(Some(*end));
                 }
                 EventKind::Alias(_) => return Err(LayoutUncertainty::TagOrAlias),
@@ -599,106 +632,130 @@ impl Tree {
                     style,
                     implicit: _,
                 } => {
-                    if !anchor.is_empty() || !tag.is_empty() {
-                        return Err(LayoutUncertainty::TagOrAlias);
-                    }
-                    let (parent, key) = self.open_slot(&mut stack, &mut entries, start)?;
-                    // An empty node is implicit null: no bytes and no node, only an extent.
-                    if start < end_offset {
-                        let kind = match style {
-                            ScalarStyleEvent::Plain => YamlNodeKind::Scalar(ScalarStyle::Plain),
-                            ScalarStyleEvent::SingleQuoted => {
-                                YamlNodeKind::Scalar(ScalarStyle::SingleQuoted)
-                            }
-                            ScalarStyleEvent::DoubleQuoted => {
-                                YamlNodeKind::Scalar(ScalarStyle::DoubleQuoted)
-                            }
-                            ScalarStyleEvent::Literal | ScalarStyleEvent::Folded => {
-                                YamlNodeKind::BlockScalar
-                            }
-                        };
-                        let node = self.push(Some(parent), kind, key, start);
-                        // A block scalar's token runs through its final line breaks; the
-                        // node spans its header and content lines only.
-                        let end_offset = if kind == YamlNodeKind::BlockScalar {
-                            start
-                                + text
-                                    .get(start..end_offset)
-                                    .unwrap_or_default()
-                                    .trim_end_matches([' ', '\t', '\r', '\n'])
-                                    .len()
-                        } else {
-                            end_offset
-                        };
-                        self.extend(node, end_offset);
-                    }
-                    self.close_slot(&mut stack, end_offset);
+                    untagged(anchor, tag)?;
+                    self.scalar(&mut stack, &mut index, *style, (start, end_offset), text)?;
                 }
                 EventKind::MappingStart {
                     anchor,
                     tag,
                     implicit: _,
+                } => {
+                    untagged(anchor, tag)?;
+                    self.open_collection(&mut stack, &mut index, true, start)?;
                 }
-                | EventKind::SequenceStart {
+                EventKind::SequenceStart {
                     anchor,
                     tag,
                     implicit: _,
                 } => {
-                    if !anchor.is_empty() || !tag.is_empty() {
-                        return Err(LayoutUncertainty::TagOrAlias);
-                    }
-                    let mapping = matches!(kind, EventKind::MappingStart { .. });
-                    let in_flow = stack.iter().any(|frame| match frame {
-                        Frame::Mapping { flow, .. } | Frame::Sequence { flow, .. } => *flow,
-                        Frame::Document(_) => false,
-                    });
-                    let opener = openers.get_mut(&start).and_then(|openers| {
-                        let index = openers.iter().position(|(kind, _)| *kind == mapping)?;
-                        Some(openers.remove(index).1)
-                    });
-                    // Only a flow sequence's single-pair entry opens a mapping without a token.
-                    let flow = opener.unwrap_or(in_flow);
-                    let (parent, key) = self.open_slot(&mut stack, &mut entries, start)?;
-                    let kind = match (mapping, flow) {
-                        (true, false) => YamlNodeKind::Mapping,
-                        (true, true) => YamlNodeKind::FlowMapping,
-                        (false, false) => YamlNodeKind::Sequence,
-                        (false, true) => YamlNodeKind::FlowSequence,
-                    };
-                    let node = self.push(Some(parent), kind, key, start);
-                    stack.push(if mapping {
-                        Frame::Mapping {
-                            node,
-                            flow,
-                            entry: None,
-                        }
-                    } else {
-                        Frame::Sequence {
-                            node,
-                            flow,
-                            item: None,
-                        }
-                    });
+                    untagged(anchor, tag)?;
+                    self.open_collection(&mut stack, &mut index, false, start)?;
                 }
                 EventKind::MappingEnd | EventKind::SequenceEnd => {
-                    let (node, flow) = match stack.pop() {
-                        Some(
-                            Frame::Mapping { node, flow, .. } | Frame::Sequence { node, flow, .. },
-                        ) => (node, flow),
-                        Some(Frame::Document(_)) | None => return Err(LayoutUncertainty::Parse),
-                    };
-                    // A flow collection ends at its bracket. A block one ends at its last
-                    // child, unless the stream end closes it: then its `BLOCK-END` token sits
-                    // at the end of input (`scannerc.go:1029`) and the trailing trivia is its.
-                    if flow || end_offset == text.len() {
-                        self.extend(node, end_offset);
-                    }
-                    let end = self.drafts.get(node).map_or(end_offset, |draft| draft.end);
-                    self.close_slot(&mut stack, end);
+                    self.close_collection(&mut stack, end_offset, text)?;
                 }
             }
         }
         Ok(None)
+    }
+
+    /// Adds a scalar of `style` spanning `(start, end)` in the slot it fills.
+    fn scalar(
+        &mut self,
+        stack: &mut [Frame],
+        index: &mut TokenIndex,
+        style: ScalarStyleEvent,
+        (start, end): (usize, usize),
+        text: &str,
+    ) -> Result<(), LayoutUncertainty> {
+        let (parent, key) = self.open_slot(stack, &mut index.entries, start)?;
+        // An empty node is implicit null: no bytes and no node, only an extent.
+        if start < end {
+            let kind = match style {
+                ScalarStyleEvent::Plain => YamlNodeKind::Scalar(ScalarStyle::Plain),
+                ScalarStyleEvent::SingleQuoted => YamlNodeKind::Scalar(ScalarStyle::SingleQuoted),
+                ScalarStyleEvent::DoubleQuoted => YamlNodeKind::Scalar(ScalarStyle::DoubleQuoted),
+                ScalarStyleEvent::Literal | ScalarStyleEvent::Folded => YamlNodeKind::BlockScalar,
+            };
+            let node = self.push(Some(parent), kind, key, start);
+            // A block scalar's token runs through its final line breaks; the node spans its
+            // header and content lines only.
+            let end = if kind == YamlNodeKind::BlockScalar {
+                start
+                    + text
+                        .get(start..end)
+                        .unwrap_or_default()
+                        .trim_end_matches([' ', '\t', '\r', '\n'])
+                        .len()
+            } else {
+                end
+            };
+            self.extend(node, end);
+        }
+        self.close_slot(stack, end);
+        Ok(())
+    }
+
+    /// Opens a mapping or sequence starting at `start` in the slot it fills.
+    fn open_collection(
+        &mut self,
+        stack: &mut Vec<Frame>,
+        index: &mut TokenIndex,
+        mapping: bool,
+        start: usize,
+    ) -> Result<(), LayoutUncertainty> {
+        let in_flow = stack.iter().any(|frame| match frame {
+            Frame::Mapping { flow, .. } | Frame::Sequence { flow, .. } => *flow,
+            Frame::Document(_) => false,
+        });
+        // Only a flow sequence's single-pair entry opens a mapping without a token.
+        let flow = index.flow(start, mapping).unwrap_or(in_flow);
+        let (parent, key) = self.open_slot(stack, &mut index.entries, start)?;
+        let kind = match (mapping, flow) {
+            (true, false) => YamlNodeKind::Mapping,
+            (true, true) => YamlNodeKind::FlowMapping,
+            (false, false) => YamlNodeKind::Sequence,
+            (false, true) => YamlNodeKind::FlowSequence,
+        };
+        let node = self.push(Some(parent), kind, key, start);
+        stack.push(if mapping {
+            Frame::Mapping {
+                node,
+                flow,
+                entry: None,
+            }
+        } else {
+            Frame::Sequence {
+                node,
+                flow,
+                item: None,
+            }
+        });
+        Ok(())
+    }
+
+    /// Closes the innermost collection at its end event `end`.
+    fn close_collection(
+        &mut self,
+        stack: &mut Vec<Frame>,
+        end: usize,
+        text: &str,
+    ) -> Result<(), LayoutUncertainty> {
+        let (node, flow) = match stack.pop() {
+            Some(Frame::Mapping { node, flow, .. } | Frame::Sequence { node, flow, .. }) => {
+                (node, flow)
+            }
+            Some(Frame::Document(_)) | None => return Err(LayoutUncertainty::Parse),
+        };
+        // A flow collection ends at its bracket. A block one ends at its last child, unless
+        // the stream end closes it: then its `BLOCK-END` token sits at the end of input
+        // (`scannerc.go:1029`) and the trailing trivia is its.
+        if flow || end == text.len() {
+            self.extend(node, end);
+        }
+        let end = self.drafts.get(node).map_or(end, |draft| draft.end);
+        self.close_slot(stack, end);
+        Ok(())
     }
 
     fn push(
@@ -732,7 +789,12 @@ impl Tree {
     ) -> Result<(usize, bool), LayoutUncertainty> {
         match stack.last_mut() {
             None => Err(LayoutUncertainty::Parse),
-            Some(Frame::Document(node)) => Ok((*node, false)),
+            Some(
+                Frame::Document(node)
+                | Frame::Sequence {
+                    node, flow: true, ..
+                },
+            ) => Ok((*node, false)),
             Some(Frame::Mapping {
                 entry: Some((pair, value)),
                 ..
@@ -754,9 +816,6 @@ impl Tree {
                 *entry = Some((pair, false));
                 Ok((pair, true))
             }
-            Some(Frame::Sequence {
-                node, flow: true, ..
-            }) => Ok((*node, false)),
             Some(Frame::Sequence {
                 node,
                 flow: false,
