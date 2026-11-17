@@ -18,6 +18,7 @@ pub const GENERATION_CRATES: &[&str] = &[
     "helm-schema-core",
     "helm-schema-dev",
     "helm-schema-gen",
+    "helm-schema-goyaml",
     "helm-schema-ir",
     "helm-schema-json-schema-minify",
     "helm-schema-json-schema-walk",
