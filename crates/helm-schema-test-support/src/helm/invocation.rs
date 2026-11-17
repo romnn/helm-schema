@@ -1344,8 +1344,10 @@ fn publish_entry(
     Ok(())
 }
 
-/// `HELM_SCHEMA_HELMSWEEP`, else `helmsweep` in the target directory this
-/// test binary was built into (`task build:helmsweep` puts it there).
+/// `HELM_SCHEMA_HELMSWEEP`, else `helmsweep` under `CARGO_TARGET_DIR` or the workspace `target/`.
+///
+/// Relative target directories resolve from the workspace root, independently of Cargo's
+/// executable layout, profile or target triple.
 ///
 /// # Errors
 ///
@@ -1354,13 +1356,8 @@ pub fn find_helmsweep() -> eyre::Result<PathBuf> {
     if let Some(path) = std::env::var_os(HELMSWEEP_VAR) {
         return Ok(PathBuf::from(path).canonicalize()?);
     }
-    let executable = std::env::current_exe()?;
-    // <target>/<profile>/deps/<test binary>
-    let target = executable
-        .ancestors()
-        .nth(3)
-        .ok_or_eyre("test binary is not inside a target directory")?;
-    let program = target.join(format!("helmsweep{}", std::env::consts::EXE_SUFFIX));
+    let program =
+        test_util::scratch::target_dir().join(format!("helmsweep{}", std::env::consts::EXE_SUFFIX));
     eyre::ensure!(
         program.is_file(),
         "no helmsweep at {}: run `task build:helmsweep`, set {HELMSWEEP_VAR}, \

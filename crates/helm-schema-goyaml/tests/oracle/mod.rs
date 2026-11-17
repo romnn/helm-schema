@@ -3,7 +3,7 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use serde_json::Value;
 use std::io::{BufRead as _, BufReader, Write as _};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 
 pub(super) struct Oracle {
@@ -14,14 +14,11 @@ pub(super) struct Oracle {
 
 impl Oracle {
     pub(super) fn start() -> eyre::Result<Self> {
-        let executable = std::env::current_exe()?;
-        let target = executable
-            .parent()
-            .and_then(Path::parent)
-            .and_then(Path::parent)
-            .ok_or_eyre("no target directory")?;
         let program = std::env::var_os("HELM_SCHEMA_GOYAMLSWEEP").map_or_else(
-            || target.join(format!("goyamlsweep{}", std::env::consts::EXE_SUFFIX)),
+            || {
+                test_util::scratch::target_dir()
+                    .join(format!("goyamlsweep{}", std::env::consts::EXE_SUFFIX))
+            },
             PathBuf::from,
         );
         let mut child = Command::new(program)
