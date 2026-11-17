@@ -31,6 +31,85 @@ impl super::DecisionStore {
     }
 }
 
+/// Incremental certificates preserve full re-walk charges across shared roots, nested tests,
+/// overlapping arena-local IDs, repeated includes, and interleaved construction charges.
+#[test]
+fn incremental_guard_accounting_matches_full_rewalk() {
+    use super::{Arena, Coverage, GuardWorkBudget, RuntimeGuard};
+    use ahash::AHashSet;
+    use helm_schema_core::Predicate;
+    use std::rc::Rc;
+
+    fn reachable(roots: &[&RuntimeGuard]) -> usize {
+        let mut pending = roots.to_vec();
+        let mut visited = AHashSet::new();
+        while let Some(guard) = pending.pop() {
+            if let RuntimeGuard::Branch(node) = guard
+                && visited.insert(Rc::as_ptr(node))
+            {
+                pending.extend([&node.yes, &node.no]);
+                pending.extend(node.test.runtime.iter());
+            }
+        }
+        visited.len()
+    }
+
+    let mut seed = 0x935a_6f23_4bd2_98e1_u64;
+    let mut next = |bound: usize| {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+        usize::try_from(seed % (bound as u64)).unwrap_or_default()
+    };
+    for _ in 0..12 {
+        let arenas = [Arena::default(), Arena::default()];
+        let mut guards = vec![RuntimeGuard::False, RuntimeGuard::True];
+        for index in 0..256 {
+            let arena = &arenas[index % 2];
+            let yes = guards[next(guards.len())].clone();
+            let no = guards[next(guards.len())].clone();
+            let test = if next(3) == 0 {
+                arena.budget_test(guards[next(guards.len())].clone())
+            } else {
+                arena.decision(Predicate::False, Predicate::False, Coverage::Partial)
+            };
+            let guard = arena.guards.borrow_mut().select(test, yes, no);
+            guards.push(guard);
+        }
+        // Repeated and overlapping roots must still pay their full union on every call.
+        for limit in [0, 1, 2, 8, 32, 128, 512, 4096, 32768] {
+            let mut work = GuardWorkBudget::new(limit);
+            let mut reference = GuardWorkBudget::new(limit);
+            for _ in 0..32 {
+                let roots = (0..next(5))
+                    .map(|_| &guards[next(guards.len())])
+                    .collect::<Vec<_>>();
+                let count = reachable(&roots);
+                for _ in 0..2 {
+                    let expected = reference.consume(count).map(|()| count);
+                    sim_assert_eq!(have: work.include(roots.iter().copied()).ok(), want: expected.ok());
+                    sim_assert_eq!(have: work.remaining, want: reference.remaining);
+                }
+                let charge = next(4);
+                sim_assert_eq!(have: work.consume(charge).is_ok(), want: reference.consume(charge).is_ok());
+            }
+        }
+        // Exercise the exact threshold with cold and warm certificates.
+        for guard in &guards {
+            let count = reachable(&[guard]);
+            for limit in [count.saturating_sub(1), count, count + 1] {
+                let mut work = GuardWorkBudget::new(limit);
+                let mut reference = GuardWorkBudget::new(limit);
+                sim_assert_eq!(
+                    have: work.include([guard]).ok(),
+                    want: reference.consume(count).map(|()| count).ok()
+                );
+                sim_assert_eq!(have: work.remaining, want: reference.remaining);
+            }
+        }
+    }
+}
+
 #[test]
 fn budget_cache_hits_account_for_retained_runtime_nodes() {
     use super::{Arena, Coverage, DecisionEdge, GuardWorkBudget, RuntimeGuard};

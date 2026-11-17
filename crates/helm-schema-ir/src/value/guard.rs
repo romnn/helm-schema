@@ -1,4 +1,4 @@
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, OnceCell, RefCell};
 use std::collections::BTreeMap;
 use std::rc::{Rc, Weak};
 
@@ -31,7 +31,7 @@ pub(super) struct DecisionNode {
     input_exact: bool,
     alias_free: bool,
     queries: Rc<GuardQueries>,
-    retained_work: Cell<Option<usize>>,
+    retained_work: OnceCell<Box<RetainedGuardNodes>>,
 }
 
 impl Drop for DecisionNode {
@@ -205,6 +205,116 @@ impl GuardWork for ExactGuardWork {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct GuardNodeRange {
+    context: usize,
+    first: u64,
+    last: u64,
+}
+
+#[derive(Clone, Debug)]
+struct RetainedGuardNodes {
+    ranges: Vec<GuardNodeRange>,
+    count: usize,
+}
+
+impl RetainedGuardNodes {
+    fn new(mut ranges: Vec<GuardNodeRange>, limit: usize) -> Result<Self, super::BoundReason> {
+        // Sorted, disjoint inclusive ranges compress long shared prefixes without losing holes.
+        ranges.sort_unstable();
+        let mut merged: Vec<GuardNodeRange> = Vec::new();
+        for range in ranges {
+            if let Some(previous) = merged.last_mut()
+                && previous.context == range.context
+                && range.first <= previous.last.saturating_add(1)
+            {
+                previous.last = previous.last.max(range.last);
+            } else {
+                merged.push(range);
+            }
+        }
+        let mut count = 0_usize;
+        for range in &merged {
+            let length = usize::try_from(range.last - range.first + 1)
+                .map_err(|_| super::BoundReason::BudgetNodes)?;
+            count = count
+                .checked_add(length)
+                .ok_or(super::BoundReason::BudgetNodes)?;
+            if count > limit {
+                return Err(super::BoundReason::BudgetNodes);
+            }
+        }
+        Ok(Self {
+            ranges: merged,
+            count,
+        })
+    }
+}
+
+impl RetainedGuardNodes {
+    fn contains(&self, node: &DecisionNode) -> bool {
+        let context = Rc::as_ptr(&node.queries) as usize;
+        let index = self.ranges.partition_point(|range| {
+            range.context < context || (range.context == context && range.last < node.id)
+        });
+        self.ranges
+            .get(index)
+            .is_some_and(|range| range.context == context && range.first <= node.id)
+    }
+}
+
+impl DecisionNode {
+    fn retained_nodes(&self, limit: usize) -> Result<&RetainedGuardNodes, super::BoundReason> {
+        // Descendants are immutable and kept alive by their parent, so context-local IDs remain
+        // valid for the certificate's lifetime, including when a graph crosses arena contexts.
+        if let Some(nodes) = self.retained_work.get() {
+            return if nodes.count <= limit {
+                Ok(nodes)
+            } else {
+                Err(super::BoundReason::BudgetNodes)
+            };
+        }
+        // Certify requested roots only: a cold graph takes one walk, and a later root can union
+        // certified descendants without constructing a transitive closure at every node.
+        let mut pending = vec![self];
+        let mut visited = AHashSet::new();
+        let mut ranges = Vec::new();
+        let mut cached = RetainedGuardNodes {
+            ranges: Vec::new(),
+            count: 0,
+        };
+        while let Some(node) = pending.pop() {
+            if cached.contains(node) || !visited.insert(std::ptr::from_ref(node)) {
+                continue;
+            }
+            if visited.len() > limit {
+                return Err(super::BoundReason::BudgetNodes);
+            }
+            if let Some(nodes) = node.retained_work.get() {
+                cached.ranges.extend_from_slice(&nodes.ranges);
+                cached = RetainedGuardNodes::new(cached.ranges, limit)?;
+                continue;
+            }
+            ranges.push(GuardNodeRange {
+                context: Rc::as_ptr(&node.queries) as usize,
+                first: node.id,
+                last: node.id,
+            });
+            for child in [&node.yes, &node.no]
+                .into_iter()
+                .chain(node.test.runtime.iter())
+            {
+                if let RuntimeGuard::Branch(child) = child {
+                    pending.push(child);
+                }
+            }
+        }
+        cached.ranges.extend(ranges);
+        let nodes = RetainedGuardNodes::new(cached.ranges, limit)?;
+        Ok(self.retained_work.get_or_init(|| Box::new(nodes)))
+    }
+}
+
 pub(super) struct GuardWorkBudget {
     remaining: usize,
 }
@@ -223,50 +333,44 @@ impl GuardWorkBudget {
         Ok(())
     }
 
-    // Cached results still retain their full graph.
+    // Every call charges the full reachable union, even across repeated calls on this budget.
+    // Certificates contain exactly the distinct nodes reached through yes, no and runtime-test
+    // edges; unioning their sets preserves sharing without adding overlapping child counts.
     pub(super) fn include<'a>(
         &mut self,
         guards: impl IntoIterator<Item = &'a RuntimeGuard>,
     ) -> Result<usize, super::BoundReason> {
-        let mut guards = guards
-            .into_iter()
-            .filter(|guard| matches!(guard, RuntimeGuard::Branch(_)));
-        let root = guards.next();
-        let second = guards.next();
-        if second.is_none()
-            && let Some(RuntimeGuard::Branch(node)) = root
-            && let Some(work) = node.retained_work.get()
-        {
-            self.consume(work)?;
-            return Ok(work);
-        }
-        let mut pending = root
-            .into_iter()
-            .chain(second)
-            .chain(guards)
-            .collect::<Vec<_>>();
-        let mut visited = AHashSet::new();
-        while let Some(guard) = pending.pop() {
-            let RuntimeGuard::Branch(node) = guard else {
-                continue;
+        let mut guards = guards.into_iter().filter_map(|guard| match guard {
+            RuntimeGuard::Branch(node) => Some(node.as_ref()),
+            RuntimeGuard::False | RuntimeGuard::True => None,
+        });
+        let Some(root) = guards.next() else {
+            return Ok(0);
+        };
+        let result = (|| {
+            let first = root.retained_nodes(self.remaining)?;
+            let Some(second) = guards.next() else {
+                return Ok(first.count);
             };
-            let key = Rc::as_ptr(node);
-            if visited.contains(&key) {
-                continue;
+            let mut union = first.clone();
+            for node in std::iter::once(second).chain(guards) {
+                union
+                    .ranges
+                    .extend_from_slice(&node.retained_nodes(self.remaining)?.ranges);
+                union = RetainedGuardNodes::new(union.ranges, self.remaining)?;
             }
-            self.charge()?;
-            visited.insert(key);
-            pending.extend([&node.yes, &node.no]);
-            if let Some(runtime) = &node.test.runtime {
-                pending.push(runtime);
+            Ok(union.count)
+        })();
+        match result {
+            Ok(count) => {
+                self.consume(count)?;
+                Ok(count)
+            }
+            Err(reason) => {
+                self.remaining = 0;
+                Err(reason)
             }
         }
-        if second.is_none()
-            && let Some(RuntimeGuard::Branch(node)) = root
-        {
-            node.retained_work.set(Some(visited.len()));
-        }
-        Ok(visited.len())
     }
 }
 
@@ -758,7 +862,7 @@ impl DecisionStore {
             input_exact,
             alias_free,
             queries: Rc::clone(&self.queries),
-            retained_work: Cell::default(),
+            retained_work: OnceCell::new(),
         });
         // Keep intermediate results reusable until collection, including throughout recursive apply.
         self.working.push(Rc::clone(&node));
