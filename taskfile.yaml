@@ -2,6 +2,8 @@
 version: "3"
 vars:
   ZIGBUILD_IMAGE: ghcr.io/rust-cross/cargo-zigbuild:latest
+  # The image's Rust 1.93 predates the integer bit_width API used by the interpreter.
+  RELEASE_RUST: "1.99.1"
   GORELEASER_VERSION: "2.17.0"
   # The Go toolchain the pinned Helm v4.2.3 release binary was built with.
   HELMSWEEP_GO: "1.26.5"
@@ -51,10 +53,11 @@ tasks:
     requires:
       vars: [GORELEASER_ARGS]
     cmds:
-      # The image ships zig, cargo-zigbuild, Rust and every release target; only goreleaser
-      # is missing. safe.directory is required because the bind-mounted repo has another owner.
+      # The image supplies zig, cargo-zigbuild and the release target roster.
+      # Install those targets for the pinned compiler, independently of the image's Rust version.
+      # safe.directory is required because the bind-mounted repo has another owner.
       - >-
-        docker run --rm -e GITHUB_TOKEN -e TAP_GITHUB_TOKEN -e "HOST_UID=$(id -u)" -e "HOST_GID=$(id
+        docker run --rm -e GITHUB_TOKEN -e TAP_GITHUB_TOKEN -e CARGO_BUILD_JOBS -e "HOST_UID=$(id -u)" -e "HOST_GID=$(id
         -g)" -v "${PWD}:/workspace" -w /workspace {{.ZIGBUILD_IMAGE}} bash -euo pipefail -c '
         fix_perms() { for d in target goreleaser-dist; do [ -e "$d" ] && chown -R
         "${HOST_UID}:${HOST_GID}" "$d" || true; done; }; trap fix_perms EXIT; case "$(uname -m)" in
@@ -62,6 +65,9 @@ tasks:
         ;; esac; curl -sSfL
         "https://github.com/goreleaser/goreleaser/releases/download/v{{.GORELEASER_VERSION}}/goreleaser_Linux_${arch}.tar.gz"
         | tar -xz -C /usr/local/bin goreleaser; git config --global --add safe.directory "$(pwd)";
+        targets="$(rustup target list --installed | paste -sd, -)";
+        rustup toolchain install {{.RELEASE_RUST}} --profile minimal --target "$targets";
+        export RUSTUP_TOOLCHAIN={{.RELEASE_RUST}}; rustc --version; cargo --version;
         goreleaser {{.GORELEASER_ARGS}}'
 
   build:goreleaser:
@@ -75,6 +81,12 @@ tasks:
     cmds:
       - task: goreleaser
         vars: { GORELEASER_ARGS: "release --clean" }
+
+  publish:dry-run:
+    desc: "package and verify every publishable workspace crate without uploading"
+    cmds:
+      # Cargo's workspace publisher handles development-dependency cycles.
+      - cargo publish --workspace --dry-run {{.CLI_ARGS}}
 
   typos:
     desc: "check repository for typos"

@@ -20,6 +20,11 @@ extend-exclude = [
 
 [default]
 extend-ignore-re = [
+  # Go's scanner diagnostic must remain byte-for-byte compatible.
+  '"did not find expected hexdecimal number"',
+  # These fragments deliberately split words across rendered template boundaries.
+  '<no val<no value>ue>',
+  '\{\{ "val" \}\}ue:',
   # Commit shas and hex digests, such as ba48ded5 in ADR references
   "\\b[0-9a-f]{7,64}\\b",
 

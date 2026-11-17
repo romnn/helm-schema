@@ -40,4 +40,5 @@ similar-asserts = "2"
 helm-schema-ast.workspace = true
 helm-schema-ir.workspace = true
 helm-schema-k8s.workspace = true
-helm-schema.workspace = true
+# The facade depends on this crate; keep that test dependency out of published manifests.
+helm-schema = { path = "../helm-schema" }

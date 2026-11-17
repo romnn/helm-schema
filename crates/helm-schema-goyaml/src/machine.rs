@@ -64,7 +64,7 @@ pub enum Syntax<'a> {
     Event(&'a Event),
 }
 
-/// A clonable suspended reader of the first YAML document.
+/// A cloneable suspended reader of the first YAML document.
 ///
 /// Characters reach the scanner immediately.
 /// Its events are provisional until their raw window has been validated: a forbidden
