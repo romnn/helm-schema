@@ -89,18 +89,18 @@ impl NodeRef {
             part: TextPart::Select {
                 decision: Rc::clone(decision),
                 yes: Rc::new(TextBuffer {
-                    parts: vec![yes.clone()],
+                    parts: vec![yes.clone()].into(),
                     ..TextBuffer::default()
                 }),
                 no: Rc::new(TextBuffer {
-                    parts: vec![no.clone()],
+                    parts: vec![no.clone()].into(),
                     ..TextBuffer::default()
                 }),
             },
         };
         Some(Self {
             buffer: Rc::new(TextBuffer {
-                parts: vec![selected],
+                parts: vec![selected].into(),
                 ..TextBuffer::default()
             }),
             index: 0,
@@ -200,7 +200,7 @@ impl<'a> PlacedTerm<'a> {
                         return None;
                     }
                     for (branch, guard) in [(no, when_false), (yes, when_true)] {
-                        let [node] = branch.parts.as_slice() else {
+                        let Some(node) = branch.parts.single() else {
                             return None;
                         };
                         pending

@@ -43,6 +43,7 @@ mod stage0_diagnostics;
 mod state;
 mod text;
 mod text_actions;
+mod text_dag;
 mod text_prefix;
 pub(crate) mod use_policy;
 mod window_exits;
@@ -682,7 +683,7 @@ enum ArgumentForm {
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct TextBuffer {
-    parts: Vec<OutputNode>,
+    parts: text_dag::TextParts,
     counts: output::BranchCounts,
     arena: Option<Rc<Arena>>,
 }

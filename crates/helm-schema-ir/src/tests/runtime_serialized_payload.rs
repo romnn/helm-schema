@@ -866,7 +866,8 @@ fn shared_capture_depth_has_bounded_query_work() {
             parts: vec![OutputNode {
                 occurrences: Vec::new(),
                 part: TextPart::Frozen(frozen),
-            }],
+            }]
+            .into(),
             ..TextBuffer::default()
         });
         let condition = Predicate::truthy_path(format!("branch{depth}"));
@@ -883,7 +884,8 @@ fn shared_capture_depth_has_bounded_query_work() {
                     yes: Rc::clone(&branch),
                     no: branch,
                 },
-            }],
+            }]
+            .into(),
             ..TextBuffer::default()
         });
         let value = Value::frozen_text(

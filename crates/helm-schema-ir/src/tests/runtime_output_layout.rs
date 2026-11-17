@@ -216,7 +216,8 @@ fn selected_output_uses_the_target_condition_without_forking_state() {
                 no: Rc::new(other),
             }
             .into(),
-        ],
+        ]
+        .into(),
         ..TextBuffer::default()
     };
     fixture.site.condition = condition.into();
@@ -246,11 +247,11 @@ fn partial_choices_only_preserve_states_proved_by_both_arms() {
         let selected = TextPart::Select {
             decision: Rc::clone(&decision),
             yes: Rc::new(TextBuffer {
-                parts: vec![TextPart::Bytes("safe".to_owned()).into()],
+                parts: vec![TextPart::Bytes("safe".to_owned()).into()].into(),
                 ..TextBuffer::default()
             }),
             no: Rc::new(TextBuffer {
-                parts: vec![other.into()],
+                parts: vec![other.into()].into(),
                 ..TextBuffer::default()
             }),
         };
@@ -499,7 +500,8 @@ fn infeasible_structural_choices_do_not_consume_the_layout_budget() {
                 no: Rc::new(fixture.state.output),
             }
             .into(),
-        ],
+        ]
+        .into(),
         ..TextBuffer::default()
     };
     let placement = OutputPlacement::new(
@@ -527,7 +529,8 @@ fn exhausted_shared_occurrence_queries_remain_unknown() {
         parts: vec![OutputNode {
             occurrences: vec![id],
             part: TextPart::Frozen(fixture.site.value),
-        }],
+        }]
+        .into(),
         ..TextBuffer::default()
     });
     for index in 0..8 {
@@ -544,7 +547,8 @@ fn exhausted_shared_occurrence_queries_remain_unknown() {
                     yes: Rc::clone(&graph),
                     no: graph,
                 },
-            }],
+            }]
+            .into(),
             ..TextBuffer::default()
         });
     }
@@ -570,11 +574,17 @@ fn exhausted_shared_occurrence_queries_remain_unknown() {
 fn recovered_frozen_continuations_do_not_certify_resource_placement() {
     let mut fixture = fixture("value: \"", "\"\n");
     let continuation = fixture.state.heap.freeze(&Value::string("\\\n"));
-    fixture
-        .state
-        .output
-        .parts
-        .insert(1, TextPart::Frozen(continuation).into());
+    fixture.state.output.parts = {
+        let mut parts = fixture
+            .state
+            .output
+            .parts
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        parts.insert(1, TextPart::Frozen(continuation).into());
+        parts.into()
+    };
     let placed = OutputPlacement::new(
         &Rc::new(fixture.state.output),
         &Predicate::True,
@@ -592,12 +602,23 @@ fn recovered_frozen_continuations_do_not_certify_resource_placement() {
 fn shared_syntax_keeps_frozen_inputs_and_guards_separate() {
     let first = fixture("value: \"", "\"\n");
     let mut second = fixture("value: \"", "\"\n");
-    second.state.output.parts[1].part = TextPart::Frozen(
-        second
+    let other = second
+        .state
+        .heap
+        .freeze(&Value::input(ValuesPath::parse("other")));
+    second.state.output.parts = {
+        let mut parts = second
             .state
-            .heap
-            .freeze(&Value::input(ValuesPath::parse("other"))),
-    );
+            .output
+            .parts
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        if let Some(part) = parts.get_mut(1) {
+            part.part = TextPart::Frozen(other);
+        }
+        parts.into()
+    };
     let mut syntax = super::SyntaxContexts::default();
     let first = OutputPlacement::new(
         &Rc::new(first.state.output),

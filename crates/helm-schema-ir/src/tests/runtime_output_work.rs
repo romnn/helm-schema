@@ -250,7 +250,7 @@ fn repeated_output_overflow_releases_unreachable_frozen_heap_snapshots() -> eyre
             if [129, 257, 385].contains(&index) {
                 sim_assert_eq!(have: state.output.parts.len(), want: 1);
                 assert!(matches!(
-                    state.output.parts.as_slice(),
+                    state.output.parts.iter().collect::<Vec<_>>().as_slice(),
                     [crate::value::OutputNode {
                         occurrences: _,
                         part: TextPart::Unknown(_)
@@ -413,7 +413,7 @@ fn retention_rewrites_only_the_forced_path_and_keeps_untouched_sibling_identity(
                     no: original_no,
                 },
         },
-    ] = original.parts.as_slice()
+    ] = original.parts.iter().collect::<Vec<_>>().as_slice()
     else {
         eyre::bail!("original selection missing");
     };
@@ -429,7 +429,7 @@ fn retention_rewrites_only_the_forced_path_and_keeps_untouched_sibling_identity(
                     no: retained_no,
                 },
         },
-    ] = retained.parts.as_slice()
+    ] = retained.parts.iter().collect::<Vec<_>>().as_slice()
     else {
         eyre::bail!("retained outer selection missing");
     };
@@ -485,7 +485,7 @@ fn immutable_output_children_do_not_retain_historical_budget_guards() -> eyre::R
                     no: child_no,
                 },
         },
-    ] = output.parts.as_slice()
+    ] = output.parts.iter().collect::<Vec<_>>().as_slice()
     else {
         eyre::bail!("joined selection missing");
     };

@@ -9,9 +9,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 impl TextBuffer {
     /// Frozen text retains rendered parts without owning mutable budget accounting.
-    pub(super) fn immutable_text(parts: Vec<OutputNode>) -> Self {
+    pub(super) fn immutable_text(parts: impl Into<super::text_dag::TextParts>) -> Self {
         Self {
-            parts,
+            parts: parts.into(),
             counts: BranchCounts::empty(),
             arena: None,
         }
@@ -29,18 +29,18 @@ impl TextBuffer {
             return;
         }
         if self.counts.definitely_at_least(129) {
-            self.parts = vec![TextPart::Unknown(self.inputs()).into()];
+            self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
             self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
             return;
         }
         if self.counts.is_exhausted() {
-            self.parts = vec![TextPart::Unknown(self.inputs()).into()];
+            self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
             self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
             return;
         }
         if let Some(arena) = &self.arena {
             let Ok(overflow) = self.counts.overflow(arena) else {
-                self.parts = vec![TextPart::Unknown(self.inputs()).into()];
+                self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
                 self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
                 return;
             };
@@ -56,7 +56,11 @@ impl TextBuffer {
             }
             let allowed = arena.complement_runtime_guard(&overflow);
             let decision = arena.budget_test(overflow.clone());
-            let exact = std::rc::Rc::new(Self::immutable_text(self.parts.clone()));
+            let exact = std::rc::Rc::new(Self {
+                parts: self.parts.clone(),
+                counts: BranchCounts::empty(),
+                arena: None,
+            });
             let exact = {
                 let _span = tracing::debug_span!(
                     target: "helm_schema_ir::value::output_work",
@@ -72,11 +76,12 @@ impl TextBuffer {
                     no: exact,
                 }
                 .into(),
-            ];
+            ]
+            .into();
             self.counts.reset_overflow(overflow);
         } else {
             // Variable counts are produced only by joins/restriction, which attach the arena.
-            self.parts = vec![TextPart::Unknown(self.inputs()).into()];
+            self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
             self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
         }
     }
@@ -149,8 +154,8 @@ impl TextBuffer {
             counts: BranchCounts::selected(&decision, &yes.counts, &no.counts, arena),
             arena: Some(std::rc::Rc::clone(arena)),
         };
-        let yes = Self::immutable_text(yes.parts.iter().skip(prefix).cloned().collect());
-        let no = Self::immutable_text(no.parts.iter().skip(prefix).cloned().collect());
+        let yes = Self::immutable_text(yes.parts.iter().skip(prefix).cloned().collect::<Vec<_>>());
+        let no = Self::immutable_text(no.parts.iter().skip(prefix).cloned().collect::<Vec<_>>());
         if !yes.parts.is_empty() || !no.parts.is_empty() {
             // The selector stores alternatives; each execution pays only for its selected source terms.
             output.parts.push(

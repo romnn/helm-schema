@@ -183,7 +183,7 @@ pub(super) fn capture(graph: &TextBuffer, strip_marker: bool) -> Value {
 }
 
 fn opaque(graph: &TextBuffer) -> bool {
-    let [node] = graph.parts.as_slice() else {
+    let Some(node) = graph.parts.single() else {
         return false;
     };
     match node.content() {

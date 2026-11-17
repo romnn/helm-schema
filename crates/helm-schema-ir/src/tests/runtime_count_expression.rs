@@ -185,7 +185,7 @@ fn count_work_exhaustion_is_sticky_without_an_exact_threshold() -> eyre::Result<
     output.counts = counts.clone();
     output.bytes("suffix");
     assert!(matches!(
-        output.parts.as_slice(),
+        output.parts.iter().collect::<Vec<_>>().as_slice(),
         [crate::value::OutputNode {
             occurrences: _,
             part: TextPart::Unknown(_)
