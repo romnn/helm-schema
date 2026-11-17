@@ -2062,3 +2062,71 @@ fn a_query_never_compares_a_form_from_cleared_tables() {
     sim_assert_eq!(have: path.compatible(true, &excluded, true), want: Some(false));
     sim_assert_eq!(have: excluded.compatible(true, &path, true), want: Some(false));
 }
+
+/// A shared composition memo answers every compatibility query exactly as fresh tables do,
+/// over randomized compositions that nest runtime tests and cross the test table cap (the
+/// grafana `ite` reuse; a form id names one diagram for as long as its tables live).
+#[test]
+fn shared_composition_memo_answers_like_fresh_tables() {
+    use super::RuntimeGuard;
+    use super::canonical::CanonicalGuards;
+    use crate::value::{Coverage, DecisionEdge, State, Value};
+    use helm_schema_core::Predicate;
+    use std::rc::Rc;
+
+    let state = State::new(Value::nil());
+    let arena = &state.heap.arena;
+    let mut seed = 0x2545_f491_4f6c_dd1d_u64;
+    let mut next = |bound: usize| {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+        usize::try_from(seed % (bound as u64)).unwrap_or_default()
+    };
+    let mut guards = (0..6)
+        .map(|_| {
+            let test = arena.decision(Predicate::False, Predicate::False, Coverage::Partial);
+            arena.runtime_path(&[DecisionEdge { test, taken: true }])
+        })
+        .collect::<Vec<_>>();
+    for _ in 0..40 {
+        let left = guards[next(guards.len())].clone();
+        let right = guards[next(guards.len())].clone();
+        let guard = match next(4) {
+            0 => arena.union_runtime_guards(&left, &right),
+            1 => arena.intersect_runtime_guards(&left, &right),
+            2 => arena.complement_runtime_guard(&left),
+            _ => {
+                // A runtime test over a composed guard, used as a decision of a new path.
+                let test = arena.budget_test(left);
+                let nested = arena.runtime_path(&[DecisionEdge {
+                    test,
+                    taken: next(2) == 0,
+                }]);
+                arena.intersect_runtime_guards(&nested, &right)
+            }
+        };
+        guards.push(guard);
+    }
+    let context = guards.iter().find_map(|guard| match guard {
+        RuntimeGuard::Branch(node) => Some(Rc::as_ptr(&node.queries)),
+        RuntimeGuard::False | RuntimeGuard::True => None,
+    });
+    let Some(context) = context else {
+        return;
+    };
+    let mut shared = CanonicalGuards::default();
+    let mut answered = 0_usize;
+    for _ in 0..400 {
+        let left = &guards[next(guards.len())];
+        let right = &guards[next(guards.len())];
+        let operands = [(left, next(2) == 0), (right, next(2) == 0)];
+        let fresh = CanonicalGuards::default().compatible(operands, context);
+        sim_assert_eq!(have: shared.compatible(operands, context), want: fresh);
+        answered += usize::from(fresh.is_some());
+    }
+    assert!(
+        answered > 0,
+        "the randomized queries must decide some compatibilities"
+    );
+}

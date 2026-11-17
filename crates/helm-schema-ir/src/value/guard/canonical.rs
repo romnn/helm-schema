@@ -7,8 +7,9 @@
 //! compatible exactly when the conjunction of their forms reaches true, which is a walk over the
 //! two forms instead of a search through the nested tests.
 //!
-//! Every form and query runs under its own fixed allowance and a memo of its own, so whether it
-//! completes depends only on its operands, never on what earlier queries left in the tables.
+//! Every form and query runs under its own fixed allowance, and every compatibility walk under a
+//! memo of its own. Compositions share one `ite` memo: its keys and values are hash-consed form
+//! ids, which name the same diagram for as long as the tables live, and it is cleared with them.
 
 use ahash::AHashMap;
 
@@ -38,6 +39,10 @@ pub(super) struct CanonicalGuards {
     unique: AHashMap<FormNode, u32>,
     /// The form of each runtime guard node by its id; `None` when its allowance ran out.
     forms: AHashMap<u64, Option<u32>>,
+    /// Completed `ite` compositions by their operand forms. Form ids are hash-consed into
+    /// `nodes`, so within one table generation an id names one diagram: an entry never outlives
+    /// the tables it was built in (`start_query` clears both), and a context owns its own tables.
+    composed: AHashMap<[u32; 3], u32>,
 }
 
 /// A form read at one outcome: the documents where the guard evaluates to `value`.
@@ -200,7 +205,10 @@ impl CanonicalGuards {
                 self.make(decision, FALSE, TRUE)
             };
         }
-        self.ite(forms, &mut AHashMap::new(), &mut { MAX_CANONICAL_WORK })
+        let mut composed = std::mem::take(&mut self.composed);
+        let form = self.ite(forms, &mut composed, &mut { MAX_CANONICAL_WORK });
+        self.composed = composed;
+        form
     }
 
     /// Starts the tables over when they are full. Called once per query, before any of its
@@ -210,6 +218,7 @@ impl CanonicalGuards {
             self.nodes.clear();
             self.unique.clear();
             self.forms.clear();
+            self.composed.clear();
         }
     }
 
