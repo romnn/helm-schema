@@ -1,42 +1,1140 @@
 {
   "$defs": {
+    "constrains/annotations": {
+      "properties": {
+        "annotations": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations:t": {
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations=null": {
+      "properties": {
+        "annotations": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations@2": {
+      "properties": {
+        "annotations": {}
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
     "constrains/commonAnnotations": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonAnnotations@3"
+        "$ref": "#/$defs/constrains~1commonAnnotations@4"
       }
     },
     "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations=null"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations@3"
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations@2"
+          "$ref": "#/$defs/constrains~1commonAnnotations@3"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@7": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@8": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@9": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+4more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+4more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+5more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+3more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+3more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+10more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+spark.enabled:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+9more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+9more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+8more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+6more@2"
         }
       ]
     },
     "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+12more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@2"
-        },
-        {
           "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@4"
+          "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@5"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t+spark.serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@6"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@13"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
@@ -46,7 +1144,7 @@
     "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+12more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@5"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@14"
         },
         {
           "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@4"
@@ -56,10 +1154,10 @@
     "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+12more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@10"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+1more"
@@ -80,97 +1178,2391 @@
         "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+12more@2"
       }
     },
-    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more": {
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+3more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount+spark.serviceAccount.annotations+2more"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@2": {
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+3more@2": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@3"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@4"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@5"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@4": {
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+3more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+5more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+5more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+8more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@10": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount+spark.serviceAccount.annotations+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@11": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@5"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@12": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@10"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@13": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null+fullnameOverride+fullnameOverride:t+8more"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@2"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@11"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@5": {
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@14": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@3"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@12"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null+fullnameOverride+fullnameOverride:t+8more@2"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t+1more": {
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@6"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t@3"
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@7": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@8": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+9more@9": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+10more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+4more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+4more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+4more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+7more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@7": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@8": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+8more@9": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@7": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@8": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride:t+9more@9": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark+spark.annotations+spark.annotations:t+spark.annotations=null+1more"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark+4more@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark+4more"
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t+5more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount+spark.serviceAccount.annotations+3more"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark.enabled:t+1more"
+          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount+spark.serviceAccount.annotations+3more"
         }
       ]
     },
@@ -185,12 +3577,12 @@
       }
     },
     "constrains/commonAnnotations+commonAnnotations=null": {
-      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@3"
+      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@8"
     },
     "constrains/commonAnnotations+commonAnnotations=null+fullnameOverride+fullnameOverride:t+8more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@3"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more@4"
@@ -203,93 +3595,976 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+          "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@4"
         }
       ]
     },
+    "constrains/commonAnnotations+commonAnnotations=null@10": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@3"
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations=null@11": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@5"
+      }
+    },
+    "constrains/commonAnnotations+commonAnnotations=null@12": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@4"
+      }
+    },
     "constrains/commonAnnotations+commonAnnotations=null@2": {
-      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@3"
+      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@9"
     },
     "constrains/commonAnnotations+commonAnnotations=null@3": {
+      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@6"
+    },
+    "constrains/commonAnnotations+commonAnnotations=null@4": {
+      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@6"
+    },
+    "constrains/commonAnnotations+commonAnnotations=null@5": {
+      "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
+    },
+    "constrains/commonAnnotations+commonAnnotations=null@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations@3"
+        }
+      ]
+    },
+    "constrains/commonAnnotations+commonAnnotations=null@7": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1commonAnnotations=null"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations@2"
         }
       ]
     },
-    "constrains/commonAnnotations+commonAnnotations=null@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonAnnotations@2"
-        }
-      ]
-    },
-    "constrains/commonAnnotations+commonAnnotations=null@5": {
+    "constrains/commonAnnotations+commonAnnotations=null@8": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null"
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
       }
     },
-    "constrains/commonAnnotations+commonAnnotations=null@6": {
+    "constrains/commonAnnotations+commonAnnotations=null@9": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@4"
-      }
-    },
-    "constrains/commonAnnotations+commonAnnotations=null@7": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@2"
+        "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations=null@7"
       }
     },
     "constrains/commonAnnotations:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonAnnotations:t@3"
-      }
+      "$ref": "#/$defs/constrains~1commonAnnotations:t@3"
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
     },
     "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t@2"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more@4"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more@5"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@2"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@5": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1commonAnnotations:t+spark.enabled:t+spark.serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@3"
         }
       ]
     },
-    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@4": {
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@2"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+7more@4"
         },
         {
           "$ref": "#/$defs/constrains~1commonAnnotations:t+spark.enabled:t+spark.serviceAccount.create:t"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+8more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+9more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride+9more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+5more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+nameOverride:t+spark+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride+fullnameOverride:t+spark.enabled:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+5more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride+nameOverride:t+spark+7more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+5more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+        }
+      ]
+    },
+    "constrains/commonAnnotations:t+fullnameOverride:t+nameOverride:t+spark+spark.annotations+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonAnnotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
@@ -299,7 +4574,7 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t@3"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
         }
       ]
     },
@@ -309,16 +4584,21 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1commonAnnotations:t@3"
+          "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
         }
       ]
     },
     "constrains/commonAnnotations:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonAnnotations:t@3"
+        "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
       }
     },
     "constrains/commonAnnotations:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
+      }
+    },
+    "constrains/commonAnnotations:t@4": {
       "properties": {
         "commonAnnotations": {
           "$ref": "#/$defs/t"
@@ -344,6 +4624,11 @@
     },
     "constrains/commonAnnotations@2": {
       "not": {
+        "$ref": "#/$defs/constrains~1commonAnnotations@4"
+      }
+    },
+    "constrains/commonAnnotations@3": {
+      "not": {
         "properties": {
           "commonAnnotations": {}
         },
@@ -353,7 +4638,7 @@
         "type": "object"
       }
     },
-    "constrains/commonAnnotations@3": {
+    "constrains/commonAnnotations@4": {
       "properties": {
         "commonAnnotations": {
           "type": "object"
@@ -376,22 +4661,23 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
+      "$ref": "#/$defs/constrains~1fullnameOverride@3"
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+1more": {
       "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        },
         {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
         },
@@ -399,20 +4685,17 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
+          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more@3"
@@ -425,7 +4708,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride@3"
         }
       ]
     },
@@ -452,7 +4735,7 @@
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+2more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@2"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+1more@4"
@@ -465,7 +4748,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+1more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@2"
         }
       ]
     },
@@ -512,22 +4795,22 @@
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+5more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount+spark.serviceAccount.annotations+2more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
         },
         {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount+spark.serviceAccount.annotations+2more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
@@ -577,7 +4860,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@4"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@4"
         }
       ]
     },
@@ -587,31 +4870,41 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@5"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@4"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@5"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t+spark.enabled:t+spark.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more@4": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more@2"
@@ -621,39 +4914,29 @@
         }
       ]
     },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+spark.enabled:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+spark.enabled:t+spark.serviceAccount.create:t"
-        }
-      ]
-    },
     "constrains/fullnameOverride+fullnameOverride:t+spark.enabled:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+spark.enabled:t+spark.serviceAccount.create:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+spark.enabled:t+spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
         }
       ]
     },
@@ -663,7 +4946,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t+spark.enabled:t+spark.serviceAccount.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride"
         }
       ]
     },
@@ -673,7 +4956,7 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
         }
       ]
     },
@@ -683,41 +4966,39 @@
           "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+spark.enabled:t+1more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride@4"
         }
       ]
     },
     "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
+      "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@4"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+spark.enabled:t+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
@@ -727,7 +5008,7 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
@@ -737,17 +5018,17 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
         }
       ]
     },
     "constrains/fullnameOverride:t+spark.enabled:t+spark.serviceAccount.create:t@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+spark.enabled:t+spark.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+spark.enabled:t+spark.serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
         }
       ]
     },
@@ -757,16 +5038,21 @@
           "$ref": "#/$defs/constrains~1fullnameOverride:t+spark.enabled:t+spark.serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
       }
     },
     "constrains/fullnameOverride:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+      }
+    },
+    "constrains/fullnameOverride:t@4": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -779,10 +5065,15 @@
     },
     "constrains/fullnameOverride@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
       }
     },
     "constrains/fullnameOverride@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+      }
+    },
+    "constrains/fullnameOverride@4": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -793,28 +5084,64 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
+    "constrains/global+global=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {}
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "global": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global+global=null@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
+        "$ref": "#/$defs/constrains~1global+global=null"
       }
+    },
+    "constrains/global+global=null@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      }
+    },
+    "constrains/nameOverride": {
+      "$ref": "#/$defs/constrains~1nameOverride@2"
     },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@4"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride@4"
         }
       ]
     },
@@ -824,36 +5151,39 @@
       }
     },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
+      "$ref": "#/$defs/constrains~1nameOverride:t@3"
     },
     "constrains/nameOverride:t+spark.enabled:t+spark.serviceAccount.create:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
         }
       ]
     },
     "constrains/nameOverride:t+spark.enabled:t+spark.serviceAccount.create:t@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t@4"
         }
       ]
     },
     "constrains/nameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1nameOverride:t@4"
       }
     },
     "constrains/nameOverride:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@4"
+      }
+    },
+    "constrains/nameOverride:t@4": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
@@ -866,10 +5196,15 @@
     },
     "constrains/nameOverride@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
+        "$ref": "#/$defs/constrains~1nameOverride@4"
       }
     },
     "constrains/nameOverride@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@4"
+      }
+    },
+    "constrains/nameOverride@4": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -880,19 +5215,35 @@
       ],
       "type": "object"
     },
-    "constrains/spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more": {
+    "constrains/spark+spark.annotations+spark.annotations:t+spark.annotations=null+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@2"
+          "$ref": "#/$defs/constrains~1spark.annotations:t"
         },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+        }
+      ]
+    },
+    "constrains/spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more": {
+      "allOf": [
         {
           "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@3"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t+spark.serviceAccount.name:t"
+          "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@6"
+          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t+spark.serviceAccount.name:t"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
@@ -960,6 +5311,9 @@
     "constrains/spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more@2": {
       "anyOf": [
         {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1spark.serviceAccount.name:t"
         },
         {
@@ -970,9 +5324,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1spark.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t"
@@ -997,6 +5348,9 @@
           "$ref": "#/$defs/constrains~1spark.serviceAccount+spark.serviceAccount.name"
         },
         {
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1spark.serviceAccount.name:t"
         },
         {
@@ -1004,9 +5358,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1spark.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t"
@@ -1125,6 +5476,91 @@
         "$ref": "#/$defs/constrains~1spark+spark.enabled:t+spark.serviceAccount+spark.serviceAccount.create:t+2more"
       }
     },
+    "constrains/spark.annotations": {
+      "$ref": "#/$defs/constrains~1spark.annotations@3"
+    },
+    "constrains/spark.annotations+spark.annotations=null": {
+      "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@7"
+    },
+    "constrains/spark.annotations+spark.annotations=null@2": {
+      "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@6"
+    },
+    "constrains/spark.annotations+spark.annotations=null@3": {
+      "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@4"
+    },
+    "constrains/spark.annotations+spark.annotations=null@4": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "spark": {
+                "$ref": "#/$defs/constrains~1annotations@2"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "spark": {
+              "$ref": "#/$defs/constrains~1annotations=null"
+            }
+          },
+          "required": [
+            "spark"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/spark.annotations+spark.annotations=null@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@3"
+      }
+    },
+    "constrains/spark.annotations+spark.annotations=null@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@4"
+      }
+    },
+    "constrains/spark.annotations+spark.annotations=null@7": {
+      "not": {
+        "$ref": "#/$defs/constrains~1spark.annotations+spark.annotations=null@4"
+      }
+    },
+    "constrains/spark.annotations:t": {
+      "properties": {
+        "spark": {
+          "$ref": "#/$defs/constrains~1annotations:t"
+        }
+      },
+      "required": [
+        "spark"
+      ],
+      "type": "object"
+    },
+    "constrains/spark.annotations@2": {
+      "$ref": "#/$defs/constrains~1spark.annotations@4"
+    },
+    "constrains/spark.annotations@3": {
+      "$ref": "#/$defs/constrains~1spark.annotations@4"
+    },
+    "constrains/spark.annotations@4": {
+      "not": {
+        "properties": {
+          "spark": {
+            "$ref": "#/$defs/constrains~1annotations"
+          }
+        },
+        "required": [
+          "spark"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/spark.enabled:t": {
       "$ref": "#/$defs/constrains~1spark.enabled:t@3"
     },
@@ -1134,16 +5570,16 @@
           "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@7"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
@@ -1153,7 +5589,7 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
         }
       ]
     },
@@ -1163,20 +5599,20 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
         }
       ]
     },
     "constrains/spark.enabled:t+spark.serviceAccount.create:t": {
-      "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@5"
+      "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@6"
     },
     "constrains/spark.enabled:t+spark.serviceAccount.create:t+spark.serviceAccount.name:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.name:t@2"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.name:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1spark.enabled:t"
@@ -1192,7 +5628,7 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
@@ -1202,27 +5638,27 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/spark.enabled:t+spark.serviceAccount.create:t@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
         }
       ]
     },
     "constrains/spark.enabled:t+spark.serviceAccount.create:t@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.enabled:t"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+          "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@3"
         }
       ]
     },
@@ -1232,7 +5668,7 @@
           "$ref": "#/$defs/constrains~1spark.enabled:t+spark.serviceAccount.create:t@4"
         },
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@2"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t"
         }
       ]
     },
@@ -1289,7 +5725,7 @@
     "constrains/spark.serviceAccount+spark.serviceAccount.annotations+2more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@2"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
         },
         {
           "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
@@ -1305,7 +5741,7 @@
     "constrains/spark.serviceAccount+spark.serviceAccount.annotations+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t"
+          "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@2"
         },
         {
           "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@3"
@@ -1341,6 +5777,15 @@
       }
     },
     "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null": {
+      "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@5"
+    },
+    "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2": {
+      "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@6"
+    },
+    "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@3": {
+      "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+    },
+    "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations@2"
@@ -1350,35 +5795,40 @@
         }
       ]
     },
-    "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@2": {
+    "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@5": {
       "not": {
-        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null"
+        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+      }
+    },
+    "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@4"
+      }
+    },
+    "constrains/spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@7": {
+      "not": {
+        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations+spark.serviceAccount.annotations=null@3"
       }
     },
     "constrains/spark.serviceAccount.annotations:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@3"
-      }
+      "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@3"
     },
     "constrains/spark.serviceAccount.annotations:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@3"
+        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
       }
     },
     "constrains/spark.serviceAccount.annotations:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
+      }
+    },
+    "constrains/spark.serviceAccount.annotations:t@4": {
       "properties": {
         "spark": {
           "properties": {
             "serviceAccount": {
-              "properties": {
-                "annotations": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "annotations"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/constrains~1annotations:t"
             }
           },
           "required": [
@@ -1397,17 +5847,7 @@
         "spark": {
           "properties": {
             "serviceAccount": {
-              "properties": {
-                "annotations": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "annotations"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/constrains~1annotations=null"
             }
           },
           "required": [
@@ -1427,13 +5867,7 @@
           "spark": {
             "properties": {
               "serviceAccount": {
-                "properties": {
-                  "annotations": {}
-                },
-                "required": [
-                  "annotations"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/constrains~1annotations@2"
               }
             },
             "required": [
@@ -1453,15 +5887,7 @@
         "spark": {
           "properties": {
             "serviceAccount": {
-              "properties": {
-                "annotations": {
-                  "type": "object"
-                }
-              },
-              "required": [
-                "annotations"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/constrains~1annotations"
             }
           },
           "required": [
@@ -1476,16 +5902,19 @@
       "type": "object"
     },
     "constrains/spark.serviceAccount.create:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
-      }
+      "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@2"
     },
     "constrains/spark.serviceAccount.create:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+        "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
       }
     },
     "constrains/spark.serviceAccount.create:t@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
+      }
+    },
+    "constrains/spark.serviceAccount.create:t@4": {
       "properties": {
         "spark": {
           "properties": {
@@ -2358,55 +6787,62 @@
         }
       ]
     },
-    "when/fullnameOverride:t/then/spark.enabled:t+spark.serviceAccount.create:t/else/fail": {
+    "when/fullnameOverride:t/then/spark.enabled:t/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
       },
       "then": {
-        "$ref": "#/$defs/when~1spark.enabled:t~1then~1spark.serviceAccount.create:t~1else~1fail"
+        "$ref": "#/$defs/when~1spark.enabled:t~1then~1any~1else~1fail"
       }
     },
-    "when/nameOverride:t/then/spark.enabled:t+spark.serviceAccount.create:t/else/fail": {
+    "when/global+global=null/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": false
+    },
+    "when/global+global=null/then/fail/else/any@2": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null"
+      },
+      "then": false
+    },
+    "when/nameOverride:t/then/spark.enabled:t/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/$defs/constrains~1nameOverride:t@4"
       },
       "then": {
-        "$ref": "#/$defs/when~1spark.enabled:t~1then~1spark.serviceAccount.create:t~1else~1fail@2"
+        "$ref": "#/$defs/when~1spark.enabled:t~1then~1any~1else~1fail@2"
       }
     },
-    "when/spark.enabled:t/then/spark.serviceAccount.create:t/else/fail": {
+    "when/spark.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+      },
+      "then": true
+    },
+    "when/spark.enabled:t/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+      },
+      "then": true
+    },
+    "when/spark.enabled:t/then/global+global=null/else/fail": {
       "else": false,
       "if": {
         "$ref": "#/$defs/constrains~1spark.enabled:t@4"
       },
       "then": {
-        "$ref": "#/$defs/when~1spark.serviceAccount.create:t~1then~1any~1else~1fail"
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1any@2"
       }
-    },
-    "when/spark.enabled:t/then/spark.serviceAccount.create:t/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1spark.enabled:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1spark.serviceAccount.create:t~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/spark.serviceAccount.create:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
-      },
-      "then": true
-    },
-    "when/spark.serviceAccount.create:t/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
-      },
-      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2430,7 +6866,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1spark.enabled:t+spark.serviceAccount.create:t~1else~1fail"
+        "$ref": "#/$defs/when~1nameOverride:t~1then~1spark.enabled:t~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -2445,13 +6881,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1commonAnnotations:t@3"
+            "$ref": "#/$defs/constrains~1commonAnnotations:t@4"
           },
           {
             "$ref": "#/$defs/constrains~1spark.enabled:t@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
           }
         ]
       },
@@ -2464,6 +6897,71 @@
               "null",
               "object"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1spark.annotations:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "spark": {
+            "additionalProperties": {},
+            "description": "https://github.com/jaegertracing/spark-dependencies",
+            "properties": {
+              "annotations": {
+                "type": [
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1spark.enabled:t~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1global+global=null@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1global+global=null@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1spark.enabled:t@4"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
           }
         }
       }
@@ -2521,16 +7019,16 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1spark.enabled:t+spark.serviceAccount.create:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+spark+4more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1commonAnnotations+commonAnnotations:t+commonAnnotations=null+fullnameOverride+11more@7"
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -2539,10 +7037,10 @@
             "$ref": "#/$defs/constrains~1spark.enabled:t@4"
           },
           {
-            "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@3"
+            "$ref": "#/$defs/constrains~1spark.serviceAccount.annotations:t@4"
           },
           {
-            "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@3"
+            "$ref": "#/$defs/constrains~1spark.serviceAccount.create:t@4"
           }
         ]
       },
@@ -2564,6 +7062,29 @@
                     ]
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1spark.enabled:t~1then~1global+global=null~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "properties": {
+              "imagePullSecrets": {
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -2596,7 +7117,12 @@
       "description": "Array with extra yaml objects to install alongside the chart. Values are evaluated as a template."
     },
     "fullnameOverride": {},
-    "global": {},
+    "global": {
+      "additionalProperties": {},
+      "properties": {
+        "imagePullSecrets": {}
+      }
+    },
     "jaeger": {
       "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml"
     },
@@ -2646,16 +7172,33 @@
       ],
       "description": "https://github.com/jaegertracing/spark-dependencies",
       "properties": {
+        "activeDeadlineSeconds": {},
+        "annotations": {},
+        "concurrencyPolicy": {},
         "enabled": {},
+        "failedJobsHistoryLimit": {},
+        "image": {},
+        "podAnnotations": {},
+        "podLabels": {
+          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
+        },
+        "schedule": {
+          "description": "- name: ES_NODES_WAN_ONLY\nvalue: 'true'\n- name: ES_CLIENT_NODE_ONLY\nvalue: 'false'\n- name: ES_INDEX_PREFIX\nvalue: 'jaeger'\n- name: ES_INDEX_DATE_SEPARATOR\nvalue: '-'\n- name: ES_TIME_RANGE\nvalue: '24h'\n- name: ES_USE_ALIASES\nvalue: 'false'"
+        },
         "serviceAccount": {
           "additionalProperties": {},
           "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
           "properties": {
             "annotations": {},
+            "automountServiceAccountToken": {
+              "description": "Explicitly mounts the API credentials for the Service Account"
+            },
             "create": {},
             "name": {}
           }
-        }
+        },
+        "successfulJobsHistoryLimit": {},
+        "ttlSecondsAfterFinished": {}
       },
       "type": "object"
     },

@@ -1,22 +1,117 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": {},
+  "additionalProperties": false,
   "allOf": [
     {
-      "additionalProperties": {},
-      "properties": {
-        "_internal_defaults": {
-          "type": [
-            "null",
-            "object"
-          ]
+      "else": {
+        "properties": {
+          "_internal_defaults": {
+            "properties": {
+              "pilot": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "pilot"
+            ]
+          }
+        }
+      },
+      "if": {
+        "required": [
+          "pilot"
+        ]
+      },
+      "then": {
+        "properties": {
+          "pilot": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "else": {
+        "properties": {
+          "_internal_defaults": {
+            "properties": {
+              "pilot": {
+                "properties": {
+                  "env": {
+                    "$ref": "#/definitions/env"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "pilot": {
+            "properties": {
+              "env": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            },
+            "required": [
+              "env"
+            ]
+          }
+        },
+        "required": [
+          "pilot"
+        ]
+      },
+      "then": {
+        "properties": {
+          "pilot": {
+            "properties": {
+              "env": {
+                "$ref": "#/definitions/env"
+              }
+            }
+          }
         }
       }
     }
   ],
-  "properties": {
-    "_internal_defaults": {},
-    "global": {}
+  "definitions": {
+    "env": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": "object"
+        },
+        {
+          "enum": [
+            false,
+            0,
+            ""
+          ]
+        }
+      ]
+    }
   },
+  "properties": {
+    "_internal_defaults": {
+      "type": "object"
+    },
+    "global": {},
+    "pilot": {}
+  },
+  "required": [
+    "_internal_defaults"
+  ],
   "type": "object"
 }

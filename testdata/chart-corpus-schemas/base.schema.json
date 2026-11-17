@@ -1,5 +1,91 @@
 {
   "$defs": {
+    "constrains/_internal_defaults_do_not_set": {
+      "not": {
+        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
+      }
+    },
+    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+defaults:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
+        },
+        {
+          "properties": {
+            "_internal_defaults_do_not_set": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "_internal_defaults_do_not_set"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "_internal_defaults_do_not_set": {}
+            },
+            "required": [
+              "_internal_defaults_do_not_set"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/$defs/constrains~1defaults:t"
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set+global+global=null": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global+global=null@5"
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set+global+global=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1global+global=null@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+global+global=null"
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set@2": {
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "_internal_defaults_do_not_set"
+      ],
+      "type": "object"
+    },
+    "constrains/defaults:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1defaults:t@2"
+      }
+    },
+    "constrains/defaults:t@2": {
+      "properties": {
+        "defaults": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "defaults"
+      ],
+      "type": "object"
+    },
     "constrains/global+global=null": {
       "$ref": "#/$defs/constrains~1global+global=null@3"
     },
@@ -41,8 +127,57 @@
     },
     "constrains/global+global=null@5": {
       "not": {
+        "$ref": "#/$defs/constrains~1global+global=null@3"
+      }
+    },
+    "constrains/global+global=null@6": {
+      "not": {
         "$ref": "#/$defs/constrains~1global+global=null@2"
       }
+    },
+    "constrains/global.resourceScope+global.resourceScope=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "global": {
+              "properties": {
+                "resourceScope": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "resourceScope"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "global": {
+                "properties": {
+                  "resourceScope": {}
+                },
+                "required": [
+                  "resourceScope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -68,11 +203,108 @@
           "const": true
         }
       ]
+    },
+    "when/_internal_defaults_do_not_set/then/fail/else/global+global.resourceScope": {
+      "else": {
+        "$ref": "#/$defs/when~1global~1then~1global.resourceScope~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
+      },
+      "then": false
+    },
+    "when/defaults:t/then/any/else/_internal_defaults_do_not_set+global+global.resourceScope+2more": {
+      "else": {
+        "$ref": "#/$defs/when~1global.resourceScope+global.resourceScope=null~1then~1fail~1else~1_internal_defaults_do_not_set+global+global.resourceScope+global=null"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1defaults:t@2"
+      },
+      "then": true
+    },
+    "when/global+global=null/then/fail/else/_internal_defaults_do_not_set+global+global.resourceScope+1more": {
+      "else": {
+        "$ref": "#/$defs/when~1global.resourceScope+global.resourceScope=null~1then~1fail~1else~1_internal_defaults_do_not_set+global+global.resourceScope"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global+global=null@3"
+      },
+      "then": false
+    },
+    "when/global.resourceScope+global.resourceScope=null/then/fail/else/_internal_defaults_do_not_set+global+global.resourceScope": {
+      "else": {
+        "$ref": "#/$defs/when~1_internal_defaults_do_not_set~1then~1fail~1else~1global+global.resourceScope"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=null"
+      },
+      "then": false
+    },
+    "when/global.resourceScope+global.resourceScope=null/then/fail/else/_internal_defaults_do_not_set+global+global.resourceScope+global=null": {
+      "else": {
+        "$ref": "#/$defs/when~1global+global=null~1then~1fail~1else~1_internal_defaults_do_not_set+global+global.resourceScope+1more"
+      },
+      "if": {
+        "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=null"
+      },
+      "then": false
+    },
+    "when/global.resourceScope/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "properties": {
+          "global": {
+            "properties": {
+              "resourceScope": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "resourceScope"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    "when/global/then/global.resourceScope/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/when~1global.resourceScope~1then~1fail~1else~1any"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": {},
   "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
     {
       "if": {
         "allOf": [
@@ -80,7 +312,7 @@
             "$ref": "#/$defs/constrains~1global+global=null@3"
           },
           {
-            "$ref": "#/$defs/constrains~1global+global=null@5"
+            "$ref": "#/$defs/constrains~1global+global=null@6"
           }
         ]
       },
@@ -88,21 +320,26 @@
     },
     {
       "if": {
-        "properties": {
-          "defaults": {
-            "$ref": "#/$defs/t"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1defaults:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+defaults:t"
           }
-        },
-        "required": [
-          "defaults"
-        ],
-        "type": "object"
+        ]
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1global+global=null@4"
+        "$ref": "#/$defs/when~1defaults:t~1then~1any~1else~1_internal_defaults_do_not_set+global+global.resourceScope+2more"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+global+global=null@2"
       },
       "then": {
         "additionalProperties": {},
@@ -124,7 +361,8 @@
       "additionalProperties": {},
       "properties": {
         "platform": {},
-        "profile": {}
+        "profile": {},
+        "resourceScope": {}
       }
     },
     "platform": {},

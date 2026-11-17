@@ -4482,6 +4482,20 @@
       "then": false
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "additionalArgs": {
+          "description": "Additional arguments to be added to the operator's args list.",
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -5515,7 +5529,11 @@
           "description": "Specifies whether the secret should be created."
         },
         "data": {
+          "additionalProperties": {},
           "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b"
+        },
+        "maxConcurrentReconciles": {
+          "description": "The maximum number of concurrent reconciles. Defaults to 10."
         },
         "name": {
           "description": "The name of the configmap/secret to use."
@@ -5799,6 +5817,7 @@
         "mutating": {
           "$ref": "#/$defs/values~1webhook.mutating"
         },
+        "port": {},
         "validating": {
           "$ref": "#/$defs/values~1webhook.mutating"
         }

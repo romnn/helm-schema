@@ -1,132 +1,783 @@
 {
   "$defs": {
-    "constrains/controller+controller.type+controller.type=Deployment+2more": {
-      "allOf": [
+    "constrains/commonLabels": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonLabels@3"
+      }
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null": {
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
+          "$ref": "#/$defs/constrains~1commonLabels:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@2"
+          "$ref": "#/$defs/constrains~1commonLabels@3"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment"
+          "$ref": "#/$defs/constrains~1commonLabels@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels=null"
         }
       ]
     },
-    "constrains/controller+controller.type+controller.type=Deployment+4more": {
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration+12more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
-        }
-      ]
-    },
-    "constrains/controller+controller.type+controller.type=Deployment+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
-        }
-      ]
-    },
-    "constrains/controller+controller.type+controller.type=Deployment+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@3"
-        }
-      ]
-    },
-    "constrains/controller+controller.type+controller.type=Deployment+6more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
         },
         {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.templateConfig@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        },
+        {
           "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
+          "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
+          "$ref": "#/$defs/constrains~1configuration.initScript@2"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
+          "$ref": "#/$defs/constrains~1configuration.initScript@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
         }
       ]
     },
-    "constrains/controller+controller.type+controller.type=Deployment+6more@3": {
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration+12more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+7more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t+configuration.initScript+configuration.templateConfig+1more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@4"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration+12more@3": {
       "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@2"
-        },
         {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@5"
         },
         {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+10more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration+12more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller+controller.type+7more"
+        },
+        {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+2more"
         },
         {
           "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+4more"
         }
       ]
     },
-    "constrains/controller+controller.type+controller.type=Deployment+6more@4": {
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration+12more@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more"
+        "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration+12more@2"
       }
     },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+10more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.initScript@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+5more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t+controller.type=StatefulSet"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.initScript@3"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+6more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+5more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.templateConfig@3"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+6more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.initScript+5more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+6more"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+6more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.templateConfig@6"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+7more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+7more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration.enabled:t+6more@2"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+configuration.initScript+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.initScript@6"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller+controller.type+7more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t+controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@7"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels@3"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t+controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+2more@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@6"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@2"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@6": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null+controller.type=StatefulSet+fullnameOverride+3more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null+controller.type=StatefulSet+fullnameOverride+3more@2"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@8": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@9": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet+4more@2"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet"
+      }
+    },
+    "constrains/commonLabels+commonLabels=null": {
+      "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@3"
+    },
+    "constrains/commonLabels+commonLabels=null+controller.type=StatefulSet+fullnameOverride+3more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more@2"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null+controller.type=StatefulSet+fullnameOverride+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more@2"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null@2": {
+      "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@3"
+    },
+    "constrains/commonLabels+commonLabels=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels=null"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels=null"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels=null"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@4"
+      }
+    },
+    "constrains/commonLabels+commonLabels=null@7": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null"
+      }
+    },
+    "constrains/commonLabels+commonLabels=null@8": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null@2"
+      }
+    },
+    "constrains/commonLabels:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonLabels:t@3"
+      }
+    },
+    "constrains/commonLabels:t+controller.type=StatefulSet": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t@3"
+        }
+      ]
+    },
+    "constrains/commonLabels:t+controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more@2"
+        }
+      ]
+    },
+    "constrains/commonLabels:t+controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+2more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t+controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+2more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1commonLabels:t+controller.type=StatefulSet"
+        }
+      ]
+    },
+    "constrains/commonLabels:t@2": {
+      "not": {
+        "$ref": "#/$defs/constrains~1commonLabels:t@3"
+      }
+    },
+    "constrains/commonLabels:t@3": {
+      "properties": {
+        "commonLabels": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels=null": {
+      "properties": {
+        "commonLabels": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels@2": {
+      "not": {
+        "properties": {
+          "commonLabels": {}
+        },
+        "required": [
+          "commonLabels"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/commonLabels@3": {
+      "properties": {
+        "commonLabels": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/configuration.enabled:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
+      }
+    },
+    "constrains/configuration.enabled:t+configuration.initScript+configuration.templateConfig+1more": {
+      "$ref": "#/$defs/constrains~1configuration.enabled:t+configuration.initScript+configuration.templateConfig+1more@2"
+    },
+    "constrains/configuration.enabled:t+configuration.initScript+configuration.templateConfig+1more@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.templateConfig"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.initScript"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+        }
+      ]
+    },
+    "constrains/configuration.enabled:t+configuration.initScript+configuration.templateConfig+1more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t+controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t+configuration.initScript+configuration.templateConfig+1more"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t"
+        }
+      ]
+    },
+    "constrains/configuration.enabled:t+controller.type=StatefulSet": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/configuration.enabled:t@2": {
+      "properties": {
+        "configuration": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "configuration"
+      ],
+      "type": "object"
+    },
+    "constrains/configuration.initScript": {
+      "$ref": "#/$defs/constrains~1configuration.initScript@5"
+    },
+    "constrains/configuration.initScript@2": {
+      "$ref": "#/$defs/constrains~1configuration.initScript@5"
+    },
+    "constrains/configuration.initScript@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1configuration.initScript@6"
+      }
+    },
+    "constrains/configuration.initScript@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1configuration.initScript@6"
+      }
+    },
+    "constrains/configuration.initScript@5": {
+      "not": {
+        "properties": {
+          "configuration": {
+            "properties": {
+              "initScript": {
+                "pattern": "\\{\\{",
+                "type": "string"
+              }
+            },
+            "required": [
+              "initScript"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "configuration"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/configuration.initScript@6": {
+      "properties": {
+        "configuration": {
+          "properties": {
+            "initScript": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "initScript"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "configuration"
+      ],
+      "type": "object"
+    },
+    "constrains/configuration.templateConfig": {
+      "$ref": "#/$defs/constrains~1configuration.templateConfig@5"
+    },
+    "constrains/configuration.templateConfig@2": {
+      "$ref": "#/$defs/constrains~1configuration.templateConfig@5"
+    },
+    "constrains/configuration.templateConfig@3": {
+      "not": {
+        "$ref": "#/$defs/constrains~1configuration.templateConfig@6"
+      }
+    },
+    "constrains/configuration.templateConfig@4": {
+      "not": {
+        "$ref": "#/$defs/constrains~1configuration.templateConfig@6"
+      }
+    },
+    "constrains/configuration.templateConfig@5": {
+      "not": {
+        "properties": {
+          "configuration": {
+            "properties": {
+              "templateConfig": {
+                "pattern": "\\{\\{",
+                "type": "string"
+              }
+            },
+            "required": [
+              "templateConfig"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "configuration"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/configuration.templateConfig@6": {
+      "properties": {
+        "configuration": {
+          "properties": {
+            "templateConfig": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "templateConfig"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "configuration"
+      ],
+      "type": "object"
+    },
+    "constrains/controller+controller.type+controller.type=Deployment+2more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@6"
+        }
+      ]
+    },
+    "constrains/controller+controller.type+controller.type=Deployment+4more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+        }
+      ]
+    },
+    "constrains/controller+controller.type+controller.type=Deployment+5more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+        }
+      ]
+    },
+    "constrains/controller+controller.type+controller.type=Deployment+6more": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+        }
+      ]
+    },
     "constrains/controller+controller.type+controller.type=null": {
-      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@4"
+      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@3"
     },
     "constrains/controller+controller.type+controller.type=null@2": {
       "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@4"
     },
     "constrains/controller+controller.type+controller.type=null@3": {
-      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@2"
+      "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@4"
     },
     "constrains/controller+controller.type+controller.type=null@4": {
       "anyOf": [
@@ -143,7 +794,7 @@
     },
     "constrains/controller+controller.type+controller.type=null@5": {
       "not": {
-        "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null"
+        "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=null@2"
       }
     },
     "constrains/controller+controller=null": {
@@ -199,16 +850,19 @@
       }
     },
     "constrains/controller.type=Deployment+controller.type=StatefulSet": {
+      "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@5"
+    },
+    "constrains/controller.type=Deployment+controller.type=StatefulSet@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@2"
+          "$ref": "#/$defs/constrains~1controller.type=Deployment"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=Deployment"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet@6"
         }
       ]
     },
-    "constrains/controller.type=Deployment+controller.type=StatefulSet@2": {
+    "constrains/controller.type=Deployment+controller.type=StatefulSet@3": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1controller.type=Deployment@2"
@@ -218,14 +872,14 @@
         }
       ]
     },
-    "constrains/controller.type=Deployment+controller.type=StatefulSet@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet"
-      }
-    },
     "constrains/controller.type=Deployment+controller.type=StatefulSet@4": {
       "not": {
         "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@2"
+      }
+    },
+    "constrains/controller.type=Deployment+controller.type=StatefulSet@5": {
+      "not": {
+        "$ref": "#/$defs/constrains~1controller.type=Deployment+controller.type=StatefulSet@3"
       }
     },
     "constrains/controller.type=Deployment@2": {
@@ -245,86 +899,131 @@
       "type": "object"
     },
     "constrains/controller.type=StatefulSet": {
-      "$ref": "#/$defs/constrains~1controller.type=StatefulSet@3"
+      "$ref": "#/$defs/constrains~1controller.type=StatefulSet@7"
+    },
+    "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+        }
+      ]
+    },
+    "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        }
+      ]
     },
     "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
+      "allOf": [
         {
           "$ref": "#/$defs/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride+1more"
         }
       ]
     },
     "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t": {
-      "anyOf": [
+      "allOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
-        },
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t+nameOverride:t"
+        }
+      ]
+    },
+    "constrains/controller.type=StatefulSet+fullnameOverride+fullnameOverride:t@2": {
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride+fullnameOverride:t"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride@3"
         }
       ]
     },
-    "constrains/controller.type=StatefulSet+fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
+    "constrains/controller.type=StatefulSet+fullnameOverride:t": {
+      "allOf": [
         {
           "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
         }
       ]
     },
+    "constrains/controller.type=StatefulSet+fullnameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet+fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/controller.type=StatefulSet+nameOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1controller.type=StatefulSet"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        }
+      ]
+    },
     "constrains/controller.type=StatefulSet@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
-      }
+      "$ref": "#/$defs/when~1controller.type=StatefulSet~1then~1any~1else~1fail"
     },
     "constrains/controller.type=StatefulSet@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
-      }
+      "$ref": "#/$defs/when~1controller.type=StatefulSet~1then~1any~1else~1fail"
     },
     "constrains/controller.type=StatefulSet@4": {
+      "$ref": "#/$defs/when~1controller.type=StatefulSet~1then~1any~1else~1fail"
+    },
+    "constrains/controller.type=StatefulSet@5": {
+      "$ref": "#/$defs/when~1controller.type=StatefulSet~1then~1any~1else~1fail"
+    },
+    "constrains/controller.type=StatefulSet@6": {
+      "not": {
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+      }
+    },
+    "constrains/controller.type=StatefulSet@7": {
+      "not": {
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+      }
+    },
+    "constrains/controller.type=StatefulSet@8": {
       "properties": {
         "controller": {
           "$ref": "#/$defs/constrains~1type=StatefulSet"
@@ -363,6 +1062,9 @@
       }
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
+      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
+    },
+    "constrains/fullnameOverride+fullnameOverride:t@2": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
@@ -378,12 +1080,15 @@
       }
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
+      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
@@ -423,15 +1128,9 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride@2"
+      }
     },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
@@ -439,32 +1138,50 @@
           "$ref": "#/$defs/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "$ref": "#/$defs/constrains~1nameOverride@2"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1nameOverride@2"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t@3": {
       "not": {
         "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
       }
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@2"
+      "not": {
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+      }
     },
     "constrains/nameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
       }
     },
     "constrains/nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      }
-    },
-    "constrains/nameOverride:t@4": {
       "properties": {
         "nameOverride": {
           "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
         }
       },
       "required": [
@@ -565,6 +1282,24 @@
         }
       ]
     },
+    "when/configuration.enabled:t/then/controller.type=StatefulSet/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@2"
+      }
+    },
+    "when/configuration.enabled:t/then/controller.type=StatefulSet/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@3"
+      }
+    },
     "when/controller.type+controller.type=null/then/fail/else/controller.type": {
       "else": {
         "$ref": "#/$defs/when~1controller.type~1then~1fail~1else~1any"
@@ -618,21 +1353,14 @@
     "when/controller.type=StatefulSet/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
-      },
-      "then": true
-    },
-    "when/controller.type=StatefulSet/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
       },
       "then": true
     },
     "when/controller.type=StatefulSet/then/controller+controller.type+controller.type=null/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
       },
       "then": {
         "$ref": "#/$defs/when~1controller.type+controller.type=null~1then~1fail~1else~1controller.type@2"
@@ -644,16 +1372,16 @@
         "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
       },
       "then": {
-        "$ref": "#/$defs/when~1controller.type=StatefulSet~1then~1any~1else~1fail"
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@4"
       }
     },
     "when/nameOverride:t/then/controller.type=StatefulSet/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
+        "$ref": "#/$defs/constrains~1nameOverride:t@3"
       },
       "then": {
-        "$ref": "#/$defs/when~1controller.type=StatefulSet~1then~1any~1else~1fail@2"
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@5"
       }
     },
     "when/type+type=null/then/fail/else/type": {
@@ -707,7 +1435,245 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1controller.type=StatefulSet~1else~1fail"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "Override the default full name of the Helm chart",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1configuration.enabled:t~1then~1controller.type=StatefulSet~1else~1fail"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "configuration": {
+                    "properties": {
+                      "initScript": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "initScript"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "configuration"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "configuration": {
+                      "properties": {
+                        "initScript": {}
+                      },
+                      "required": [
+                        "initScript"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "configuration"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1commonLabels:t@3"
+          },
+          {
+            "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "description": "Labels to add to all resources\napp.kubernetes.io/part-of: home-automation",
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/constrains~1controller+controller=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1configuration.enabled:t+configuration.initScript+configuration.templateConfig+1more@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "description": "Image settings",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/when~1controller.type=Deployment~1then~1controller+controller.type+controller.type=null~1else~1controller.type=StatefulSet"
+          },
+          {
+            "$ref": "#/$defs/constrains~1controller+controller=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configuration": {
+            "description": "Configuration for Home Assistant",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1configuration.enabled:t~1then~1controller.type=StatefulSet~1else~1fail@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configuration": {
+            "additionalProperties": {},
+            "description": "Configuration for Home Assistant",
+            "properties": {
+              "initScript": {
+                "description": "Init script for the Home Assistant initialization, you can use Go template functions\nScript is executed before the Home Assistant container starts and is used to prepare the configuration\nWill be executed only if the configuration.enabled is set to true",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configuration": {}
+                  },
+                  "required": [
+                    "configuration"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "configuration": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "configuration"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1configuration.enabled:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configuration.templateConfig@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configuration.initScript@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1controller.type=StatefulSet@8"
+          }
+        ]
       },
       "then": false
     },
@@ -729,37 +1695,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1controller.type=Deployment~1then~1controller+controller.type+controller.type=null~1else~1controller.type=StatefulSet"
+            "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration+12more@4"
           },
           {
-            "$ref": "#/$defs/constrains~1controller+controller=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1controller.type=StatefulSet~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "Override the default full name of the Helm chart",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@3"
+            "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+controller.type=StatefulSet@2"
           },
           {
-            "$ref": "#/$defs/constrains~1controller+controller.type+controller.type=Deployment+6more@4"
+            "$ref": "#/$defs/constrains~1commonLabels+commonLabels:t+commonLabels=null+configuration+12more@3"
           }
         ]
       },
@@ -792,7 +1734,19 @@
       "description": "Labels to add to all resources\napp.kubernetes.io/part-of: home-automation"
     },
     "configuration": {
-      "description": "Configuration for Home Assistant"
+      "additionalProperties": {},
+      "description": "Configuration for Home Assistant",
+      "properties": {
+        "enabled": {
+          "description": "Enable or disable the configuration setup for Home Assistant"
+        },
+        "initScript": {
+          "description": "Init script for the Home Assistant initialization, you can use Go template functions\nScript is executed before the Home Assistant container starts and is used to prepare the configuration\nWill be executed only if the configuration.enabled is set to true"
+        },
+        "templateConfig": {
+          "description": "Template for the configuration.yaml file\nUsed the `tpl` function to render the template, so you can use Go template functions"
+        }
+      }
     },
     "controller": {
       "additionalProperties": {},
@@ -806,6 +1760,9 @@
       ],
       "description": "Controller configuration",
       "properties": {
+        "labels": {
+          "description": "Labels to add to the controller"
+        },
         "type": {
           "anyOf": [
             {
@@ -855,7 +1812,13 @@
       "description": "Gateway API HTTPRoute settings (alternative to ingress)\nThis chart does not install the Gateway API CRDs or a Gateway controller;\nboth must already be present in the cluster (see the chart README)."
     },
     "image": {
-      "description": "Image settings"
+      "additionalProperties": {},
+      "description": "Image settings",
+      "properties": {
+        "tag": {
+          "description": "Overrides the image tag whose default is the chart appVersion."
+        }
+      }
     },
     "imagePullSecrets": {
       "description": "List of imagePullSecrets for private image repositories"

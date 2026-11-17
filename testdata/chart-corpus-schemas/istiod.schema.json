@@ -1,5 +1,71 @@
 {
   "$defs": {
+    "constrains/_internal_defaults_do_not_set": {
+      "not": {
+        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
+      }
+    },
+    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+defaults:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
+        },
+        {
+          "properties": {
+            "_internal_defaults_do_not_set": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "_internal_defaults_do_not_set"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "_internal_defaults_do_not_set": {}
+            },
+            "required": [
+              "_internal_defaults_do_not_set"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/$defs/constrains~1defaults:t"
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set@2": {
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "_internal_defaults_do_not_set"
+      ],
+      "type": "object"
+    },
+    "constrains/defaults:t": {
+      "not": {
+        "$ref": "#/$defs/constrains~1defaults:t@2"
+      }
+    },
+    "constrains/defaults:t@2": {
+      "properties": {
+        "defaults": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "defaults"
+      ],
+      "type": "object"
+    },
     "constrains/global+global=null": {
       "$ref": "#/$defs/constrains~1global+global=null@3"
     },
@@ -44,6 +110,36 @@
         "$ref": "#/$defs/constrains~1global+global=null@2"
       }
     },
+    "constrains/pilot+pilot=null": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "pilot": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "pilot"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "pilot": {}
+              },
+              "required": [
+                "pilot"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
     "t": {
       "anyOf": [
         {
@@ -68,6 +164,13 @@
           "const": true
         }
       ]
+    },
+    "when/defaults:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/$defs/constrains~1defaults:t@2"
+      },
+      "then": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -87,18 +190,58 @@
       "then": false
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
       "if": {
-        "properties": {
-          "defaults": {
-            "$ref": "#/$defs/t"
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1defaults:t@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+defaults:t"
           }
-        },
-        "required": [
-          "defaults"
-        ],
-        "type": "object"
+        ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/when~1defaults:t~1then~1any~1else~1fail"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set"
+          },
+          {
+            "$ref": "#/$defs/constrains~1pilot+pilot=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "pilot": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
     },
     {
       "if": {
@@ -127,6 +270,7 @@
         "profile": {}
       }
     },
+    "pilot": {},
     "platform": {},
     "profile": {}
   },
