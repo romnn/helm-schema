@@ -1,6 +1,6 @@
 # 0072. R3b target architecture: values as terms, three kinds of condition, one owner per operation, one render
 
-Status: Accepted (2026-11-10; amended 2026-11-17 after a direction check: §2 validity atoms, §5 effect log,
+Status: Accepted (2026-11-10; amended 2026-11-17 after direction checks: §2 validity atoms, §5 effect log, §7 reader port,
 .Release.Namespace policy. The user asked for a first-principles redesign; the orchestrator decided after two
 independent reviews)
 Date: 2026-11-10 (schema-bug-hunt-v1 round 8)
@@ -111,14 +111,27 @@ behind that executor to the following. Each invariant names the cluster it makes
    - A demand becomes universal over members (`items`, `additionalProperties`) only with a proof that it is reached for
      every member. A `break` or a guarded consumer withholds that proof. (E)
 
-7. **Layout is one compositional analysis over a shared text DAG.**
-   - Rendered and captured text is a shared DAG of literal and hole nodes.
-   - One layout analysis resolves each hole's placement once the structure is complete; a suffix can still complete a
-     token or turn a scalar into a key. Until then, placements are provisional with parser alternatives.
-   - Invalidity is recorded only when it is established for the complete relevant output.
-   - Manifest YAML and decode modes are separate contracts: `fromYaml` returns a map holding `Error` rather than
-     aborting.
-   - No placeholder skeleton, no re-parse of finished text, and no cross product of arms. (C)
+7. **Layout is an abstract interpretation of Helm's own reader over a shared text DAG** (amended 2026-11-17;
+   direction check `round8/designs/reviews/step7-parser-direction-fable-2026-11-17.md`).
+   - Rendered and captured text is a shared DAG of literal, hole, operation and choice nodes.
+   - **The reader.** It is a port of the pinned decoder Helm runs on that text (go-yaml v2, behind
+     `sigs.k8s.io/yaml`), stepped one character at a time.
+     - Its states are the decoder's own: indent stack, flow level, simple keys, held tokens, parser stack.
+     - The analyser holds no other model of YAML.
+   - **Stages.** Every stage between the template and the reader (Helm's splitter and trims, `indent`, `nindent`,
+     the encoders, quoting) is an exact transducer or generator owned by its operation. No column, indentation or
+     line structure is ever inferred.
+   - **Holes.** A hole acts through the reader's transition relation over its value's language, with regular guards.
+     What the relation cannot decide is an explicit unknown for that document, never an error.
+   - **Merging.** Equal reader states merge, and destinations are guarded data beside the state. A placement stays
+     provisional until its document completes exactly; a suffix completes a token by being the reader's next input.
+   - **Invalidity** is recorded when the reader takes its error transition, within the bytes Helm decodes: the first
+     YAML document of each chunk.
+   - **Manifests and `fromYaml`** share the reader and differ only in target; `fromYaml` returns a map holding
+     `Error`. The reader runs after execution for manifests, and at the call for `fromYaml`.
+   - **The oracle.** The pinned Go code is the test oracle: equality on concrete text, invariance under chunk
+     partition, and soundness under hole substitution.
+   - No placeholder skeleton, no re-parse, and no cross product of arms. (C)
 
 8. **One Helm-compatible render graph.**
    - Dependencies run in the same execution, over values constructed as Helm constructs them: activation by condition
