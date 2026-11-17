@@ -14,7 +14,9 @@
 
 use crate::Span;
 use crate::rendered::{HoleShape, LayoutUncertainty, RenderedArm, RenderedBody, RenderedPiece};
-use crate::yaml_dialect::{DialectDivergence, plain_scalar_divergence};
+use helm_schema_goyaml::{
+    Event, EventKind, Mark, Reader, ScalarStyle as ScalarStyleEvent, Syntax, Token, TokenKind,
+};
 
 /// Upper bound on one arm's skeleton, in bytes. It is well above the largest
 /// template of the chart corpus (a 1.4 MB CRD); a larger skeleton is
@@ -179,21 +181,6 @@ pub struct YamlOwnership {
     pub nodes: Vec<YamlNode>,
     /// The block scalars among `nodes`, with their decoded headers.
     pub blocks: Vec<BlockScalarOwnership>,
-    /// The documents' values as Helm decodes them, or why they are withheld.
-    pub decoded: Result<Vec<serde_json::Value>, Undecoded>,
-}
-
-/// Why an arm's decoded values are withheld while its structure is known.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Undecoded {
-    /// The arm renders hole output, whose text is not known.
-    Placeholders,
-    /// A plain scalar Helm's YAML 1.1 reading decodes differently.
-    Dialect(DialectDivergence),
-    /// A collection as a mapping key.
-    CollectionKey,
-    /// The literal decoder refuses the text.
-    Refused,
 }
 
 /// One structural YAML node.
@@ -413,130 +400,538 @@ pub fn first_document_ownership(skeleton: Skeleton) -> Result<YamlOwnership, Lay
     ownership(skeleton, true)
 }
 
+/// Reads a skeleton with Helm's pinned go-yaml reader and maps its nodes to pieces.
+///
+/// `first_only` reads what Helm reads of one `SplitManifests` chunk: the first document.
+/// Otherwise each later document is read by a fresh reader from the previous document's end.
 #[tracing::instrument(skip_all)]
 fn ownership(skeleton: Skeleton, first_only: bool) -> Result<YamlOwnership, LayoutUncertainty> {
-    let tree = parse_yaml(&skeleton.text).ok_or(LayoutUncertainty::Parse)?;
-    let root = tree.root_node();
-    let mut cursor = root.walk();
-    let root = if first_only {
-        root.named_children(&mut cursor)
-            .find(|node| node.kind() == "document" || node.has_error())
-            .unwrap_or(root)
-    } else {
-        root
-    };
-    if root.has_error() {
-        return Err(LayoutUncertainty::Parse);
+    let offsets: Vec<usize> = skeleton
+        .text
+        .char_indices()
+        .map(|(offset, _)| offset)
+        .chain(std::iter::once(skeleton.text.len()))
+        .collect();
+    let mut tree = Tree::default();
+    let mut base = 0;
+    loop {
+        let rest = offsets
+            .get(base)
+            .and_then(|offset| skeleton.text.get(*offset..))
+            .unwrap_or_default();
+        let read = read_first_document(rest)?;
+        let at = |mark: Mark| {
+            offsets
+                .get(base + mark.index)
+                .or(offsets.last())
+                .copied()
+                .unwrap_or_default()
+        };
+        let Some(end) = tree.document(&read, &at, &skeleton.text)? else {
+            break;
+        };
+        if first_only || end.index == 0 {
+            break;
+        }
+        base += end.index;
     }
-    let mut nodes = Vec::new();
+    let mut nodes = Vec::with_capacity(tree.drafts.len());
     let mut blocks = Vec::new();
-    collect_nodes(root, &skeleton, &mut nodes, &mut blocks)?;
+    tree.flatten(&skeleton, &mut nodes, &mut blocks)?;
     if may_form_merge_key(&nodes, &skeleton) {
         return Err(LayoutUncertainty::MergeKey);
     }
-    let decoded = if skeleton.segments.iter().any(|segment| segment.placeholder) {
-        Err(Undecoded::Placeholders)
-    } else {
-        decode_documents(&nodes, &skeleton.text)
-    };
     Ok(YamlOwnership {
         skeleton,
         nodes,
         blocks,
-        decoded,
     })
 }
 
-#[derive(Default)]
-struct OwnershipContext {
-    parent: Option<usize>,
-    key: bool,
-    entry_key: Option<usize>,
-    flow_mapping: bool,
+/// The tokens and events of the first document of `text`, as the pinned reader delivers them.
+fn read_first_document(text: &str) -> Result<(Vec<Token>, Vec<Event>), LayoutUncertainty> {
+    let mut reader = Reader::default();
+    let mut tokens = Vec::new();
+    let mut events = Vec::new();
+    let mut observe = |syntax: Syntax<'_>| {
+        match syntax {
+            Syntax::Token(token) => tokens.push(token.clone()),
+            Syntax::Event(event) => events.push(event.clone()),
+        }
+        Ok(())
+    };
+    for character in text.chars() {
+        reader
+            .step_syntax(character, &mut observe)
+            .map_err(|_| LayoutUncertainty::Parse)?;
+    }
+    reader
+        .finish_syntax(&mut observe)
+        .map_err(|_| LayoutUncertainty::Parse)?;
+    Ok((tokens, events))
 }
 
-fn collect_nodes(
-    root: tree_sitter::Node<'_>,
-    skeleton: &Skeleton,
-    nodes: &mut Vec<YamlNode>,
-    blocks: &mut Vec<BlockScalarOwnership>,
-) -> Result<(), LayoutUncertainty> {
-    let mut cursor = root.walk();
-    let mut contexts = vec![OwnershipContext::default()];
-    loop {
-        let node = cursor.node();
-        let spelling = node.kind();
-        let Some(context) = contexts.last() else {
-            return Ok(());
+fn push(
+    drafts: &mut Vec<Draft>,
+    parent: Option<usize>,
+    kind: YamlNodeKind,
+    key: bool,
+    start: usize,
+) -> usize {
+    drafts.push(Draft {
+        parent,
+        kind,
+        key,
+        start,
+        end: start,
+    });
+    drafts.len() - 1
+}
+
+/// A node before document order and piece coverage are fixed.
+struct Draft {
+    parent: Option<usize>,
+    kind: YamlNodeKind,
+    key: bool,
+    start: usize,
+    end: usize,
+}
+
+/// An open node whose children the reader is still delivering.
+enum Frame {
+    Document(usize),
+    /// A mapping and its open entry, with whether the entry's value has started.
+    Mapping {
+        node: usize,
+        flow: bool,
+        entry: Option<(usize, bool)>,
+    },
+    /// A sequence and, in block style, its open item.
+    Sequence {
+        node: usize,
+        flow: bool,
+        item: Option<usize>,
+    },
+}
+
+#[derive(Default)]
+struct Tree {
+    drafts: Vec<Draft>,
+}
+
+impl Tree {
+    /// Adds the first document of one read; returns its end mark, or `None` for a stream
+    /// without a document.
+    fn document(
+        &mut self,
+        (tokens, events): &(Vec<Token>, Vec<Event>),
+        at: &impl Fn(Mark) -> usize,
+        text: &str,
+    ) -> Result<Option<Mark>, LayoutUncertainty> {
+        // Collection openers in token order, per start offset: `true` for flow style.
+        let mut openers: std::collections::BTreeMap<usize, Vec<(bool, bool)>> =
+            std::collections::BTreeMap::new();
+        let mut entries = Vec::new();
+        let mut spans = Vec::new();
+        for Token { kind, start, end } in tokens {
+            let (mapping, flow) = match kind {
+                TokenKind::BlockMappingStart => (true, false),
+                TokenKind::FlowMappingStart => (true, true),
+                TokenKind::BlockSequenceStart => (false, false),
+                TokenKind::FlowSequenceStart => (false, true),
+                TokenKind::BlockEntry => {
+                    entries.push((at(*start), at(*end)));
+                    spans.push((at(*start), at(*end)));
+                    continue;
+                }
+                TokenKind::StreamStart
+                | TokenKind::StreamEnd
+                | TokenKind::VersionDirective(..)
+                | TokenKind::TagDirective(..)
+                | TokenKind::DocumentStart
+                | TokenKind::DocumentEnd
+                | TokenKind::BlockEnd
+                | TokenKind::FlowSequenceEnd
+                | TokenKind::FlowMappingEnd
+                | TokenKind::FlowEntry
+                | TokenKind::Key
+                | TokenKind::Value
+                | TokenKind::Alias(_)
+                | TokenKind::Anchor(_)
+                | TokenKind::Tag(..)
+                | TokenKind::Scalar { .. } => {
+                    spans.push((at(*start), at(*end)));
+                    continue;
+                }
+            };
+            spans.push((at(*start), at(*end)));
+            openers.entry(at(*start)).or_default().push((mapping, flow));
+        }
+        let mut entries = entries.into_iter();
+        let mut stack: Vec<Frame> = Vec::new();
+        let mut document = None;
+        for Event { kind, start, end } in events {
+            let (start, end_offset) = (at(*start), at(*end));
+            match kind {
+                EventKind::StreamStart | EventKind::StreamEnd => {}
+                EventKind::DocumentStart { implicit: _ } => {
+                    let node = self.push(None, YamlNodeKind::Document, false, start);
+                    document = Some(node);
+                    stack.push(Frame::Document(node));
+                }
+                EventKind::DocumentEnd { implicit } => {
+                    let Some(node) = document else {
+                        return Err(LayoutUncertainty::Parse);
+                    };
+                    if !implicit {
+                        let marker = self.push(Some(node), YamlNodeKind::DocumentEnd, false, start);
+                        self.extend(marker, end_offset);
+                    }
+                    self.extend(node, end_offset);
+                    self.comments(node, &spans, text);
+                    return Ok(Some(*end));
+                }
+                EventKind::Alias(_) => return Err(LayoutUncertainty::TagOrAlias),
+                EventKind::Scalar {
+                    anchor,
+                    tag,
+                    value: _,
+                    style,
+                    implicit: _,
+                } => {
+                    if !anchor.is_empty() || !tag.is_empty() {
+                        return Err(LayoutUncertainty::TagOrAlias);
+                    }
+                    let (parent, key) = self.open_slot(&mut stack, &mut entries, start)?;
+                    // An empty node is implicit null: no bytes and no node, only an extent.
+                    if start < end_offset {
+                        let kind = match style {
+                            ScalarStyleEvent::Plain => YamlNodeKind::Scalar(ScalarStyle::Plain),
+                            ScalarStyleEvent::SingleQuoted => {
+                                YamlNodeKind::Scalar(ScalarStyle::SingleQuoted)
+                            }
+                            ScalarStyleEvent::DoubleQuoted => {
+                                YamlNodeKind::Scalar(ScalarStyle::DoubleQuoted)
+                            }
+                            ScalarStyleEvent::Literal | ScalarStyleEvent::Folded => {
+                                YamlNodeKind::BlockScalar
+                            }
+                        };
+                        let node = self.push(Some(parent), kind, key, start);
+                        // A block scalar's token runs through its final line breaks; the
+                        // node spans its header and content lines only.
+                        let end_offset = if kind == YamlNodeKind::BlockScalar {
+                            start
+                                + text
+                                    .get(start..end_offset)
+                                    .unwrap_or_default()
+                                    .trim_end_matches([' ', '\t', '\r', '\n'])
+                                    .len()
+                        } else {
+                            end_offset
+                        };
+                        self.extend(node, end_offset);
+                    }
+                    self.close_slot(&mut stack, end_offset);
+                }
+                EventKind::MappingStart {
+                    anchor,
+                    tag,
+                    implicit: _,
+                }
+                | EventKind::SequenceStart {
+                    anchor,
+                    tag,
+                    implicit: _,
+                } => {
+                    if !anchor.is_empty() || !tag.is_empty() {
+                        return Err(LayoutUncertainty::TagOrAlias);
+                    }
+                    let mapping = matches!(kind, EventKind::MappingStart { .. });
+                    let in_flow = stack.iter().any(|frame| match frame {
+                        Frame::Mapping { flow, .. } | Frame::Sequence { flow, .. } => *flow,
+                        Frame::Document(_) => false,
+                    });
+                    let opener = openers.get_mut(&start).and_then(|openers| {
+                        let index = openers.iter().position(|(kind, _)| *kind == mapping)?;
+                        Some(openers.remove(index).1)
+                    });
+                    // Only a flow sequence's single-pair entry opens a mapping without a token.
+                    let flow = opener.unwrap_or(in_flow);
+                    let (parent, key) = self.open_slot(&mut stack, &mut entries, start)?;
+                    let kind = match (mapping, flow) {
+                        (true, false) => YamlNodeKind::Mapping,
+                        (true, true) => YamlNodeKind::FlowMapping,
+                        (false, false) => YamlNodeKind::Sequence,
+                        (false, true) => YamlNodeKind::FlowSequence,
+                    };
+                    let node = self.push(Some(parent), kind, key, start);
+                    stack.push(if mapping {
+                        Frame::Mapping {
+                            node,
+                            flow,
+                            entry: None,
+                        }
+                    } else {
+                        Frame::Sequence {
+                            node,
+                            flow,
+                            item: None,
+                        }
+                    });
+                }
+                EventKind::MappingEnd | EventKind::SequenceEnd => {
+                    let (node, flow) = match stack.pop() {
+                        Some(
+                            Frame::Mapping { node, flow, .. } | Frame::Sequence { node, flow, .. },
+                        ) => (node, flow),
+                        Some(Frame::Document(_)) | None => return Err(LayoutUncertainty::Parse),
+                    };
+                    // A flow collection ends at its bracket. A block one ends at its last
+                    // child, unless the stream end closes it: then its `BLOCK-END` token sits
+                    // at the end of input (`scannerc.go:1029`) and the trailing trivia is its.
+                    if flow || end_offset == text.len() {
+                        self.extend(node, end_offset);
+                    }
+                    let end = self.drafts.get(node).map_or(end_offset, |draft| draft.end);
+                    self.close_slot(&mut stack, end);
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    fn push(
+        &mut self,
+        parent: Option<usize>,
+        kind: YamlNodeKind,
+        key: bool,
+        start: usize,
+    ) -> usize {
+        push(&mut self.drafts, parent, kind, key, start)
+    }
+
+    /// Extends a node and its ancestors to `end`.
+    fn extend(&mut self, mut node: usize, end: usize) {
+        while let Some(draft) = self.drafts.get_mut(node) {
+            draft.end = draft.end.max(end);
+            let Some(parent) = draft.parent else {
+                return;
+            };
+            node = parent;
+        }
+    }
+
+    /// The parent and key role of a node starting at `start`, opening its mapping entry
+    /// or block sequence item.
+    fn open_slot(
+        &mut self,
+        stack: &mut [Frame],
+        entries: &mut impl Iterator<Item = (usize, usize)>,
+        start: usize,
+    ) -> Result<(usize, bool), LayoutUncertainty> {
+        match stack.last_mut() {
+            None => Err(LayoutUncertainty::Parse),
+            Some(Frame::Document(node)) => Ok((*node, false)),
+            Some(Frame::Mapping {
+                entry: Some((pair, value)),
+                ..
+            }) => {
+                *value = true;
+                Ok((*pair, false))
+            }
+            Some(Frame::Mapping {
+                node,
+                flow,
+                entry: entry @ None,
+            }) => {
+                let kind = if *flow {
+                    YamlNodeKind::FlowPair
+                } else {
+                    YamlNodeKind::Pair
+                };
+                let pair = push(&mut self.drafts, Some(*node), kind, false, start);
+                *entry = Some((pair, false));
+                Ok((pair, true))
+            }
+            Some(Frame::Sequence {
+                node, flow: true, ..
+            }) => Ok((*node, false)),
+            Some(Frame::Sequence {
+                node,
+                flow: false,
+                item,
+            }) => {
+                // Each block item owns the next `-` indicator, in token order.
+                let (dash, dash_end) = entries.next().ok_or(LayoutUncertainty::Parse)?;
+                let index = push(
+                    &mut self.drafts,
+                    Some(*node),
+                    YamlNodeKind::Item,
+                    false,
+                    dash,
+                );
+                *item = Some(index);
+                self.extend(index, dash_end);
+                Ok((index, false))
+            }
+        }
+    }
+
+    /// Completes the slot a node ending at `end` filled: an entry after its value, an item
+    /// after its node.
+    fn close_slot(&mut self, stack: &mut [Frame], end: usize) {
+        let open = match stack.last_mut() {
+            None | Some(Frame::Document(_)) => None,
+            Some(Frame::Mapping { entry, .. }) => match *entry {
+                Some((pair, true)) => {
+                    *entry = None;
+                    Some(pair)
+                }
+                Some((pair, false)) => Some(pair),
+                None => None,
+            },
+            Some(Frame::Sequence { item, .. }) => item.take(),
         };
-        let OwnershipContext {
-            parent,
-            key,
-            entry_key,
-            flow_mapping,
-        } = context;
-        let key = *key || *entry_key == Some(node.id()) || *flow_mapping && spelling == "flow_node";
-        let kind = match spelling {
-            "tag" | "anchor" | "alias" => return Err(LayoutUncertainty::TagOrAlias),
-            "document" => Some(YamlNodeKind::Document),
-            "..." => Some(YamlNodeKind::DocumentEnd),
-            "block_mapping" => Some(YamlNodeKind::Mapping),
-            "block_mapping_pair" => Some(YamlNodeKind::Pair),
-            "block_sequence" => Some(YamlNodeKind::Sequence),
-            "block_sequence_item" => Some(YamlNodeKind::Item),
-            "flow_mapping" => Some(YamlNodeKind::FlowMapping),
-            "flow_pair" => Some(YamlNodeKind::FlowPair),
-            "flow_sequence" => Some(YamlNodeKind::FlowSequence),
-            "plain_scalar" => Some(YamlNodeKind::Scalar(ScalarStyle::Plain)),
-            "single_quote_scalar" => Some(YamlNodeKind::Scalar(ScalarStyle::SingleQuoted)),
-            "double_quote_scalar" => Some(YamlNodeKind::Scalar(ScalarStyle::DoubleQuoted)),
-            "block_scalar" => Some(YamlNodeKind::BlockScalar),
-            "comment" => Some(YamlNodeKind::Comment),
-            _ => None,
+        if let Some(open) = open {
+            self.extend(open, end);
+        }
+    }
+
+    /// Adds a node for each comment between the document's tokens.
+    ///
+    /// Outside its tokens a document holds only blanks, line breaks and comments
+    /// (`scannerc.go:1443`), so a `#` there starts a comment that runs to the line break.
+    fn comments(&mut self, document: usize, spans: &[(usize, usize)], text: &str) {
+        let Some(Draft { start, end, .. }) = self.drafts.get(document) else {
+            return;
         };
-        let mut next = OwnershipContext {
-            parent: *parent,
-            key,
-            entry_key: node.child_by_field_name("key").map(|node| node.id()),
-            flow_mapping: spelling == "flow_mapping",
-        };
-        let scalar = matches!(
-            kind,
-            Some(YamlNodeKind::Scalar(_) | YamlNodeKind::BlockScalar)
-        );
-        if let Some(kind) = kind {
-            let span = Span::new(node.start_byte(), node.end_byte());
-            let index = nodes.len();
-            nodes.push(YamlNode {
-                parent: *parent,
+        let (start, end) = (*start, *end);
+        let mut spans = spans.to_vec();
+        spans.sort_unstable();
+        let mut gaps = Vec::new();
+        let mut cursor = start;
+        for (token_start, token_end) in spans {
+            if token_start > cursor {
+                gaps.push((cursor, token_start.min(end)));
+            }
+            cursor = cursor.max(token_end);
+        }
+        if cursor < end {
+            gaps.push((cursor, end));
+        }
+        let mut comments = Vec::new();
+        for (gap_start, gap_end) in gaps {
+            let gap = text.get(gap_start..gap_end).unwrap_or_default();
+            let mut offset = 0;
+            while let Some(found) = gap.get(offset..).and_then(|rest| rest.find('#')) {
+                let comment_start = offset + found;
+                let length = gap
+                    .get(comment_start..)
+                    .unwrap_or_default()
+                    .find(['\r', '\n', '\u{85}', '\u{2028}', '\u{2029}'])
+                    .unwrap_or(gap.len() - comment_start);
+                comments.push((
+                    gap_start + comment_start,
+                    gap_start + comment_start + length,
+                ));
+                offset = comment_start + length;
+            }
+        }
+        // Containers were created at their starts, parents first, so one sweep keeps the
+        // chain of those containing the current comment.
+        let containers: Vec<usize> = (document + 1..self.drafts.len())
+            .filter(|index| {
+                self.drafts.get(*index).is_some_and(|draft| {
+                    !matches!(
+                        draft.kind,
+                        YamlNodeKind::Scalar(_)
+                            | YamlNodeKind::BlockScalar
+                            | YamlNodeKind::Comment
+                            | YamlNodeKind::DocumentEnd
+                            | YamlNodeKind::Document
+                    )
+                })
+            })
+            .collect();
+        let mut next = containers.iter().peekable();
+        let mut open: Vec<(usize, usize)> = Vec::new();
+        for (from, to) in comments {
+            while let Some(&&index) = next.peek() {
+                let Some(draft) = self.drafts.get(index) else {
+                    break;
+                };
+                if draft.start > from {
+                    break;
+                }
+                open.retain(|(_, end)| *end > draft.start);
+                open.push((index, draft.end));
+                next.next();
+            }
+            open.retain(|(_, end)| *end > from);
+            let parent = open.last().map_or(document, |(index, _)| *index);
+            let node = self.push(Some(parent), YamlNodeKind::Comment, false, from);
+            if let Some(draft) = self.drafts.get_mut(node) {
+                draft.end = to;
+            }
+        }
+    }
+
+    /// Emits nodes in document order, parents before children.
+    fn flatten(
+        &self,
+        skeleton: &Skeleton,
+        nodes: &mut Vec<YamlNode>,
+        blocks: &mut Vec<BlockScalarOwnership>,
+    ) -> Result<(), LayoutUncertainty> {
+        let mut children: Vec<Vec<usize>> = vec![Vec::new(); self.drafts.len()];
+        let mut roots = Vec::new();
+        for (index, draft) in self.drafts.iter().enumerate() {
+            match draft.parent.and_then(|parent| children.get_mut(parent)) {
+                Some(siblings) => siblings.push(index),
+                None => roots.push(index),
+            }
+        }
+        for siblings in &mut children {
+            siblings.sort_by_key(|&index| self.drafts.get(index).map(|draft| draft.start));
+        }
+        let mut stack: Vec<(usize, Option<usize>)> =
+            roots.into_iter().rev().map(|root| (root, None)).collect();
+        while let Some((index, parent)) = stack.pop() {
+            let Some(Draft {
+                parent: _,
                 kind,
                 key,
+                start,
+                end,
+            }) = self.drafts.get(index)
+            else {
+                continue;
+            };
+            let span = Span::new(*start, *end);
+            let position = nodes.len();
+            nodes.push(YamlNode {
+                parent,
+                kind: *kind,
+                key: *key,
                 span,
                 pieces: covered_pieces(skeleton, span),
             });
-            if kind == YamlNodeKind::BlockScalar {
+            if *kind == YamlNodeKind::BlockScalar {
                 let text = skeleton.text.get(span.start..span.end).unwrap_or_default();
                 blocks.push(BlockScalarOwnership {
-                    node: index,
+                    node: position,
                     header: block_header(text).ok_or(LayoutUncertainty::Parse)?,
                 });
             }
-            next.parent = Some(index);
-            next.key = false;
-        }
-        // Scalar grammar details do not introduce ownership nodes or propagate key roles.
-        if !scalar && cursor.goto_first_child() {
-            contexts.push(next);
-            continue;
-        }
-        while !cursor.goto_next_sibling() {
-            if !cursor.goto_parent() {
-                return Ok(());
+            if let Some(siblings) = children.get(index) {
+                stack.extend(siblings.iter().rev().map(|child| (*child, Some(position))));
             }
-            contexts.pop();
         }
+        Ok(())
     }
 }
+
 /// The first and last arm-local pieces whose bytes intersect `span`.
 fn covered_pieces(skeleton: &Skeleton, span: Span) -> Option<(usize, usize)> {
     let first = skeleton
@@ -580,37 +975,6 @@ fn block_header(text: &str) -> Option<BlockHeader> {
         chomping: chomping.unwrap_or(Chomping::Clip),
         indentation,
     })
-}
-
-/// Every document of a literal-only skeleton as Helm decodes it, or why
-/// that is withheld: the literal decoder reads YAML 1.2 and agrees with
-/// Helm only where no plain scalar diverges.
-#[tracing::instrument(skip_all)]
-fn decode_documents(nodes: &[YamlNode], text: &str) -> Result<Vec<serde_json::Value>, Undecoded> {
-    use serde::Deserialize as _;
-    for (index, node) in nodes.iter().enumerate() {
-        match node.kind {
-            YamlNodeKind::Scalar(ScalarStyle::Plain) => {
-                let spelling = text.get(node.span.start..node.span.end).unwrap_or_default();
-                if let Some(divergence) = plain_scalar_divergence(spelling, node.key) {
-                    return Err(Undecoded::Dialect(divergence));
-                }
-            }
-            YamlNodeKind::Pair | YamlNodeKind::FlowPair
-                if !nodes
-                    .iter()
-                    .any(|child| child.parent == Some(index) && child.key) =>
-            {
-                return Err(Undecoded::Dialect(DialectDivergence::NonStringKey));
-            }
-            kind if node.key && kind.is_collection() => return Err(Undecoded::CollectionKey),
-            _ => {}
-        }
-    }
-    serde_yaml::Deserializer::from_str(text)
-        .map(serde_json::Value::deserialize)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| Undecoded::Refused)
 }
 
 /// Whether a plain mapping key is, or a hole output can make it, the merge

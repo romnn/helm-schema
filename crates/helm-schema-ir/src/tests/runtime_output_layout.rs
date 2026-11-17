@@ -569,8 +569,12 @@ fn exhausted_shared_occurrence_queries_remain_unknown() {
     sim_assert_eq!(have: term.inputs(), want: BTreeSet::from([ValuesPath::parse("value")]));
 }
 
+/// An escaped line break continues a double-quoted scalar onto an unindented line. Helm's
+/// reader accepts `value: "\`, a line break, then `ab"` (the pinned helmsweep 4.2.3 renders it,
+/// while an unterminated quote fails with "found unexpected end of stream"), so the reader
+/// places the document directly, without the multiline recovery.
 #[test]
-fn recovered_frozen_continuations_do_not_certify_resource_placement() {
+fn escaped_break_continuations_place_their_document_as_helm_reads_it() {
     let mut fixture = fixture("value: \"", "\"\n");
     let continuation = fixture.state.heap.freeze(&Value::string("\\\n"));
     fixture.state.output.parts = {
@@ -594,7 +598,7 @@ fn recovered_frozen_continuations_do_not_certify_resource_placement() {
         &fixture.state.heap.arena.input_objects.borrow(),
     );
     assert_ne!(placed.invalid(&fixture.memo), Predicate::False);
-    sim_assert_eq!(have: placed.layouts.iter().map(|layout| layout.documents.len()).sum::<usize>(), want: 0);
+    sim_assert_eq!(have: placed.layouts.iter().map(|layout| layout.documents.len()).sum::<usize>(), want: 1);
 }
 
 #[test]

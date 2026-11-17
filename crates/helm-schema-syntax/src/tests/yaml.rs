@@ -6,7 +6,7 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::{
     ActionId, ArmLayout, BodyLayout, HoleShape, HoleShapes, LayoutUncertainty, MAX_SKELETON_BYTES,
-    RenderedBody, TemplatedDocument, Undecoded, UnknownShapes, YamlOwnership, arm_layout,
+    RenderedBody, TemplatedDocument, UnknownShapes, YamlNodeKind, YamlOwnership, arm_layout,
     arm_skeleton, parse_go_template, parse_yaml, render_body,
 };
 
@@ -73,8 +73,8 @@ impl HoleShapes for MaybeEmptyScalarShapes {
 
 /// One block per arm: its pieces, skeleton, and either the uncertainty or
 /// the ownership tree (`Kind key[first..last]`, children indented), block
-/// headers, and the decoded documents or why they are withheld (hole
-/// output withholds them and is not printed).
+/// headers, and each document of a literal-only arm as Helm's pinned reader
+/// decodes it, or the class of its refusal (hole output is not decoded).
 fn layouts(source: &str, shapes: &dyn HoleShapes) -> eyre::Result<String> {
     let body = render(source, shapes)?;
     let BodyLayout::Arms(arms) = &body.layout else {
@@ -118,15 +118,34 @@ fn dump_ownership(owned: &YamlOwnership, out: &mut String) -> eyre::Result<()> {
     for block in &owned.blocks {
         let _ = writeln!(out, "  block n{} {:?}", block.node, block.header);
     }
-    match &owned.decoded {
-        Ok(documents) => {
-            for document in documents {
-                let _ = writeln!(out, "  decoded {}", serde_json::to_string(document)?);
+    // A literal-only arm's documents, decoded by Helm's pinned reader into sigs' generic target.
+    if owned
+        .skeleton
+        .segments
+        .iter()
+        .all(|segment| !segment.placeholder)
+    {
+        for node in owned
+            .nodes
+            .iter()
+            .filter(|node| node.kind == YamlNodeKind::Document)
+        {
+            let text = owned
+                .skeleton
+                .text
+                .get(node.span.start..node.span.end)
+                .ok_or_eyre("document span")?;
+            match helm_schema_goyaml::unmarshal_json(
+                text.as_bytes(),
+                helm_schema_goyaml::Target::Generic,
+            ) {
+                Ok(document) => {
+                    let _ = writeln!(out, "  decoded {}", serde_json::to_string(&document)?);
+                }
+                Err(err) => {
+                    let _ = writeln!(out, "  refused {:?}", err.kind());
+                }
             }
-        }
-        Err(Undecoded::Placeholders) => {}
-        Err(reason) => {
-            let _ = writeln!(out, "  withheld {reason:?}");
         }
     }
     Ok(())
@@ -991,7 +1010,7 @@ fn document_markers_split_only_at_column_zero() -> eyre::Result<()> {
                 Scalar(Plain)[0..0]
           block n4 BlockHeader { folded: false, chomping: Clip, indentation: None }
           decoded {"a":"---\nx\n"}
-          decoded {"b":1}
+          decoded {"b":1.0}
     "#});
     Ok(())
 }
@@ -1140,7 +1159,7 @@ fn merge_keys_over_collections_are_uncertain() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          decoded {"<<":{"c":1},"e":2}
+          decoded {"<<":{"c":1.0},"e":2.0}
         # "<<: 1\ne: 2\n"
         arm [p0] "<<: 1\ne: 2\n"
           Document[0..0]
@@ -1151,15 +1170,14 @@ fn merge_keys_over_collections_are_uncertain() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(MergeKey)
+          refused Decode
     "#});
     Ok(())
 }
 
-/// P2 (`helm/{dialect-agree,numeric}.log`): where no plain scalar diverges
-/// between YAML 1.1 and 1.2, a literal arm's decoded documents equal Helm's
-/// `fromYaml` values. Every Helm number is a float64, so `1e2` agrees with
-/// Helm's `100` by value.
+/// P2 (`helm/{dialect-agree,numeric}.log`): a literal arm's decoded documents
+/// equal Helm's `fromYaml` values. Every Helm number is a float64, so `1e2`
+/// agrees with Helm's `100` by value.
 #[test]
 fn literal_decoding_matches_helm_where_the_dialects_agree() -> eyre::Result<()> {
     let agree = indoc! {r#"
@@ -1212,7 +1230,7 @@ fn literal_decoding_matches_helm_where_the_dialects_agree() -> eyre::Result<()> 
                   Scalar(Plain)[0..0]
                   Scalar(Plain)[0..0]
           block n25 BlockHeader { folded: false, chomping: Clip, indentation: None }
-          decoded {"b":true,"block":"x\n","f":1.5,"i":10,"nul":null,"qo":"on","qy":"yes","s":"abc","seq":["a",1],"y":1}
+          decoded {"b":true,"block":"x\n","f":1.5,"i":10.0,"nul":null,"qo":"on","qy":"yes","s":"abc","seq":["a",1.0],"y":1.0}
     "#});
     let numbers = ["a: 1e2\n", "a: -.5\n", "a: 1e400\n", "a: _1\n"];
     sim_assert_eq!(have: cell_layouts(&numbers, &UnknownShapes)?, want: indoc! {r#"
@@ -1254,10 +1272,10 @@ fn literal_decoding_matches_helm_where_the_dialects_agree() -> eyre::Result<()> 
 
 /// P2 (`helm/dialect.log`, `helm/dialect-agree.log`): Helm reads `y`, `yes`
 /// and `on` as `true`, `010` as 8, the key `y` as `"true"`, the key `n` as
-/// `"false"` and `1:` as `"1"`, so those arms withhold their decoded values
-/// with the divergence; a duplicate key decodes to the later value, as Helm's.
+/// `"false"` and `1:` as `"1"`; Helm's own reader decodes those arms to exactly
+/// those values, and a duplicate key to the later value.
 #[test]
-fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
+fn dialect_sensitive_literals_decode_as_helm_reads_them() -> eyre::Result<()> {
     let diverge = [
         "a: y\n",
         "a: yes\n",
@@ -1279,7 +1297,7 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Boolean)
+          decoded {"a":true}
         # "a: yes\n"
         arm [p0] "a: yes\n"
           Document[0..0]
@@ -1287,7 +1305,7 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Boolean)
+          decoded {"a":true}
         # "a: on\n"
         arm [p0] "a: on\n"
           Document[0..0]
@@ -1295,7 +1313,7 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Boolean)
+          decoded {"a":true}
         # "a: 010\n"
         arm [p0] "a: 010\n"
           Document[0..0]
@@ -1303,7 +1321,7 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"a":8.0}
         # "y: 1\n"
         arm [p0] "y: 1\n"
           Document[0..0]
@@ -1311,7 +1329,7 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Boolean)
+          decoded {"true":1.0}
         # "n: ~\n"
         arm [p0] "n: ~\n"
           Document[0..0]
@@ -1319,7 +1337,7 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Boolean)
+          decoded {"false":null}
         # "1: a\n"
         arm [p0] "1: a\n"
           Document[0..0]
@@ -1327,7 +1345,7 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(NonStringKey)
+          decoded {"1":"a"}
         # "a: 1\na: 2\n"
         arm [p0] "a: 1\na: 2\n"
           Document[0..0]
@@ -1338,18 +1356,17 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          decoded {"a":2}
+          decoded {"a":2.0}
     "#});
     Ok(())
 }
 
 /// P8 (`helm/numeric.log`): Helm's decoder drops underscores anywhere in a
 /// number before resolving it (`1_0e2` is 1000 as a value and `"1000"` as a
-/// key, `1e1_0` is 1e10, `.1_0` is 0.1, `-.1_0` is -0.1), while the literal
-/// decoder reads those spellings as strings, so the arms withhold their
-/// decoded values.
+/// key, `1e1_0` is 1e10, `.1_0` is 0.1, `-.1_0` is -0.1); Helm's own reader
+/// decodes the arms to those values.
 #[test]
-fn underscored_numbers_are_withheld() -> eyre::Result<()> {
+fn underscored_numbers_decode_as_helm_reads_them() -> eyre::Result<()> {
     let cells = [
         "a: 1_0e2\n",
         "a: 1e1_0\n",
@@ -1367,7 +1384,7 @@ fn underscored_numbers_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"a":1000.0}
         # "a: 1e1_0\n"
         arm [p0] "a: 1e1_0\n"
           Document[0..0]
@@ -1375,7 +1392,7 @@ fn underscored_numbers_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"a":10000000000.0}
         # "a: .1_0\n"
         arm [p0] "a: .1_0\n"
           Document[0..0]
@@ -1383,7 +1400,7 @@ fn underscored_numbers_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"a":0.1}
         # "a: -.1_0\n"
         arm [p0] "a: -.1_0\n"
           Document[0..0]
@@ -1391,7 +1408,7 @@ fn underscored_numbers_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"a":-0.1}
         # "a: 0.1e1_0\n"
         arm [p0] "a: 0.1e1_0\n"
           Document[0..0]
@@ -1399,7 +1416,7 @@ fn underscored_numbers_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"a":1000000000.0}
         # "1_0e2: x\n"
         arm [p0] "1_0e2: x\n"
           Document[0..0]
@@ -1407,7 +1424,7 @@ fn underscored_numbers_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"1000":"x"}
         # "a: 0x_1f\n"
         arm [p0] "a: 0x_1f\n"
           Document[0..0]
@@ -1415,7 +1432,7 @@ fn underscored_numbers_are_withheld() -> eyre::Result<()> {
               Pair[0..0]
                 Scalar(Plain) key[0..0]
                 Scalar(Plain)[0..0]
-          withheld Dialect(Number)
+          decoded {"a":31.0}
     "#});
     Ok(())
 }
