@@ -1570,3 +1570,84 @@ fn layer_bound_widens_only_the_destination() -> eyre::Result<()> {
         true,
     )
 }
+
+/// (b, step 4a, Sol r2 1) A copy of a copied map keeps each alternative member as its own copy
+/// (receipts `s5_copy_of_copy`).
+#[test]
+fn copies_of_copies_keep_their_members() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            a:
+              inner:
+                x: "a"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $one := deepCopy .Values.a }}
+                {{- $copies := deepCopy (list $one) }}
+                {{- $_ := set $one.inner "x" "ok" }}
+                {{- $d := merge (dict) (first $copies) }}
+            "#},
+            CONFIG_MAP,
+            "data:\n  x: {{ upper $d.inner.x | quote }}\n",
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s5a: the second copy keeps the integer",
+            json!({ "a": { "inner": { "x": 7 } } }),
+        )],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s5b: the second copy keeps the string",
+            json!({ "a": { "inner": { "x": "b" } } }),
+        )],
+        true,
+    )
+}
+
+/// (b, step 4a, Sol r2 2) A destination widened past the layer bound still reaches the maps it
+/// shares with its sources, so a later write through it is not lost (receipts
+/// `s6_bound_alias`).
+#[test]
+fn bounded_destination_keeps_its_source_aliases() -> eyre::Result<()> {
+    let merges = "{{- $_ := mergeOverwrite $d.nested .Values.src }}\n".repeat(72);
+    let schema = template_law_schema(
+        indoc! {r#"
+            src:
+              inner: {}
+            bad: "s"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $alias := .Values.src.inner }}
+                {{- $_ := set $alias "x" .Values.bad }}
+                {{- $d := dict "nested" (dict) }}
+            "#},
+            &merges,
+            "{{- $_ := mergeOverwrite $d.nested (dict \"inner\" (dict \"x\" \"ok\")) }}\n",
+            CONFIG_MAP,
+            "data:\n  x: {{ upper $alias.x | quote }}\n",
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            (
+                "s6a: the shared map is repaired before the integer is read",
+                json!({ "src": { "inner": {} }, "bad": 7 }),
+            ),
+            (
+                "s6b: a string renders",
+                json!({ "src": { "inner": {} }, "bad": "b" }),
+            ),
+        ],
+        true,
+    )
+}

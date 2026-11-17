@@ -64,8 +64,9 @@ enum Base {
     Input,
     /// The key reads a copy of this map's member, frozen at the copy.
     Copy(FrozenValue),
-    /// The key set and members are unknown (a decoded map of unknown text, a widened map).
-    Unknown(Rc<BTreeSet<ValuesPath>>),
+    /// The key set and members are unknown (a decoded map of unknown text, a widened map):
+    /// they depend on these inputs and may alias these objects.
+    Unknown(Rc<BTreeSet<ValuesPath>>, super::Reach),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -107,7 +108,7 @@ impl State {
         let Layers { base, merges } = layers;
         let mut field = match base {
             Base::Closed => Field::Absent,
-            Base::Unknown(_) => Field::Unknown,
+            Base::Unknown(_, _) => Field::Unknown,
             Base::Input => path.map_or(Field::Unknown, |path| {
                 let mut child = path.clone();
                 child.push(key);
@@ -214,7 +215,18 @@ impl State {
         key: &str,
         depth: usize,
     ) -> Field {
-        let Some(storage) = heap.object(id) else {
+        // A copy child allocated after `heap` was frozen was pristine at that version: its
+        // initial storage is what the frozen read sees.
+        let storage = heap.object(id).or_else(|| {
+            self.heap
+                .arena
+                .derived
+                .borrow()
+                .get(id)
+                .filter(|_| !heap.has_allocated_object(id))
+                .cloned()
+        });
+        let Some(storage) = storage else {
             return Field::Unknown;
         };
         let ObjectData::Map { fields, remainder } = &storage.data else {
@@ -235,7 +247,7 @@ impl State {
                 let Layers { base, merges } = layers.as_ref();
                 let mut field = match base {
                     Base::Closed => Field::Absent,
-                    Base::Unknown(_) => Field::Unknown,
+                    Base::Unknown(_, _) => Field::Unknown,
                     Base::Input => heap.input_paths.get(id).map_or(Field::Unknown, |path| {
                         let mut child = path.clone();
                         child.push(key);
@@ -845,15 +857,18 @@ impl State {
                     // Past the bound only this object's unwritten keys widen, keeping what
                     // they depend on; the rest of the heap is untouched.
                     let path = self.heap.version.input_paths.get(target).cloned();
-                    layers.widened(path.as_ref())
+                    let aliases = self
+                        .layer_aliases(&layers)
+                        .map_or(super::Reach::Top, |ids| super::Reach::Bounded(Rc::new(ids)));
+                    layers.widened(path.as_ref(), aliases)
                 }
             }
             Remainder::Open => Layers {
-                base: Base::Unknown(Rc::default()),
+                base: Base::Unknown(Rc::default(), super::Reach::Top),
                 merges: vec![layer.clone()],
             },
             Remainder::Unknown { inputs } => Layers {
-                base: Base::Unknown(Rc::clone(inputs)),
+                base: Base::Unknown(Rc::clone(inputs), super::Reach::Top),
                 merges: vec![layer.clone()],
             },
         };
@@ -884,7 +899,7 @@ impl State {
     }
 
     /// Nested maps allocated beneath `target` for unwritten keys: input children and copies.
-    fn allocated_children(&self, target: &ObjectId) -> Vec<(String, ObjectId)> {
+    pub(super) fn allocated_children(&self, target: &ObjectId) -> Vec<(String, ObjectId)> {
         let mut children = Vec::new();
         if let Some(path) = self.heap.version.input_paths.get(target) {
             for (child, backing) in self.heap.arena.input_objects.borrow().iter() {
@@ -899,7 +914,7 @@ impl State {
                 }
             }
         }
-        for ((parent, key), child) in self.heap.arena.copy_children.borrow().iter() {
+        for ((parent, key, _), child) in self.heap.arena.copy_children.borrow().iter() {
             if parent == target && self.heap.version.has_allocated_object(child) {
                 children.push((key.clone(), child.clone()));
             }
@@ -948,7 +963,7 @@ impl State {
         let Layers { base, merges } = layers;
         let base = match base {
             Base::Closed => return None,
-            Base::Unknown(inputs) => Base::Unknown(Rc::clone(inputs)),
+            Base::Unknown(inputs, aliases) => Base::Unknown(Rc::clone(inputs), aliases.clone()),
             Base::Input => Base::Input,
             Base::Copy(source) => {
                 let Field::Present(member) = self.member_at(source, key) else {
@@ -1082,12 +1097,48 @@ impl State {
         source: &FrozenValue,
         member: Field,
     ) -> Field {
-        let Field::Present(value) = member else {
-            return member;
-        };
-        let ValueNode::Leaf(Leaf { datum, origin }) = value.node.as_ref() else {
-            // Alternative members would need one copy each; keep the member's inputs only.
-            return Field::Present(Value::influenced(source.inputs()));
+        let mut arm = 0;
+        self.copy_field(copy, key, source, member, &mut arm)
+    }
+
+    /// A copy of each alternative member, keeping its decision; every map alternative is a
+    /// separate copy object, numbered by `arm` in a fixed order.
+    fn copy_field(
+        &mut self,
+        copy: &ObjectId,
+        key: &str,
+        source: &FrozenValue,
+        member: Field,
+        arm: &mut u32,
+    ) -> Field {
+        match member {
+            Field::Present(value) => {
+                Field::Present(self.copy_value(copy, key, source, &value, arm))
+            }
+            Field::Select { decision, yes, no } => {
+                let yes = self.copy_field(copy, key, source, yes.as_ref().clone(), arm);
+                let no = self.copy_field(copy, key, source, no.as_ref().clone(), arm);
+                Field::select(decision, yes, no)
+            }
+            Field::Absent | Field::Unknown => member,
+        }
+    }
+
+    fn copy_value(
+        &mut self,
+        copy: &ObjectId,
+        key: &str,
+        source: &FrozenValue,
+        value: &Value,
+        arm: &mut u32,
+    ) -> Value {
+        let (datum, origin) = match value.node.as_ref() {
+            ValueNode::Leaf(Leaf { datum, origin }) => (datum, origin),
+            ValueNode::Select { decision, yes, no } => {
+                let yes = self.copy_value(copy, key, source, yes, arm);
+                let no = self.copy_value(copy, key, source, no, arm);
+                return Value::select(Rc::clone(decision), yes, no);
+            }
         };
         let map_like = match datum {
             Datum::Map {
@@ -1113,17 +1164,19 @@ impl State {
                 index: _,
             } => false,
             // Sequences are copied whole by `deepCopy`'s eager path; keep the member's inputs.
-            Datum::Sequence(_) => return Field::Present(Value::influenced(value.inputs())),
+            Datum::Sequence(_) => return Value::influenced(value.inputs()),
         };
         if !map_like {
-            return Field::Present(value.clone());
+            return value.clone();
         }
+        let slot_key = (copy.clone(), key.to_owned(), *arm);
+        *arm += 1;
         let slot = self
             .heap
             .arena
             .copy_children
             .borrow()
-            .get(&(copy.clone(), key.to_owned()))
+            .get(&slot_key)
             .cloned();
         let child = match slot {
             Some(child) if self.heap.version.has_allocated_object(&child) => child,
@@ -1134,7 +1187,7 @@ impl State {
                     .arena
                     .copy_children
                     .borrow_mut()
-                    .insert((copy.clone(), key.to_owned()), child.clone());
+                    .insert(slot_key, child.clone());
                 child
             }
         };
@@ -1142,7 +1195,7 @@ impl State {
             view: MapType::Interface,
             target: Some(child),
         });
-        Field::Present(match datum {
+        match datum {
             Datum::Unknown(UnknownValue {
                 types: TypeCoverage::Unresolved,
                 aliases: _,
@@ -1160,7 +1213,7 @@ impl State {
                 backing: _,
                 index: _,
             } => map,
-        })
+        }
     }
 }
 
@@ -1235,11 +1288,11 @@ impl State {
 impl Layers {
     /// These layers collapsed to an unknown base that keeps every input they read: the base's
     /// own region (`path` for an input base) and each merge source's.
-    fn widened(&self, path: Option<&ValuesPath>) -> Self {
+    fn widened(&self, path: Option<&ValuesPath>, aliases: super::Reach) -> Self {
         let mut inputs = BTreeSet::new();
         match &self.base {
             Base::Closed => {}
-            Base::Unknown(known) => inputs.extend(known.iter().cloned()),
+            Base::Unknown(known, _) => inputs.extend(known.iter().cloned()),
             Base::Input => inputs.extend(path.cloned()),
             Base::Copy(source) => inputs.extend(source.inputs()),
         }
@@ -1247,7 +1300,7 @@ impl Layers {
             inputs.extend(layer.source.inputs());
         }
         Self {
-            base: Base::Unknown(Rc::new(inputs)),
+            base: Base::Unknown(Rc::new(inputs), aliases),
             merges: Vec::new(),
         }
     }
@@ -1255,7 +1308,7 @@ impl Layers {
     /// The inputs an unknown base still depends on.
     pub(super) fn unknown_inputs(&self) -> Option<&Rc<BTreeSet<ValuesPath>>> {
         match &self.base {
-            Base::Unknown(inputs) => Some(inputs),
+            Base::Unknown(inputs, _) => Some(inputs),
             Base::Closed | Base::Input | Base::Copy(_) => None,
         }
     }
@@ -1264,7 +1317,7 @@ impl Layers {
     pub(super) fn source_values(&self) -> impl Iterator<Item = &Value> {
         let Self { base, merges } = self;
         let base = match base {
-            Base::Closed | Base::Input | Base::Unknown(_) => None,
+            Base::Closed | Base::Input | Base::Unknown(_, _) => None,
             Base::Copy(source) => Some(&source.value),
         };
         base.into_iter()
@@ -1321,11 +1374,11 @@ pub(super) fn join_remainders(
         }),
         Remainder::Layered(layers) => Some(layers.as_ref().clone()),
         Remainder::Open => Some(Layers {
-            base: Base::Unknown(Rc::default()),
+            base: Base::Unknown(Rc::default(), super::Reach::Top),
             merges: Vec::new(),
         }),
         Remainder::Unknown { inputs } => Some(Layers {
-            base: Base::Unknown(Rc::clone(inputs)),
+            base: Base::Unknown(Rc::clone(inputs), super::Reach::Top),
             merges: Vec::new(),
         }),
     };
@@ -1496,7 +1549,7 @@ impl State {
         let Layers { base, merges } = layers.as_ref();
         let base = match base {
             Base::Closed => Predicate::False,
-            Base::Unknown(_) => return None,
+            Base::Unknown(_, _) => return None,
             Base::Input => Predicate::from(Guard::Truthy {
                 path: self.heap.version.input_paths.get(object)?.clone(),
             }),
@@ -1650,5 +1703,79 @@ fn take_one(remaining: &mut usize) -> bool {
         true
     } else {
         false
+    }
+}
+
+impl State {
+    /// The objects a layered remainder's unknown keys may alias: the objects its merge sources
+    /// and collapsed bases reach, and the allocated input objects under the inputs they read.
+    /// `None` when that reach is unbounded.
+    pub(super) fn layer_aliases(&self, layers: &Layers) -> Option<BTreeSet<ObjectId>> {
+        let mut objects = BTreeSet::new();
+        let mut prefixes = Vec::new();
+        let Layers { base, merges } = layers;
+        match base {
+            Base::Closed | Base::Input | Base::Copy(_) => {}
+            Base::Unknown(inputs, aliases) => {
+                match aliases {
+                    super::Reach::Top => return None,
+                    super::Reach::Bounded(ids) => objects.extend(ids.iter().cloned()),
+                }
+                prefixes.extend(inputs.iter().cloned());
+            }
+        }
+        let mut pending: Vec<&Value> = merges.iter().map(|layer| &layer.source.value).collect();
+        while let Some(value) = pending.pop() {
+            match value.node.as_ref() {
+                ValueNode::Select {
+                    decision: _,
+                    yes,
+                    no,
+                } => pending.extend([yes, no]),
+                ValueNode::Leaf(Leaf { datum, origin }) => match datum {
+                    Datum::Map {
+                        view: _,
+                        target: Some(id),
+                    } => {
+                        objects.insert(id.clone());
+                    }
+                    Datum::Unknown(UnknownValue { types: _, aliases }) => {
+                        if let Some(path) = &origin.identity {
+                            prefixes.push(path.clone());
+                        } else {
+                            match aliases {
+                                super::Reach::Top => return None,
+                                super::Reach::Bounded(ids) => objects.extend(ids.iter().cloned()),
+                            }
+                        }
+                    }
+                    Datum::Map {
+                        view: _,
+                        target: None,
+                    }
+                    | Datum::Text(_)
+                    | Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    }
+                    | Datum::Sequence(_)
+                    | Datum::Strings(_)
+                    | Datum::Slot {
+                        backing: _,
+                        index: _,
+                    } => {}
+                },
+            }
+        }
+        for (path, backing) in self.heap.arena.input_objects.borrow().iter() {
+            if self.heap.version.has_allocated_object(&backing.object)
+                && prefixes
+                    .iter()
+                    .any(|prefix| path == prefix || path.is_descendant_of(prefix))
+            {
+                objects.insert(backing.object.clone());
+            }
+        }
+        Some(objects)
     }
 }

@@ -407,8 +407,8 @@ struct Arena {
     requirement_identity: consumption::RequirementScope,
     /// Whether any object has a layered remainder; reads skip derivation until one does.
     layered: Cell<bool>,
-    /// The object a `deepCopy` allocates for each copied map member, by (copy, key).
-    copy_children: RefCell<BTreeMap<(ObjectId, String), ObjectId>>,
+    /// The object a `deepCopy` allocates for each copied map member, by (copy, key, alternative).
+    copy_children: RefCell<BTreeMap<(ObjectId, String, u32), ObjectId>>,
     /// The storage each derived object starts from: the baseline of a join that lacks it.
     derived: RefCell<BTreeMap<ObjectId, Rc<ObjectVersion>>>,
 }

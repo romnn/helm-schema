@@ -2480,6 +2480,25 @@ fn widen_targets(targets: &[Value], sources: &[Value], state: &mut State) {
                         invalidate(state);
                         return;
                     }
+                    // Unwritten keys of a layered map may alias what its layers reach.
+                    if let Remainder::Layered(layers) = remainder {
+                        let Some(aliases) = state.layer_aliases(layers) else {
+                            invalidate(state);
+                            return;
+                        };
+                        let children = state.allocated_children(&target);
+                        pending.extend(
+                            aliases
+                                .into_iter()
+                                .chain(children.into_iter().map(|(_, child)| child))
+                                .map(|id| {
+                                    Value::leaf(Datum::Map {
+                                        view: MapType::Interface,
+                                        target: Some(id),
+                                    })
+                                }),
+                        );
+                    }
                     let mut fields: Vec<_> = fields.values().collect();
                     while let Some(field) = fields.pop() {
                         match field {
