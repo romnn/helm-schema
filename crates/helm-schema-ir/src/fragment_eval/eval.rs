@@ -46,7 +46,7 @@ pub(crate) fn project_execution_at_offset(
             }
         }));
 
-        execution.with_relationship_query(1024, |query| {
+        execution.with_relationship_query(PLACEMENT_ALLOWANCE, |query| {
             let projection = Projection {
                 document,
                 query: std::cell::RefCell::new(query),
@@ -55,7 +55,6 @@ pub(crate) fn project_execution_at_offset(
                 source_offset,
                 db,
                 resources,
-                remaining: &std::cell::Cell::new(1024),
                 depth: 0,
             };
             let mut rows = Vec::new();
@@ -97,21 +96,21 @@ struct Projection<'a, 'inputs> {
     source_offset: usize,
     db: &'a IrAnalysisDb,
     resources: Vec<PlacedResource>,
-    remaining: &'a std::cell::Cell<usize>,
     depth: usize,
 }
+
+/// Work one placement's relationship and guard queries may spend; each placement has its own.
+const PLACEMENT_ALLOWANCE: usize = 1024;
 
 impl<'a> Projection<'a, '_> {
     fn payload(
         &self,
         value: &'a crate::value::FrozenValue,
     ) -> Vec<crate::value::use_policy::RelationshipUse<'a>> {
-        let mut remaining = self.remaining.get();
         let result = self
             .query
             .borrow_mut()
-            .bounded(&mut remaining, |query| query.value(value, &[]));
-        self.remaining.set(remaining);
+            .with_allowance(PLACEMENT_ALLOWANCE, |query| query.value(value, &[]));
         result
             .known
             .into_iter()
@@ -218,13 +217,11 @@ impl<'a> Projection<'a, '_> {
             .keys()
             .filter_map(|index| {
                 let placement = self.document.serialization(*index)?;
-                let mut remaining = self.remaining.get();
                 let guard = placement.term.execution_guard(
                     self.execution,
                     self.db.predicate_memo(),
-                    &mut remaining,
+                    &mut { PLACEMENT_ALLOWANCE },
                 );
-                self.remaining.set(remaining);
                 Some((
                     *index,
                     self.db.predicate_memo().normalize(Predicate::all(vec![
@@ -346,15 +343,18 @@ impl<'a> Projection<'a, '_> {
         let Some(alternatives) = placement.term.frozen_alternatives() else {
             return Predicate::False;
         };
-        let mut guards = Vec::new();
-        let mut remaining = self.remaining.get();
-        for (condition, value) in alternatives {
-            let view = self.query.borrow_mut().bounded(&mut remaining, |query| {
-                query.member(value, &[key.to_owned()])
+        let guards = self
+            .query
+            .borrow_mut()
+            .with_allowance(PLACEMENT_ALLOWANCE, |query| {
+                alternatives
+                    .into_iter()
+                    .map(|(condition, value)| {
+                        let view = query.member(value, &[key.to_owned()]);
+                        Predicate::all(vec![condition, view.presence.absent])
+                    })
+                    .collect()
             });
-            guards.push(Predicate::all(vec![condition, view.presence.absent]));
-        }
-        self.remaining.set(remaining);
         self.db.predicate_memo().normalize(Predicate::Or(guards))
     }
 
@@ -366,10 +366,9 @@ impl<'a> Projection<'a, '_> {
         let Some(alternatives) = term.frozen_alternatives() else {
             return Vec::new();
         };
-        let mut remaining = self.remaining.get();
-        let occurrence =
-            term.execution_guard(self.execution, self.db.predicate_memo(), &mut remaining);
-        self.remaining.set(remaining);
+        let occurrence = term.execution_guard(self.execution, self.db.predicate_memo(), &mut {
+            PLACEMENT_ALLOWANCE
+        });
 
         let mut rows = Vec::new();
         let mut captures = BTreeMap::new();
@@ -496,9 +495,9 @@ impl<'a> Projection<'a, '_> {
         if self.depth >= 32 {
             return Vec::new();
         }
-        let mut remaining = self.remaining.get();
-        let placement = self.execution.place_capture(graph, ambient, &mut remaining);
-        self.remaining.set(remaining);
+        let placement = self
+            .execution
+            .place_capture(graph, ambient, &mut { PLACEMENT_ALLOWANCE });
         let Some(placement) = placement else {
             return Vec::new();
         };
@@ -511,7 +510,7 @@ impl<'a> Projection<'a, '_> {
             };
             let complete = document.completion_guard();
             self.execution
-                .with_relationship_query(self.remaining.get(), |query| {
+                .with_relationship_query(PLACEMENT_ALLOWANCE, |query| {
                     let projection = Projection {
                         document,
                         query: std::cell::RefCell::new(query),
@@ -520,7 +519,6 @@ impl<'a> Projection<'a, '_> {
                         source_offset: self.source_offset,
                         db: self.db,
                         resources,
-                        remaining: self.remaining,
                         depth: self.depth + 1,
                     };
                     let mut contract = Vec::new();

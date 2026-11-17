@@ -706,7 +706,7 @@ fn later_yaml_member_withdraws_original_member_typing() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Cache hits agree with fresh queries and consume the same finite allowance as emitted claims.
+/// Cache hits agree with fresh queries and charge the work their computation took.
 #[test]
 fn borrowed_query_cache_preserves_guard_correlation() {
     use crate::value::relationship::RelationshipQuery;
@@ -740,11 +740,56 @@ fn borrowed_query_cache_preserves_guard_correlation() {
     let first = query.value(&frozen, &[]);
     sim_assert_eq!(have: first.unknown.clone(), want: Predicate::False);
     sim_assert_eq!(have: first.known.len(), want: 2);
+    // Each repeated placement runs under its own allowance; a hit charges the work its
+    // computation took, so the cached answer equals the uncached one every time.
     for _ in 0..128 {
         let uncached = RelationshipQuery::new(&inputs, 1024).value(&frozen, &[]);
-        sim_assert_eq!(have: query.value(&frozen, &[]), want: uncached);
+        let cached = query.with_allowance(1024, |query| query.value(&frozen, &[]));
+        sim_assert_eq!(have: cached, want: uncached);
     }
     assert!(query.work() <= 1024);
+}
+
+/// A cached answer equals a fresh query under the same allowance, whatever earlier queries
+/// warmed the cache: a hit charges the work its computation took (ADR 0072 §10, step 7a3).
+#[test]
+fn cached_relationship_answers_equal_fresh_answers_under_every_allowance() {
+    use crate::value::relationship::RelationshipQuery;
+    use crate::value::text::TextTerm;
+    use crate::value::{Coverage, State, Value};
+    use helm_schema_core::Predicate;
+
+    let state = State::new(Value::nil());
+    let mut value = Value::unknown();
+    for index in 0..8 {
+        let condition = Predicate::truthy_path(format!("choose{index}"));
+        let decision =
+            state
+                .heap
+                .arena
+                .decision(condition.clone(), condition.negated(), Coverage::Exact);
+        let serialized = Value::frozen_text(
+            TextTerm::Yaml {
+                value: state
+                    .heap
+                    .freeze(&Value::input(ValuesPath::parse(&format!("source{index}")))),
+                pretty: false,
+            },
+            BTreeSet::new(),
+        );
+        value = Value::select(decision, serialized, value);
+    }
+    let frozen = state.heap.freeze(&value);
+    let inputs = state.heap.arena.input_objects.borrow();
+    let mut warm = RelationshipQuery::new(&inputs, 1024);
+    let complete = warm.with_allowance(1024, |query| query.value(&frozen, &[]));
+    assert_ne!(complete.known.len(), 0);
+    for allowance in [1, 4, 8, 16, 32, 64, 128, 1024] {
+        let fresh = RelationshipQuery::new(&inputs, 1024)
+            .with_allowance(allowance, |query| query.value(&frozen, &[]));
+        let cached = warm.with_allowance(allowance, |query| query.value(&frozen, &[]));
+        sim_assert_eq!(have: cached, want: fresh, "allowance {allowance}");
+    }
 }
 
 /// Small allowances cannot turn a truncated alternative set into complete provenance.

@@ -273,8 +273,9 @@ pub(crate) struct RelationshipQuery<'a, 'inputs> {
     predicates: PredicateMemo,
     decisions: BTreeMap<u64, bool>,
     omission_depth: usize,
-    nodes: BTreeMap<NodeKey, Relationships<'a>>,
-    members: BTreeMap<MemberKey, MemberPresence>,
+    /// Complete answers with the work their computation took; a hit charges that work.
+    nodes: BTreeMap<NodeKey, (Relationships<'a>, usize)>,
+    members: BTreeMap<MemberKey, (MemberPresence, usize)>,
 }
 
 impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
@@ -464,15 +465,19 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         }
         self.unchanged(path, heap)
     }
-    pub(crate) fn bounded<T>(
+    /// Runs one placement's query under its own allowance.
+    ///
+    /// The answer depends only on the query and the allowance: memo hits charge the work their
+    /// computation took, so earlier placements neither starve nor subsidize later ones.
+    pub(crate) fn with_allowance<T>(
         &mut self,
-        remaining: &mut usize,
+        allowance: usize,
         consume: impl FnOnce(&mut Self) -> T,
     ) -> T {
-        self.remaining = self.remaining.min(*remaining);
-        let before = self.remaining;
+        let saved = self.remaining;
+        self.remaining = allowance.min(self.limit);
         let result = consume(self);
-        *remaining = remaining.saturating_sub(before - self.remaining);
+        self.remaining = saved;
         result
     }
 
@@ -524,20 +529,21 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             return Relationships::unknown();
         }
         let key = self.node_key(value, heap, members);
-        if let Some(view) = self.nodes.get(&key) {
-            let cost = Self::copy_work(view);
-            if !self.charge(cost) {
+        if let Some((view, work)) = self.nodes.get(&key) {
+            let (view, work) = (view.clone(), *work);
+            if !self.charge(work) {
                 return Relationships::unknown();
             }
-            return self
-                .nodes
-                .get(&key)
-                .cloned()
-                .unwrap_or_else(Relationships::unknown);
+            return view;
         }
+        let before = self.remaining;
         let mut view = self.node_inner(value, heap, members, depth);
+        let complete = self.remaining != 0;
         if self.charge(Self::copy_work(&view)) {
-            self.nodes.insert(key, view.clone());
+            if complete {
+                self.nodes
+                    .insert(key, (view.clone(), before - self.remaining));
+            }
         } else {
             view.unknown = Predicate::True;
         }
@@ -1713,9 +1719,14 @@ impl<'a> RelationshipQuery<'a, '_> {
             marker,
             text_only,
         };
-        if let Some(cached) = self.members.get(&key) {
-            return cached.clone();
+        if let Some((cached, work)) = self.members.get(&key) {
+            let (cached, work) = (cached.clone(), *work);
+            if !self.charge(work) {
+                return MemberPresence::unknown();
+            }
+            return cached;
         }
+        let before = self.remaining;
         let result = match value.node.as_ref() {
             ValueNode::Select { decision, yes, no } => self.presence_choice(
                 decision,
@@ -1735,7 +1746,8 @@ impl<'a> RelationshipQuery<'a, '_> {
             }
         };
         if self.remaining != 0 {
-            self.members.insert(key, result.clone());
+            self.members
+                .insert(key, (result.clone(), before - self.remaining));
         }
         result
     }
