@@ -406,27 +406,34 @@ pub fn first_document_ownership(skeleton: Skeleton) -> Result<YamlOwnership, Lay
 /// Otherwise each later document is read by a fresh reader from the previous document's end.
 #[tracing::instrument(skip_all)]
 fn ownership(skeleton: Skeleton, first_only: bool) -> Result<YamlOwnership, LayoutUncertainty> {
-    let offsets: Vec<usize> = skeleton
-        .text
-        .char_indices()
-        .map(|(offset, _)| offset)
-        .chain(std::iter::once(skeleton.text.len()))
-        .collect();
-    let mut tree = Tree::default();
-    let mut base = 0;
-    loop {
-        let rest = offsets
-            .get(base)
-            .and_then(|offset| skeleton.text.get(*offset..))
-            .unwrap_or_default();
-        let read = read_first_document(rest)?;
-        let at = |mark: Mark| {
+    // Reader marks count characters; ASCII text needs no table to turn them into bytes.
+    let offsets: Vec<usize> = if skeleton.text.is_ascii() {
+        Vec::new()
+    } else {
+        skeleton
+            .text
+            .char_indices()
+            .map(|(offset, _)| offset)
+            .chain(std::iter::once(skeleton.text.len()))
+            .collect()
+    };
+    let byte = |index: usize| {
+        if offsets.is_empty() {
+            index.min(skeleton.text.len())
+        } else {
             offsets
-                .get(base + mark.index)
+                .get(index)
                 .or(offsets.last())
                 .copied()
                 .unwrap_or_default()
-        };
+        }
+    };
+    let mut tree = Tree::default();
+    let mut base = 0;
+    loop {
+        let rest = skeleton.text.get(byte(base)..).unwrap_or_default();
+        let read = read_first_document(rest)?;
+        let at = |mark: Mark| byte(base + mark.index);
         let Some(end) = tree.document(&read, &at, &skeleton.text)? else {
             break;
         };
