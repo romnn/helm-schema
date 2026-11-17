@@ -2439,10 +2439,11 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
         let shared = state
             .map_target(source)
             .is_some_and(|object| object == target);
-        if shared || !state.merge_into(&target, source, overwrite, 0) {
-            let mut affected = arguments.to_vec();
-            affected.push(destination.clone());
-            widen_operands(&affected, state);
+        if shared || !state.merge_into(&target, source, overwrite, 0, &Rc::default()) {
+            // Mergo writes only the destination; the sources stay as they are.
+            let mut sources = arguments.to_vec();
+            sources.push(destination.clone());
+            widen_targets(std::slice::from_ref(&destination), &sources, state);
             break;
         }
     }
@@ -2451,8 +2452,14 @@ fn merge(arguments: &[Value], state: &mut State, overwrite: bool) -> Value {
 }
 
 pub(super) fn widen_operands(arguments: &[Value], state: &mut State) {
-    let influences = Rc::new(inputs(arguments, state));
-    let mut pending = arguments.to_vec();
+    widen_targets(arguments, arguments, state);
+}
+
+/// Widens the objects reachable from `targets`; their unknown contents depend on every input
+/// of `sources`.
+fn widen_targets(targets: &[Value], sources: &[Value], state: &mut State) {
+    let influences = Rc::new(inputs(sources, state));
+    let mut pending = targets.to_vec();
     let mut objects = BTreeSet::new();
     while let Some(value) = pending.pop() {
         let mut targets = BTreeSet::new();

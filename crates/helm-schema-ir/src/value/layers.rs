@@ -20,6 +20,18 @@ use super::{
 /// Nested merges deeper than this stop recursing and leave the member unknown.
 const MAX_MERGE_DEPTH: usize = 32;
 
+/// The branch outcomes under which a merge runs; empty when it runs on every path.
+pub(super) type Outcomes = Rc<[(Rc<FrozenTest>, bool)]>;
+
+/// `guard` narrowed by one more branch outcome.
+fn extended(guard: &Outcomes, decision: &Rc<FrozenTest>, taken: bool) -> Outcomes {
+    guard
+        .iter()
+        .cloned()
+        .chain(std::iter::once((Rc::clone(decision), taken)))
+        .collect()
+}
+
 /// Steps one member merge may take before it reads unknown (shared choices multiply).
 const MAX_MERGE_WORK: usize = 1024;
 
@@ -64,7 +76,7 @@ struct MergeLayer {
     /// Keys the merge resolved eagerly; the layer does not apply to them.
     explicit: Rc<BTreeSet<String>>,
     /// The branch outcomes under which the merge ran; empty when it ran on every path.
-    guard: Rc<[(Rc<FrozenTest>, bool)]>,
+    guard: Outcomes,
 }
 
 impl State {
@@ -124,12 +136,12 @@ impl State {
     }
 
     /// A member of a frozen map, read at the heap version it was frozen at.
-    fn member_at(&self, frozen: &FrozenValue, key: &str) -> Field {
+    fn member_at(&mut self, frozen: &FrozenValue, key: &str) -> Field {
         self.member_of(&frozen.heap, &frozen.value, key, 0)
     }
 
     fn member_of(
-        &self,
+        &mut self,
         heap: &Rc<super::HeapVersion>,
         value: &Value,
         key: &str,
@@ -196,7 +208,7 @@ impl State {
     }
 
     fn object_member_at(
-        &self,
+        &mut self,
         heap: &Rc<super::HeapVersion>,
         id: &ObjectId,
         key: &str,
@@ -229,9 +241,12 @@ impl State {
                         child.push(key);
                         Field::Present(Value::input(child))
                     }),
-                    // A frozen read cannot allocate the copy's own member; it reads the source.
+                    // A copy's map member is the copy occurrence's own child object, never the
+                    // source's: a later write to the source does not reach it.
                     Base::Copy(source) => {
-                        self.member_of(&source.heap, &source.value, key, depth + 1)
+                        let source = source.clone();
+                        let member = self.member_of(&source.heap, &source.value, key, depth + 1);
+                        self.copy_member(id, key, &source, member)
                     }
                 };
                 for MergeLayer {
@@ -581,6 +596,7 @@ impl State {
         source: &Value,
         overwrite: bool,
         depth: usize,
+        guard: &Outcomes,
     ) -> bool {
         if depth > MAX_MERGE_DEPTH {
             return false;
@@ -632,13 +648,11 @@ impl State {
             if matches!(member, Field::Absent) {
                 continue;
             }
-            if !self.merge_nested(&destination, &member, overwrite, depth, &mut nested) {
+            if !self.merge_nested(&destination, &member, overwrite, depth, guard, &mut nested) {
                 return false;
             }
-            writes.push((
-                key.clone(),
-                self.merge_field(destination, member, overwrite),
-            ));
+            let merged = self.merge_field(destination.clone(), member, overwrite);
+            writes.push((key.clone(), guarded(guard, merged, &destination)));
         }
         for (key, field) in writes {
             if !self.heap.write(target, &key, field) {
@@ -650,7 +664,7 @@ impl State {
                 source: frozen,
                 overwrite,
                 explicit: Rc::new(explicit),
-                guard: Rc::default(),
+                guard: Rc::clone(guard),
             };
             if !self.push_layer(target, &layer, depth) {
                 return false;
@@ -661,26 +675,69 @@ impl State {
 
     /// Recurses into a nested map both members may hold, mutating the destination's own object
     /// so that its earlier aliases see the merge.
+    /// Merges a source member into the destination member's own map where both may be maps.
+    /// Each alternative of the destination is a separate map; its merge applies only under the
+    /// branch outcomes that select it.
     fn merge_nested(
         &mut self,
         destination: &Field,
         source: &Field,
         overwrite: bool,
         depth: usize,
+        guard: &Outcomes,
         nested: &mut BTreeSet<ObjectId>,
     ) -> bool {
-        let (Field::Present(destination), Field::Present(source)) = (destination, source) else {
+        let Field::Present(source) = source else {
             return true;
         };
-        if self.map_test(destination).constant_outcome() == Some(false)
-            || self.map_test(source).constant_outcome() == Some(false)
-        {
+        if self.map_test(source).constant_outcome() == Some(false) {
+            return true;
+        }
+        match destination {
+            Field::Absent => true,
+            Field::Unknown => false,
+            Field::Select { decision, yes, no } => {
+                [(yes, true), (no, false)].into_iter().all(|(arm, taken)| {
+                    let guard = extended(guard, decision, taken);
+                    self.merge_nested(
+                        arm,
+                        &Field::Present(source.clone()),
+                        overwrite,
+                        depth,
+                        &guard,
+                        nested,
+                    )
+                })
+            }
+            Field::Present(destination) => {
+                self.merge_nested_value(destination, source, overwrite, depth, guard, nested)
+            }
+        }
+    }
+
+    fn merge_nested_value(
+        &mut self,
+        destination: &Value,
+        source: &Value,
+        overwrite: bool,
+        depth: usize,
+        guard: &Outcomes,
+        nested: &mut BTreeSet<ObjectId>,
+    ) -> bool {
+        if let ValueNode::Select { decision, yes, no } = destination.node.as_ref() {
+            return [(yes, true), (no, false)].into_iter().all(|(arm, taken)| {
+                let guard = extended(guard, decision, taken);
+                self.merge_nested_value(arm, source, overwrite, depth, &guard, nested)
+            });
+        }
+        if self.map_test(destination).constant_outcome() == Some(false) {
             return true;
         }
         let Some(target) = self.nested_target(destination) else {
             return false;
         };
-        nested.insert(target.clone()) && self.merge_into(&target, source, overwrite, depth + 1)
+        nested.insert(target.clone())
+            && self.merge_into(&target, source, overwrite, depth + 1, guard)
     }
 
     fn nested_target(&mut self, value: &Value) -> Option<ObjectId> {
@@ -782,10 +839,14 @@ impl State {
             Remainder::Layered(layers) => {
                 let mut layers = layers.as_ref().clone();
                 layers.merges.push(layer.clone());
-                if !within_layer_bound(&layers.merges) {
-                    return false;
+                if within_layer_bound(&layers.merges) {
+                    layers
+                } else {
+                    // Past the bound only this object's unwritten keys widen, keeping what
+                    // they depend on; the rest of the heap is untouched.
+                    let path = self.heap.version.input_paths.get(target).cloned();
+                    layers.widened(path.as_ref())
                 }
-                layers
             }
             Remainder::Open => Layers {
                 base: Base::Unknown(Rc::default()),
@@ -815,7 +876,7 @@ impl State {
             if self.map_test(&member).constant_outcome() == Some(false) {
                 continue;
             }
-            if !self.merge_into(&child, &member, layer.overwrite, depth + 1) {
+            if !self.merge_into(&child, &member, layer.overwrite, depth + 1, &layer.guard) {
                 return false;
             }
         }
@@ -883,7 +944,7 @@ impl State {
     }
 
     /// The share of a parent's layers that reaches its nested map at `key`.
-    fn child_layers(&self, layers: &Layers, key: &str) -> Option<Layers> {
+    fn child_layers(&mut self, layers: &Layers, key: &str) -> Option<Layers> {
         let Layers { base, merges } = layers;
         let base = match base {
             Base::Closed => return None,
@@ -1172,6 +1233,25 @@ impl State {
 }
 
 impl Layers {
+    /// These layers collapsed to an unknown base that keeps every input they read: the base's
+    /// own region (`path` for an input base) and each merge source's.
+    fn widened(&self, path: Option<&ValuesPath>) -> Self {
+        let mut inputs = BTreeSet::new();
+        match &self.base {
+            Base::Closed => {}
+            Base::Unknown(known) => inputs.extend(known.iter().cloned()),
+            Base::Input => inputs.extend(path.cloned()),
+            Base::Copy(source) => inputs.extend(source.inputs()),
+        }
+        for layer in &self.merges {
+            inputs.extend(layer.source.inputs());
+        }
+        Self {
+            base: Base::Unknown(Rc::new(inputs)),
+            merges: Vec::new(),
+        }
+    }
+
     /// The inputs an unknown base still depends on.
     pub(super) fn unknown_inputs(&self) -> Option<&Rc<BTreeSet<ValuesPath>>> {
         match &self.base {
@@ -1408,7 +1488,9 @@ impl State {
         {
             return Some(self.constant_test(true));
         }
-        if fields.values().any(|field| !matches!(field, Field::Absent)) {
+        // Every other field is a tombstone (`unset`) or undecided. A tombstone masks a key the
+        // layers may hold, possibly the last one, so the layers no longer decide emptiness.
+        if !fields.is_empty() {
             return None;
         }
         let Layers { base, merges } = layers.as_ref();
@@ -1451,21 +1533,27 @@ impl State {
             possible.push(contribution);
         }
         let memo = &self.heap.arena.predicate_memo;
-        let when_true = memo.normalize(Predicate::Or(if certain {
-            possible.clone()
-        } else {
-            proven
-        }));
-        let when_false = memo.normalize(Predicate::Or(possible).negated());
-        Some(self.heap.arena.decision(
-            when_true,
-            when_false,
-            if certain {
-                Coverage::Exact
-            } else {
-                Coverage::CertifiedPartial
-            },
-        ))
+        let possible = memo.normalize(Predicate::Or(possible));
+        let exact = |predicate: Predicate| {
+            let negated = predicate.negated();
+            self.heap
+                .arena
+                .decision(predicate, negated, Coverage::Exact)
+        };
+        if certain {
+            return Some(exact(possible));
+        }
+        // A non-overwrite source whose members are all nil adds no key (mergo skips nil
+        // members), and no guard states "has a non-nil member". The result is decided only when
+        // a contribution that always adds a key holds on every path, or when none is possible.
+        let proven = memo.normalize(Predicate::Or(proven));
+        if proven == Predicate::True {
+            return Some(self.constant_test(true));
+        }
+        if possible == Predicate::False {
+            return Some(self.constant_test(false));
+        }
+        None
     }
 }
 

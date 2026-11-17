@@ -1354,3 +1354,219 @@ fn member_reads_under_exclusive_pairs_keep_every_rejection() -> eyre::Result<()>
         true,
     )
 }
+
+fn merged_guard_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            base:
+              gate: {}
+              live: false
+              x: "a"
+            override:
+              gate: {}
+        "#},
+        &[
+            "{{- $gate := mergeOverwrite .Values.base.gate .Values.override.gate }}\n",
+            CONFIG_MAP,
+            indoc! {r"
+                data:
+                {{- if and (not $gate.enabled) .Values.base.live }}
+                  x: {{ upper .Values.base.x | quote }}
+                {{- end }}
+            "},
+        ],
+        "",
+    )
+}
+
+/// (b, step 4a) A guard over a merged member keeps the payload it guards
+/// (receipts `g_merged_guard`).
+#[test]
+fn merged_guard_rejects_the_live_integer_payload() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merged_guard_schema()?,
+        &[(
+            "g1: a disabled merged gate renders the integer payload",
+            json!({
+                "base": { "gate": { "enabled": false }, "live": true, "x": 7 },
+                "override": { "gate": { "enabled": false } },
+            }),
+        )],
+        false,
+    )
+}
+
+/// (b, step 4a) The merged gate decides the payload in both directions.
+#[test]
+fn merged_guard_accepts_dormant_or_valid_payloads() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &merged_guard_schema()?,
+        &[
+            (
+                "g2: a string payload renders",
+                json!({
+                    "base": { "gate": { "enabled": false }, "live": true, "x": "b" },
+                    "override": { "gate": { "enabled": false } },
+                }),
+            ),
+            (
+                "g3: the override enables the gate, so the payload is dormant",
+                json!({
+                    "base": { "gate": { "enabled": false }, "live": true, "x": 7 },
+                    "override": { "gate": { "enabled": true } },
+                }),
+            ),
+        ],
+        true,
+    )
+}
+
+/// (b, step 4a, Sol 1) A merge recurses into each alternative of a conditional nested map
+/// (receipts `s1_select_nested`).
+#[test]
+fn merge_recurses_into_a_conditionally_set_nested_map() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            choose: false
+            x: "a"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $d := dict }}
+                {{- if .Values.choose }}{{- $_ := set $d "inner" (dict "x" "ok") }}{{- end }}
+                {{- $_ := mergeOverwrite $d (dict "inner" (dict "x" .Values.x)) }}
+            "#},
+            CONFIG_MAP,
+            "data:\n  x: {{ upper $d.inner.x | quote }}\n",
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s1a: the chosen nested map takes the integer",
+            json!({ "choose": true, "x": 7 }),
+        )],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s1b: the chosen nested map takes the string",
+            json!({ "choose": true, "x": "b" }),
+        )],
+        true,
+    )
+}
+
+/// (b, step 4a, Sol 2) A map member read from a copy is the copy's own map, which a later write
+/// to the source does not reach (receipts `s2_copy_identity`).
+#[test]
+fn merged_copy_members_do_not_follow_source_writes() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            a:
+              inner:
+                x: "a"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $c := deepCopy .Values.a }}
+                {{- $d := merge (dict) $c }}
+                {{- $_ := set .Values.a.inner "x" "ok" }}
+            "#},
+            CONFIG_MAP,
+            "data:\n  x: {{ upper $d.inner.x | quote }}\n",
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s2a: the copy keeps the integer",
+            json!({ "a": { "inner": { "x": 7 } } }),
+        )],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s2b: the copy keeps the string",
+            json!({ "a": { "inner": { "x": "b" } } }),
+        )],
+        true,
+    )
+}
+
+/// (b, step 4a, Sol 3) An `unset` may empty a merged map, so its truthiness is not the
+/// sources' (receipts `s3_tombstone_truth`).
+#[test]
+fn unset_merged_map_is_not_assumed_non_empty() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            src:
+              x: true
+            bad: "s"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $m := mergeOverwrite (dict) .Values.src }}
+                {{- $_ := unset $m "x" }}
+            "#},
+            CONFIG_MAP,
+            indoc! {r"
+                data:
+                {{- if $m }}
+                  x: {{ upper .Values.bad | quote }}
+                {{- else }}
+                  x: empty
+                {{- end }}
+            "},
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s3a: removing the only key renders the else branch",
+            json!({ "src": { "x": true }, "bad": 7 }),
+        )],
+        true,
+    )
+}
+
+/// (b, step 4a, Sol 4) Past the layer bound only the destination widens; an unrelated map keeps
+/// its obligation (receipts `s4_layer_bound`).
+#[test]
+fn layer_bound_widens_only_the_destination() -> eyre::Result<()> {
+    let merges = "{{- $_ := mergeOverwrite $m $.Values.src }}\n".repeat(72);
+    let schema = template_law_schema(
+        indoc! {r#"
+            src: {}
+            bad: "s"
+        "#},
+        &[
+            "{{- $u := dict \"x\" .Values.bad }}\n{{- $m := dict }}\n",
+            &merges,
+            CONFIG_MAP,
+            "data:\n  x: {{ upper $u.x | quote }}\n",
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s4a: the unrelated integer still aborts",
+            json!({ "src": {}, "bad": 7 }),
+        )],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "s4b: a string renders",
+            json!({ "src": { "k": "v" }, "bad": "b" }),
+        )],
+        true,
+    )
+}
