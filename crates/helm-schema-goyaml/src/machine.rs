@@ -118,6 +118,22 @@ impl Reader {
                 return Ok(());
             }
         }
+        // Inside one raw window a symbol's bytes decode to the symbol itself, so it skips the
+        // byte decoder; a symbol crossing the window boundary takes the byte path.
+        let width = character.len_utf8();
+        if self.validator.active() && self.validator.phase + width < 512 && self.bytes.utf8_ready()
+        {
+            self.input_seen = true;
+            self.validator.phase += width;
+            match self.bytes.accept_utf8(character) {
+                Ok(()) => {
+                    self.decoded_seen += 1;
+                    self.scan_character(character, observer);
+                }
+                Err(err) => self.validator.invalid = Some(err),
+            }
+            return Ok(());
+        }
         let mut encoded = [0; 4];
         self.push_bytes_syntax(character.encode_utf8(&mut encoded).as_bytes(), observer)
     }

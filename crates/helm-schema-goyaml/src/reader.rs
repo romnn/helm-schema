@@ -36,6 +36,24 @@ impl ByteReader {
         self.initial_bom = true;
     }
 
+    /// Whether the next decoded symbol can bypass byte decoding: UTF-8 is selected and no
+    /// partial character or BOM is pending.
+    pub(crate) fn utf8_ready(&self) -> bool {
+        self.encoding == Some(Encoding::Utf8) && self.pending.is_empty() && !self.finished
+    }
+
+    /// Accepts one already-decoded UTF-8 symbol, with the printable check of the byte path.
+    ///
+    /// Port of `readerc.go:91` (`yaml_parser_update_buffer`, UTF-8 branch and range check).
+    pub(crate) fn accept_utf8(&mut self, character: char) -> Result<(), Error> {
+        if !matches!(u32::from(character), 0x09 | 0x0a | 0x0d | 0x20..=0x7e | 0x85 | 0xa0..=0xd7ff | 0xe000..=0xfffd | 0x0001_0000..=0x0010_ffff)
+        {
+            return Err(reader_error("control characters are not allowed"));
+        }
+        self.offset += character.len_utf8();
+        Ok(())
+    }
+
     pub(crate) fn pending_len(&self) -> usize {
         self.pending.len()
     }
