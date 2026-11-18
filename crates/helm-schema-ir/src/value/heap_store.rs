@@ -8,6 +8,7 @@ use imbl::GenericOrdMap;
 use imbl::ordmap::DiffItem;
 use imbl::shared_ptr::RcK;
 
+use super::heap_regions::{ObjectRegions, Projection};
 use super::{Multiplicity, ObjectData, ObjectId, ObjectVersion, SnapshotId};
 
 #[derive(Clone, Debug)]
@@ -46,6 +47,7 @@ pub(super) struct Store {
     identities: GenericOrdMap<ObjectId, Multiplicity, RcK>,
     contents: GenericOrdMap<ObjectId, StoredObject, RcK>,
     epoch: Option<Rc<Epoch>>,
+    projection: Projection,
 }
 
 impl Store {
@@ -74,12 +76,19 @@ impl Store {
     }
 
     pub(super) fn install(&mut self, object: &ObjectId, storage: Rc<ObjectVersion>) {
-        if self
-            .lookup(object)
-            .is_some_and(|current| Rc::ptr_eq(current, &storage))
-        {
+        let current = self.lookup(object);
+        if current.is_some_and(|current| Rc::ptr_eq(current, &storage)) {
             return;
         }
+        let before = current
+            .map(|current| ObjectRegions::from(&current.data))
+            .unwrap_or_default();
+        self.projection.install(
+            object,
+            storage.multiplicity,
+            before,
+            ObjectRegions::from(&storage.data),
+        );
         if self.identities.get(object) != Some(&storage.multiplicity) {
             self.identities.insert(object.clone(), storage.multiplicity);
         }
@@ -99,55 +108,21 @@ impl Store {
         };
         // Discarded contents must release the frozen roots they capture.
         self.contents = GenericOrdMap::new();
-        self.epoch = Some(Rc::new(Epoch {
+        let epoch = Rc::new(Epoch {
             inputs: Rc::clone(inputs),
             singleton: storage(Multiplicity::Singleton),
             summary: storage(Multiplicity::Summary),
-        }));
+        });
+        self.projection.invalidate(&self.identities, &epoch.inputs);
+        self.epoch = Some(epoch);
+    }
+
+    pub(super) fn region_projection(&self) -> &Projection {
+        &self.projection
     }
 
     pub(super) fn objects(&self) -> Vec<ObjectId> {
         self.identities.keys().cloned().collect()
-    }
-
-    pub(super) fn visit_explicit(&self, mut visit: impl FnMut(ObjectId, &Rc<ObjectVersion>)) {
-        for (object, StoredObject { version }) in &self.contents {
-            visit(object.clone(), version);
-        }
-    }
-
-    pub(super) fn visit_explicit_since(
-        &self,
-        previous: &Self,
-        mut visit: impl FnMut(ObjectId, &Rc<ObjectVersion>),
-    ) {
-        for difference in self.contents.diff(&previous.contents) {
-            let object = match difference {
-                DiffItem::Add(object, _)
-                | DiffItem::Remove(object, _)
-                | DiffItem::Update {
-                    old: (object, _),
-                    new: _,
-                } => object,
-            };
-            if let Some(StoredObject { version }) = self.contents.get(object) {
-                visit(object.clone(), version);
-            }
-        }
-    }
-
-    pub(super) fn fallback_inputs(&self) -> Option<&Rc<BTreeSet<ValuesPath>>> {
-        if self.contents.len() < self.identities.len() {
-            self.epoch.as_ref().map(|epoch| &epoch.inputs)
-        } else {
-            None
-        }
-    }
-
-    pub(super) fn is_fallback(&self, object: &ObjectId) -> bool {
-        self.epoch.is_some()
-            && !self.contents.contains_key(object)
-            && self.identities.contains_key(object)
     }
 
     fn shares_epoch(&self, other: &Self) -> bool {

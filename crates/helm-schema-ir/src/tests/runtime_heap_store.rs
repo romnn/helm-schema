@@ -3,9 +3,11 @@ use std::rc::Rc;
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::ValuesPath;
+use imbl::ordmap::DiffItem;
 use test_util::prelude::sim_assert_eq;
 
-use crate::value::{Multiplicity, ObjectData, ObjectVersion, Remainder, State, Value};
+use super::StoredObject;
+use crate::value::{Multiplicity, ObjectData, ObjectId, ObjectVersion, Remainder, State, Value};
 
 #[test]
 fn persistent_store_keeps_a_map_after_the_write_replay_budget() -> eyre::Result<()> {
@@ -536,6 +538,49 @@ fn persistent_store_explicit_and_epoch_views_match_sparse_point_lookups() -> eyr
 }
 
 impl super::Store {
+    pub(in crate::value) fn visit_explicit(
+        &self,
+        mut visit: impl FnMut(ObjectId, &Rc<ObjectVersion>),
+    ) {
+        for (object, StoredObject { version }) in &self.contents {
+            visit(object.clone(), version);
+        }
+    }
+
+    pub(in crate::value) fn visit_explicit_since(
+        &self,
+        previous: &Self,
+        mut visit: impl FnMut(ObjectId, &Rc<ObjectVersion>),
+    ) {
+        for difference in self.contents.diff(&previous.contents) {
+            let object = match difference {
+                DiffItem::Add(object, _)
+                | DiffItem::Remove(object, _)
+                | DiffItem::Update {
+                    old: (object, _),
+                    new: _,
+                } => object,
+            };
+            if let Some(StoredObject { version }) = self.contents.get(object) {
+                visit(object.clone(), version);
+            }
+        }
+    }
+
+    pub(in crate::value) fn fallback_inputs(&self) -> Option<&Rc<BTreeSet<ValuesPath>>> {
+        if self.contents.len() < self.identities.len() {
+            self.epoch.as_ref().map(|epoch| &epoch.inputs)
+        } else {
+            None
+        }
+    }
+
+    pub(in crate::value) fn is_fallback(&self, object: &ObjectId) -> bool {
+        self.epoch.is_some()
+            && !self.contents.contains_key(object)
+            && self.identities.contains_key(object)
+    }
+
     pub(in crate::value) fn visit(
         &self,
         mut visit: impl FnMut(crate::value::ObjectId, &Rc<ObjectVersion>),
