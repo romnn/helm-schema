@@ -61,7 +61,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() -> eyre::Res
     let strict_enabled = serde_json::json!({
         "properties": {
             "strict": {
-                "properties": { "enabled": { "$ref": "#/$defs/t" } },
+                "properties": { "enabled": { "$ref": "#/definitions/t" } },
                 "required": ["enabled"],
                 "type": "object",
             },
@@ -93,7 +93,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() -> eyre::Res
             "allOf": [{
                 "if": { "allOf": [
                     {
-                        "properties": { "enabled": { "$ref": "#/$defs/t" } },
+                        "properties": { "enabled": { "$ref": "#/definitions/t" } },
                         "required": ["enabled"],
                         "type": "object",
                     },
@@ -184,7 +184,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() -> eyre::Res
         .ok_or_eyre("missing strict receiver absence condition")?
         .clone();
     let definitions = expected
-        .get_mut("$defs")
+        .get_mut("definitions")
         .and_then(Value::as_object_mut)
         .ok_or_eyre("missing expected definitions")?;
     // Both nil proofs share the same encoding. Duplicating their disjunction
@@ -195,7 +195,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() -> eyre::Res
     );
     definitions.insert(
         "helm-condition-1".to_owned(),
-        serde_json::json!({"not": {"$ref": "#/$defs/helm-condition-0"}}),
+        serde_json::json!({"not": {"$ref": "#/definitions/helm-condition-0"}}),
     );
     definitions.insert(
         "helm-condition-2".to_owned(),
@@ -203,11 +203,11 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() -> eyre::Res
     );
     definitions.insert(
         "helm-condition-3".to_owned(),
-        serde_json::json!({"not": {"$ref": "#/$defs/helm-condition-2"}}),
+        serde_json::json!({"not": {"$ref": "#/definitions/helm-condition-2"}}),
     );
-    expected["allOf"][0]["if"] = serde_json::json!({"$ref": "#/$defs/helm-condition-1"});
+    expected["allOf"][0]["if"] = serde_json::json!({"$ref": "#/definitions/helm-condition-1"});
     expected["properties"]["grouped"]["allOf"] = serde_json::json!([{
-        "if": {"allOf": [receiver_absent, {"$ref": "#/$defs/helm-condition-3"}]},
+        "if": {"allOf": [receiver_absent, {"$ref": "#/definitions/helm-condition-3"}]},
         "then": false,
     }]);
     sim_assert_eq!(have: &schema, want: &expected);
@@ -365,7 +365,7 @@ fn member_local_guard_does_not_leak_its_string_contract() {
     // at all. A non-object member cannot satisfy the selector, so it passes
     // both arms unconstrained.
     let gate = serde_json::json!({
-        "properties": { "enabled": { "$ref": "#/$defs/t" } },
+        "properties": { "enabled": { "$ref": "#/definitions/t" } },
         "required": ["enabled"],
         "type": "object",
     });
@@ -1617,7 +1617,7 @@ fn tilde_semver_guard_scopes_member_host_shape_exactly() {
             "component": {
                 "properties": {
                     "enabled": {
-                        "$ref": "#/$defs/t",
+                        "$ref": "#/definitions/t",
                     },
                 },
                 "required": ["enabled"],

@@ -278,7 +278,7 @@ fn expected_values_schema(
         schema["allOf"] = Value::Array(all_of);
     }
     if uses_helm_truthy {
-        schema["$defs"] = serde_json::json!({
+        schema["definitions"] = serde_json::json!({
             "t": {
                 "anyOf": [
                     { "const": true },
@@ -303,7 +303,10 @@ fn root_property_schema(path: &str, schema: Value) -> Value {
 
 fn helm_truthy_guard(path: &str) -> Value {
     let mut properties = serde_json::Map::new();
-    properties.insert(path.to_string(), serde_json::json!({ "$ref": "#/$defs/t" }));
+    properties.insert(
+        path.to_string(),
+        serde_json::json!({ "$ref": "#/definitions/t" }),
+    );
     serde_json::json!({
         "properties": properties,
         "required": [path],
@@ -434,20 +437,20 @@ fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
     // Preserve a complete document's own definitions so its references keep their scope.
     let needs_truthy = crate::condition_encoding::value_references_helm_truthy(schema)
         && schema
-            .get("$defs")
+            .get("definitions")
             .and_then(|defs| defs.get(crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME))
             .is_none();
     let mut shared =
         crate::resolve_policy::scalar_preimage::serialized_definitions(std::iter::once(schema));
     shared.retain(|name, _| {
         schema
-            .get("$defs")
+            .get("definitions")
             .and_then(|defs| defs.get(name))
             .is_none()
     });
     let document = (needs_truthy || !shared.is_empty()).then(|| {
         let mut defs = schema
-            .get("$defs")
+            .get("definitions")
             .cloned()
             .unwrap_or_else(|| serde_json::json!({}));
         if needs_truthy {
@@ -457,7 +460,7 @@ fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
         if let Some(defs) = defs.as_object_mut() {
             defs.extend(shared);
         }
-        serde_json::json!({ "$defs": defs, "allOf": [schema] })
+        serde_json::json!({ "definitions": defs, "allOf": [schema] })
     });
     jsonschema::validator_for(document.as_ref().unwrap_or(schema))
         .expect("schema validator")
@@ -722,7 +725,7 @@ impl ResourceSchemaOracle for SharedObjectProvider {
     fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
         // An ARRAY subtree: object-typed provider positions no longer bound
         // `toYaml` fragment inputs, and this stub's consumers pin the
-        // `$defs` sharing machinery, not fragment typing.
+        // `definitions` sharing machinery, not fragment typing.
         Some(ProviderSchemaFragment::new(serde_json::json!({
             "type": "array",
             "items": {

@@ -30,7 +30,7 @@ read as a regression or an improvement.
   "Instructions (cachegrind)", lower is better, in the same suite as the times. Its own
   environment omits CPU, so it stays one series across runners, and it is the first chart.
   Wall and CPU time keep their CPU series.
-- `bench.py` owns each metric's environment: peak RSS, pretty and compact schema sizes, `$defs`
+- `bench.py` owns each metric's environment: peak RSS, pretty and compact schema sizes, definition
   counts and instruction counts omit CPU.
   RSS measures memory use; allocator and kernel accounting differences can add noise, but CPU
   model is not a useful comparison boundary within the hosted runner pool.

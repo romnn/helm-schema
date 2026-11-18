@@ -13,7 +13,7 @@ pub struct OutputPipelineOptions {
     pub strip_descriptions: bool,
     /// Whether redundant schema structure is minimized.
     pub minimize: bool,
-    /// How anonymous `$defs` entries are named.
+    /// How anonymous `definitions` entries are named.
     pub definition_names: DefinitionNames,
 }
 

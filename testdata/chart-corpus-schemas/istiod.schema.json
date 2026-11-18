@@ -1,45 +1,160 @@
 {
-  "$defs": {
-    "constrains/_internal_defaults_do_not_set": {
-      "not": {
-        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": {},
+  "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
       }
     },
-    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+defaults:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
-        },
-        {
-          "properties": {
-            "_internal_defaults_do_not_set": {
-              "enum": [
-                null
-              ]
-            }
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+              },
+              {
+                "properties": {
+                  "_internal_defaults_do_not_set": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "_internal_defaults_do_not_set"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "_internal_defaults_do_not_set": {}
+                  },
+                  "required": [
+                    "_internal_defaults_do_not_set"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
-          "required": [
-            "_internal_defaults_do_not_set"
-          ],
-          "type": "object"
+          {
+            "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
         },
-        {
-          "not": {
-            "properties": {
-              "_internal_defaults_do_not_set": {}
-            },
-            "required": [
-              "_internal_defaults_do_not_set"
-            ],
+        "then": true
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "not": {
+          "$ref": "#/definitions/constrains~1global+global=null"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
             "type": "object"
           }
-        },
-        {
-          "$ref": "#/$defs/constrains~1defaults:t"
         }
-      ]
+      }
     },
-    "constrains/_internal_defaults_do_not_set@2": {
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1global+global=null"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "pilot": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pilot"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "pilot": {}
+                    },
+                    "required": [
+                      "pilot"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "pilot": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "constrains/_internal_defaults_do_not_set": {
       "properties": {
         "_internal_defaults_do_not_set": {
           "type": "object"
@@ -50,15 +165,32 @@
       ],
       "type": "object"
     },
-    "constrains/defaults:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1defaults:t@2"
-      }
-    },
-    "constrains/defaults:t@2": {
+    "constrains/defaults!=0+defaults=true": {
       "properties": {
         "defaults": {
-          "$ref": "#/$defs/t"
+          "anyOf": [
+            {
+              "minProperties": 1,
+              "type": "object"
+            },
+            {
+              "not": {
+                "const": 0
+              },
+              "type": "number"
+            },
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "const": true
+            }
+          ]
         }
       },
       "required": [
@@ -67,12 +199,6 @@
       "type": "object"
     },
     "constrains/global+global=null": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
-    },
-    "constrains/global+global=null@2": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
-    },
-    "constrains/global+global=null@3": {
       "anyOf": [
         {
           "not": {
@@ -99,164 +225,8 @@
           "type": "object"
         }
       ]
-    },
-    "constrains/global+global=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global+global=null"
-      }
-    },
-    "constrains/global+global=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global+global=null@2"
-      }
-    },
-    "constrains/pilot+pilot=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "pilot": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "pilot"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "pilot": {}
-              },
-              "required": [
-                "pilot"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/defaults:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1defaults:t@2"
-      },
-      "then": true
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": {},
-  "allOf": [
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global=null@5"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "_internal_defaults_do_not_set": {
-          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1defaults:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+defaults:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1defaults:t~1then~1any~1else~1fail"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set"
-          },
-          {
-            "$ref": "#/$defs/constrains~1pilot+pilot=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "pilot": {
-            "type": [
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1global+global=null@4"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "_internal_defaults_do_not_set": {
       "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`."

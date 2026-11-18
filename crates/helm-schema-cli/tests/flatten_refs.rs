@@ -1,5 +1,5 @@
 //! Regression coverage for output-only `$ref` handling. External refs can be
-//! re-homed into local `$defs`, fully inlined for export, or preserved
+//! re-homed into local `definitions`, fully inlined for export, or preserved
 //! literally when requested.
 //!
 //! Tests exercise the lower-level `flatten_with_retriever` API with an
@@ -79,12 +79,12 @@ fn external_refs_can_be_bundled_into_defs() -> eyre::Result<()> {
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": {
+        "definitions": {
             "schema1": { "enum": [null, "azure", "minikube"] }
         },
         "additionalProperties": false,
         "properties": {
-            "cloud": { "$ref": "#/$defs/schema1" }
+            "cloud": { "$ref": "#/definitions/schema1" }
         },
         "type": "object"
     });
@@ -111,13 +111,13 @@ fn repeated_external_refs_share_one_definition() -> eyre::Result<()> {
 
     sim_assert_eq!(
         have: actual.pointer("/properties/cloud/$ref"),
-        want: Some(&Value::String("#/$defs/schema1".to_string()))
+        want: Some(&Value::String("#/definitions/schema1".to_string()))
     );
     sim_assert_eq!(
         have: actual.pointer("/properties/provider/$ref"),
-        want: Some(&Value::String("#/$defs/schema1".to_string()))
+        want: Some(&Value::String("#/definitions/schema1".to_string()))
     );
-    sim_assert_eq!(have: actual.pointer("/$defs/schema1"), want: Some(&cloud_schema()));
+    sim_assert_eq!(have: actual.pointer("/definitions/schema1"), want: Some(&cloud_schema()));
 
     Ok(())
 }
@@ -128,7 +128,7 @@ fn bundled_definition_names_do_not_overwrite_existing_defs() -> eyre::Result<()>
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": {
+        "definitions": {
             "schema1": { "type": "number" }
         },
         "type": "object",
@@ -141,13 +141,13 @@ fn bundled_definition_names_do_not_overwrite_existing_defs() -> eyre::Result<()>
     let actual = flatten::bundle_with_retriever(merged, BASE_URI, retriever).wrap_err("bundle")?;
 
     sim_assert_eq!(
-        have: actual.pointer("/$defs/schema1"),
+        have: actual.pointer("/definitions/schema1"),
         want: Some(&serde_json::json!({ "type": "number" }))
     );
-    sim_assert_eq!(have: actual.pointer("/$defs/schema2"), want: Some(&cloud_schema()));
+    sim_assert_eq!(have: actual.pointer("/definitions/schema2"), want: Some(&cloud_schema()));
     sim_assert_eq!(
         have: actual.pointer("/properties/cloud/$ref"),
-        want: Some(&Value::String("#/$defs/schema2".to_string()))
+        want: Some(&Value::String("#/definitions/schema2".to_string()))
     );
 
     Ok(())
@@ -185,14 +185,14 @@ fn bundled_external_document_id_updates_relative_ref_base() -> eyre::Result<()> 
 
     sim_assert_eq!(
         have: actual.pointer("/properties/external/$ref"),
-        want: Some(&Value::String("#/$defs/schema1".to_string()))
+        want: Some(&Value::String("#/definitions/schema1".to_string()))
     );
     sim_assert_eq!(
-        have: actual.pointer("/$defs/schema1/properties/name/$ref"),
-        want: Some(&Value::String("#/$defs/schema2".to_string()))
+        have: actual.pointer("/definitions/schema1/properties/name/$ref"),
+        want: Some(&Value::String("#/definitions/schema2".to_string()))
     );
     sim_assert_eq!(
-        have: actual.pointer("/$defs/schema2"),
+        have: actual.pointer("/definitions/schema2"),
         want: Some(&serde_json::json!({ "type": "string" }))
     );
 
@@ -206,12 +206,12 @@ fn root_document_id_does_not_turn_local_refs_into_external_fetches() -> eyre::Re
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$id": "https://example.test/root.schema.json",
-        "$defs": {
+        "definitions": {
             "name": { "type": "string" }
         },
         "type": "object",
         "properties": {
-            "name": { "$ref": "#/$defs/name" },
+            "name": { "$ref": "#/definitions/name" },
             "cloud": { "$ref": "../schemas/cloud.json" }
         }
     });
@@ -222,11 +222,11 @@ fn root_document_id_does_not_turn_local_refs_into_external_fetches() -> eyre::Re
 
     sim_assert_eq!(
         have: actual.pointer("/properties/name/$ref"),
-        want: Some(&Value::String("#/$defs/name".to_string()))
+        want: Some(&Value::String("#/definitions/name".to_string()))
     );
     sim_assert_eq!(
         have: actual.pointer("/properties/cloud/$ref"),
-        want: Some(&Value::String("#/$defs/schema1".to_string()))
+        want: Some(&Value::String("#/definitions/schema1".to_string()))
     );
 
     Ok(())
@@ -260,7 +260,7 @@ fn bundling_does_not_rewrite_ref_keys_inside_enum_data() -> eyre::Result<()> {
     );
     sim_assert_eq!(
         have: actual.pointer("/properties/cloud/$ref"),
-        want: Some(&Value::String("#/$defs/schema1".to_string()))
+        want: Some(&Value::String("#/definitions/schema1".to_string()))
     );
 
     Ok(())
@@ -272,7 +272,7 @@ fn bundling_rejects_non_object_root_defs_before_writing_dangling_refs() -> eyre:
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": false,
+        "definitions": false,
         "type": "object",
         "properties": {
             "cloud": { "$ref": "../schemas/cloud.json" }
@@ -281,10 +281,11 @@ fn bundling_rejects_non_object_root_defs_before_writing_dangling_refs() -> eyre:
     let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
 
     let err = flatten::bundle_with_retriever(merged, BASE_URI, retriever)
-        .expect_err("non-object $defs should be rejected");
+        .expect_err("non-object definitions should be rejected");
 
     assert!(
-        err.to_string().contains("root $defs is not an object"),
+        err.to_string()
+            .contains("root definitions is not an object"),
         "unexpected error: {err}"
     );
     Ok(())

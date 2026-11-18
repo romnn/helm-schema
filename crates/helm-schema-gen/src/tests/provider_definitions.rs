@@ -105,14 +105,14 @@ fn repeated_provider_subtrees_move_to_root_definitions() {
 
     sim_assert_eq!(
         have: paths[0].schema,
-        want: json!({ "$ref": "#/$defs/providerSchema1" })
+        want: json!({ "$ref": "#/definitions/providerSchema1" })
     );
     sim_assert_eq!(
         have: paths[1].schema,
-        want: json!({ "$ref": "#/$defs/providerSchema1" })
+        want: json!({ "$ref": "#/definitions/providerSchema1" })
     );
     sim_assert_eq!(
-        have: root.pointer("/$defs/providerSchema1"),
+        have: root.pointer("/definitions/providerSchema1"),
         want: Some(&provider_schema)
     );
 }
@@ -199,14 +199,14 @@ fn repeated_provider_subtrees_with_one_source_use_source_stable_definition_name(
 
     sim_assert_eq!(
         have: paths[0].schema,
-        want: json!({ "$ref": format!("#/$defs/{definition_name}") })
+        want: json!({ "$ref": format!("#/definitions/{definition_name}") })
     );
     sim_assert_eq!(
         have: paths[1].schema,
-        want: json!({ "$ref": format!("#/$defs/{definition_name}") })
+        want: json!({ "$ref": format!("#/definitions/{definition_name}") })
     );
     sim_assert_eq!(
-        have: root.pointer(&format!("/$defs/{definition_name}")),
+        have: root.pointer(&format!("/definitions/{definition_name}")),
         want: Some(&provider_schema)
     );
 }
@@ -286,7 +286,7 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
     let expected_definition = json!({
         "type": "object",
         "properties": {
-            "labels": { "$ref": format!("#/$defs/{definition_name}/$defs/StringMap") }
+            "labels": { "$ref": format!("#/definitions/{definition_name}/$defs/StringMap") }
         },
         "$defs": {
             "StringMap": {
@@ -298,10 +298,10 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
 
     sim_assert_eq!(
         have: paths[0].schema,
-        want: json!({ "$ref": format!("#/$defs/{definition_name}") })
+        want: json!({ "$ref": format!("#/definitions/{definition_name}") })
     );
     sim_assert_eq!(
-        have: root.pointer(&format!("/$defs/{definition_name}")),
+        have: root.pointer(&format!("/definitions/{definition_name}")),
         want: Some(&expected_definition)
     );
 }
@@ -371,11 +371,11 @@ fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema(
     insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(
-        have: root.pointer(&format!("/$defs/{definition_name}")),
+        have: root.pointer(&format!("/definitions/{definition_name}")),
         want: Some(&json!({
             "type": "object",
             "additionalProperties": {
-                "$ref": format!("#/$defs/{definition_name}/$defs/StringMap")
+                "$ref": format!("#/definitions/{definition_name}/$defs/StringMap")
             },
             "$defs": {
                 "StringMap": {
@@ -446,7 +446,7 @@ fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
     insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(
-        have: root.pointer(&format!("/$defs/{definition_name}")),
+        have: root.pointer(&format!("/definitions/{definition_name}")),
         want: Some(&provider_schema),
         "mixed self-contained and provider-document-local source leaves must fall back together"
     );
@@ -501,14 +501,14 @@ fn structurally_equal_provider_schemas_share_even_with_different_sources() {
 
     sim_assert_eq!(
         have: paths[0].schema,
-        want: json!({ "$ref": "#/$defs/providerSchema1" })
+        want: json!({ "$ref": "#/definitions/providerSchema1" })
     );
     sim_assert_eq!(
         have: paths[1].schema,
-        want: json!({ "$ref": "#/$defs/providerSchema1" })
+        want: json!({ "$ref": "#/definitions/providerSchema1" })
     );
     sim_assert_eq!(
-        have: root.pointer("/$defs/providerSchema1"),
+        have: root.pointer("/definitions/providerSchema1"),
         want: Some(&provider_schema)
     );
 }
@@ -527,7 +527,7 @@ fn scalar_provider_schemas_stay_inline() {
     insert_definitions_into_root(&mut root, definitions);
 
     sim_assert_eq!(have: paths[0].schema, want: provider_schema);
-    assert!(root.pointer("/$defs").is_none());
+    assert!(root.pointer("/definitions").is_none());
 }
 
 #[test]
@@ -555,14 +555,14 @@ fn described_provider_subtrees_stay_inline_even_when_other_paths_share_definitio
     sim_assert_eq!(have: paths[0].schema, want: provider_schema);
     sim_assert_eq!(
         have: paths[1].schema,
-        want: json!({ "$ref": "#/$defs/providerSchema1" })
+        want: json!({ "$ref": "#/definitions/providerSchema1" })
     );
     sim_assert_eq!(
         have: paths[2].schema,
-        want: json!({ "$ref": "#/$defs/providerSchema1" })
+        want: json!({ "$ref": "#/definitions/providerSchema1" })
     );
     sim_assert_eq!(
-        have: root.pointer("/$defs/providerSchema1"),
+        have: root.pointer("/definitions/providerSchema1"),
         want: Some(&provider_schema)
     );
 }
@@ -600,14 +600,14 @@ fn repeated_large_structural_payloads_keep_local_annotations() {
         have: root.pointer("/properties/first"),
         want: Some(&json!({
             "description": "first use",
-            "allOf": [{"$ref": "#/$defs/providerShared1"}]
+            "allOf": [{"$ref": "#/definitions/providerShared1"}]
         }))
     );
     sim_assert_eq!(
         have: root.pointer("/properties/second"),
         want: Some(&json!({
             "description": "second use",
-            "allOf": [{"$ref": "#/$defs/providerShared1"}]
+            "allOf": [{"$ref": "#/definitions/providerShared1"}]
         }))
     );
     sim_assert_eq!(
@@ -623,14 +623,14 @@ fn unreachable_provider_definitions_are_pruned_transitively() {
     document.insert_path_schema(
         &["selected".to_string()],
         crate::schema_node::SchemaNode::foreign(json!({
-            "$ref": "#/$defs/providerSchema1"
+            "$ref": "#/definitions/providerSchema1"
         })),
     );
     let mut definitions = BTreeMap::from([
         (
             "providerSchema1".to_string(),
             json!({
-                "allOf": [{"$ref": "#/$defs/providerSchema2/properties/name"}]
+                "allOf": [{"$ref": "#/definitions/providerSchema2/properties/name"}]
             }),
         ),
         ("providerSchema2".to_string(), json!({"type": "object"})),

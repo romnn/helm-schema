@@ -1,6 +1,7 @@
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
+use helm_schema_json_schema_walk::DefinitionsKeyword;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
@@ -109,7 +110,7 @@ pub(crate) fn load_emit_request(
 /// Prepares loaded override schemas according to reference and fetch policy.
 ///
 /// Overrides must not reference generator-owned definitions in the inferred
-/// document's `$defs`; their names and presence are private implementation
+/// document; their names and presence are private implementation
 /// details. Prepared overrides form an ordered set: a later override may
 /// reference a same-URI definition carried by an earlier override after
 /// namespace deduplication. They must not be consumed independently or reordered.
@@ -128,7 +129,10 @@ pub(crate) fn prepare_emit_request(
         loaded_overrides,
         request,
     } = loaded;
-    let mut namespace = flatten::BundleNamespace::default();
+    let output_root = loaded_overrides.iter().fold(base_schema, |root, loaded| {
+        loaded.schema.root_after_merge(root)
+    });
+    let mut namespace = flatten::BundleNamespace::new(DefinitionsKeyword::for_schema(output_root));
     namespace.reserve_schema(base_schema);
     for loaded in &loaded_overrides {
         namespace.reserve_schema(loaded.schema.schema());

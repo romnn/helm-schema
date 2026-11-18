@@ -1,5 +1,222 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/helm-condition-0"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "prometheus": {
+                "additionalProperties": {},
+                "properties": {
+                  "servicemonitor": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-6"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "prometheus": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "prometheus"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
+            "additionalProperties": {},
+            "properties": {
+              "podmonitor": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/helm-condition-7"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "prometheus": {}
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-13"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-30"
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "helm-condition-0": {
       "not": {
         "properties": {
@@ -8,7 +225,7 @@
               "podmonitor": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -38,7 +255,7 @@
               "podmonitor": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -62,7 +279,7 @@
     },
     "helm-condition-10": {
       "else": {
-        "$ref": "#/$defs/helm-condition-9"
+        "$ref": "#/definitions/helm-condition-9"
       },
       "if": {
         "anyOf": [
@@ -96,7 +313,7 @@
     },
     "helm-condition-11": {
       "else": {
-        "$ref": "#/$defs/helm-condition-10"
+        "$ref": "#/definitions/helm-condition-10"
       },
       "if": {
         "anyOf": [
@@ -130,7 +347,7 @@
     },
     "helm-condition-12": {
       "else": {
-        "$ref": "#/$defs/helm-condition-11"
+        "$ref": "#/definitions/helm-condition-11"
       },
       "if": {
         "properties": {
@@ -139,7 +356,7 @@
               "podmonitor": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -168,7 +385,7 @@
           "prometheus": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -183,7 +400,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-12"
+        "$ref": "#/definitions/helm-condition-12"
       }
     },
     "helm-condition-14": {
@@ -204,7 +421,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -215,7 +432,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -228,7 +445,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -282,10 +499,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         }
       ]
     },
@@ -324,7 +541,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -335,7 +552,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -348,7 +565,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -402,13 +619,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         }
       ]
     },
@@ -447,7 +664,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -458,7 +675,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -471,7 +688,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -508,16 +725,16 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-18"
+          "$ref": "#/definitions/helm-condition-18"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         }
       ]
     },
@@ -528,7 +745,7 @@
           "prometheus": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -543,7 +760,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-1"
+        "$ref": "#/definitions/helm-condition-1"
       }
     },
     "helm-condition-20": {
@@ -564,7 +781,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -577,7 +794,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -620,10 +837,10 @@
           ]
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-20"
+          "$ref": "#/definitions/helm-condition-20"
         }
       ]
     },
@@ -632,7 +849,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -645,7 +862,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -688,13 +905,13 @@
           ]
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-20"
+          "$ref": "#/definitions/helm-condition-20"
         }
       ]
     },
@@ -703,7 +920,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -716,7 +933,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -742,16 +959,16 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-18"
+          "$ref": "#/definitions/helm-condition-18"
         },
         {
-          "$ref": "#/$defs/helm-condition-20"
+          "$ref": "#/definitions/helm-condition-20"
         }
       ]
     },
@@ -759,7 +976,7 @@
       "not": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -773,7 +990,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -786,7 +1003,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -829,13 +1046,13 @@
           ]
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         }
       ]
     },
@@ -844,7 +1061,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -857,7 +1074,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -900,16 +1117,16 @@
           ]
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         }
       ]
     },
@@ -918,7 +1135,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -931,7 +1148,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -957,19 +1174,19 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-18"
+          "$ref": "#/definitions/helm-condition-18"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         }
       ]
     },
@@ -993,7 +1210,7 @@
             "prometheus": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -1008,16 +1225,16 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-18"
+          "$ref": "#/definitions/helm-condition-18"
         },
         {
-          "$ref": "#/$defs/helm-condition-28"
+          "$ref": "#/definitions/helm-condition-28"
         }
       ]
     },
@@ -1026,7 +1243,7 @@
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -1035,40 +1252,40 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-2"
+        "$ref": "#/definitions/helm-condition-2"
       }
     },
     "helm-condition-30": {
       "anyOf": [
         {
-          "$ref": "#/$defs/helm-condition-15"
+          "$ref": "#/definitions/helm-condition-15"
         },
         {
-          "$ref": "#/$defs/helm-condition-17"
+          "$ref": "#/definitions/helm-condition-17"
         },
         {
-          "$ref": "#/$defs/helm-condition-19"
+          "$ref": "#/definitions/helm-condition-19"
         },
         {
-          "$ref": "#/$defs/helm-condition-21"
+          "$ref": "#/definitions/helm-condition-21"
         },
         {
-          "$ref": "#/$defs/helm-condition-22"
+          "$ref": "#/definitions/helm-condition-22"
         },
         {
-          "$ref": "#/$defs/helm-condition-23"
+          "$ref": "#/definitions/helm-condition-23"
         },
         {
-          "$ref": "#/$defs/helm-condition-25"
+          "$ref": "#/definitions/helm-condition-25"
         },
         {
-          "$ref": "#/$defs/helm-condition-26"
+          "$ref": "#/definitions/helm-condition-26"
         },
         {
-          "$ref": "#/$defs/helm-condition-27"
+          "$ref": "#/definitions/helm-condition-27"
         },
         {
-          "$ref": "#/$defs/helm-condition-29"
+          "$ref": "#/definitions/helm-condition-29"
         }
       ]
     },
@@ -1081,7 +1298,7 @@
               "podmonitor": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -1110,7 +1327,7 @@
           "prometheus": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -1125,7 +1342,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-4"
+        "$ref": "#/definitions/helm-condition-4"
       }
     },
     "helm-condition-6": {
@@ -1133,7 +1350,7 @@
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -1142,7 +1359,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-5"
+        "$ref": "#/definitions/helm-condition-5"
       }
     },
     "helm-condition-7": {
@@ -1153,7 +1370,7 @@
               "podmonitor": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -1180,7 +1397,7 @@
           "podmonitor": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -1236,223 +1453,6 @@
       ]
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-0"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "prometheus": {
-                "additionalProperties": {},
-                "properties": {
-                  "servicemonitor": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-6"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "prometheus": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "prometheus"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheus": {
-            "additionalProperties": {},
-            "properties": {
-              "podmonitor": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/helm-condition-7"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "prometheus": {}
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-13"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-30"
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "acmesolver": {},
     "affinity": {},
@@ -1500,7 +1500,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -1546,7 +1546,7 @@
               {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -1583,7 +1583,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/helm-condition-8"
+                "$ref": "#/definitions/helm-condition-8"
               }
             ]
           },

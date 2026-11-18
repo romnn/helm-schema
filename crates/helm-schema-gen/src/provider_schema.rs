@@ -123,6 +123,7 @@ fn rewrite_local_ref_for_root_definition(
     }
     Some(
         helm_schema_json_schema_walk::DefinitionReference {
+            keyword: helm_schema_json_schema_walk::GENERATED_DEFINITIONS,
             name: definition_name.to_string(),
             suffix: pointer,
         }

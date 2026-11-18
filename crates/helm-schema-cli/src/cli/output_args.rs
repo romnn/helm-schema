@@ -6,7 +6,7 @@ use helm_schema::output::{
     DefinitionNames, EmitRequest, JsonOutputFormat, OutputPipelineOptions, ReferencePolicy,
 };
 
-/// How readable output names the `$defs` entries helm-schema creates.
+/// How readable output names the `definitions` entries helm-schema creates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
 pub enum DefsNames {
     /// The schema path the definition's content comes from, such as
@@ -69,17 +69,17 @@ pub struct OutputArgs {
 
     /// Leave file/URL `$ref` strings in the generated schema as-is.
     ///
-    /// By default, external refs are resolved into root-level `$defs` so the
+    /// By default, external refs are resolved into root-level `definitions` so the
     /// output is self-contained while still sharing referenced schemas.
     #[arg(long, conflicts_with = "inline_refs")]
     pub keep_refs: bool,
 
-    /// Fully inline resolved file/URL `$ref`s instead of writing `$defs`.
+    /// Fully inline resolved file/URL `$ref`s instead of writing `definitions`.
     #[arg(long)]
     pub inline_refs: bool,
 
     /// Keep repeated schema subtrees inline instead of interning them into
-    /// root-level `$defs`.
+    /// root-level `definitions`.
     ///
     /// Interning is an output-only transform over the final JSON Schema (it
     /// does not participate in Helm template inference) and is on by default:
@@ -89,17 +89,17 @@ pub struct OutputArgs {
     #[arg(long = "no-minimize", action = clap::ArgAction::SetFalse)]
     pub minimize: bool,
 
-    /// How to name the `$defs` entries helm-schema creates.
+    /// How to name the `definitions` entries helm-schema creates.
     #[arg(long, value_enum, default_value_t = DefsNames::Source)]
     pub defs_names: DefsNames,
 
-    /// Deprecated: shorten `$defs` names, keeping pretty JSON unless --compact is set.
+    /// Deprecated: shorten `definitions` names, keeping pretty JSON unless --compact is set.
     ///
     /// Use --output-layout compact for compact JSON and short definition names when safe.
     #[arg(long)]
     pub shorten_defs: bool,
 
-    /// Write the short-to-readable `$defs` name map; empty when shortening abstains.
+    /// Write the short-to-readable `definitions` name map; empty when shortening abstains.
     #[arg(long, value_name = "PATH")]
     pub defs_map: Option<PathBuf>,
 }

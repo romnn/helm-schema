@@ -100,7 +100,7 @@ pub fn session_schema(session: &AnalysisSession, recipe: &ChartRecipe) -> eyre::
         .wrap_err_with(|| format!("generate {:?} schema for {}", recipe.profile, recipe.chart))?;
     if recipe.minimize {
         // Mirror the CLI's default output policy: repeated schema subtrees
-        // are interned into root-level `$defs` under readable source paths.
+        // are interned into root-level `definitions` under readable source paths.
         // Fixtures always keep those names; shortening is a separate
         // transform applied only to what is handed to Helm.
         Ok(helm_schema_json_schema_minify::minimize_schema(

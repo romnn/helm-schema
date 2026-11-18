@@ -52,7 +52,7 @@ Nothing in the chart states a *type* for any of these values — yet the schema 
 - **`additionalProperties: false`** at the root means the schema lists exactly the values the chart uses. Keys the chart never reads are rejected, which is what catches typos like `replicaCont`.
 
 > [!NOTE]
-> The schemas shown throughout these docs are **fully inlined** for readability. By default the tool interns subtrees that repeat across a large schema into a shared `$defs` section to keep the file small — pass `--no-minimize` to inline them, as shown here. See [Output]({{< relref "reference/output.md" >}}).
+> The schemas shown throughout these docs are **fully inlined** for readability. By default the tool interns subtrees that repeat across a large schema into a shared `definitions` section to keep the file small — pass `--no-minimize` to inline them, as shown here. See [Output]({{< relref "reference/output.md" >}}).
 
 ## 4. Common variations
 

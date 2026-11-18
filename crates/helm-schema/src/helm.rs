@@ -1,5 +1,5 @@
 //! Running the real Helm on a copy of a chart whose root `values.schema.json`
-//! has short `$defs` keys.
+//! has short definition keys.
 //!
 //! Helm refuses chart files over 5 MiB, and a readable schema can exceed that.
 //! [`run`] copies the chart to a scratch directory, replaces only the root
@@ -19,6 +19,7 @@ use std::time::Duration;
 use helm_schema_json_schema_minify::{
     ShortenedSchema, expand_short_definition_names, shorten_definition_names,
 };
+use helm_schema_json_schema_walk::DefinitionsKeyword;
 use serde_json::Value;
 
 const SCHEMA_FILE: &str = "values.schema.json";
@@ -159,13 +160,13 @@ enum Stream {
 /// Without a root `values.schema.json`, Helm runs on `options.chart` itself.
 /// Otherwise the whole chart tree is copied under `options.scratch_root`,
 /// with links materialized, and only the copy's root schema is replaced by
-/// its compact form with short `$defs` keys. Helm keeps the caller's working
+/// its compact form with short definition keys. Helm keeps the caller's working
 /// directory, environment and standard input. Each line Helm writes goes to
 /// the same stream here. Diagnostics (both streams of `lint`, standard error
-/// of `template`) have complete `#/$defs/<short key>` tokens translated; the
+/// of `template`) have complete short definition pointers translated; the
 /// manifests `template` writes to standard output stay byte for byte. A short
 /// key is looked up in the root schema's map only, so a dependency schema's
-/// own `#/$defs/<key>` with the same spelling is translated too.
+/// own definition pointer with the same spelling is translated too.
 ///
 /// `interrupt` holds the number of a signal that should stop the run, or 0;
 /// the caller owns signal registration. It is checked while the chart is
@@ -183,7 +184,13 @@ enum Stream {
 pub fn run(options: &HelmRunOptions, interrupt: &AtomicUsize) -> Result<ExitStatus, HelmRunError> {
     let schema_path = options.chart.join(SCHEMA_FILE);
     if !schema_path.is_file() {
-        return run_helm(options, &options.chart, &BTreeMap::new(), interrupt);
+        return run_helm(
+            options,
+            &options.chart,
+            DefinitionsKeyword::Defs,
+            &BTreeMap::new(),
+            interrupt,
+        );
     }
     let bytes = std::fs::read(&schema_path).map_err(|source| HelmRunError::ReadSchema {
         path: schema_path.clone(),
@@ -248,7 +255,13 @@ fn run_on_copy(
             path: copy_schema,
             source,
         })?;
-    run_helm(options, &copy, &shortened.readable_names, interrupt)
+    run_helm(
+        options,
+        &copy,
+        DefinitionsKeyword::existing_in(&shortened.schema).unwrap_or(DefinitionsKeyword::Defs),
+        &shortened.readable_names,
+        interrupt,
+    )
 }
 
 /// [`HelmRunError::Interrupted`] once `interrupt` holds a signal.
@@ -319,6 +332,7 @@ fn copy_tree(
 fn run_helm(
     options: &HelmRunOptions,
     chart: &Path,
+    keyword: DefinitionsKeyword,
     readable_names: &BTreeMap<String, String>,
     interrupt: &AtomicUsize,
 ) -> Result<ExitStatus, HelmRunError> {
@@ -345,6 +359,7 @@ fn run_helm(
     let relay = relay(
         child.stdout.take(),
         child.stderr.take(),
+        keyword,
         stdout_names,
         readable_names.clone(),
     );
@@ -386,6 +401,7 @@ fn run_helm(
 fn relay(
     stdout: Option<ChildStdout>,
     stderr: Option<ChildStderr>,
+    keyword: DefinitionsKeyword,
     stdout_names: BTreeMap<String, String>,
     stderr_names: BTreeMap<String, String>,
 ) -> JoinHandle<io::Result<()>> {
@@ -397,11 +413,11 @@ fn relay(
             match line? {
                 (Stream::Out, line) => write_line(
                     &mut io::stdout().lock(),
-                    &expand_short_definition_names(&line, &stdout_names),
+                    &expand_short_definition_names(&line, keyword, &stdout_names),
                 )?,
                 (Stream::Err, line) => write_line(
                     &mut io::stderr().lock(),
-                    &expand_short_definition_names(&line, &stderr_names),
+                    &expand_short_definition_names(&line, keyword, &stderr_names),
                 )?,
             }
         }

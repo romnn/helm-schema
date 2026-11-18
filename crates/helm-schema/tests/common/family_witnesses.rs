@@ -273,7 +273,7 @@ pub(crate) struct SizeObligation {
 /// The serialization a size obligation measures.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ShippedOutput {
-    /// Compact JSON with short `$defs` keys: what `helm-schema lint` /
+    /// Compact JSON with short `definitions` keys: what `helm-schema lint` /
     /// `template` hand Helm.
     HelmReady,
     /// The fully emitted default CLI file, including policy annotations and a newline:

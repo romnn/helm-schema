@@ -1,1409 +1,15 @@
 {
-  "$defs": {
-    "constrains/auth+auth=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "auth": {}
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "auth": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "auth"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "bitnami-common": {}
-            },
-            "required": [
-              "bitnami-common"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null"
-      }
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/ingress.annotations": {
-      "properties": {
-        "ingress": {
-          "properties": {
-            "annotations": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+10more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+10more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+9more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+9more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+9more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+9more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+10more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+10more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+9more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+5more"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t": {
-      "$ref": "#/$defs/constrains~1ingress.enabled:t@2"
-    },
-    "constrains/ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+9more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+ingress.tls:t+memoryHighWatermark+memoryHighWatermark.type+9more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+9more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+memoryHighWatermark+memoryHighWatermark.type+9more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits?@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits.memory?"
-        },
-        {
-          "$ref": "#/$defs/constrains~1resources.limits@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-      }
-    },
-    "constrains/ingress.enabled:t@3": {
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "constrains/ingress.tls:t": {
-      "$ref": "#/$defs/constrains~1ingress.tls:t@2"
-    },
-    "constrains/ingress.tls:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-      }
-    },
-    "constrains/ingress.tls:t@3": {
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/constrains~1tls:t"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "constrains/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null": {
-      "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
-    },
-    "constrains/memoryHighWatermark.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-      }
-    },
-    "constrains/memoryHighWatermark.enabled:t@2": {
-      "properties": {
-        "memoryHighWatermark": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "memoryHighWatermark"
-      ],
-      "type": "object"
-    },
-    "constrains/memoryHighWatermark.type": {
-      "$ref": "#/$defs/constrains~1memoryHighWatermark.type@2"
-    },
-    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null": {
-      "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@4"
-    },
-    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@2": {
-      "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@5"
-    },
-    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@3": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "memoryHighWatermark": {
-                "properties": {
-                  "type": {}
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "memoryHighWatermark"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "memoryHighWatermark": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "memoryHighWatermark"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-      }
-    },
-    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-      }
-    },
-    "constrains/memoryHighWatermark.type=relative": {
-      "not": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-      }
-    },
-    "constrains/memoryHighWatermark.type=relative@2": {
-      "properties": {
-        "memoryHighWatermark": {
-          "properties": {
-            "type": {
-              "enum": [
-                "relative"
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "memoryHighWatermark"
-      ],
-      "type": "object"
-    },
-    "constrains/memoryHighWatermark.type@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
-      }
-    },
-    "constrains/memoryHighWatermark.type@3": {
-      "properties": {
-        "memoryHighWatermark": {
-          "properties": {
-            "type": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "memoryHighWatermark"
-      ],
-      "type": "object"
-    },
-    "constrains/resources": {
-      "properties": {
-        "resources": {
-          "type": "object"
-        }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
-    },
-    "constrains/resources.limits": {
-      "not": {
-        "$ref": "#/$defs/constrains~1resources.limits@2"
-      }
-    },
-    "constrains/resources.limits.memory:t": {
-      "properties": {
-        "resources": {
-          "properties": {
-            "limits": {
-              "properties": {
-                "memory": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "memory"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "limits"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
-    },
-    "constrains/resources.limits.memory?": {
-      "properties": {
-        "resources": {
-          "properties": {
-            "limits": {
-              "required": [
-                "memory"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "limits"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
-    },
-    "constrains/resources.limits?": {
-      "not": {
-        "$ref": "#/$defs/constrains~1resources.limits?@2"
-      }
-    },
-    "constrains/resources.limits?@2": {
-      "properties": {
-        "resources": {
-          "required": [
-            "limits"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
-    },
-    "constrains/resources.limits@2": {
-      "properties": {
-        "resources": {
-          "properties": {
-            "limits": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "limits"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
-    },
-    "constrains/resources:t": {
-      "$ref": "#/$defs/constrains~1resources:t@2"
-    },
-    "constrains/resources:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1resources:t@3"
-      }
-    },
-    "constrains/resources:t@3": {
-      "properties": {
-        "resources": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
-    },
-    "constrains/resourcesPreset": {
-      "$ref": "#/$defs/constrains~1resourcesPreset@2"
-    },
-    "constrains/resourcesPreset+resourcesPreset=null": {
-      "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@4"
-    },
-    "constrains/resourcesPreset+resourcesPreset=null@2": {
-      "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@5"
-    },
-    "constrains/resourcesPreset+resourcesPreset=null@3": {
-      "anyOf": [
-        {
-          "properties": {
-            "resourcesPreset": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "resourcesPreset"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "resourcesPreset": {}
-            },
-            "required": [
-              "resourcesPreset"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "constrains/resourcesPreset+resourcesPreset=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-      }
-    },
-    "constrains/resourcesPreset+resourcesPreset=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-      }
-    },
-    "constrains/resourcesPreset@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1resourcesPreset@3"
-      }
-    },
-    "constrains/resourcesPreset@3": {
-      "properties": {
-        "resourcesPreset": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "resourcesPreset"
-      ],
-      "type": "object"
-    },
-    "constrains/tls:t": {
-      "properties": {
-        "tls": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
-    },
-    "constrains/tls=null": {
-      "properties": {
-        "tls": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/memoryHighWatermark.enabled:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resources:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null~1else~1memoryHighWatermark.type=relative+resources+resources.limits+3more"
-      }
-    },
-    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type": {
-      "else": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-      },
-      "then": false
-    },
-    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-      },
-      "then": false
-    },
-    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits+resources.limits.memory?+resourcesPreset+1more/else/memoryHighWatermark.type": {
-      "else": {
-        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1memoryHighWatermark.type~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-      }
-    },
-    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits+resources.limits.memory?+resourcesPreset+1more/else/memoryHighWatermark.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset@2"
-      }
-    },
-    "when/memoryHighWatermark.type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
-      },
-      "then": false
-    },
-    "when/memoryHighWatermark.type/then/resources+resources.limits+resources.limits.memory?+resourcesPreset/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
-      }
-    },
-    "when/memoryHighWatermark.type=relative/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more~1else~1memoryHighWatermark.type@2"
-      }
-    },
-    "when/resources.limits.memory:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+6more/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1resources.limits.memory:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type=relative~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+5more~1else~1any"
-      }
-    },
-    "when/resources.limits.memory?/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1resources.limits.memory?"
-      },
-      "then": true
-    },
-    "when/resources.limits/then/resources.limits.memory?+resources.limits?+resourcesPreset/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1resources.limits@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resourcesPreset~1then~1fail~1else~1resources.limits.memory?+resources.limits?"
-      }
-    },
-    "when/resources.limits?/then/resources.limits.memory?/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1resources.limits?@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resources.limits.memory?~1then~1any~1else~1fail"
-      }
-    },
-    "when/resources/then/resources+resources.limits+resources.limits.memory?+resourcesPreset/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1resources"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1resources.limits~1then~1resources.limits.memory?+resources.limits?+resourcesPreset~1else~1fail"
-      }
-    },
-    "when/resources:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null/else/memoryHighWatermark.type=relative+resources+resources.limits+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1resources.limits.memory:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+6more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1resources:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-      }
-    },
-    "when/resourcesPreset+resourcesPreset=null/then/fail/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
-      "else": {
-        "$ref": "#/$defs/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-      },
-      "then": false
-    },
-    "when/resourcesPreset+resourcesPreset=null/then/fail/else/resources+resources.limits+resources.limits.memory?+resourcesPreset@2": {
-      "else": {
-        "$ref": "#/$defs/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-      },
-      "then": false
-    },
-    "when/resourcesPreset+resourcesPreset=null/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
-      "else": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more~1else~1memoryHighWatermark.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
-      }
-    },
-    "when/resourcesPreset+resourcesPreset=null/then/memoryHighWatermark.type/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
-      "else": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1resourcesPreset+resourcesPreset=null@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
-      }
-    },
-    "when/resourcesPreset/then/fail/else/resources.limits.memory?+resources.limits?": {
-      "else": {
-        "$ref": "#/$defs/when~1resources.limits?~1then~1resources.limits.memory?~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1resourcesPreset@3"
-      },
-      "then": false
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t+memoryHighWatermark+9more"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
           }
         ]
       },
@@ -1421,13 +27,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1resources.limits?@2"
+            "$ref": "#/definitions/constrains~1resources.limits?@2"
           },
           {
-            "$ref": "#/$defs/constrains~1resources"
+            "$ref": "#/definitions/constrains~1resources"
           },
           {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
           },
           {
             "anyOf": [
@@ -1472,13 +81,42 @@
                 }
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1resources.limits?@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1resources"
+          },
+          {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "resources": {
+            "additionalProperties": {},
+            "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure RabbitMQ containers' extra options for liveness probe\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
+            "properties": {
+              "limits": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1513,39 +151,89 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1resources.limits?@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1resources"
-          },
-          {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "resources": {
-            "additionalProperties": {},
-            "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nConfigure RabbitMQ containers' extra options for liveness probe\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
-            "properties": {
-              "limits": {
-                "type": "object"
+        "else": {
+          "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              "then": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "else": {
+                        "else": true,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                  },
+                  "then": false
+                }
               }
             }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1resources:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
           }
         }
-      }
+      },
+      "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1auth+auth=null"
+        "$ref": "#/definitions/constrains~1auth+auth=null"
       },
       "then": false
     },
@@ -1582,33 +270,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1ingress.enabled:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ingress.tls:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Configure the ingress resource that allows you to access the\nRabbitMQ installation. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-            "properties": {
-              "annotations": {
-                "description": "Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.\nFor a full list of possible ingress annotations, please see\nref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md\nUse this parameter to set the required annotations for cert-manager, see\nref: https://cert-manager.io/docs/usage/ingress/#supported-annotations\ne.g:\nannotations:\nkubernetes.io/ingress.class: nginx\ncert-manager.io/cluster-issuer: cluster-issuer-name",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -1640,40 +301,645 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.type=relative@2"
-          },
-          {
-            "anyOf": [
+            "allOf": [
               {
-                "properties": {
-                  "resources": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "resources"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1ingress.annotations"
               },
               {
-                "not": {
-                  "properties": {
-                    "resources": {}
-                  },
-                  "required": [
-                    "resources"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/definitions/constrains~1resources.limits?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
               }
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1memoryHighWatermark.enabled:t@2"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resourcesPreset"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits.memory?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources.limits@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+              }
+            ]
           }
         ]
       },
@@ -1683,11 +949,48 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Configure the ingress resource that allows you to access the\nRabbitMQ installation. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+            "properties": {
+              "annotations": {
+                "description": "Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.\nFor a full list of possible ingress annotations, please see\nref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md\nUse this parameter to set the required annotations for cert-manager, see\nref: https://cert-manager.io/docs/usage/ingress/#supported-annotations\ne.g:\nannotations:\nkubernetes.io/ingress.class: nginx\ncert-manager.io/cluster-issuer: cluster-issuer-name",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "anyOf": [
               {
                 "properties": {
                   "auth": {
-                    "$ref": "#/$defs/constrains~1tls=null"
+                    "properties": {
+                      "tls": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
@@ -1717,7 +1020,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1auth+auth=null"
+            "$ref": "#/definitions/constrains~1auth+auth=null"
           }
         ]
       },
@@ -1725,11 +1028,532 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "resources": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "resources"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "resources": {}
+                  },
+                  "required": [
+                    "resources"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
       },
       "then": false
     }
   ],
+  "definitions": {
+    "constrains/auth+auth=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "auth": {}
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "auth": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.annotations": {
+      "properties": {
+        "ingress": {
+          "properties": {
+            "annotations": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+      }
+    },
+    "constrains/ingress.enabled:t@2": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.tls:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+      }
+    },
+    "constrains/ingress.tls:t@2": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/constrains~1tls:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/memoryHighWatermark.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+      }
+    },
+    "constrains/memoryHighWatermark.enabled:t@2": {
+      "properties": {
+        "memoryHighWatermark": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "memoryHighWatermark"
+      ],
+      "type": "object"
+    },
+    "constrains/memoryHighWatermark.type": {
+      "not": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+      }
+    },
+    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "memoryHighWatermark": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "memoryHighWatermark"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "memoryHighWatermark": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "memoryHighWatermark"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+      }
+    },
+    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+      }
+    },
+    "constrains/memoryHighWatermark.type=relative": {
+      "not": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+      }
+    },
+    "constrains/memoryHighWatermark.type=relative@2": {
+      "properties": {
+        "memoryHighWatermark": {
+          "properties": {
+            "type": {
+              "enum": [
+                "relative"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "memoryHighWatermark"
+      ],
+      "type": "object"
+    },
+    "constrains/memoryHighWatermark.type@2": {
+      "properties": {
+        "memoryHighWatermark": {
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "memoryHighWatermark"
+      ],
+      "type": "object"
+    },
+    "constrains/resources": {
+      "properties": {
+        "resources": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
+    },
+    "constrains/resources.limits": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resources.limits@2"
+      }
+    },
+    "constrains/resources.limits.memory:t": {
+      "properties": {
+        "resources": {
+          "properties": {
+            "limits": {
+              "properties": {
+                "memory": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "memory"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "limits"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
+    },
+    "constrains/resources.limits.memory?": {
+      "properties": {
+        "resources": {
+          "properties": {
+            "limits": {
+              "required": [
+                "memory"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "limits"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
+    },
+    "constrains/resources.limits?": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resources.limits?@2"
+      }
+    },
+    "constrains/resources.limits?@2": {
+      "properties": {
+        "resources": {
+          "required": [
+            "limits"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
+    },
+    "constrains/resources.limits@2": {
+      "properties": {
+        "resources": {
+          "properties": {
+            "limits": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "limits"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
+    },
+    "constrains/resources:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resources:t@2"
+      }
+    },
+    "constrains/resources:t@2": {
+      "properties": {
+        "resources": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
+    },
+    "constrains/resourcesPreset": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resourcesPreset@2"
+      }
+    },
+    "constrains/resourcesPreset+resourcesPreset=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "resourcesPreset": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "resourcesPreset"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "resourcesPreset": {}
+            },
+            "required": [
+              "resourcesPreset"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/resourcesPreset+resourcesPreset=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+      }
+    },
+    "constrains/resourcesPreset+resourcesPreset=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+      }
+    },
+    "constrains/resourcesPreset@2": {
+      "properties": {
+        "resourcesPreset": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "resourcesPreset"
+      ],
+      "type": "object"
+    },
+    "constrains/tls:t": {
+      "properties": {
+        "tls": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type": {
+      "else": {
+        "$ref": "#/definitions/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+      },
+      "then": false
+    },
+    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type@2": {
+      "else": {
+        "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+      },
+      "then": false
+    },
+    "when/memoryHighWatermark.type/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+      },
+      "then": false
+    },
+    "when/resources/then/resources+resources.limits+resources.limits.memory?+resourcesPreset/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1resources"
+      },
+      "then": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1resources.limits@2"
+        },
+        "then": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1resources.limits?@2"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1resources.limits.memory?"
+              },
+              "then": true
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1resourcesPreset@2"
+          },
+          "then": false
+        }
+      }
+    },
+    "when/resourcesPreset+resourcesPreset=null/then/fail/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
+      "else": {
+        "$ref": "#/definitions/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+      },
+      "then": false
+    }
+  },
   "properties": {
     "advancedConfiguration": {
       "description": "Configuration file content: advanced configuration\nUse this as additional configuration in classic config format (Erlang term configuration format)\nLDAP authorisation example:\nadvancedConfiguration: |-\n[{rabbitmq_auth_backend_ldap,[\n{tag_queries,           [{administrator, {constant, true}},\n{management,    {constant, true}}]}\n]}].\nIf both, advancedConfiguration and advancedConfigurationExistingSecret are set, then advancedConfiguration\nwill be used instead of the secret."
@@ -1761,7 +1585,17 @@
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1tls=null"
+                "properties": {
+                  "tls": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -1919,12 +1753,6 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1tls:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              },
-              {
                 "anyOf": [
                   {
                     "properties": {
@@ -1951,6 +1779,12 @@
                     }
                   }
                 ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
               }
             ]
           },
@@ -2153,7 +1987,45 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null@2"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "bitnami-common": {}
+                    },
+                    "required": [
+                      "bitnami-common"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
           "then": false
         }

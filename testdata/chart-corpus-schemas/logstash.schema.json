@@ -1,62 +1,4 @@
 {
-  "$defs": {
-    "constrains/fullnameOverride": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/fullnameOverride:t": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -75,20 +17,11 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride!=0+fullnameOverride=true"
+        },
+        "then": true
       },
       "then": {
         "additionalProperties": {},
@@ -98,8 +31,66 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride!=0+fullnameOverride=true"
+          },
+          {
+            "not": {
+              "properties": {
+                "fullnameOverride": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "fullnameOverride"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
     }
   ],
+  "definitions": {
+    "constrains/fullnameOverride!=0+fullnameOverride=true": {
+      "properties": {
+        "fullnameOverride": {
+          "anyOf": [
+            {
+              "minProperties": 1,
+              "type": "object"
+            },
+            {
+              "not": {
+                "const": 0
+              },
+              "type": "number"
+            },
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "const": true
+            }
+          ]
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    }
+  },
   "properties": {
     "antiAffinity": {
       "description": "Hard means that by default pods will only be scheduled if there are enough nodes for them\nand that they will never end up on the same node. Setting this to soft will do this \"best effort\""

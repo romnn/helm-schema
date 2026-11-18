@@ -1028,13 +1028,13 @@ impl PolicySchema {
 }
 
 /// `schema` and `constraint` as one schema: both under `allOf`, their
-/// definitions merged at the root so every `#/$defs/...` still resolves,
+/// definitions merged at the root so their pointers still resolve,
 /// under the constraint's dialect when it names one.
 #[must_use]
 pub fn conjoin(mut schema: serde_json::Value, constraint: &serde_json::Value) -> serde_json::Value {
     let mut constraint = constraint.clone();
     let mut root = serde_json::Map::new();
-    let mut definitions = serde_json::Map::new();
+    let mut definitions = BTreeMap::<_, serde_json::Map<String, serde_json::Value>>::new();
     for part in [&mut schema, &mut constraint] {
         let Some(members) = part.as_object_mut() else {
             continue;
@@ -1042,11 +1042,18 @@ pub fn conjoin(mut schema: serde_json::Value, constraint: &serde_json::Value) ->
         if let Some(dialect) = members.remove("$schema") {
             root.insert("$schema".to_string(), dialect);
         }
-        if let Some(serde_json::Value::Object(defined)) = members.remove("$defs") {
-            definitions.extend(defined);
+        for keyword in helm_schema_json_schema_walk::DefinitionsKeyword::ALL {
+            if let Some(serde_json::Value::Object(defined)) = members.remove(keyword.as_str()) {
+                definitions.entry(keyword).or_default().extend(defined);
+            }
         }
     }
-    root.insert("$defs".to_string(), serde_json::Value::Object(definitions));
+    for (keyword, definitions) in definitions {
+        root.insert(
+            keyword.as_str().to_string(),
+            serde_json::Value::Object(definitions),
+        );
+    }
     root.insert("allOf".to_string(), json!([schema, constraint]));
     serde_json::Value::Object(root)
 }

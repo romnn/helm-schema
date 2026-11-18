@@ -1,49 +1,778 @@
 {
-  "$defs": {
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null": {
-      "anyOf": [
-        {
-          "not": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
             "properties": {
-              "bitnami-common": {}
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
             },
             "required": [
-              "bitnami-common"
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1phpldapadmin.enabled+phpldapadmin.enabled=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1phpldapadmin.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1phpldapadmin"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "phpldapadmin": {
+                "additionalProperties": {},
+                "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+                "properties": {
+                  "ingress": {
+                    "$ref": "#/definitions/values~1object;configure-ingress-based-on"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "phpldapadmin": {
+                "additionalProperties": {},
+                "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+                "properties": {
+                  "service": {
+                    "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.fullname",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1service.enableLdapPort:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.enableSslLdapPort:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.ingress.enabled:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1phpldapadmin.ingress.tls:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1any~1else~1fail"
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1phpldapadmin.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.ingress.enabled:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1phpldapadmin.ingress.tls:t"
+            },
+            "then": true
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "additionalProperties": {},
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "tls": {
+                    "description": "Ingress cert\n- secretName: phpldapadmin.example\nhosts:\n- phpldapadmin.example",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1service.enableLdapPort:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1service.enableSslLdapPort:t"
+          },
+          {
+            "properties": {
+              "global": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/t"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "global"
             ],
             "type": "object"
           }
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
+            "type": "object"
+          }
         }
-      ]
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null"
       }
     },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "phpldapadmin": {
+          "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          },
+          {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1service.enableSslLdapPort:t"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1service.enableLdapPort:t"
+              },
+              "then": true
+            },
+            "if": {
+              "properties": {
+                "global": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            },
+            "then": true
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1ltb-passwd.fullnameOverride:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ltb-passwd.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1ltb-passwd.fullnameOverride:t"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ltb-passwd": {
+            "additionalProperties": {},
+            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "phpldapadmin": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "phpldapadmin"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "phpldapadmin": {
+                        "$ref": "#/definitions/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "phpldapadmin"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1phpldapadmin.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "phpldapadmin": {
+                        "$ref": "#/definitions/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "phpldapadmin"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1phpldapadmin.enabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.fullnameOverride:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1phpldapadmin.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.fullnameOverride:t"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "additionalProperties": {},
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1ltb-passwd.nameOverride:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1any~1else~1fail"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1ltb-passwd.fullnameOverride:t"
+          },
+          "then": false
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ltb-passwd.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1ltb-passwd.nameOverride:t"
+            },
+            "then": true
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1ltb-passwd.fullnameOverride:t"
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ltb-passwd": {
+            "additionalProperties": {},
+            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "ltb-passwd": {
+          "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1ltb-passwd.enabled+ltb-passwd.enabled=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ltb-passwd"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ltb-passwd.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ltb-passwd": {
+                "additionalProperties": {},
+                "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+                "properties": {
+                  "service": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ltb-passwd": {
+                "additionalProperties": {},
+                "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+                "properties": {
+                  "ingress": {
+                    "$ref": "#/definitions/values~1object;configure-ingress-based-on"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.nameOverride:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1phpldapadmin.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.nameOverride:t"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "additionalProperties": {},
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.tls:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1any~1else~1fail"
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ltb-passwd.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.tls:t"
+            },
+            "then": true
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ltb-passwd": {
+            "additionalProperties": {},
+            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "tls": {
+                    "description": "Ingress cert\n- secretName: ssl-ldap2.example\nhosts:\n- ssl-ldap2.example\nldap:\nif you want to restrict search base tree for users instead of complete domain\nsearchBase: \"ou=....,dc=mydomain,dc=com\"\nif you want to use a dedicated bindDN for the search with less permissions instead of cn=admin one\nbindDN: \"cn=....,dc=mydomain,dc=com\"\nif you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)\npassKey: LDAP_MY_KEY",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ltb-passwd.enabled"
+                  },
+                  {
+                    "properties": {
+                      "ltb-passwd": {
+                        "$ref": "#/definitions/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "ltb-passwd"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ltb-passwd.enabled"
+                  },
+                  {
+                    "properties": {
+                      "ltb-passwd": {
+                        "$ref": "#/definitions/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "ltb-passwd"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "ltb-passwd": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ltb-passwd"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ltb-passwd": {
+            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override common.names.fullname",
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
     "constrains/enabled": {
       "properties": {
         "enabled": {}
@@ -86,7 +815,7 @@
     "constrains/enabled+enabled=null": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+          "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
         },
         {
           "type": "object"
@@ -97,7 +826,7 @@
       "anyOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1enabled"
+            "$ref": "#/definitions/constrains~1enabled"
           }
         },
         {
@@ -118,20 +847,7 @@
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled=true": {
-      "properties": {
-        "enabled": {
-          "enum": [
-            true
-          ]
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -140,247 +856,9 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.type+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+service+service.type+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+service+service.type+service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+service+service.type+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+service+service.type+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+service+service.type+service.type=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.type+service.type=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      }
-    },
-    "constrains/fullnameOverride:t@4": {
       "properties": {
         "fullnameOverride": {
-          "$ref": "#/$defs/t"
+          "type": "string"
         }
       },
       "required": [
@@ -388,20 +866,181 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride@2": {
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1nameOverride@3"
+              }
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type+service.type=null@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
     },
-    "constrains/fullnameOverride@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@4"
-      }
-    },
-    "constrains/fullnameOverride@4": {
+    "constrains/fullnameOverride:t@2": {
       "properties": {
         "fullnameOverride": {
-          "type": "string"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -437,38 +1076,10 @@
         }
       ]
     },
-    "constrains/global:t+service.enableLdapPort:t+service.enableSslLdapPort:t": {
-      "anyOf": [
-        {
-          "properties": {
-            "global": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/t"
-                },
-                {
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-        }
-      ]
-    },
     "constrains/ingress.enabled:t": {
       "properties": {
         "ingress": {
-          "$ref": "#/$defs/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
@@ -481,7 +1092,7 @@
         "ingress": {
           "properties": {
             "tls": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -508,33 +1119,11 @@
         "type": "object"
       }
     },
-    "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.enabled+ltb-passwd.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
-        }
-      ]
-    },
-    "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null": {
-      "$ref": "#/$defs/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@2": {
-      "$ref": "#/$defs/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@3": {
-      "$ref": "#/$defs/when~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1then~1any~1else~1fail"
-    },
     "constrains/ltb-passwd.enabled": {
       "not": {
         "properties": {
           "ltb-passwd": {
-            "$ref": "#/$defs/constrains~1enabled"
+            "$ref": "#/definitions/constrains~1enabled"
           }
         },
         "required": [
@@ -546,7 +1135,7 @@
     "constrains/ltb-passwd.enabled+ltb-passwd.enabled=null": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null"
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
         }
       },
       "required": [
@@ -557,7 +1146,7 @@
     "constrains/ltb-passwd.enabled:t": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
@@ -568,7 +1157,7 @@
     "constrains/ltb-passwd.fullnameOverride:t": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         }
       },
       "required": [
@@ -579,7 +1168,7 @@
     "constrains/ltb-passwd.ingress.enabled:t": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+          "$ref": "#/definitions/constrains~1ingress.enabled:t"
         }
       },
       "required": [
@@ -590,7 +1179,7 @@
     "constrains/ltb-passwd.ingress.tls:t": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
+          "$ref": "#/definitions/constrains~1ingress.tls:t"
         }
       },
       "required": [
@@ -601,7 +1190,7 @@
     "constrains/ltb-passwd.nameOverride:t": {
       "properties": {
         "ltb-passwd": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       },
       "required": [
@@ -611,18 +1200,18 @@
     },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
+        "$ref": "#/definitions/constrains~1nameOverride@3"
       }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -632,15 +1221,10 @@
     },
     "constrains/nameOverride@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
+        "$ref": "#/definitions/constrains~1nameOverride@3"
       }
     },
     "constrains/nameOverride@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@4"
-      }
-    },
-    "constrains/nameOverride@4": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -664,33 +1248,11 @@
         "type": "object"
       }
     },
-    "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.enabled+phpldapadmin.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1phpldapadmin"
-        }
-      ]
-    },
-    "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
-      "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@2": {
-      "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@3": {
-      "$ref": "#/$defs/when~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1then~1any~1else~1fail"
-    },
     "constrains/phpldapadmin.enabled": {
       "not": {
         "properties": {
           "phpldapadmin": {
-            "$ref": "#/$defs/constrains~1enabled"
+            "$ref": "#/definitions/constrains~1enabled"
           }
         },
         "required": [
@@ -702,7 +1264,7 @@
     "constrains/phpldapadmin.enabled+phpldapadmin.enabled=null": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1enabled+enabled=null"
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
         }
       },
       "required": [
@@ -713,7 +1275,7 @@
     "constrains/phpldapadmin.enabled:t": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
@@ -724,7 +1286,7 @@
     "constrains/phpldapadmin.fullnameOverride:t": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         }
       },
       "required": [
@@ -735,7 +1297,7 @@
     "constrains/phpldapadmin.ingress.enabled:t": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1ingress.enabled:t"
+          "$ref": "#/definitions/constrains~1ingress.enabled:t"
         }
       },
       "required": [
@@ -746,7 +1308,7 @@
     "constrains/phpldapadmin.ingress.tls:t": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1ingress.tls:t"
+          "$ref": "#/definitions/constrains~1ingress.tls:t"
         }
       },
       "required": [
@@ -757,7 +1319,7 @@
     "constrains/phpldapadmin.nameOverride:t": {
       "properties": {
         "phpldapadmin": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       },
       "required": [
@@ -770,7 +1332,7 @@
         "service": {
           "properties": {
             "enableLdapPort": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -784,22 +1346,12 @@
       ],
       "type": "object"
     },
-    "constrains/service.enableLdapPort:t+service.enableSslLdapPort:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-        }
-      ]
-    },
     "constrains/service.enableSslLdapPort:t": {
       "properties": {
         "service": {
           "properties": {
             "enableSslLdapPort": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -814,15 +1366,11 @@
       "type": "object"
     },
     "constrains/service.type": {
-      "$ref": "#/$defs/constrains~1service.type@2"
+      "not": {
+        "$ref": "#/definitions/constrains~1service.type@2"
+      }
     },
     "constrains/service.type+service.type=null": {
-      "$ref": "#/$defs/constrains~1service.type+service.type=null@4"
-    },
-    "constrains/service.type+service.type=null@2": {
-      "$ref": "#/$defs/constrains~1service.type+service.type=null@5"
-    },
-    "constrains/service.type+service.type=null@3": {
       "anyOf": [
         {
           "not": {
@@ -866,29 +1414,24 @@
         }
       ]
     },
-    "constrains/service.type+service.type=null@4": {
+    "constrains/service.type+service.type=null@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+        "$ref": "#/definitions/constrains~1service.type+service.type=null"
       }
     },
-    "constrains/service.type+service.type=null@5": {
+    "constrains/service.type+service.type=null@3": {
       "not": {
         "allOf": [
           {
             "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+            "$ref": "#/definitions/constrains~1service.type+service.type=null"
           }
         ]
       }
     },
     "constrains/service.type@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1service.type@3"
-      }
-    },
-    "constrains/service.type@3": {
       "properties": {
         "service": {
           "properties": {
@@ -939,26 +1482,6 @@
       "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
       "type": "object"
     },
-    "when/enabled+enabled=null/then/service+service.type+service.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1enabled+enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1service.type@2"
-      }
-    },
-    "when/enabled:t/then/service+service.type+service.type=null/else/enabled+enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1enabled+enabled=null+service.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1service.type"
-      }
-    },
     "when/fullnameOverride!=null+nameOverride!=null/then/fail": {
       "if": {
         "allOf": [
@@ -996,165 +1519,17 @@
       },
       "then": false
     },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      },
-      "then": true
-    },
-    "when/global:t/then/any/else/service.enableLdapPort:t+service.enableSslLdapPort:t": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableLdapPort:t~1then~1any~1else~1service.enableSslLdapPort:t"
-      },
-      "if": {
-        "properties": {
-          "global": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
     "when/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1ltb-passwd.enabled+ltb-passwd.enabled=null"
+            "$ref": "#/definitions/constrains~1ltb-passwd.enabled+ltb-passwd.enabled=null"
           },
           {
-            "$ref": "#/$defs/constrains~1ltb-passwd"
+            "$ref": "#/definitions/constrains~1ltb-passwd"
           }
         ]
-      },
-      "then": true
-    },
-    "when/ltb-passwd.enabled:t/then/ltb-passwd.fullnameOverride:t+ltb-passwd.nameOverride:t/else/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride:t~1then~1fail~1else~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride:t~1then~1fail~1else~1ltb-passwd.nameOverride:t"
-      }
-    },
-    "when/ltb-passwd.enabled:t/then/ltb-passwd.fullnameOverride:t/else/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.fullnameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.enabled:t/then/ltb-passwd.ingress+ltb-passwd.ingress.tls:t/else/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.ingress.tls:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.enabled:t~1then~1ltb-passwd.ingress.tls:t~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
-      },
-      "then": true
-    },
-    "when/ltb-passwd.fullnameOverride:t/then/fail/else/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.nameOverride:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
-      },
-      "then": false
-    },
-    "when/ltb-passwd.fullnameOverride:t/then/fail/else/ltb-passwd.nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1ltb-passwd.nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
-      },
-      "then": false
-    },
-    "when/ltb-passwd.fullnameOverride:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@2"
-      }
-    },
-    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null+ltb-passwd.ingress.tls:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.enabled:t/then/ltb-passwd.ingress.tls:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ltb-passwd.ingress.tls:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/ltb-passwd.ingress.tls:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
-      },
-      "then": true
-    },
-    "when/ltb-passwd.ingress.tls:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null@3"
-      }
-    },
-    "when/ltb-passwd.nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t"
-      },
-      "then": true
-    },
-    "when/ltb-passwd.nameOverride:t/then/ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd.nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
-      }
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
       },
       "then": true
     },
@@ -1163,127 +1538,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1phpldapadmin.enabled+phpldapadmin.enabled=null"
+            "$ref": "#/definitions/constrains~1phpldapadmin.enabled+phpldapadmin.enabled=null"
           },
           {
-            "$ref": "#/$defs/constrains~1phpldapadmin"
+            "$ref": "#/definitions/constrains~1phpldapadmin"
           }
         ]
-      },
-      "then": true
-    },
-    "when/phpldapadmin.enabled:t/then/phpldapadmin.fullnameOverride:t/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.fullnameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.enabled:t/then/phpldapadmin.ingress+phpldapadmin.ingress.tls:t/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.enabled:t~1then~1phpldapadmin.ingress.tls:t~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.enabled:t/then/phpldapadmin.nameOverride:t/else/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.nameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t"
-      },
-      "then": true
-    },
-    "when/phpldapadmin.fullnameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
-      }
-    },
-    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.ingress.enabled:t/then/phpldapadmin.ingress.tls:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1phpldapadmin.ingress.tls:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/phpldapadmin.ingress.tls:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.tls:t"
-      },
-      "then": true
-    },
-    "when/phpldapadmin.ingress.tls:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.ingress.tls:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@2"
-      }
-    },
-    "when/phpldapadmin.nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t"
-      },
-      "then": true
-    },
-    "when/phpldapadmin.nameOverride:t/then/phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin.nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null@3"
-      }
-    },
-    "when/service.enableLdapPort:t/then/any/else/service.enableSslLdapPort:t": {
-      "else": {
-        "$ref": "#/$defs/when~1service.enableSslLdapPort:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableLdapPort:t"
-      },
-      "then": true
-    },
-    "when/service.enableSslLdapPort:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1service.enableSslLdapPort:t"
       },
       "then": true
     },
@@ -1313,27 +1573,13 @@
       },
       "then": false
     },
-    "when/service.type+service.type=null/then/fail/else/enabled+enabled=null+service.type": {
-      "else": {
-        "$ref": "#/$defs/when~1enabled+enabled=null~1then~1service+service.type+service.type=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
-      },
-      "then": false
-    },
     "when/service.type+service.type=null/then/fail/else/service.type": {
       "else": {
-        "$ref": "#/$defs/when~1service.type+service.type=null~1then~1fail~1else~1service.type@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
-      },
-      "then": false
-    },
-    "when/service.type+service.type=null/then/fail/else/service.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1service.type~1then~1fail~1else~1any"
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1service.type@2"
+        },
+        "then": false
       },
       "if": {
         "allOf": [
@@ -1341,517 +1587,13 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1service.type+service.type=null@3"
+            "$ref": "#/definitions/constrains~1service.type+service.type=null"
           }
         ]
-      },
-      "then": false
-    },
-    "when/service.type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1service.type@3"
       },
       "then": false
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/when~1ltb-passwd.enabled:t~1then~1ltb-passwd.ingress+ltb-passwd.ingress.tls:t~1else~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ltb-passwd": {
-            "additionalProperties": {},
-            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "tls": {
-                    "description": "Ingress cert\n- secretName: ssl-ldap2.example\nhosts:\n- ssl-ldap2.example\nldap:\nif you want to restrict search base tree for users instead of complete domain\nsearchBase: \"ou=....,dc=mydomain,dc=com\"\nif you want to use a dedicated bindDN for the search with less permissions instead of cn=admin one\nbindDN: \"cn=....,dc=mydomain,dc=com\"\nif you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)\npassKey: LDAP_MY_KEY",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1service.enableLdapPort:t+service.enableSslLdapPort:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "service": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "service": {}
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "phpldapadmin": {
-          "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1global:t+service.enableLdapPort:t+service.enableSslLdapPort:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1ltb-passwd.enabled:t~1then~1ltb-passwd.fullnameOverride:t+ltb-passwd.nameOverride:t~1else~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ltb-passwd": {
-            "additionalProperties": {},
-            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-            "properties": {
-              "nameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override common.names.fullname",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "phpldapadmin": {
-                "$ref": "#/$defs/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "phpldapadmin"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "phpldapadmin": {
-                        "$ref": "#/$defs/constrains~1enabled!=true"
-                      }
-                    },
-                    "required": [
-                      "phpldapadmin"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "phpldapadmin": {
-                        "$ref": "#/$defs/constrains~1enabled!=false"
-                      }
-                    },
-                    "required": [
-                      "phpldapadmin"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/when~1global:t~1then~1any~1else~1service.enableLdapPort:t+service.enableSslLdapPort:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled:t+ltb-passwd.enabled=null"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ltb-passwd": {
-                "additionalProperties": {},
-                "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-                "properties": {
-                  "service": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ltb-passwd": {
-                "additionalProperties": {},
-                "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-                "properties": {
-                  "ingress": {
-                    "$ref": "#/$defs/values~1object;configure-ingress-based-on"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override common.names.fullname",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled:t+1more"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "phpldapadmin": {
-                "additionalProperties": {},
-                "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-                "properties": {
-                  "ingress": {
-                    "$ref": "#/$defs/values~1object;configure-ingress-based-on"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "phpldapadmin": {
-                "additionalProperties": {},
-                "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-                "properties": {
-                  "service": {
-                    "description": "Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1ltb-passwd.enabled:t~1then~1ltb-passwd.fullnameOverride:t~1else~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ltb-passwd": {
-            "additionalProperties": {},
-            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-            "properties": {
-              "fullnameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.nameOverride:t~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "additionalProperties": {},
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "nameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.ingress+phpldapadmin.ingress.tls:t~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "additionalProperties": {},
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "tls": {
-                    "description": "Ingress cert\n- secretName: phpldapadmin.example\nhosts:\n- phpldapadmin.example",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "ltb-passwd": {
-          "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1phpldapadmin.enabled:t~1then~1phpldapadmin.fullnameOverride:t~1else~1phpldapadmin+phpldapadmin.enabled+phpldapadmin.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "additionalProperties": {},
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "fullnameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1ltb-passwd.enabled"
-                  },
-                  {
-                    "properties": {
-                      "ltb-passwd": {
-                        "$ref": "#/$defs/constrains~1enabled!=true"
-                      }
-                    },
-                    "required": [
-                      "ltb-passwd"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1ltb-passwd.enabled"
-                  },
-                  {
-                    "properties": {
-                      "ltb-passwd": {
-                        "$ref": "#/$defs/constrains~1enabled!=false"
-                      }
-                    },
-                    "required": [
-                      "ltb-passwd"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "properties": {
-              "ltb-passwd": {
-                "$ref": "#/$defs/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "ltb-passwd"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ltb-passwd": {
-            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@3"
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "affinity": {
       "description": "Affinity for OPENLDAP  pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNOTE: `podAffinityPreset`, `podAntiAffinityPreset`, and `nodeAffinityPreset` will be ignored when it's set"
@@ -1962,10 +1704,25 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/definitions/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
               },
               {
                 "type": "object"
@@ -1973,22 +1730,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
+            "$ref": "#/definitions/when~1fullnameOverride!=null+nameOverride!=null~1then~1fail"
           }
         }
       ],
@@ -2011,7 +1753,7 @@
             "enabled": {},
             "ingressClassName": {},
             "path": {
-              "$ref": "#/$defs/values~1ltb-passwd.ingress.path"
+              "$ref": "#/definitions/values~1ltb-passwd.ingress.path"
             },
             "pathType": {},
             "tls": {
@@ -2050,20 +1792,27 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/when~1enabled:t~1then~1service+service.type+service.type=null~1else~1enabled+enabled=null"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            ]
           },
           "then": {
-            "$ref": "#/$defs/when~1service.type!=null~1then~1fail"
+            "$ref": "#/definitions/when~1service.type!=null~1then~1fail"
           }
         },
         {
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more@2"
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null@2"
+                "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
               },
               {
                 "type": "object"
@@ -2071,22 +1820,41 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/when~1service.type!=null~1then~1fail"
+            "$ref": "#/definitions/when~1service.type!=null~1then~1fail"
           }
         },
         {
           "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+2more@2"
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1service.type+service.type=null~1then~1fail~1else~1service.type"
+                }
               },
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              }
-            ]
+              "if": {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1service.type+service.type=null~1then~1fail~1else~1service.type"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              },
+              "then": false
+            }
           },
           "then": {
-            "$ref": "#/$defs/when~1service.type!=null~1then~1fail"
+            "$ref": "#/definitions/when~1service.type!=null~1then~1fail"
           }
         }
       ],
@@ -2109,7 +1877,7 @@
             "enabled": {},
             "ingressClassName": {},
             "path": {
-              "$ref": "#/$defs/values~1ltb-passwd.ingress.path"
+              "$ref": "#/definitions/values~1ltb-passwd.ingress.path"
             },
             "pathType": {},
             "tls": {
@@ -2192,7 +1960,45 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null@2"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "bitnami-common": {}
+                    },
+                    "required": [
+                      "bitnami-common"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
           "then": false
         }

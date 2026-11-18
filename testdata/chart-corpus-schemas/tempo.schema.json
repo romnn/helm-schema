@@ -1,307 +1,4 @@
 {
-  "$defs": {
-    "constrains/config": {
-      "$ref": "#/$defs/constrains~1config@5"
-    },
-    "constrains/config+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tempo.tag"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config"
-        }
-      ]
-    },
-    "constrains/config+fullnameOverride+fullnameOverride:t+nameOverride:t+tempo.tag": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tempo.tag"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config"
-        }
-      ]
-    },
-    "constrains/config+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tempo.tag"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/config+fullnameOverride:t+nameOverride:t+tempo.tag": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tempo.tag"
-        },
-        {
-          "$ref": "#/$defs/constrains~1config"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/config@2": {
-      "$ref": "#/$defs/constrains~1config@4"
-    },
-    "constrains/config@3": {
-      "$ref": "#/$defs/constrains~1config@4"
-    },
-    "constrains/config@4": {
-      "not": {
-        "properties": {
-          "config": {
-            "pattern": "\\{\\{",
-            "type": "string"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/config@5": {
-      "not": {
-        "properties": {
-          "config": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/fullnameOverride": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t@2": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/tag=null": {
-      "properties": {
-        "tag": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "tag"
-      ],
-      "type": "object"
-    },
-    "constrains/tempo+tempo=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "tempo": {}
-            },
-            "required": [
-              "tempo"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "tempo": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "tempo"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/tempo.pullSecrets:t": {
-      "$ref": "#/$defs/constrains~1tempo.pullSecrets:t@3"
-    },
-    "constrains/tempo.pullSecrets:t@2": {
-      "$ref": "#/$defs/constrains~1tempo.pullSecrets:t@3"
-    },
-    "constrains/tempo.pullSecrets:t@3": {
-      "not": {
-        "properties": {
-          "tempo": {
-            "properties": {
-              "pullSecrets": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "pullSecrets"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tempo"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/tempo.tag": {
-      "$ref": "#/$defs/constrains~1tempo.tag@2"
-    },
-    "constrains/tempo.tag@2": {
-      "not": {
-        "properties": {
-          "tempo": {
-            "properties": {
-              "tag": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tempo"
-        ],
-        "type": "object"
-      }
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -320,27 +17,13 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "Overrides the chart's name",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1tempo+tempo=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tempo.pullSecrets:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config@2"
+          },
           {
             "anyOf": [
               {
@@ -368,16 +51,132 @@
                 "type": "object"
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1tempo.pullSecrets:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config@3"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1tempo+tempo=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tempo.pullSecrets:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1tempo.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1config"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "additionalProperties": {},
@@ -452,33 +251,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1config@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "Overrides the chart's computed fullname",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -510,20 +282,36 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1config@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1tempo.pullSecrets:t"
-          }
-        ]
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": true
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "tempoQuery": {
-            "type": "object"
+          "fullnameOverride": {
+            "description": "Overrides the chart's computed fullname",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "Overrides the chart's name",
+            "type": "string"
           }
         }
       }
@@ -532,24 +320,8 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag"
+            "$ref": "#/definitions/constrains~1config@2"
           },
-          {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride+fullnameOverride:t+nameOverride:t+tempo.tag"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride:t+nameOverride+nameOverride:t+tempo.tag"
-          },
-          {
-            "$ref": "#/$defs/constrains~1config+fullnameOverride:t+nameOverride:t+tempo.tag"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
           {
             "anyOf": [
               {
@@ -577,9 +349,6 @@
                 }
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1config@3"
           }
         ]
       },
@@ -589,7 +358,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1tempo+tempo=null"
+            "$ref": "#/definitions/constrains~1tempo+tempo=null"
           },
           {
             "anyOf": [
@@ -615,7 +384,17 @@
               {
                 "properties": {
                   "tempo": {
-                    "$ref": "#/$defs/constrains~1tag=null"
+                    "properties": {
+                      "tag": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
@@ -630,6 +409,194 @@
       "then": false
     }
   ],
+  "definitions": {
+    "constrains/config": {
+      "$ref": "#/definitions/constrains~1config@3"
+    },
+    "constrains/config@2": {
+      "$ref": "#/definitions/constrains~1config@3"
+    },
+    "constrains/config@3": {
+      "not": {
+        "properties": {
+          "config": {
+            "pattern": "\\{\\{",
+            "type": "string"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/config@4": {
+      "not": {
+        "properties": {
+          "config": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/fullnameOverride": {
+      "not": {
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      }
+    },
+    "constrains/nameOverride:t@2": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo+tempo=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "tempo": {}
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "tempo": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "tempo"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/tempo.pullSecrets:t": {
+      "not": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "pullSecrets": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "pullSecrets"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/tempo.tag": {
+      "not": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "tag": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      }
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    }
+  },
   "properties": {
     "affinity": {
       "description": "Affinity for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
@@ -720,7 +687,17 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1tag=null"
+                "properties": {
+                  "tag": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "tag"
+                ],
+                "type": "object"
               },
               {
                 "not": {

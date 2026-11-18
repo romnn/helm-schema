@@ -12,7 +12,7 @@ weight: 2
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$defs": { "…": "…" },
+  "definitions": { "…": "…" },
   "additionalProperties": false,
   "properties": { "…": "…" },
   "allOf": [ "…" ],
@@ -25,19 +25,19 @@ weight: 2
 - **`type: object`** and **`additionalProperties: false`** — the root is the values object, and only keys the chart actually consumes are allowed. Unrecognized keys are rejected, which is what catches typos.
 - **`properties`** — one entry per value path the chart reads, typed from template use and resolved resource fields.
 - **`allOf`** — conditional structure produced from template control flow (`if`/`then`, guard-scoped constraints). See [Template analysis]({{< relref "/docs/guide/template-analysis.md" >}}).
-- **`$defs`** — interned subtrees shared by `$ref` (see [Minimization](#minimization)), plus a few reusable building blocks such as `helm-truthy`.
+- **`definitions`** — interned subtrees shared by `$ref` (see [Minimization](#minimization)), plus a few reusable building blocks such as `helm-truthy`.
 - **`x-helm-schema-generated: true`** — a marker identifying the file as machine-generated.
 
 ## Recurring building blocks
 
-Some `$defs` entries appear across many charts:
+Some `definitions` entries appear across many charts:
 
 | Definition | Meaning |
 |---|---|
 | `helm-truthy` | Helm's notion of "truthy" — anything other than `false`, `0`, `""`, an empty list, or an empty map. Used to model `if`/`with` guards precisely rather than assuming a boolean. |
 | An int-or-string pattern (e.g. `values/replicas@anyOf(1)`) | Accepts Helm's quoted-integer form (`"3"`) alongside a numeric field, because a quoted number renders and validates the same as the bare number. |
 
-Every `$defs` entry `helm-schema` creates is named by a schema path. By
+Every `definitions` entry `helm-schema` creates is named by a schema path. By
 default (`--defs-names source`) the path says where the definition's content
 comes from:
 
@@ -88,19 +88,19 @@ later arms.
 
 ## `$ref` handling
 
-By default the output is **self-contained**: external file/URL `$ref`s discovered during analysis are resolved and re-homed into root-level `$defs`, so the schema stands alone while still sharing referenced subschemas.
+By default the output is **self-contained**: external file/URL `$ref`s discovered during analysis are resolved and re-homed into root-level `definitions`, so the schema stands alone while still sharing referenced subschemas.
 
 | Flag | Effect |
 |---|---|
-| *(default)* | Resolve external refs into root-level `$defs`. |
+| *(default)* | Resolve external refs into root-level `definitions`. |
 | `--keep-refs` | Leave external `$ref` strings exactly as-is. |
-| `--inline-refs` | Fully inline resolved refs instead of writing `$defs`. |
+| `--inline-refs` | Fully inline resolved refs instead of writing `definitions`. |
 
 `--keep-refs` and `--inline-refs` are mutually exclusive.
 
 ## Minimization
 
-Branch-scoped guard arms tend to repeat large fragments. By default, `helm-schema` interns repeated subtrees into root-level `$defs` and references them with `$ref`. This is an **output-only** transform — it never affects inference — and it matters in practice: it substantially reduces large schemas and speeds up downstream validators.
+Branch-scoped guard arms tend to repeat large fragments. By default, `helm-schema` interns repeated subtrees into root-level `definitions` and references them with `$ref`. Definitions used at one sibling-free reference are inlined when they can be moved safely and are non-recursive. This is an **output-only** transform — it never affects inference — and it matters in practice: it substantially reduces large schemas and speeds up downstream validators.
 
 ```bash
 # Keep everything inline (larger, but no $ref indirection)
@@ -114,7 +114,7 @@ downstream validator compilation larger.
 ## Size limit
 
 Helm refuses chart files larger than 5 MiB (5,242,880 bytes). Default output
-stays pretty JSON with readable `$defs` names through that limit, including
+stays pretty JSON with readable `definitions` names through that limit, including
 the final newline. Above it, `helm-schema` automatically writes compact JSON
 with short base-62 definition keys (the most referenced definition getting
 the shortest one) and prints a one-line note on stderr with the reason and
@@ -139,7 +139,7 @@ helm-schema shorten values.readable.json values.schema.json --map defs-map.json 
 
 Shortening is a one-to-one rename of the same schema. The map file lists the
 readable name of every short key, so a Helm or validator error that mentions
-`#/$defs/2b` can be translated back
+`#/definitions/2b` can be translated back
 (`helm_schema::output::expand_short_definition_names`).
 
 `helm-schema lint` and `helm-schema template` do all of this for one Helm run:

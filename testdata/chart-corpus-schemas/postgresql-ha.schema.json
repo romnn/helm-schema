@@ -1,218 +1,275 @@
 {
-  "$defs": {
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "bitnami-common": {}
-            },
-            "required": [
-              "bitnami-common"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                null
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1witness.create:t"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1witness.labels@3"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1witness.labels@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1witness.labels"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1witness.labels@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1witness.labels=null"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1witness.create:t"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1witness.labels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1witness.labels@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1witness.labels=null"
+                }
               ]
             }
           },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1witness.create:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1witness.create:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1witness.create:t"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
         },
-        {
-          "properties": {
-            "bitnami-common": {
-              "$ref": "#/$defs/t"
-            }
+        "then": {
+          "$ref": "#/definitions/when~1witness.create:t~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "String to fully override common.names.namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
           },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          "then": {
+            "$ref": "#/definitions/when~1witness.create:t~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.fullname template (will maintain the release name)",
+            "type": "string"
+          }
         }
-      ]
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null"
       }
     },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1witness.create:t~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override common.names.fullname template",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "witness": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "witness"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "witness": {}
+              },
+              "required": [
+                "witness"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.create:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+witness.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+witness.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1witness+witness.labels+witness.labels:helm-no-template-actions+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.create:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1witness.labels"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels:helm-no-template-actions"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+witness.create:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.create:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+witness.create:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.create:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
-          "$ref": "#/$defs/t"
+          "type": "string"
         }
       },
       "required": [
@@ -220,10 +277,15 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride@2": {
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
       "properties": {
         "fullnameOverride": {
-          "type": "string"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -242,35 +304,15 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-      }
-    },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -281,7 +323,9 @@
     "constrains/namespaceOverride+namespaceOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
+          "not": {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+          }
         },
         {
           "properties": {
@@ -296,20 +340,10 @@
         }
       ]
     },
-    "constrains/namespaceOverride+namespaceOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
-      }
-    },
     "constrains/namespaceOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-      }
-    },
-    "constrains/namespaceOverride:t@2": {
       "properties": {
         "namespaceOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -317,45 +351,12 @@
       ],
       "type": "object"
     },
-    "constrains/witness+witness.labels+witness.labels:helm-no-template-actions+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1witness.labels"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1witness.labels:helm-no-template-actions"
-        }
-      ]
-    },
     "constrains/witness.create:t": {
-      "$ref": "#/$defs/when~1witness.create:t~1then~1any~1else~1fail"
-    },
-    "constrains/witness.create:t@2": {
-      "$ref": "#/$defs/when~1witness.create:t~1then~1any~1else~1fail"
-    },
-    "constrains/witness.create:t@3": {
-      "$ref": "#/$defs/when~1witness.create:t~1then~1any~1else~1fail"
-    },
-    "constrains/witness.create:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1witness.create:t@5"
-      }
-    },
-    "constrains/witness.create:t@5": {
       "properties": {
         "witness": {
           "properties": {
             "create": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -396,7 +397,7 @@
         "witness": {
           "properties": {
             "labels": {
-              "$ref": "#/$defs/constrains~1witness.labels:helm-no-template-actions~1:helm-no-template-actions"
+              "$ref": "#/definitions/helm-no-template-actions"
             }
           },
           "required": [
@@ -409,9 +410,6 @@
         "witness"
       ],
       "type": "object"
-    },
-    "constrains/witness.labels:helm-no-template-actions/:helm-no-template-actions": {
-      "$ref": "#/$defs/helm-no-template-actions"
     },
     "constrains/witness.labels=null": {
       "properties": {
@@ -477,6 +475,17 @@
     "helm-no-template-actions": {
       "anyOf": [
         {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
           "not": {
             "pattern": "\\{\\{"
           },
@@ -491,20 +500,9 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/constrains~1witness.labels:helm-no-template-actions~1:helm-no-template-actions"
+            "$ref": "#/definitions/helm-no-template-actions"
           },
           "type": "array"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/constrains~1witness.labels:helm-no-template-actions~1:helm-no-template-actions"
-          },
-          "propertyNames": {
-            "not": {
-              "pattern": "\\{\\{"
-            }
-          },
-          "type": "object"
         }
       ]
     },
@@ -533,140 +531,14 @@
         }
       ]
     },
-    "when/fullnameOverride:t/then/fail/else/nameOverride:t+witness.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1witness.create:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": false
-    },
-    "when/fullnameOverride:t/then/witness.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1witness.create:t"
-      }
-    },
-    "when/nameOverride:t/then/witness.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1witness.create:t@2"
-      }
-    },
-    "when/namespaceOverride:t/then/witness.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1witness.create:t@3"
-      }
-    },
     "when/witness.create:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1witness.create:t@5"
+        "$ref": "#/definitions/constrains~1witness.create:t"
       },
       "then": true
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t+witness.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override common.names.fullname template (will maintain the release name)",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1witness.create:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override common.names.fullname template",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "witness": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "witness"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "witness": {}
-              },
-              "required": [
-                "witness"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1witness.create:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "String to fully override common.names.namespace",
-            "type": "string"
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "backup": {
       "description": "This section implements a trivial logical dump cronjob of the database.\nThis only comes with the consistency guarantees of the dump program.\nThis is not a snapshot based roll forward/backward recovery backup.\nref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"
@@ -741,7 +613,45 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null@2"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "bitnami-common": {}
+                    },
+                    "required": [
+                      "bitnami-common"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
           "then": false
         }

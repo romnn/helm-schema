@@ -693,7 +693,7 @@ fn clickhouse_operator_image_field_has_conditional_string_schema(
     schema: &Value,
     field: &str,
 ) -> bool {
-    // Output interning may move any subtree behind a root-level `$defs`
+    // Output interning may move any subtree behind a root-level `definitions`
     // ref, so every pointer step and type check resolves through the root.
     let mut branch_lists = Vec::new();
     schema_values_at_pointer(
@@ -788,7 +788,7 @@ fn schema_values_at_pointer<'schema>(
     let Some(object) = schema.as_object() else {
         return;
     };
-    // Interned subtrees live in root-level `$defs`; follow local refs so
+    // Interned subtrees live in root-level `definitions`; follow local refs so
     // pointer-based assertions see through the output interning.
     if let Some(reference) = object.get("$ref").and_then(Value::as_str)
         && let Some(pointer) = helm_schema_json_schema_walk::local_reference_fragment(reference)

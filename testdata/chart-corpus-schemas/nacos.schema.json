@@ -1,2003 +1,42 @@
 {
-  "$defs": {
-    "constrains/architecture": {
-      "properties": {
-        "architecture": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture+architecture=null": {
-      "$ref": "#/$defs/constrains~1architecture+architecture=null@3"
-    },
-    "constrains/architecture+architecture=null+architecture=replication+commonLabels+9more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+commonLabels+commonLabels:helm-no-template-actions+2more"
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null+architecture=replication+commonLabels+9more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+commonLabels+9more"
-      }
-    },
-    "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+5more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+5more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+5more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride:t+2more"
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null+architecture=replication+fullnameOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null@2": {
-      "$ref": "#/$defs/constrains~1architecture+architecture=null@5"
-    },
-    "constrains/architecture+architecture=null@3": {
-      "$ref": "#/$defs/constrains~1architecture+architecture=null@5"
-    },
-    "constrains/architecture+architecture=null@4": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1architecture=null"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/constrains~1architecture@2"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture+architecture=null@4"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1architecture@2"
-          }
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1architecture+architecture=null@2"
-      }
-    },
-    "constrains/architecture=null": {
-      "properties": {
-        "architecture": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture=replication": {
-      "$ref": "#/$defs/constrains~1architecture=replication@2"
-    },
-    "constrains/architecture=replication+commonLabels+commonLabels:helm-no-template-actions+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:helm-no-template-actions"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride+3more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride:t+nameOverride:t+namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride:t+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride:t+nameOverride:t+namespaceOverride+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride:t+nameOverride+nameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride+3more"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride+fullnameOverride:t+nameOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride:t+nameOverride+nameOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride:t+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride:t+nameOverride:t+namespaceOverride+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-        }
-      ]
-    },
-    "constrains/architecture=replication+fullnameOverride:t+nameOverride:t+namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-        }
-      ]
-    },
-    "constrains/architecture=replication@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1architecture=replication@3"
-      }
-    },
-    "constrains/architecture=replication@3": {
-      "properties": {
-        "architecture": {
-          "enum": [
-            "replication"
-          ]
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture@2": {
-      "properties": {
-        "architecture": {}
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonLabels@4"
-      }
-    },
-    "constrains/commonLabels!=null": {
-      "properties": {
-        "commonLabels": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels+commonLabels=null": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "commonLabels": {}
-                },
-                "required": [
-                  "commonLabels"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "commonLabels": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "commonLabels"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/commonLabels:helm-no-template-actions": {
-      "properties": {
-        "commonLabels": {
-          "$ref": "#/$defs/helm-no-template-actions"
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t@2"
-      }
-    },
-    "constrains/commonLabels:t@2": {
-      "properties": {
-        "commonLabels": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonLabels@3"
-      }
-    },
-    "constrains/commonLabels@3": {
-      "properties": {
-        "commonLabels": {
-          "pattern": "\\{\\{",
-          "type": "string"
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels@4": {
-      "properties": {
-        "commonLabels": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled": {
-      "properties": {
-        "enabled": {}
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled+enabled=null": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1enabled"
-          }
-        },
-        {
-          "properties": {
-            "enabled": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride!=null": {
-      "properties": {
-        "fullnameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      }
-    },
-    "constrains/fullnameOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      }
-    },
-    "constrains/fullnameOverride:t@5": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql": {
-      "not": {
-        "properties": {
-          "mysql": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "mysql"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null": {
-      "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null@3"
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+10more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture=replication+mysql.commonLabels+3more"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+10more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+10more"
-      }
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride+mysql.nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride+mysql.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t+mysql.nameOverride+mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride+mysql.nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride+mysql.namespaceOverride:t"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+6more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride+mysql.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t+mysql.nameOverride+mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride+mysql.namespaceOverride:t@3"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+6more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+6more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+6more"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null@2": {
-      "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null@4"
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null@3": {
-      "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null@4"
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null@4": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "mysql": {
-                "$ref": "#/$defs/constrains~1architecture@2"
-              }
-            },
-            "required": [
-              "mysql"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "mysql": {
-              "$ref": "#/$defs/constrains~1architecture=null"
-            }
-          },
-          "required": [
-            "mysql"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "mysql": {
-              "$ref": "#/$defs/constrains~1architecture+architecture=null@4"
-            }
-          },
-          "required": [
-            "mysql"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "mysql": {
-              "$ref": "#/$defs/constrains~1architecture"
-            }
-          },
-          "required": [
-            "mysql"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.architecture+mysql.architecture=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null@2"
-      }
-    },
-    "constrains/mysql+mysql.architecture=replication+mysql.commonLabels+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.commonLabels"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.commonLabels:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.commonLabels@2"
-        },
-        {
-          "properties": {
-            "mysql": {
-              "$ref": "#/$defs/constrains~1commonLabels:helm-no-template-actions"
-            }
-          },
-          "required": [
-            "mysql"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "mysql": {
-              "$ref": "#/$defs/constrains~1commonLabels+commonLabels=null"
-            }
-          },
-          "required": [
-            "mysql"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.enabled+mysql.enabled:t+mysql.enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.enabled+mysql.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql"
-        }
-      ]
-    },
-    "constrains/mysql+mysql.enabled+mysql.enabled=null": {
-      "$ref": "#/$defs/when~1mysql+mysql.enabled+mysql.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/mysql+mysql.enabled+mysql.enabled=null@2": {
-      "$ref": "#/$defs/when~1mysql+mysql.enabled+mysql.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/mysql+mysql.enabled+mysql.enabled=null@3": {
-      "$ref": "#/$defs/when~1mysql+mysql.enabled+mysql.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/mysql.architecture=replication": {
-      "$ref": "#/$defs/constrains~1mysql.architecture=replication@5"
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t+mysql.nameOverride:t+mysql.namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride+mysql.fullnameOverride:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication+mysql.fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication+mysql.fullnameOverride:t+mysql.nameOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.architecture=replication@2": {
-      "$ref": "#/$defs/when~1mysql.architecture=replication~1then~1any~1else~1fail"
-    },
-    "constrains/mysql.architecture=replication@3": {
-      "$ref": "#/$defs/when~1mysql.architecture=replication~1then~1any~1else~1fail"
-    },
-    "constrains/mysql.architecture=replication@4": {
-      "$ref": "#/$defs/when~1mysql.architecture=replication~1then~1any~1else~1fail"
-    },
-    "constrains/mysql.architecture=replication@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-      }
-    },
-    "constrains/mysql.architecture=replication@6": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1architecture=replication@3"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.commonLabels": {
-      "not": {
-        "properties": {
-          "mysql": {
-            "$ref": "#/$defs/constrains~1commonLabels@4"
-          }
-        },
-        "required": [
-          "mysql"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/mysql.commonLabels:t": {
-      "not": {
-        "properties": {
-          "mysql": {
-            "$ref": "#/$defs/constrains~1commonLabels:t@2"
-          }
-        },
-        "required": [
-          "mysql"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/mysql.commonLabels@2": {
-      "not": {
-        "properties": {
-          "mysql": {
-            "$ref": "#/$defs/constrains~1commonLabels@3"
-          }
-        },
-        "required": [
-          "mysql"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/mysql.enabled": {
-      "not": {
-        "properties": {
-          "mysql": {
-            "$ref": "#/$defs/constrains~1enabled"
-          }
-        },
-        "required": [
-          "mysql"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/mysql.enabled+mysql.enabled=null": {
-      "properties": {
-        "mysql": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1enabled+enabled=null"
-            },
-            {
-              "type": "object"
-            }
-          ]
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.enabled:t": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.fullnameOverride@2"
-      }
-    },
-    "constrains/mysql.fullnameOverride+mysql.fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride@2"
-        }
-      ]
-    },
-    "constrains/mysql.fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@2"
-    },
-    "constrains/mysql.fullnameOverride:t+mysql.nameOverride+mysql.nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/mysql.fullnameOverride:t+mysql.nameOverride:t+mysql.namespaceOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/mysql.fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-      }
-    },
-    "constrains/mysql.fullnameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-      }
-    },
-    "constrains/mysql.fullnameOverride:t@4": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.fullnameOverride@2": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.nameOverride": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.nameOverride+mysql.nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.nameOverride"
-        }
-      ]
-    },
-    "constrains/mysql.nameOverride+mysql.nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.nameOverride+mysql.nameOverride:t"
-      }
-    },
-    "constrains/mysql.nameOverride:t": {
-      "$ref": "#/$defs/constrains~1mysql.nameOverride:t@2"
-    },
-    "constrains/mysql.nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-      }
-    },
-    "constrains/mysql.nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-      }
-    },
-    "constrains/mysql.nameOverride:t@4": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@4"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.namespaceOverride": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/mysql.namespaceOverride+mysql.namespaceOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride"
-        }
-      ]
-    },
-    "constrains/mysql.namespaceOverride+mysql.namespaceOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql.namespaceOverride"
-        }
-      ]
-    },
-    "constrains/mysql.namespaceOverride+mysql.namespaceOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.namespaceOverride+mysql.namespaceOverride:t@2"
-      }
-    },
-    "constrains/mysql.namespaceOverride:t": {
-      "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@3"
-    },
-    "constrains/mysql.namespaceOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-      }
-    },
-    "constrains/mysql.namespaceOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-      }
-    },
-    "constrains/mysql.namespaceOverride:t@4": {
-      "properties": {
-        "mysql": {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-        }
-      },
-      "required": [
-        "mysql"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "constrains/nameOverride!=null": {
-      "properties": {
-        "nameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@2"
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      }
-    },
-    "constrains/nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      }
-    },
-    "constrains/nameOverride:t@4": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride": {
-      "properties": {
-        "namespaceOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride!=null": {
-      "properties": {
-        "namespaceOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride+namespaceOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/namespaceOverride+namespaceOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/namespaceOverride+namespaceOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@2"
-      }
-    },
-    "constrains/namespaceOverride:t": {
-      "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-    },
-    "constrains/namespaceOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-      }
-    },
-    "constrains/namespaceOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
-      }
-    },
-    "constrains/namespaceOverride:t@4": {
-      "properties": {
-        "namespaceOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "helm-no-template-actions": {
-      "anyOf": [
-        {
-          "not": {
-            "pattern": "\\{\\{"
-          },
-          "type": "string"
-        },
-        {
-          "type": [
-            "null",
-            "boolean",
-            "number"
-          ]
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/helm-no-template-actions"
-          },
-          "type": "array"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/helm-no-template-actions"
-          },
-          "propertyNames": {
-            "not": {
-              "pattern": "\\{\\{"
-            }
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "values/common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
-        "global": {}
-      },
-      "type": "object"
-    },
-    "when/commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1namespaceOverride!=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1commonLabels!=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride!=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride!=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/fail/else/nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@5"
-      },
-      "then": false
-    },
-    "when/ingress.enabled:t/then/ingress.secrets:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "ingress": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ingress.secrets:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/ingress.secrets:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "secrets": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "secrets"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/mysql+mysql.enabled+mysql.enabled=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1mysql.enabled+mysql.enabled=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1mysql"
-          }
-        ]
-      },
-      "then": true
-    },
-    "when/mysql.architecture=replication/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-      },
-      "then": true
-    },
-    "when/mysql.architecture=replication/then/mysql+mysql.enabled+mysql.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1mysql+mysql.enabled+mysql.enabled=null"
-      }
-    },
-    "when/mysql.architecture=replication/then/mysql+mysql.enabled+mysql.enabled=null/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1mysql+mysql.enabled+mysql.enabled=null@2"
-      }
-    },
-    "when/mysql.architecture=replication/then/mysql+mysql.enabled+mysql.enabled=null/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1mysql+mysql.enabled+mysql.enabled=null@3"
-      }
-    },
-    "when/mysql.enabled:t/then/mysql.architecture=replication+mysql.fullnameOverride:t/else/mysql+mysql.enabled+mysql.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1mysql.fullnameOverride:t~1then~1mysql+mysql.architecture=replication+mysql.enabled+mysql.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1mysql.fullnameOverride:t~1then~1mysql.architecture=replication~1else~1fail"
-      }
-    },
-    "when/mysql.enabled:t/then/mysql.architecture=replication+mysql.nameOverride:t/else/mysql+mysql.enabled+mysql.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1mysql.nameOverride:t~1then~1mysql+mysql.architecture=replication+mysql.enabled+mysql.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1mysql.nameOverride:t~1then~1mysql.architecture=replication~1else~1fail"
-      }
-    },
-    "when/mysql.enabled:t/then/mysql.architecture=replication+mysql.namespaceOverride:t/else/mysql+mysql.enabled+mysql.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1mysql.namespaceOverride:t~1then~1mysql+mysql.architecture=replication+mysql.enabled+mysql.enabled=null~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1mysql.namespaceOverride:t~1then~1mysql.architecture=replication~1else~1fail"
-      }
-    },
-    "when/mysql.fullnameOverride:t/then/mysql+mysql.architecture=replication+mysql.enabled+mysql.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1mysql.architecture=replication~1then~1mysql+mysql.enabled+mysql.enabled=null~1else~1fail@3"
-      }
-    },
-    "when/mysql.fullnameOverride:t/then/mysql.architecture=replication/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.fullnameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@4"
-      }
-    },
-    "when/mysql.nameOverride:t/then/mysql+mysql.architecture=replication+mysql.enabled+mysql.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1mysql.architecture=replication~1then~1mysql+mysql.enabled+mysql.enabled=null~1else~1fail"
-      }
-    },
-    "when/mysql.nameOverride:t/then/mysql.architecture=replication/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.nameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@2"
-      }
-    },
-    "when/mysql.namespaceOverride:t/then/mysql+mysql.architecture=replication+mysql.enabled+mysql.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1mysql.architecture=replication~1then~1mysql+mysql.enabled+mysql.enabled=null~1else~1fail@2"
-      }
-    },
-    "when/mysql.namespaceOverride:t/then/mysql.architecture=replication/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1mysql.namespaceOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1mysql.architecture=replication@3"
-      }
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@4"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/when~1ingress.enabled:t~1then~1ingress.secrets:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Configure the ingress resource that allows you to access the\nref: https://kubernetes.io/docs/user-guide/ingress/",
-            "properties": {
-              "secrets": {
-                "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate are expected in PEM format\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nExample\nsecrets:\n- name: chart-example.local-tls\nkey: \"\"\ncertificate: \"\"",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1mysql.architecture=replication@6"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              }
+            ]
           },
           {
-            "$ref": "#/$defs/constrains~1mysql+mysql.enabled+mysql.enabled:t+mysql.enabled=null"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                }
+              }
+            ]
           }
         ]
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mysql": {
-            "additionalProperties": {},
-            "properties": {
-              "secondary": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
+      "then": false
     },
     {
       "if": {
@@ -2030,7 +69,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1mysql.enabled"
+                    "$ref": "#/definitions/constrains~1mysql.enabled"
                   }
                 ]
               },
@@ -2060,7 +99,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1mysql.enabled"
+                    "$ref": "#/definitions/constrains~1mysql.enabled"
                   }
                 ]
               }
@@ -2131,32 +170,33 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1mysql.enabled:t~1then~1mysql.architecture=replication+mysql.namespaceOverride:t~1else~1mysql+mysql.enabled+mysql.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mysql": {
-            "additionalProperties": {},
-            "properties": {
-              "namespaceOverride": {
-                "description": "String to fully override common.names.namespace",
-                "type": "string"
-              }
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1mysql+mysql.enabled+mysql.enabled=null~1then~1any~1else~1fail"
             }
           }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mysql.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1mysql.architecture=replication~1then~1any~1else~1fail"
+          }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1mysql.enabled:t~1then~1mysql.architecture=replication+mysql.nameOverride:t~1else~1mysql+mysql.enabled+mysql.enabled=null"
       },
       "then": {
         "additionalProperties": {},
@@ -2175,14 +215,45 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t"
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1mysql+mysql.enabled+mysql.enabled=null~1then~1any~1else~1fail"
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mysql.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1mysql.architecture=replication~1then~1any~1else~1fail"
+          }
+        }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "description": "String to partially override nginx.fullname template (will maintain the release name)",
-            "type": "string"
+          "mysql": {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "description": "String to fully override common.names.fullname template",
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -2191,20 +262,386 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+10more@2"
-          },
-          {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1mysql.enabled+mysql.enabled=null"
+                "$ref": "#/definitions/constrains~1mysql.enabled+mysql.enabled=null"
               },
               {
-                "$ref": "#/$defs/constrains~1mysql"
+                "$ref": "#/definitions/constrains~1mysql"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled:t"
               }
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1mysql+mysql.architecture+mysql.architecture=null+mysql.architecture=replication+6more@3"
+            "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mysql": {
+            "additionalProperties": {},
+            "properties": {
+              "secondary": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1mysql+mysql.enabled+mysql.enabled=null~1then~1any~1else~1fail"
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mysql.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1mysql.architecture=replication~1then~1any~1else~1fail"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mysql": {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
+                "description": "String to fully override common.names.namespace",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "mysql": {
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled+mysql.enabled=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql"
+              }
+            ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "mysql": {
+                            "$ref": "#/definitions/constrains~1commonLabels:t"
+                          }
+                        },
+                        "required": [
+                          "mysql"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mysql.architecture=replication"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "mysql": {
+                            "$ref": "#/definitions/constrains~1commonLabels@2"
+                          }
+                        },
+                        "required": [
+                          "mysql"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "mysql": {
+                            "$ref": "#/definitions/constrains~1commonLabels"
+                          }
+                        },
+                        "required": [
+                          "mysql"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "mysql": {
+                          "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                        }
+                      },
+                      "required": [
+                        "mysql"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "mysql": {
+                          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
+                        }
+                      },
+                      "required": [
+                        "mysql"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              ]
+            }
           },
           {
             "anyOf": [
@@ -2233,6 +670,108 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.nameOverride+mysql.nameOverride:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.nameOverride+mysql.nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.fullnameOverride+mysql.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t+mysql.nameOverride+mysql.nameOverride:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.fullnameOverride+mysql.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t+mysql.nameOverride+mysql.nameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -2242,7 +781,7 @@
             {
               "properties": {
                 "mysql": {
-                  "$ref": "#/$defs/constrains~1namespaceOverride!=null"
+                  "$ref": "#/definitions/constrains~1namespaceOverride!=null"
                 }
               },
               "required": [
@@ -2253,7 +792,7 @@
             {
               "properties": {
                 "mysql": {
-                  "$ref": "#/$defs/constrains~1fullnameOverride!=null"
+                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
                 }
               },
               "required": [
@@ -2264,7 +803,7 @@
             {
               "properties": {
                 "mysql": {
-                  "$ref": "#/$defs/constrains~1nameOverride!=null"
+                  "$ref": "#/definitions/constrains~1nameOverride!=null"
                 }
               },
               "required": [
@@ -2275,7 +814,7 @@
             {
               "properties": {
                 "mysql": {
-                  "$ref": "#/$defs/constrains~1commonLabels!=null"
+                  "$ref": "#/definitions/constrains~1commonLabels!=null"
                 }
               },
               "required": [
@@ -2289,19 +828,36 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "mysql": {
-          "type": [
-            "null",
-            "object"
-          ]
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override nginx.fullname template (will maintain the release name)",
+            "type": "string"
+          }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        },
+        "then": true
       },
       "then": {
         "additionalProperties": {},
@@ -2315,17 +871,57 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1mysql.enabled:t~1then~1mysql.architecture=replication+mysql.fullnameOverride:t~1else~1mysql+mysql.enabled+mysql.enabled=null"
+        "else": false,
+        "if": {
+          "properties": {
+            "ingress": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "secrets": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "secrets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          "then": true
+        }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "mysql": {
+          "ingress": {
             "additionalProperties": {},
+            "description": "Configure the ingress resource that allows you to access the\nref: https://kubernetes.io/docs/user-guide/ingress/",
             "properties": {
-              "fullnameOverride": {
-                "description": "String to fully override common.names.fullname template",
-                "type": "string"
+              "secrets": {
+                "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate are expected in PEM format\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nExample\nsecrets:\n- name: chart-example.local-tls\nkey: \"\"\ncertificate: \"\"",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -2333,6 +929,1117 @@
       }
     }
   ],
+  "definitions": {
+    "constrains/architecture": {
+      "not": {
+        "properties": {
+          "architecture": {}
+        },
+        "required": [
+          "architecture"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/architecture+architecture=null": {
+      "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+    },
+    "constrains/architecture+architecture=null+architecture=replication+commonLabels+9more": {
+      "not": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1commonLabels"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1commonLabels:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1architecture=replication"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1commonLabels@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1architecture+architecture=null"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+5more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/constrains~1namespaceOverride"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            }
+          ]
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1architecture+architecture=null"
+          }
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/architecture+architecture=null@2": {
+      "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+    },
+    "constrains/architecture+architecture=null@3": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1architecture=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1architecture"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/architecture+architecture=null@4": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1architecture@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1architecture=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1architecture"
+        }
+      ]
+    },
+    "constrains/architecture=null": {
+      "properties": {
+        "architecture": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "architecture"
+      ],
+      "type": "object"
+    },
+    "constrains/architecture=replication": {
+      "not": {
+        "$ref": "#/definitions/constrains~1architecture=replication@2"
+      }
+    },
+    "constrains/architecture=replication@2": {
+      "properties": {
+        "architecture": {
+          "enum": [
+            "replication"
+          ]
+        }
+      },
+      "required": [
+        "architecture"
+      ],
+      "type": "object"
+    },
+    "constrains/architecture@2": {
+      "properties": {
+        "architecture": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "architecture"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels": {
+      "properties": {
+        "commonLabels": {
+          "pattern": "\\{\\{",
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels!=null": {
+      "properties": {
+        "commonLabels": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels+commonLabels=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "commonLabels": {}
+                },
+                "required": [
+                  "commonLabels"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "commonLabels": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "commonLabels"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/commonLabels:helm-no-template-actions": {
+      "properties": {
+        "commonLabels": {
+          "$ref": "#/definitions/helm-no-template-actions"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels:t": {
+      "properties": {
+        "commonLabels": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels@2": {
+      "properties": {
+        "commonLabels": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled+enabled=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "enabled": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride!=null": {
+      "properties": {
+        "fullnameOverride": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride+fullnameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+      }
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+      }
+    },
+    "constrains/fullnameOverride:t@3": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql": {
+      "not": {
+        "properties": {
+          "mysql": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "mysql"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mysql+mysql.architecture+mysql.architecture=null": {
+      "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null@3"
+    },
+    "constrains/mysql+mysql.architecture+mysql.architecture=null@2": {
+      "$ref": "#/definitions/constrains~1mysql+mysql.architecture+mysql.architecture=null@3"
+    },
+    "constrains/mysql+mysql.architecture+mysql.architecture=null@3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "mysql": {
+                "properties": {
+                  "architecture": {}
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "mysql"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "mysql": {
+              "$ref": "#/definitions/constrains~1architecture=null"
+            }
+          },
+          "required": [
+            "mysql"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "mysql": {
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+            }
+          },
+          "required": [
+            "mysql"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "mysql": {
+              "$ref": "#/definitions/constrains~1architecture@2"
+            }
+          },
+          "required": [
+            "mysql"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/mysql.architecture=replication": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+      }
+    },
+    "constrains/mysql.architecture=replication@2": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1architecture=replication@2"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.enabled": {
+      "not": {
+        "properties": {
+          "mysql": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mysql"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mysql.enabled+mysql.enabled=null": {
+      "properties": {
+        "mysql": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1enabled+enabled=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.enabled:t": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.fullnameOverride": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.fullnameOverride+mysql.fullnameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+        }
+      ]
+    },
+    "constrains/mysql.fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+      }
+    },
+    "constrains/mysql.fullnameOverride:t+mysql.nameOverride+mysql.nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mysql.nameOverride"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+        }
+      ]
+    },
+    "constrains/mysql.fullnameOverride:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@3"
+      }
+    },
+    "constrains/mysql.fullnameOverride:t@3": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.nameOverride": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.nameOverride+mysql.nameOverride:t": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1mysql.nameOverride"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+          }
+        ]
+      }
+    },
+    "constrains/mysql.nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+      }
+    },
+    "constrains/mysql.nameOverride:t@2": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.namespaceOverride": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1namespaceOverride"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/mysql.namespaceOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t@2"
+      }
+    },
+    "constrains/mysql.namespaceOverride:t@2": {
+      "properties": {
+        "mysql": {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+        }
+      },
+      "required": [
+        "mysql"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride!=null": {
+      "properties": {
+        "nameOverride": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride+nameOverride:t": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        ]
+      }
+    },
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      }
+    },
+    "constrains/nameOverride:t@2": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaceOverride": {
+      "properties": {
+        "namespaceOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaceOverride!=null": {
+      "properties": {
+        "namespaceOverride": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaceOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+      }
+    },
+    "constrains/namespaceOverride:t@2": {
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/common": {
+      "additionalProperties": {},
+      "properties": {
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
+      },
+      "type": "object"
+    },
+    "when/commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more/then/fail": {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride!=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels!=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride!=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride!=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    "when/mysql+mysql.enabled+mysql.enabled=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1mysql.enabled+mysql.enabled=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mysql"
+          }
+        ]
+      },
+      "then": true
+    },
+    "when/mysql.architecture=replication/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+      },
+      "then": true
+    }
+  },
   "properties": {
     "affinity": {
       "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNote: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set"
@@ -2348,7 +2055,7 @@
       "description": "Default container command (useful when using custom images). Use array form"
     },
     "common": {
-      "$ref": "#/$defs/values~1common"
+      "$ref": "#/definitions/values~1common"
     },
     "commonAnnotations": {
       "description": "Add annotations to all the deployed resources"
@@ -2446,31 +2153,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+5more@3"
+                "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+5more"
               },
               {
-                "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+commonLabels+9more@2"
+                "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+commonLabels+9more"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/when~1commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more~1then~1fail"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+5more@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1architecture+architecture=null+architecture=replication+commonLabels+9more@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                "$ref": "#/definitions/constrains~1enabled+enabled=null"
               },
               {
                 "type": "object"
@@ -2478,7 +2167,25 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/when~1commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more~1then~1fail"
+            "$ref": "#/definitions/when~1commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more~1then~1fail"
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+5more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+commonLabels+9more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/definitions/when~1commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more~1then~1fail"
           }
         }
       ],
@@ -2500,7 +2207,7 @@
           "description": "MySQL architecture (`standalone` or `replication`)"
         },
         "common": {
-          "$ref": "#/$defs/values~1common"
+          "$ref": "#/definitions/values~1common"
         },
         "commonLabels": {
           "description": "Common labels to add to all MySQL resources (sub-charts are not considered). Evaluated as a template"

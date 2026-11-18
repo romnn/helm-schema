@@ -1,5 +1,672 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configGeneral": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configKubernetes": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                }
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "maxItems": 0,
+                              "type": "array"
+                            },
+                            {
+                              "maxProperties": 0,
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "propertyNames": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ],
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                            }
+                          }
+                        ],
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "string"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(null|Null|NULL)[ \\t]+#"
+                            }
+                          }
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/t"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+                        },
+                        "pattern": "[\\r\\n]",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-1"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "name": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "additionalProperties": {
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+                        },
+                        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+                        "type": "string"
+                      },
+                      "maxProperties": 1,
+                      "minProperties": 1,
+                      "propertyNames": {
+                        "minLength": 1,
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+-]"
+                        },
+                        "type": "string"
+                      },
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "name": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "null",
+                              "boolean",
+                              "number"
+                            ]
+                          },
+                          {
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_./+-]"
+                            },
+                            "type": "string"
+                          },
+                          {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": [
+                                    "null",
+                                    "boolean",
+                                    "number"
+                                  ]
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[^A-Za-z0-9_./+-]"
+                                  },
+                                  "type": "string"
+                                }
+                              ]
+                            },
+                            "propertyNames": {
+                              "not": {
+                                "pattern": "[^A-Za-z0-9_./+-]"
+                              },
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": [
+                                    "null",
+                                    "boolean",
+                                    "number"
+                                  ]
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[^A-Za-z0-9_./+-]"
+                                  },
+                                  "type": "string"
+                                }
+                              ]
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "type": "array"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configGeneral": {}
+                  },
+                  "required": [
+                    "configGeneral"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "configGeneral": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "configGeneral"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configKubernetes": {}
+                  },
+                  "required": [
+                    "configKubernetes"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "configKubernetes": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "configKubernetes"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {}
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/helm-condition-21"
+          },
+          {
+            "$ref": "#/definitions/helm-condition-37"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "helm-condition-0": {
       "else": false,
       "if": {
@@ -7,7 +674,7 @@
           "rbac": {
             "properties": {
               "create": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -28,7 +695,7 @@
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -37,7 +704,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-0"
+        "$ref": "#/definitions/helm-condition-0"
       }
     },
     "helm-condition-10": {
@@ -47,7 +714,7 @@
             "rbac": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -62,26 +729,26 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-5"
+          "$ref": "#/definitions/helm-condition-5"
         },
         {
-          "$ref": "#/$defs/helm-condition-8"
+          "$ref": "#/definitions/helm-condition-8"
         },
         {
-          "$ref": "#/$defs/helm-condition-9"
+          "$ref": "#/definitions/helm-condition-9"
         }
       ]
     },
     "helm-condition-11": {
       "not": {
-        "$ref": "#/$defs/helm-condition-10"
+        "$ref": "#/definitions/helm-condition-10"
       }
     },
     "helm-condition-12": {
       "not": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -96,7 +763,7 @@
           "rbac": {
             "properties": {
               "create": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -116,7 +783,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -136,10 +803,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-12"
+          "$ref": "#/definitions/helm-condition-12"
         },
         {
-          "$ref": "#/$defs/helm-condition-13"
+          "$ref": "#/definitions/helm-condition-13"
         }
       ]
     },
@@ -147,7 +814,7 @@
       "not": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -161,7 +828,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -181,10 +848,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-15"
+          "$ref": "#/definitions/helm-condition-15"
         },
         {
-          "$ref": "#/$defs/helm-condition-13"
+          "$ref": "#/definitions/helm-condition-13"
         }
       ]
     },
@@ -202,13 +869,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-15"
+          "$ref": "#/definitions/helm-condition-15"
         },
         {
-          "$ref": "#/$defs/helm-condition-12"
+          "$ref": "#/definitions/helm-condition-12"
         },
         {
-          "$ref": "#/$defs/helm-condition-13"
+          "$ref": "#/definitions/helm-condition-13"
         }
       ]
     },
@@ -239,16 +906,16 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-15"
+          "$ref": "#/definitions/helm-condition-15"
         },
         {
-          "$ref": "#/$defs/helm-condition-12"
+          "$ref": "#/definitions/helm-condition-12"
         },
         {
-          "$ref": "#/$defs/helm-condition-13"
+          "$ref": "#/definitions/helm-condition-13"
         },
         {
-          "$ref": "#/$defs/helm-condition-18"
+          "$ref": "#/definitions/helm-condition-18"
         }
       ]
     },
@@ -259,7 +926,7 @@
           "rbac": {
             "properties": {
               "create": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -278,25 +945,25 @@
     "helm-condition-20": {
       "allOf": [
         {
-          "$ref": "#/$defs/helm-condition-11"
+          "$ref": "#/definitions/helm-condition-11"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-17"
+          "$ref": "#/definitions/helm-condition-17"
         },
         {
-          "$ref": "#/$defs/helm-condition-19"
+          "$ref": "#/definitions/helm-condition-19"
         }
       ]
     },
     "helm-condition-21": {
       "not": {
-        "$ref": "#/$defs/helm-condition-20"
+        "$ref": "#/definitions/helm-condition-20"
       }
     },
     "helm-condition-22": {
@@ -317,7 +984,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -330,7 +997,7 @@
             "rbac": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -345,7 +1012,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-22"
+          "$ref": "#/definitions/helm-condition-22"
         }
       ]
     },
@@ -353,7 +1020,7 @@
       "not": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -376,13 +1043,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-12"
+          "$ref": "#/definitions/helm-condition-12"
         }
       ]
     },
     "helm-condition-26": {
       "not": {
-        "$ref": "#/$defs/helm-condition-25"
+        "$ref": "#/definitions/helm-condition-25"
       }
     },
     "helm-condition-27": {
@@ -392,7 +1059,7 @@
             "rbac": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -407,10 +1074,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         },
         {
-          "$ref": "#/$defs/helm-condition-26"
+          "$ref": "#/definitions/helm-condition-26"
         }
       ]
     },
@@ -418,7 +1085,7 @@
       "not": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -432,7 +1099,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -452,7 +1119,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-28"
+          "$ref": "#/definitions/helm-condition-28"
         }
       ]
     },
@@ -461,7 +1128,7 @@
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -470,7 +1137,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-2"
+        "$ref": "#/definitions/helm-condition-2"
       }
     },
     "helm-condition-30": {
@@ -487,7 +1154,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         }
       ]
     },
@@ -498,7 +1165,7 @@
             "rbac": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -513,13 +1180,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-26"
+          "$ref": "#/definitions/helm-condition-26"
         },
         {
-          "$ref": "#/$defs/helm-condition-29"
+          "$ref": "#/definitions/helm-condition-29"
         },
         {
-          "$ref": "#/$defs/helm-condition-30"
+          "$ref": "#/definitions/helm-condition-30"
         }
       ]
     },
@@ -528,7 +1195,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -548,10 +1215,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-28"
+          "$ref": "#/definitions/helm-condition-28"
         },
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         }
       ]
     },
@@ -560,7 +1227,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -580,10 +1247,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         },
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         }
       ]
     },
@@ -601,13 +1268,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         },
         {
-          "$ref": "#/$defs/helm-condition-28"
+          "$ref": "#/definitions/helm-condition-28"
         },
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         }
       ]
     },
@@ -625,16 +1292,16 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-24"
+          "$ref": "#/definitions/helm-condition-24"
         },
         {
-          "$ref": "#/$defs/helm-condition-28"
+          "$ref": "#/definitions/helm-condition-28"
         },
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         },
         {
-          "$ref": "#/$defs/helm-condition-22"
+          "$ref": "#/definitions/helm-condition-22"
         }
       ]
     },
@@ -645,7 +1312,7 @@
             "rbac": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -660,41 +1327,41 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-32"
+          "$ref": "#/definitions/helm-condition-32"
         },
         {
-          "$ref": "#/$defs/helm-condition-33"
+          "$ref": "#/definitions/helm-condition-33"
         },
         {
-          "$ref": "#/$defs/helm-condition-5"
+          "$ref": "#/definitions/helm-condition-5"
         },
         {
-          "$ref": "#/$defs/helm-condition-34"
+          "$ref": "#/definitions/helm-condition-34"
         },
         {
-          "$ref": "#/$defs/helm-condition-35"
+          "$ref": "#/definitions/helm-condition-35"
         },
         {
-          "$ref": "#/$defs/helm-condition-8"
+          "$ref": "#/definitions/helm-condition-8"
         },
         {
-          "$ref": "#/$defs/helm-condition-9"
+          "$ref": "#/definitions/helm-condition-9"
         }
       ]
     },
     "helm-condition-37": {
       "anyOf": [
         {
-          "$ref": "#/$defs/helm-condition-23"
+          "$ref": "#/definitions/helm-condition-23"
         },
         {
-          "$ref": "#/$defs/helm-condition-27"
+          "$ref": "#/definitions/helm-condition-27"
         },
         {
-          "$ref": "#/$defs/helm-condition-31"
+          "$ref": "#/definitions/helm-condition-31"
         },
         {
-          "$ref": "#/$defs/helm-condition-36"
+          "$ref": "#/definitions/helm-condition-36"
         }
       ]
     },
@@ -704,7 +1371,7 @@
           "rbac": {
             "properties": {
               "create": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -726,7 +1393,7 @@
             "serviceAccount": {
               "properties": {
                 "name": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -741,7 +1408,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         }
       ]
     },
@@ -751,7 +1418,7 @@
           "serviceAccount": {
             "properties": {
               "name": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -5547,13 +6214,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         },
         {
-          "$ref": "#/$defs/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-6"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         }
       ]
     },
@@ -10175,10 +10842,10 @@
           ]
         },
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         },
         {
-          "$ref": "#/$defs/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-6"
         }
       ]
     },
@@ -10208,673 +10875,6 @@
       ]
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "create": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configGeneral": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configKubernetes": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "anyOf": [
-                            {
-                              "type": "boolean"
-                            },
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "not": {
-                                    "pattern": ":[ \\t]|:$"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[ \\t]#"
-                                  }
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                }
-                              ],
-                              "type": "string"
-                            },
-                            {
-                              "maxItems": 0,
-                              "type": "array"
-                            },
-                            {
-                              "maxProperties": 0,
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "propertyNames": {
-                          "allOf": [
-                            {
-                              "not": {
-                                "pattern": ":[ \\t]|:$"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[ \\t]#"
-                              }
-                            },
-                            {
-                              "not": {
-                                "pattern": "[\\r\\n]"
-                              }
-                            }
-                          ],
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
-                          }
-                        ],
-                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                        "type": "string"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(null|Null|NULL)[ \\t]+#"
-                            }
-                          }
-                        ],
-                        "type": "string"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/t"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
-                        },
-                        "pattern": "[\\r\\n]",
-                        "type": "string"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-1"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "name": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  {
-                    "not": {
-                      "additionalProperties": {
-                        "not": {
-                          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
-                        },
-                        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
-                        "type": "string"
-                      },
-                      "maxProperties": 1,
-                      "minProperties": 1,
-                      "propertyNames": {
-                        "minLength": 1,
-                        "not": {
-                          "pattern": "[^A-Za-z0-9_.$/+-]"
-                        },
-                        "type": "string"
-                      },
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "name": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  {
-                    "not": {
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": [
-                              "null",
-                              "boolean",
-                              "number"
-                            ]
-                          },
-                          {
-                            "not": {
-                              "pattern": "[^A-Za-z0-9_./+-]"
-                            },
-                            "type": "string"
-                          },
-                          {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": [
-                                    "null",
-                                    "boolean",
-                                    "number"
-                                  ]
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[^A-Za-z0-9_./+-]"
-                                  },
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "propertyNames": {
-                              "not": {
-                                "pattern": "[^A-Za-z0-9_./+-]"
-                              },
-                              "type": "string"
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "items": {
-                              "anyOf": [
-                                {
-                                  "type": [
-                                    "null",
-                                    "boolean",
-                                    "number"
-                                  ]
-                                },
-                                {
-                                  "not": {
-                                    "pattern": "[^A-Za-z0-9_./+-]"
-                                  },
-                                  "type": "string"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configGeneral": {}
-                  },
-                  "required": [
-                    "configGeneral"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configGeneral": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "configGeneral"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configKubernetes": {}
-                  },
-                  "required": [
-                    "configKubernetes"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configKubernetes": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "configKubernetes"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {}
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/helm-condition-21"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-37"
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "affinity": {},
     "configAwsOrGcp": {},

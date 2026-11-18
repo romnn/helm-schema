@@ -14,7 +14,7 @@ put to the user as a product decision.
 ## Decision
 
 A CLI output-layout option with values `auto` (default), `pretty`,
-`compact` (compact JSON + short `$defs` handles):
+`compact` (compact JSON + short `definitions` handles):
 
 - `auto` writes pretty, and switches to compact with short handles only when
   the pretty schema would exceed the limit, with a note on stderr.

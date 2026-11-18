@@ -525,7 +525,7 @@ pub(crate) fn draft07_root_document(root_schema: Value, root_policy: RootPolicy)
     let mut out = Map::new();
     out.insert(
         "$schema".to_string(),
-        Value::String("http://json-schema.org/draft-07/schema#".to_string()),
+        Value::String(helm_schema_json_schema_walk::GENERATED_SCHEMA_URI.to_string()),
     );
 
     if let Value::Object(obj) = root_schema {

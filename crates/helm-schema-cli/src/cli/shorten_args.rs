@@ -7,11 +7,11 @@ use helm_schema::output::JsonOutputFormat;
 /// Arguments of `helm-schema shorten`.
 #[derive(Args, Debug, Clone)]
 pub struct ShortenArgs {
-    /// Schema with readable `$defs` names, as `helm-schema` writes it.
+    /// Schema with readable `definitions` names, as `helm-schema` writes it.
     #[arg(value_name = "INPUT")]
     pub input: PathBuf,
 
-    /// Where to write the schema with short `$defs` keys.
+    /// Where to write the schema with short `definitions` keys.
     #[arg(value_name = "OUTPUT")]
     pub output: PathBuf,
 

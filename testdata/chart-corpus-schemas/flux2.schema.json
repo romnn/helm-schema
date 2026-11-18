@@ -1,66 +1,10 @@
 {
-  "$defs": {
-    "constrains/create:t": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "constrains/sourceWatcher.create:t": {
-      "properties": {
-        "sourceWatcher": {
-          "$ref": "#/$defs/constrains~1create:t"
-        }
-      },
-      "required": [
-        "sourceWatcher"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/sourceWatcher.create:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1sourceWatcher.create:t"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1sourceWatcher.create:t"
+        "$ref": "#/definitions/constrains~1sourceWatcher.create!=0+sourceWatcher.create=true"
       },
       "then": {
         "allOf": [
@@ -103,37 +47,9 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1sourceWatcher.create:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "sourceWatcher": {
-            "additionalProperties": {},
-            "properties": {
-              "container": {
-                "additionalProperties": {},
-                "properties": {
-                  "additionalArgs": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1sourceWatcher.create:t"
+            "$ref": "#/definitions/constrains~1sourceWatcher.create!=0+sourceWatcher.create=true"
           },
           {
             "anyOf": [
@@ -197,8 +113,86 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1sourceWatcher.create!=0+sourceWatcher.create=true"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sourceWatcher": {
+            "additionalProperties": {},
+            "properties": {
+              "container": {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalArgs": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
+  "definitions": {
+    "constrains/create!=0+create=true": {
+      "properties": {
+        "create": {
+          "anyOf": [
+            {
+              "minProperties": 1,
+              "type": "object"
+            },
+            {
+              "not": {
+                "const": 0
+              },
+              "type": "number"
+            },
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "const": true
+            }
+          ]
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "constrains/sourceWatcher.create!=0+sourceWatcher.create=true": {
+      "properties": {
+        "sourceWatcher": {
+          "$ref": "#/definitions/constrains~1create!=0+create=true"
+        }
+      },
+      "required": [
+        "sourceWatcher"
+      ],
+      "type": "object"
+    }
+  },
   "properties": {
     "cli": {},
     "clusterDomain": {},
@@ -237,45 +231,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1create:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "container": {}
-                      },
-                      "required": [
-                        "container"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "container": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "container"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1create:t"
+                "$ref": "#/definitions/constrains~1create!=0+create=true"
               },
               {
                 "anyOf": [
@@ -302,6 +258,44 @@
                       ],
                       "type": "object"
                     }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1create!=0+create=true"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "container": {}
+                      },
+                      "required": [
+                        "container"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "container": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "container"
+                    ],
+                    "type": "object"
                   }
                 ]
               }

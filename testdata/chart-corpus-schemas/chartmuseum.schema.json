@@ -1,5 +1,447 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@2"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    },
+                    {
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1env.existingSecret:t"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "env": {
+            "additionalProperties": {},
+            "description": "team_name: dev",
+            "properties": {
+              "secret": {
+                "description": "POD_IP: status.podIP",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "env": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "env"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "env": {}
+              },
+              "required": [
+                "env"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "not": {
+          "$ref": "#/definitions/constrains~1env.existingSecret:t"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "secret": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1env.existingSecret:t"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "secret": {}
+                  },
+                  "required": [
+                    "secret"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "secret": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "secret"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "constrains/annotations": {
       "properties": {
         "annotations": {
@@ -23,7 +465,7 @@
     "constrains/annotations:helm-marker-free": {
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+          "$ref": "#/definitions/helm-marker-free"
         }
       },
       "required": [
@@ -31,13 +473,10 @@
       ],
       "type": "object"
     },
-    "constrains/annotations:helm-marker-free/:helm-marker-free": {
-      "$ref": "#/$defs/helm-marker-free"
-    },
     "constrains/annotations:t": {
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -69,281 +508,135 @@
       ],
       "type": "object"
     },
-    "constrains/annotations@3": {
-      "properties": {
-        "annotations": {}
-      },
-      "required": [
-        "annotations"
-      ],
-      "type": "object"
-    },
     "constrains/commonLabels:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t@3"
-      }
-    },
-    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
-      }
-    },
-    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+13more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.type+service.type=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@9"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+13more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+13more"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+13more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+13more@2"
+        "$ref": "#/definitions/constrains~1commonLabels:t@3"
       }
     },
     "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1commonLabels:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1commonLabels:t@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1commonLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more"
+            }
+          ]
         }
       ]
     },
     "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more@3"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more@2"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@8"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@3"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@8": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@6"
-      }
-    },
-    "constrains/commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@9": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@5"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more@2"
+              }
+            ]
+          }
+        ]
       }
     },
     "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations+8more@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1commonLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.annotations+8more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.annotations+8more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1commonLabels:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            }
+          ]
         }
       ]
     },
     "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations+8more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations+8more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations+8more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@8"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@4"
-        }
-      ]
-    },
-    "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@8": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@6"
-      }
-    },
-    "constrains/commonLabels:t+serviceAccount+serviceAccount.annotations+9more@9": {
-      "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@5"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.annotations+8more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.annotations+8more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+              }
+            ]
+          }
+        ]
       }
     },
     "constrains/commonLabels:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1commonLabels:t@3"
+        "$ref": "#/definitions/constrains~1commonLabels:t@3"
       }
     },
     "constrains/commonLabels:t@3": {
       "properties": {
         "commonLabels": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -354,7 +647,7 @@
     "constrains/create:t": {
       "properties": {
         "create": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -363,21 +656,11 @@
       "type": "object"
     },
     "constrains/env.existingSecret:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1env.existingSecret:t@3"
-      }
-    },
-    "constrains/env.existingSecret:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1env.existingSecret:t@3"
-      }
-    },
-    "constrains/env.existingSecret:t@3": {
       "properties": {
         "env": {
           "properties": {
             "existingSecret": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -393,270 +676,150 @@
     },
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@5"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@8"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            }
+          ]
+        }
+      ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@6": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@7": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@8": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@6"
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@9": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+service+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.type+service.type=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+serviceAccount.create:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+          }
         }
       ]
     },
     "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+      }
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/definitions/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
       }
     },
     "constrains/fullnameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      }
-    },
-    "constrains/fullnameOverride:t@4": {
       "properties": {
         "fullnameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -665,11 +828,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -681,117 +839,30 @@
       "type": "object"
     },
     "constrains/name": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1name@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1name@2"
-            }
-          ]
-        },
-        {
-          "$ref": "#/$defs/constrains~1name@3"
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/constrains~1name~1object@4"
         }
-      ]
-    },
-    "constrains/name+name:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1name@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t"
-        }
-      ]
-    },
-    "constrains/name+name:t+name=false+name=null+name=true": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1name+name:t+name=false+name=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name+name:t+name=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name+name:t"
-        }
-      ]
-    },
-    "constrains/name+name:t+name=false+name=true": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1name+name=false+name=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t"
-        }
-      ]
-    },
-    "constrains/name+name:t+name=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1name+name=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t"
-        }
-      ]
-    },
-    "constrains/name+name=false+name=true": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name=false"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name=true"
-        }
-      ]
-    },
-    "constrains/name+name=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1name=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name@2"
-        }
-      ]
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
     },
     "constrains/name/array": {
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1array@2"
+            "$ref": "#/definitions/constrains~1name~1array@2"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1object@2"
+            "$ref": "#/definitions/constrains~1name~1object@2"
           }
         ]
       },
@@ -801,16 +872,16 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1array@3"
+            "$ref": "#/definitions/constrains~1name~1array@3"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1object@5"
+            "$ref": "#/definitions/constrains~1name~1object@5"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
           }
         ]
       },
@@ -820,10 +891,10 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
           }
         ]
       },
@@ -840,21 +911,21 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1array@2"
+            "$ref": "#/definitions/constrains~1name~1array@2"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1object@2"
+            "$ref": "#/definitions/constrains~1name~1object@2"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -862,21 +933,21 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1array@3"
+            "$ref": "#/definitions/constrains~1name~1array@3"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1object@5"
+            "$ref": "#/definitions/constrains~1name~1object@5"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -884,21 +955,21 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1object"
+            "$ref": "#/definitions/constrains~1name~1object"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1array"
+            "$ref": "#/definitions/constrains~1name~1array"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -906,15 +977,15 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x3a"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -922,15 +993,15 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -961,57 +1032,7 @@
     "constrains/name:t": {
       "properties": {
         "name": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
-    },
-    "constrains/name=false": {
-      "properties": {
-        "name": {
-          "enum": [
-            false
-          ]
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
-    },
-    "constrains/name=null": {
-      "properties": {
-        "name": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
-    },
-    "constrains/name=true": {
-      "properties": {
-        "name": {
-          "enum": [
-            true
-          ]
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
-    },
-    "constrains/name@10": {
-      "properties": {
-        "name": {
-          "type": "number"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -1020,20 +1041,20 @@
       "type": "object"
     },
     "constrains/name@2": {
-      "not": {
-        "properties": {
-          "name": {}
-        },
-        "required": [
-          "name"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2e@2"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
     },
     "constrains/name@3": {
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1object@4"
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2e"
         }
       },
       "required": [
@@ -1044,7 +1065,7 @@
     "constrains/name@4": {
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2e@2"
+          "$ref": "#/definitions/constrains~1name~1object@3"
         }
       },
       "required": [
@@ -1053,28 +1074,6 @@
       "type": "object"
     },
     "constrains/name@5": {
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2e"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
-    },
-    "constrains/name@6": {
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/constrains~1name~1object@3"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
-    },
-    "constrains/name@7": {
       "properties": {
         "name": {
           "maxItems": 1,
@@ -1086,7 +1085,7 @@
       ],
       "type": "object"
     },
-    "constrains/name@8": {
+    "constrains/name@6": {
       "properties": {
         "name": {
           "pattern": "^(?:(?:[\\x20])*)$",
@@ -1098,11 +1097,9 @@
       ],
       "type": "object"
     },
-    "constrains/name@9": {
+    "constrains/name@7": {
       "properties": {
-        "name": {
-          "type": "null"
-        }
+        "name": {}
       },
       "required": [
         "name"
@@ -1110,105 +1107,6 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@8"
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@8": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
-    },
-    "constrains/nameOverride@3": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -1219,86 +1117,754 @@
       ],
       "type": "object"
     },
-    "constrains/service+service.annotations": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1service.annotations"
-          },
-          {
-            "properties": {
-              "service": {
-                "$ref": "#/$defs/constrains~1annotations@2"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service.annotations+service.annotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t+service.servicename=false+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.annotations@2"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1annotations:t"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1annotations:helm-marker-free"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more@2": {
+    "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more"
+          "$ref": "#/definitions/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t@4"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       ]
     },
-    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more@3": {
+    "constrains/nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more@2"
+        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@3": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "$ref": "#/definitions/constrains~1annotations=null"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1service.annotations"
+                  }
+                ]
+              }
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1service.annotations"
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "$ref": "#/definitions/constrains~1annotations@2"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            {
+              "not": {
+                "properties": {
+                  "service": {
+                    "$ref": "#/definitions/constrains~1annotations"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "service": {
+                          "$ref": "#/definitions/constrains~1servicename@3"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1service.servicename:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1service.servicename:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename=true"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "service": {
+                                  "$ref": "#/definitions/constrains~1servicename@2"
+                                }
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1service+service.servicename@2"
+                            }
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename@9"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename@4"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename@5"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename=false"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1service.servicename:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename@7"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1service.servicename"
+                        },
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename=null"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "service": {
+                              "$ref": "#/definitions/constrains~1servicename@8"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "properties": {
+                "service": {
+                  "$ref": "#/definitions/constrains~1annotations:t"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "service": {
+                  "$ref": "#/definitions/constrains~1annotations:helm-marker-free"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service.servicename:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1service.servicename@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1service+service.servicename"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service.servicename:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1service.servicename@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1service+service.servicename"
+                },
+                {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "servicename": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x25"
+                        }
+                      },
+                      "required": [
+                        "servicename"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service.servicename:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "servicename": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object@2"
+                        }
+                      },
+                      "required": [
+                        "servicename"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "service": {
+                          "properties": {
+                            "servicename": {
+                              "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object@4"
+                            }
+                          },
+                          "required": [
+                            "servicename"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1service+service.servicename@2"
+                    }
+                  ]
+                },
+                {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "servicename": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x2e"
+                        }
+                      },
+                      "required": [
+                        "servicename"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service.servicename:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "servicename": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x5b"
+                        }
+                      },
+                      "required": [
+                        "servicename"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1service.servicename@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1service+service.servicename"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/allOf/array+not/array": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1array@2"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1object@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1array+not~1array@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/allOf/array+not/array@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1array@3"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/allOf/not/object+object": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1object@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1array+not~1array@2"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@2"
+          }
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/allOf/not/object+object@2": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1array"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "allOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1name~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1name~1object@2"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1name~1array"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+              },
+              {
+                "allOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1name~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x3a"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1name~1object@2"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1anyOf~1string;pattern-x20-x2d"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1name~1object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@3"
+          }
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/allOf/not/object+object@3": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@5"
+          }
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/allOf/not/object+object@4": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@4"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/anyOf/string;pattern-x20-x2d": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x2d"
+        },
+        {
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/string;pattern-x20-x25": {
+      "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/string;pattern-x20-x2e": {
+      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/string;pattern-x20-x5b": {
+      "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/service+service.annotations+service.annotations:helm-marker-free+7more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more"
       }
     },
     "constrains/service+service.servicename": {
@@ -1306,253 +1872,24 @@
         {
           "properties": {
             "service": {
-              "$ref": "#/$defs/constrains~1servicename@2"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@6"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename:t"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename:t+service.servicename=false+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename=false+service.servicename=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename:t"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename:t+service.servicename=false+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t+service.servicename=false+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename:t+service.servicename=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename+service.servicename:t"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename:t+service.servicename=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename+service.servicename=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename:t"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename:t"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename:t@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename:t"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename:t@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename:t"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename=false+service.servicename=true": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename=true"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename@9"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename@4"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename@5"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename=false"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/service+service.servicename+service.servicename=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename@7"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename=null"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename@8"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/service+service.servicename/allOf/array+not/array": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1name~1array@2"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+              "properties": {
+                "servicename": {
+                  "$ref": "#/definitions/constrains~1service+service.servicename~1allOf~1not~1object+object"
+                }
               },
-              {
-                "$ref": "#/$defs/constrains~1name~1array@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x2d"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1object@5"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1array+not~1array@2"
-              }
-            ]
+              "required": [
+                "servicename"
+              ],
+              "type": "object"
+            }
           },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/service+service.servicename/allOf/array+not/array@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1name~1array@3"
-          }
+          "required": [
+            "service"
+          ],
+          "type": "object"
         },
         {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x2d"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
-              }
-            ]
-          },
-          "type": "array"
+          "$ref": "#/definitions/constrains~1service+service.servicename@2"
         }
       ]
     },
@@ -1563,443 +1900,38 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d@2"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1name~1object@4"
-          }
-        }
-      ]
-    },
-    "constrains/service+service.servicename/allOf/not/object+object@2": {
-      "allOf": [
-        {
-          "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1array@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1object@5"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
               }
             ]
-          },
-          "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1name~1object@2"
+            "$ref": "#/definitions/constrains~1name~1object@4"
           }
         }
       ]
-    },
-    "constrains/service+service.servicename/allOf/not/object+object@3": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1name~1object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1array"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-              },
-              {
-                "allOf": [
-                  {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1name~1array@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x2d"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1array+not~1array"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1name~1object@2"
-                        }
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/constrains~1name~1array"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
-              },
-              {
-                "allOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1name~1array@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1array+not~1array"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x3a"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1name~1object@2"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/constrains~1name~1object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1name~1object@3"
-          }
-        }
-      ]
-    },
-    "constrains/service+service.servicename/allOf/not/object+object@4": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1name~1object@5"
-          }
-        }
-      ]
-    },
-    "constrains/service+service.servicename/allOf/not/object+object@5": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1name~1object@4"
-          }
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/service+service.servicename/anyOf/string;pattern-x20-x2d": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x2d"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/service+service.servicename/anyOf/string;pattern-x20-x2d@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/service+service.servicename/string;pattern-x20-x25": {
-      "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/service+service.servicename/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/service+service.servicename/string;pattern-x20-x2e": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/service+service.servicename/string;pattern-x20-x5b": {
-      "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/service+service.servicename/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
-      "type": "string"
     },
     "constrains/service+service.servicename@2": {
-      "allOf": [
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "servicename": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@5"
-                }
-              },
-              "required": [
-                "servicename"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@6"
-        }
-      ]
-    },
-    "constrains/service+service.servicename@3": {
-      "allOf": [
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "servicename": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object"
-                }
-              },
-              "required": [
-                "servicename"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@6"
-        }
-      ]
-    },
-    "constrains/service+service.servicename@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1service+service.servicename@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename@2"
+          "$ref": "#/definitions/constrains~1service.servicename"
         },
         {
           "properties": {
             "service": {
-              "properties": {
-                "servicename": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x25"
-                }
-              },
-              "required": [
-                "servicename"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/service+service.servicename@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename@2"
-        }
-      ]
-    },
-    "constrains/service+service.servicename@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1service.servicename"
-        },
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename@6"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/service+service.servicename@7": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "servicename": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x5b"
-                }
-              },
-              "required": [
-                "servicename"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename@2"
-        }
-      ]
-    },
-    "constrains/service+service.servicename@8": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "servicename": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@3"
-                }
-              },
-              "required": [
-                "servicename"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service+service.servicename@2"
-        },
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "servicename": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x2e"
-                }
-              },
-              "required": [
-                "servicename"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1servicename@6"
             }
           },
           "required": [
@@ -2010,12 +1942,9 @@
       ]
     },
     "constrains/service+service.type+service.type=null": {
-      "$ref": "#/$defs/constrains~1service+service.type+service.type=null@3"
+      "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
     },
     "constrains/service+service.type+service.type=null@2": {
-      "$ref": "#/$defs/constrains~1service+service.type+service.type=null@3"
-    },
-    "constrains/service+service.type+service.type=null@3": {
       "anyOf": [
         {
           "not": {
@@ -2039,7 +1968,17 @@
         {
           "properties": {
             "service": {
-              "$ref": "#/$defs/constrains~1type=null"
+              "properties": {
+                "type": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
             }
           },
           "required": [
@@ -2050,7 +1989,15 @@
         {
           "properties": {
             "service": {
-              "$ref": "#/$defs/constrains~1type"
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
             }
           },
           "required": [
@@ -2060,49 +2007,17 @@
         }
       ]
     },
-    "constrains/service+service.type+service.type=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1service+service.type+service.type=null@2"
-      }
-    },
     "constrains/service.annotations": {
       "not": {
         "properties": {
           "service": {
-            "$ref": "#/$defs/constrains~1annotations@3"
-          }
-        },
-        "required": [
-          "service"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/service.annotations+service.annotations=null": {
-      "not": {
-        "anyOf": [
-          {
             "properties": {
-              "service": {
-                "$ref": "#/$defs/constrains~1annotations=null"
-              }
+              "annotations": {}
             },
             "required": [
-              "service"
+              "annotations"
             ],
             "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service.annotations"
-          }
-        ]
-      }
-    },
-    "constrains/service.annotations@2": {
-      "not": {
-        "properties": {
-          "service": {
-            "$ref": "#/$defs/constrains~1annotations"
           }
         },
         "required": [
@@ -2115,7 +2030,13 @@
       "not": {
         "properties": {
           "service": {
-            "$ref": "#/$defs/constrains~1servicename@10"
+            "properties": {
+              "servicename": {}
+            },
+            "required": [
+              "servicename"
+            ],
+            "type": "object"
           }
         },
         "required": [
@@ -2124,46 +2045,28 @@
         "type": "object"
       }
     },
-    "constrains/service.servicename+service.servicename:t": {
-      "allOf": [
-        {
-          "properties": {
-            "service": {
-              "$ref": "#/$defs/constrains~1servicename@3"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1service.servicename:t"
-        }
-      ]
-    },
     "constrains/service.servicename/allOf/array+not/array": {
       "allOf": [
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1service.servicename~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1service.servicename~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1array@3"
+                "$ref": "#/definitions/constrains~1name~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1service.servicename~1allOf~1not~1object+object@3"
+                "$ref": "#/definitions/constrains~1service.servicename~1allOf~1not~1object+object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1object@5"
+                "$ref": "#/definitions/constrains~1name~1object@5"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
               }
             ]
           },
@@ -2171,7 +2074,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1name~1array@2"
+            "$ref": "#/definitions/constrains~1name~1array@2"
           }
         }
       ]
@@ -2180,7 +2083,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1name~1array@3"
+            "$ref": "#/definitions/constrains~1name~1array@3"
           }
         },
         {
@@ -2188,10 +2091,10 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
               }
             ]
           },
@@ -2205,33 +2108,37 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1service.servicename~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1service.servicename~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1array@3"
+                "$ref": "#/definitions/constrains~1name~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1service.servicename~1allOf~1not~1object+object@3"
+                "$ref": "#/definitions/constrains~1service.servicename~1allOf~1not~1object+object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1object@5"
+                "$ref": "#/definitions/constrains~1name~1object@5"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1name~1object@2"
+            "$ref": "#/definitions/constrains~1name~1object@2"
           }
         }
       ]
@@ -2242,13 +2149,13 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1name~1object"
+                "$ref": "#/definitions/constrains~1name~1object"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1array"
+                "$ref": "#/definitions/constrains~1name~1array"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
               },
               {
                 "allOf": [
@@ -2256,22 +2163,22 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/constrains~1service.servicename~1allOf~1not~1object+object"
+                          "$ref": "#/definitions/constrains~1service.servicename~1allOf~1not~1object+object"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1array@2"
+                          "$ref": "#/definitions/constrains~1name~1array@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2d@2"
+                          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1object@2"
+                          "$ref": "#/definitions/constrains~1name~1object@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1service.servicename~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1service.servicename~1allOf~1array+not~1array"
                         }
                       ]
                     },
@@ -2279,46 +2186,50 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/constrains~1name~1array"
+                      "$ref": "#/definitions/constrains~1name~1array"
                     }
                   }
                 ]
               },
               {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
               },
               {
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/constrains~1name~1object"
+                      "$ref": "#/definitions/constrains~1name~1object"
                     }
                   },
                   {
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/constrains~1service.servicename~1allOf~1not~1object+object"
+                          "$ref": "#/definitions/constrains~1service.servicename~1allOf~1not~1object+object"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1array@2"
+                          "$ref": "#/definitions/constrains~1name~1array@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+                          "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1name~1object@2"
+                          "$ref": "#/definitions/constrains~1name~1object@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1service.servicename~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1service.servicename~1allOf~1array+not~1array"
                         }
                       ]
                     },
                     "propertyNames": {
-                      "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d@2"
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+                        }
+                      ]
                     },
                     "type": "object"
                   }
@@ -2327,13 +2238,17 @@
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1name~1object@3"
+            "$ref": "#/definitions/constrains~1name~1object@3"
           }
         }
       ]
@@ -2342,7 +2257,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1name~1object@5"
+            "$ref": "#/definitions/constrains~1name~1object@5"
           }
         },
         {
@@ -2350,15 +2265,19 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1service+service.servicename~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         }
@@ -2367,7 +2286,7 @@
     "constrains/service.servicename:t": {
       "properties": {
         "service": {
-          "$ref": "#/$defs/constrains~1servicename:t"
+          "$ref": "#/definitions/constrains~1servicename:t"
         }
       },
       "required": [
@@ -2380,7 +2299,7 @@
         "service": {
           "properties": {
             "servicename": {
-              "$ref": "#/$defs/constrains~1service.servicename~1allOf~1not~1object+object@2"
+              "$ref": "#/definitions/constrains~1service.servicename~1allOf~1not~1object+object@2"
             }
           },
           "required": [
@@ -2394,188 +2313,471 @@
       ],
       "type": "object"
     },
-    "constrains/serviceAccount+serviceAccount.annotations": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount.annotations"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "$ref": "#/$defs/constrains~1annotations@2"
+    "constrains/serviceAccount+serviceAccount.annotations+8more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "$ref": "#/definitions/constrains~1annotations=null"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.annotations"
+                  }
+                ]
               }
             },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "constrains/serviceAccount+serviceAccount.annotations+8more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.annotations@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.annotations+serviceAccount.annotations=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+3more"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1annotations:t"
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.annotations"
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "$ref": "#/definitions/constrains~1annotations@2"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            {
+              "not": {
+                "properties": {
+                  "serviceAccount": {
+                    "$ref": "#/definitions/constrains~1annotations"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
+                            },
+                            {
+                              "properties": {
+                                "serviceAccount": {
+                                  "$ref": "#/definitions/constrains~1name"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "$ref": "#/definitions/constrains~1name@4"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "enum": [
+                                    false
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "$ref": "#/definitions/constrains~1name@3"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "serviceAccount": {
+                          "$ref": "#/definitions/constrains~1name@2"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "$ref": "#/definitions/constrains~1name@6"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "enum": [
+                                    null
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "type": "null"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "$ref": "#/definitions/constrains~1annotations:t"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "$ref": "#/definitions/constrains~1annotations:helm-marker-free"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
             }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
+          ]
         },
         {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1annotations:helm-marker-free"
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x25"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
             }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object@4"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
+                    }
+                  ]
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x2e"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1allOf~1not~1object+object@2"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/definitions/constrains~1service+service.annotations+service.annotations:helm-marker-free+7more~1string;pattern-x20-x5b"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            }
+          ]
         }
       ]
     },
     "constrains/serviceAccount+serviceAccount.annotations+8more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations+8more"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.annotations+8more@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.annotations+8more@2"
+        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.annotations+8more"
       }
     },
     "constrains/serviceAccount+serviceAccount.name": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@6"
-        },
-        {
           "properties": {
             "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@3"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name=false+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name+serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+1more"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name=false+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@10"
+              "properties": {
+                "name": {
+                  "$ref": "#/definitions/constrains~1service+service.servicename~1allOf~1not~1object+object"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
             }
           },
           "required": [
@@ -2584,265 +2786,19 @@
           "type": "object"
         },
         {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@6"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name=true"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name=false"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@5"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name+serviceAccount.name=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@8"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name=null"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@9"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
         }
       ]
     },
     "constrains/serviceAccount+serviceAccount.name@2": {
-      "allOf": [
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@6"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name@3": {
-      "allOf": [
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@5"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@6"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name@2"
+          "$ref": "#/definitions/constrains~1serviceAccount.name"
         },
         {
           "properties": {
             "serviceAccount": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x5b"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name@2"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@7"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@2"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x25"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name@2"
-        }
-      ]
-    },
-    "constrains/serviceAccount+serviceAccount.name@8": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount.name@3"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1string;pattern-x20-x2e"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "$ref": "#/$defs/constrains~1service+service.servicename~1allOf~1not~1object+object@3"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1name@5"
             }
           },
           "required": [
@@ -2856,40 +2812,13 @@
       "not": {
         "properties": {
           "serviceAccount": {
-            "$ref": "#/$defs/constrains~1annotations@3"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/serviceAccount.annotations+serviceAccount.annotations=null": {
-      "not": {
-        "anyOf": [
-          {
             "properties": {
-              "serviceAccount": {
-                "$ref": "#/$defs/constrains~1annotations=null"
-              }
+              "annotations": {}
             },
             "required": [
-              "serviceAccount"
+              "annotations"
             ],
             "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount.annotations"
-          }
-        ]
-      }
-    },
-    "constrains/serviceAccount.annotations@2": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "$ref": "#/$defs/constrains~1annotations"
           }
         },
         "required": [
@@ -2900,18 +2829,13 @@
     },
     "constrains/serviceAccount.create:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
+        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
       }
     },
     "constrains/serviceAccount.create:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceAccount.create:t@3"
-      }
-    },
-    "constrains/serviceAccount.create:t@3": {
       "properties": {
         "serviceAccount": {
-          "$ref": "#/$defs/constrains~1create:t"
+          "$ref": "#/definitions/constrains~1create:t"
         }
       },
       "required": [
@@ -2923,13 +2847,7 @@
       "not": {
         "properties": {
           "serviceAccount": {
-            "properties": {
-              "name": {}
-            },
-            "required": [
-              "name"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1name@7"
           }
         },
         "required": [
@@ -2938,28 +2856,10 @@
         "type": "object"
       }
     },
-    "constrains/serviceAccount.name+serviceAccount.name:t": {
-      "allOf": [
-        {
-          "properties": {
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name@4"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceAccount.name:t"
-        }
-      ]
-    },
     "constrains/serviceAccount.name:t": {
       "properties": {
         "serviceAccount": {
-          "$ref": "#/$defs/constrains~1name:t"
+          "$ref": "#/definitions/constrains~1name:t"
         }
       },
       "required": [
@@ -2972,7 +2872,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/$defs/constrains~1service.servicename~1allOf~1not~1object+object@2"
+              "$ref": "#/definitions/constrains~1service.servicename~1allOf~1not~1object+object@2"
             }
           },
           "required": [
@@ -2987,111 +2887,20 @@
       "type": "object"
     },
     "constrains/servicename": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1servicename@2"
+      "not": {
+        "properties": {
+          "servicename": {}
         },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/constrains~1servicename@10"
-              }
-            },
-            {
-              "$ref": "#/$defs/constrains~1servicename@6"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/servicename+servicename:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1servicename@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename:t"
-        }
-      ]
-    },
-    "constrains/servicename+servicename:t+servicename=false+servicename=null+servicename=true": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1servicename+servicename:t+servicename=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename+servicename:t+servicename=false+servicename=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename+servicename:t"
-        }
-      ]
-    },
-    "constrains/servicename+servicename:t+servicename=false+servicename=true": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1servicename+servicename=false+servicename=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename:t"
-        }
-      ]
-    },
-    "constrains/servicename+servicename:t+servicename=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1servicename+servicename=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename:t"
-        }
-      ]
-    },
-    "constrains/servicename+servicename=false+servicename=true": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1servicename@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename=false"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename@9"
-        }
-      ]
-    },
-    "constrains/servicename+servicename=null": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1servicename@10"
-          }
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1servicename@8"
-        }
-      ]
+        "required": [
+          "servicename"
+        ],
+        "type": "object"
+      }
     },
     "constrains/servicename:t": {
       "properties": {
         "servicename": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -3138,19 +2947,10 @@
       ],
       "type": "object"
     },
-    "constrains/servicename@10": {
-      "properties": {
-        "servicename": {}
-      },
-      "required": [
-        "servicename"
-      ],
-      "type": "object"
-    },
     "constrains/servicename@2": {
       "properties": {
         "servicename": {
-          "$ref": "#/$defs/constrains~1name~1object@4"
+          "$ref": "#/definitions/constrains~1name~1object@4"
         }
       },
       "required": [
@@ -3161,7 +2961,7 @@
     "constrains/servicename@3": {
       "properties": {
         "servicename": {
-          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2e@2"
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2e@2"
         }
       },
       "required": [
@@ -3172,7 +2972,7 @@
     "constrains/servicename@4": {
       "properties": {
         "servicename": {
-          "$ref": "#/$defs/constrains~1name~1string;pattern-x20-x2e"
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2e"
         }
       },
       "required": [
@@ -3183,7 +2983,7 @@
     "constrains/servicename@5": {
       "properties": {
         "servicename": {
-          "$ref": "#/$defs/constrains~1name~1object@3"
+          "$ref": "#/definitions/constrains~1name~1object@3"
         }
       },
       "required": [
@@ -3237,17 +3037,6 @@
       ],
       "type": "object"
     },
-    "constrains/type": {
-      "properties": {
-        "type": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
     "constrains/type+type=null": {
       "anyOf": [
         {
@@ -3262,28 +3051,25 @@
           }
         },
         {
-          "$ref": "#/$defs/constrains~1type=null"
+          "properties": {
+            "type": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
         }
       ]
-    },
-    "constrains/type=null": {
-      "properties": {
-        "type": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
     },
     "helm-marker-free": {
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+            "$ref": "#/definitions/helm-marker-free"
           },
           "propertyNames": {
             "not": {
@@ -3293,11 +3079,11 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
         },
         {
           "items": {
-            "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+            "$ref": "#/definitions/helm-marker-free"
           },
           "type": "array"
         },
@@ -3338,62 +3124,49 @@
       "anyOf": [
         {
           "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        {
-          "not": {
             "items": {
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1service.servicename~1string@3"
-                      }
-                    ]
+                    "$ref": "#/definitions/values~1service.servicename~1anyOf~1null,boolean,number+string"
                   },
                   "propertyNames": {
-                    "$ref": "#/$defs/values~1service.servicename~1string@3"
+                    "not": {
+                      "pattern": "[^A-Za-z0-9_./+-]"
+                    },
+                    "type": "string"
                   },
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name~1null,boolean,number"
+                  "$ref": "#/definitions/constrains~1name~1null,boolean,number"
                 },
                 {
                   "items": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1name~1null,boolean,number"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1service.servicename~1string@3"
-                      }
-                    ]
+                    "$ref": "#/definitions/values~1service.servicename~1anyOf~1null,boolean,number+string"
                   },
                   "type": "array"
                 },
                 {
-                  "$ref": "#/$defs/values~1service.servicename~1string@3"
+                  "not": {
+                    "pattern": "[^A-Za-z0-9_./+-]"
+                  },
+                  "type": "string"
                 }
               ]
             },
             "type": "array"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/t"
           }
         }
       ]
     },
     "values/service.servicename/anyOf/not/:t+not/object": {
       "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
-        },
         {
           "not": {
             "additionalProperties": {
@@ -3414,6 +3187,24 @@
             },
             "type": "object"
           }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/t"
+          }
+        }
+      ]
+    },
+    "values/service.servicename/anyOf/null,boolean,number+string": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+        },
+        {
+          "not": {
+            "pattern": "[^A-Za-z0-9_./+-]"
+          },
+          "type": "string"
         }
       ]
     },
@@ -3432,7 +3223,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1service.servicename~1string"
+            "$ref": "#/definitions/values~1service.servicename~1string"
           },
           {
             "type": "number"
@@ -3450,7 +3241,7 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1service.servicename~1string"
+        "$ref": "#/definitions/values~1service.servicename~1string"
       },
       "type": "object"
     },
@@ -3530,13 +3321,6 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "values/service.servicename/string;pattern-r-n": {
-      "not": {
-        "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
-      },
-      "pattern": "[\\r\\n]",
-      "type": "string"
-    },
     "values/service.servicename/string@2": {
       "allOf": [
         {
@@ -3555,12 +3339,6 @@
       ],
       "type": "string"
     },
-    "values/service.servicename/string@3": {
-      "not": {
-        "pattern": "[^A-Za-z0-9_./+-]"
-      },
-      "type": "string"
-    },
     "values/service/object,null;annotations-is-an-unstructured": {
       "additionalProperties": {
         "type": [
@@ -3573,302 +3351,8 @@
         "object",
         "null"
       ]
-    },
-    "when/env.existingSecret:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1env.existingSecret:t@3"
-      },
-      "then": false
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/type+type=null/then/fail/else/type": {
-      "else": {
-        "$ref": "#/$defs/when~1type~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1type+type=null"
-      },
-      "then": false
-    },
-    "when/type+type=null/then/fail/else/type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1type+type=null~1then~1fail~1else~1type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1type+type=null"
-      },
-      "then": false
-    },
-    "when/type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1type"
-      },
-      "then": false
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1env.existingSecret:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "secret": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "service": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "service": {}
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@9"
-          },
-          {
-            "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@7"
-          },
-          {
-            "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1commonLabels:t+serviceAccount+serviceAccount.annotations+9more@8"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@9"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@7"
-          },
-          {
-            "$ref": "#/$defs/constrains~1commonLabels:t+service+service.annotations+service.annotations:helm-marker-free+7more@8"
-          },
-          {
-            "$ref": "#/$defs/constrains~1service+service.type+service.type=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+13more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1env.existingSecret:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "secret": {}
-                  },
-                  "required": [
-                    "secret"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "secret": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "secret"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "env": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "env"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "env": {}
-              },
-              "required": [
-                "env"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1env.existingSecret:t~1then~1fail~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "env": {
-            "additionalProperties": {},
-            "description": "team_name: dev",
-            "properties": {
-              "secret": {
-                "description": "POD_IP: status.podIP",
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "affinity": {},
     "bearerAuth": {},
@@ -3932,13 +3416,114 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/when~1type+type=null~1then~1fail~1else~1type@2"
+            "else": {
+              "else": {
+                "else": true,
+                "if": {
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1type+type=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1type+type=null"
+            },
+            "then": false
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1servicename+servicename:t+servicename=false+servicename=null+servicename=true"
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1servicename"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename@7"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename@8"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1servicename:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1servicename@2"
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1servicename"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1servicename@6"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename=true"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename=false"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename@5"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1servicename@9"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1servicename:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1servicename@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1servicename:t"
+                  }
+                ]
+              }
+            ]
           },
           "then": {
             "additionalProperties": {},
@@ -3947,15 +3532,15 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/helm-marker-free"
                     }
                   },
                   {
-                    "$ref": "#/$defs/values~1service~1object,null;annotations-is-an-unstructured"
+                    "$ref": "#/definitions/values~1service~1object,null;annotations-is-an-unstructured"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+                      "$ref": "#/definitions/t"
                     }
                   }
                 ]
@@ -3983,35 +3568,34 @@
           "allOf": [
             {
               "if": {
-                "type": "object"
+                "type": "array"
               },
               "then": {
-                "$ref": "#/$defs/values~1service.servicename~1anyOf~1not~1:t+not~1object"
+                "$ref": "#/definitions/values~1service.servicename~1anyOf~1not~1:t+not~1array"
               }
             },
             {
               "if": {
-                "type": "array"
+                "type": "object"
               },
               "then": {
-                "$ref": "#/$defs/values~1service.servicename~1anyOf~1not~1:t+not~1array"
+                "$ref": "#/definitions/values~1service.servicename~1anyOf~1not~1:t+not~1object"
               }
             }
           ],
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1service.servicename~1string;name-must-be-unique"
-            },
-            {
-              "$ref": "#/$defs/values~1service.servicename~1string;pattern-r-n"
-            },
-            {
-              "$ref": "#/$defs/values~1service.servicename~1string@2"
+              "$ref": "#/definitions/values~1service.servicename~1string;name-must-be-unique"
             },
             {
               "not": {
-                "$ref": "#/$defs/t"
-              }
+                "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+              },
+              "pattern": "[\\r\\n]",
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/values~1service.servicename~1string@2"
             },
             {
               "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
@@ -4021,14 +3605,14 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/values~1service.servicename~1object"
+              "$ref": "#/definitions/values~1service.servicename~1object"
             },
             {
               "pattern": "^[ \\t]*(#.*)?$",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1service.servicename~1null;name-must-be-unique"
+              "$ref": "#/definitions/values~1service.servicename~1null;name-must-be-unique"
             },
             {
               "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
@@ -4039,6 +3623,11 @@
             },
             {
               "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/t"
+              }
             }
           ]
         },
@@ -4056,10 +3645,137 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1name+name:t+name=false+name=null+name=true"
+                "$ref": "#/definitions/constrains~1create:t"
               },
               {
-                "$ref": "#/$defs/constrains~1create:t"
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1name@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1name:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1name@3"
+                          },
+                          {
+                            "properties": {
+                              "name": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "name": {
+                                "enum": [
+                                  false
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1name@5"
+                                  },
+                                  {
+                                    "not": {
+                                      "$ref": "#/definitions/constrains~1name@7"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1name"
+                              }
+                            ]
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1name@4"
+                          },
+                          {
+                            "properties": {
+                              "name": {
+                                "enum": [
+                                  true
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1name:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "name": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1name@6"
+                          },
+                          {
+                            "properties": {
+                              "name": {
+                                "type": "null"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1name@7"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1name:t"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -4070,15 +3786,15 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/helm-marker-free"
                     }
                   },
                   {
-                    "$ref": "#/$defs/values~1service~1object,null;annotations-is-an-unstructured"
+                    "$ref": "#/definitions/values~1service~1object,null;annotations-is-an-unstructured"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/constrains~1annotations:helm-marker-free~1:helm-marker-free"
+                      "$ref": "#/definitions/t"
                     }
                   }
                 ],
@@ -4089,9 +3805,59 @@
         },
         {
           "if": {
+            "$ref": "#/definitions/constrains~1create:t"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1service.servicename~1string;name-must-be-unique"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+                    },
+                    "pattern": "[\\r\\n]",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1service.servicename~1string@2"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1service.servicename~1object"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1service.servicename~1null;name-must-be-unique"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1create:t"
+                "$ref": "#/definitions/constrains~1create:t"
               },
               {
                 "properties": {
@@ -4110,53 +3876,7 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "$ref": "#/$defs/values~1service.servicename~1anyOf~1not~1:t+not~1object"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1create:t"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/values~1service.servicename~1string;name-must-be-unique"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1service.servicename~1string;pattern-r-n"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1service.servicename~1string@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  {
-                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1service.servicename~1object"
-                  },
-                  {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1service.servicename~1null;name-must-be-unique"
-                  },
-                  {
-                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/values~1service.servicename~1anyOf~1not~1:t+not~1object"
               }
             }
           }
@@ -4164,6 +3884,9 @@
         {
           "if": {
             "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1create:t"
+              },
               {
                 "properties": {
                   "name": {
@@ -4174,9 +3897,6 @@
                   "name"
                 ],
                 "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1create:t"
               }
             ]
           },
@@ -4184,7 +3904,7 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "$ref": "#/$defs/values~1service.servicename~1anyOf~1not~1:t+not~1array"
+                "$ref": "#/definitions/values~1service.servicename~1anyOf~1not~1:t+not~1array"
               }
             }
           }

@@ -16,8 +16,9 @@ made a whole emitted schema fail metaschema validation.
 ## Decision
 
 helm-schema emits a single JSON Schema Draft-07 document rooted at the values
-object (`"$schema": "http://json-schema.org/draft-07/schema#"`). Every emitted
-`pattern` and `patternProperties` key must be a valid ECMA-262 `u`-mode
+object (`"$schema": "http://json-schema.org/draft-07/schema#"`). Shared subschemas
+use Draft-07’s `definitions` keyword and `#/definitions/…` references. Helm can
+index these subschemas during initial compilation. Every emitted `pattern` and `patternProperties` key must be a valid ECMA-262 `u`-mode
 regular expression: superfluous RE2 escapes are respelled (located with
 `regex-syntax`), class `&`/`~` become hex escapes and `\<`/`\>` become
 literals, while colliding `patternProperties` keys keep their original

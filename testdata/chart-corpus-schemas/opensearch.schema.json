@@ -1,408 +1,102 @@
 {
-  "$defs": {
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/image.tag": {
-      "properties": {
-        "image": {
-          "properties": {
-            "tag": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "tag"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/image.tag+image.tag:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1image.tag:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1majorVersion:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag+image.tag:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1majorVersion:t@2"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null@2"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
-      }
-    },
-    "constrains/image.tag+image.tag:t+majorVersion:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1image.tag:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1majorVersion:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.tag"
-        }
-      ]
-    },
-    "constrains/image.tag+image.tag:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1image.tag+image.tag:t"
-      }
-    },
-    "constrains/image.tag:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1image.tag:t@3"
-      }
-    },
-    "constrains/image.tag:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1image.tag:t@3"
-      }
-    },
-    "constrains/image.tag:t@3": {
-      "properties": {
-        "image": {
-          "properties": {
-            "tag": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "tag"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/majorVersion:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1majorVersion:t@3"
-      }
-    },
-    "constrains/majorVersion:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1majorVersion:t@3"
-      }
-    },
-    "constrains/majorVersion:t@3": {
-      "properties": {
-        "majorVersion": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "majorVersion"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nodeGroup": {
-      "not": {
-        "properties": {
-          "nodeGroup": {}
-        },
-        "required": [
-          "nodeGroup"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/nodeGroup+nodeGroup=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nodeGroup=null"
-        }
-      ]
-    },
-    "constrains/nodeGroup+nodeGroup=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nodeGroup+nodeGroup=null"
-      }
-    },
-    "constrains/nodeGroup=null": {
-      "properties": {
-        "nodeGroup": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "nodeGroup"
-      ],
-      "type": "object"
-    },
-    "constrains/nodeGroup@2": {
-      "properties": {
-        "nodeGroup": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeGroup"
-      ],
-      "type": "object"
-    },
-    "constrains/persistence.enabled:t": {
-      "properties": {
-        "persistence": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "persistence"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "values/initResources": {
-      "description": "limits:\ncpu: \"25m\"\nmemory: \"128Mi\"\nrequests:\ncpu: \"25m\"\nmemory: \"128Mi\""
-    },
-    "when/image.tag:t/then/majorVersion:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1image.tag:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1majorVersion:t~1then~1fail~1else~1any"
-      }
-    },
-    "when/majorVersion:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1majorVersion:t@3"
-      },
-      "then": false
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/nodeGroup": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup~1then~1fail~1else~1any"
-      },
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1nodeGroup"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nodeGroup=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/nodeGroup@2": {
-      "else": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup"
-      },
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1nodeGroup"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nodeGroup=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/nodeGroup/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1nodeGroup@2"
-      },
-      "then": false
-    },
-    "when/persistence.enabled:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1persistence.enabled:t"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1majorVersion:t"
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1majorVersion:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1image.tag:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1image.tag"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1image.tag:t@2"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1majorVersion:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1image.tag"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1image.tag:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1majorVersion:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1image.tag"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "not": {
+          "$ref": "#/definitions/constrains~1majorVersion:t@2"
+        }
       },
       "then": {
         "additionalProperties": {},
@@ -415,7 +109,62 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
+        "else": {
+          "else": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1nodeGroup"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
+          },
+          "then": false
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
+        },
+        "then": false
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1image.tag:t@2"
+        },
+        "then": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1majorVersion:t@2"
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "description": "override image tag, which is .Chart.AppVersion by default",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        "then": true
       },
       "then": {
         "additionalProperties": {},
@@ -428,31 +177,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1persistence.enabled:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistence": {
-            "additionalProperties": {},
-            "properties": {
-              "accessModes": {
-                "description": "OpenSearch Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nstorageClass: \"-\"",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1persistence.enabled:t"
+        "$ref": "#/definitions/constrains~1persistence.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -471,9 +196,40 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "persistence": {}
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "persistence": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1majorVersion:t@2"
+            "$ref": "#/definitions/constrains~1majorVersion:t"
           },
           {
             "anyOf": [
@@ -509,67 +265,26 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "persistence": {}
-              },
-              "required": [
-                "persistence"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "persistence": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "persistence"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1image.tag:t~1then~1majorVersion:t~1else~1fail"
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+        },
+        "then": true
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "image": {
+          "persistence": {
             "additionalProperties": {},
             "properties": {
-              "tag": {
-                "description": "override image tag, which is .Chart.AppVersion by default",
-                "type": "string"
+              "accessModes": {
+                "description": "OpenSearch Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nstorageClass: \"-\"",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -577,6 +292,226 @@
       }
     }
   ],
+  "definitions": {
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/image.tag": {
+      "properties": {
+        "image": {
+          "properties": {
+            "tag": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "tag"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "constrains/image.tag:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1image.tag:t@2"
+      }
+    },
+    "constrains/image.tag:t@2": {
+      "properties": {
+        "image": {
+          "properties": {
+            "tag": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "tag"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "constrains/majorVersion:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1majorVersion:t@2"
+      }
+    },
+    "constrains/majorVersion:t@2": {
+      "properties": {
+        "majorVersion": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "majorVersion"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        }
+      ]
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup": {
+      "properties": {
+        "nodeGroup": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup+nodeGroup=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup"
+        },
+        {
+          "not": {
+            "properties": {
+              "nodeGroup": {}
+            },
+            "required": [
+              "nodeGroup"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup=null"
+        }
+      ]
+    },
+    "constrains/nodeGroup+nodeGroup=null@2": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "nodeGroup": {}
+            },
+            "required": [
+              "nodeGroup"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup=null"
+        }
+      ]
+    },
+    "constrains/nodeGroup=null": {
+      "properties": {
+        "nodeGroup": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.enabled:t": {
+      "properties": {
+        "persistence": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/initResources": {
+      "description": "limits:\ncpu: \"25m\"\nmemory: \"128Mi\"\nrequests:\ncpu: \"25m\"\nmemory: \"128Mi\""
+    }
+  },
   "properties": {
     "antiAffinity": {
       "description": "Hard means that by default pods will only be scheduled if there are enough nodes for them\nand that they will never end up on the same node. Setting this to soft will do this \"best effort\".\nSetting this to custom will use what is passed into customAntiAffinity."
@@ -638,7 +573,7 @@
       "description": "Enabling this will publically expose your OpenSearch instance.\nOnly enable this if you have security enabled on your cluster"
     },
     "initResources": {
-      "$ref": "#/$defs/values~1initResources"
+      "$ref": "#/definitions/values~1initResources"
     },
     "keystore": {
       "description": "To add secrets to the keystore:\n- secretName: opensearch-encryption-key"
@@ -688,9 +623,6 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              },
-              {
                 "anyOf": [
                   {
                     "properties": {
@@ -717,6 +649,9 @@
                     }
                   }
                 ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
               }
             ]
           },
@@ -782,7 +717,7 @@
       "description": "ServiceMonitor Configuration for Prometheus\nEnabling this option will create a ServiceMonitor resource that allows Prometheus to scrape metrics from the OpenSearch service.\nThis only creates the serviceMonitor, to actually have metrics Make sure to install the prometheus-exporter plugin needed for\nserving metrics over the `.Values.plugins` value:\nplugins:\nenabled: true\ninstallList:\n- https://github.com/aiven/prometheus-exporter-plugin-for-opensearch/releases/download/x.x.x.x/prometheus-exporter-x.x.x.x.zip"
     },
     "sidecarResources": {
-      "$ref": "#/$defs/values~1initResources"
+      "$ref": "#/definitions/values~1initResources"
     },
     "singleNode": {
       "description": "If discovery.type in the opensearch configuration is set to \"single-node\",\nthis should be set to \"true\"\nIf \"true\", replicas will be forced to 1"

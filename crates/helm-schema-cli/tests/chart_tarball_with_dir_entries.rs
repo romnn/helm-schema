@@ -180,14 +180,14 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
         // itself, or any nested string or mapping key of a
         // Go-fmt-serialized collection — must be valid double-quoted
         // YAML content; other scalars format safely.
-        "$defs": {
+        "definitions": {
             "helm-double-quoted-safe": {
                 "anyOf": [
                     { "type": ["boolean", "integer", "null", "number"] },
                     { "pattern": safe_quoted_content, "type": "string" },
-                    { "items": { "$ref": "#/$defs/helm-double-quoted-safe" }, "type": "array" },
+                    { "items": { "$ref": "#/definitions/helm-double-quoted-safe" }, "type": "array" },
                     {
-                        "additionalProperties": { "$ref": "#/$defs/helm-double-quoted-safe" },
+                        "additionalProperties": { "$ref": "#/definitions/helm-double-quoted-safe" },
                         "propertyNames": { "pattern": safe_quoted_content },
                         "type": "object"
                     }
@@ -207,7 +207,7 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
                     "subchart": {
                         "additionalProperties": {},
                         "properties": {
-                            "enabled": { "$ref": "#/$defs/helm-double-quoted-safe" }
+                            "enabled": { "$ref": "#/definitions/helm-double-quoted-safe" }
                         }
                     }
                 }

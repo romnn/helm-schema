@@ -194,34 +194,34 @@ fn serialized_integer_preimage() -> eyre::Result<Value> {
     let marker_free = json!({"anyOf": [
         {"type": ["null", "boolean", "number"]},
         {"type": "string", "not": {"pattern": "<no value>"}},
-        {"type": "array", "items": {"$ref": "#/$defs/helm-marker-free"}},
-        {"type": "object", "propertyNames": {"not": {"pattern": "<no value>"}}, "additionalProperties": {"$ref": "#/$defs/helm-marker-free"}}
+        {"type": "array", "items": {"$ref": "#/definitions/helm-marker-free"}},
+        {"type": "object", "propertyNames": {"not": {"pattern": "<no value>"}}, "additionalProperties": {"$ref": "#/definitions/helm-marker-free"}}
     ]});
     let mut expected = schema("{{ $_ := .Values.replicas }}");
     let expected_object = expected
         .as_object_mut()
         .ok_or_eyre("expected schema object")?;
-    expected_object.insert("$defs".to_owned(), json!({
+    expected_object.insert("definitions".to_owned(), json!({
         "t": truthy, "helm-marker-free": marker_free,
         "helm-condition-0": {"anyOf": [{"type": "array"}, {"type": "object"}]},
-        "helm-condition-1": {"not": {"$ref": "#/$defs/helm-condition-0"}},
+        "helm-condition-1": {"not": {"$ref": "#/definitions/helm-condition-0"}},
         "helm-condition-2": {"anyOf": [
             {"anyOf": [{"not": required(json!({}))}, required(json!({"enum": [null]}))]},
-            required(json!({"$ref": "#/$defs/helm-marker-free"}))
+            required(json!({"$ref": "#/definitions/helm-marker-free"}))
         ]},
-        "helm-condition-3": {"allOf": [required(json!({"$ref": "#/$defs/t"})), required(json!({"type": "array"}))]},
+        "helm-condition-3": {"allOf": [required(json!({"$ref": "#/definitions/t"})), required(json!({"type": "array"}))]},
         "helm-condition-4": {"allOf": [required(json!({"type": "object"})), required(json!({"type": "object", "minProperties": 1}))]},
-        "helm-condition-5": {"anyOf": [{"$ref": "#/$defs/helm-condition-3"}, {"$ref": "#/$defs/helm-condition-4"}]}
+        "helm-condition-5": {"anyOf": [{"$ref": "#/definitions/helm-condition-3"}, {"$ref": "#/definitions/helm-condition-4"}]}
     }));
-    expected_object.insert("allOf".to_owned(), json!([{"if": {"allOf": [{"$ref": "#/$defs/helm-condition-2"}, {"$ref": "#/$defs/helm-condition-5"}]}, "then": false}]));
+    expected_object.insert("allOf".to_owned(), json!([{"if": {"allOf": [{"$ref": "#/definitions/helm-condition-2"}, {"$ref": "#/definitions/helm-condition-5"}]}, "then": false}]));
     let properties = expected_object
         .get_mut("properties")
         .and_then(Value::as_object_mut)
         .ok_or_eyre("expected properties object")?;
     properties.insert(
         "replicas".to_owned(),
-        json!({"allOf": [{"if": {"$ref": "#/$defs/helm-condition-1"}, "then": {"anyOf": [
-            {"not": {"$ref": "#/$defs/helm-marker-free"}}, {"type": "integer"}
+        json!({"allOf": [{"if": {"$ref": "#/definitions/helm-condition-1"}, "then": {"anyOf": [
+            {"not": {"$ref": "#/definitions/helm-marker-free"}}, {"type": "integer"}
         ]}}]}),
     );
     Ok(expected)
@@ -282,11 +282,11 @@ fn opaque_policy_uses_only_its_own_executed_guard() -> eyre::Result<()> {
     assert!(validator.is_valid(&json!({"enabled": true, "value": "text"})));
     sim_assert_eq!(have: observed, want: json!({
         "$schema": "http://json-schema.org/draft-07/schema#", "type": "object", "additionalProperties": false,
-        "$defs": {
+        "definitions": {
             "t": {"anyOf": [{"const": true}, {"type": "number", "not": {"const": 0}}, {"type": "string", "minLength": 1}, {"type": "array", "minItems": 1}, {"type": "object", "minProperties": 1}]},
-            "helm-condition-0": {"if": {"type": "object", "properties": {"enabled": {"$ref": "#/$defs/t"}}, "required": ["enabled"]}, "then": true, "else": false}
+            "helm-condition-0": {"if": {"type": "object", "properties": {"enabled": {"$ref": "#/definitions/t"}}, "required": ["enabled"]}, "then": true, "else": false}
         },
-        "allOf": [{"if": {"$ref": "#/$defs/helm-condition-0"}, "then": {"additionalProperties": {}, "properties": {"value": {"type": "string"}}}}],
+        "allOf": [{"if": {"$ref": "#/definitions/helm-condition-0"}, "then": {"additionalProperties": {}, "properties": {"value": {"type": "string"}}}}],
         "properties": {"enabled": {}, "value": {}, "global": {}}
     }));
     Ok(())

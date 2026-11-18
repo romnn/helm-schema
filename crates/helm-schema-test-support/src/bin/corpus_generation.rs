@@ -7,7 +7,7 @@
 //!   generates just those artifacts and prints their manifest entries as JSON
 //!   lines. It never writes a manifest; it exists for timing comparisons.
 //! - `--helm-ready` also writes, for every schema artifact Helm reads, the
-//!   Helm-ready copy `internal/<name>.helm.schema.json` (short `$defs` keys,
+//!   Helm-ready copy `internal/<name>.helm.schema.json` (short definition keys,
 //!   compact JSON) and its name map `internal/<name>.defs-map.json`, recorded
 //!   in the artifact's manifest entry. `<name>` is the artifact file name
 //!   without `.schema.json`.

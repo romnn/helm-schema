@@ -72,7 +72,7 @@ Compact output:
 helm-schema ./path/to/chart --output values.schema.json --output-layout compact
 ```
 
-Default output is pretty JSON with readable `$defs` names. If it would exceed
+Default output is pretty JSON with readable `definitions` names. If it would exceed
 Helm's 5 MiB chart-file limit, the CLI automatically uses compact JSON with
 short names when safe and reports the resulting size on stderr. Use `--output-layout pretty`
 to always keep the readable layout, or `--output-layout compact` to

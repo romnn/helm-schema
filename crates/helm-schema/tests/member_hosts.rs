@@ -5,6 +5,9 @@ use helm_schema::AnalysisSession;
 use helm_schema::generation::{AuthoringPolicy, DeclaredTypes, GenerateOptions, SchemaProfile};
 use helm_schema::output::{EmitRequest, OutputPipelineOptions, ReferencePolicy};
 use helm_schema::provider::ProviderOptions;
+use helm_schema_json_schema_walk::{
+    ReferenceSiblings, canonical_json_string, visit_subschemas_mut,
+};
 use indoc::{formatdoc, indoc};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
@@ -212,12 +215,12 @@ const DIRECT_ACCESS_AND_POST_ACCESS_DEFAULT_ENCODED: &str = indoc! {r#"
 const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
     [
       {
-        "$defs": {
+        "definitions": {
           "constrains/a+a=null": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@2": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@3": {
             "anyOf": [
@@ -249,12 +252,12 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
           },
           "constrains/a+a=null@4": {
             "not": {
-              "$ref": "#/$defs/constrains~1a+a=null"
+              "$ref": "#/definitions/constrains~1a+a=null"
             }
           },
           "constrains/a+a=null@5": {
             "not": {
-              "$ref": "#/$defs/constrains~1a+a=null@2"
+              "$ref": "#/definitions/constrains~1a+a=null@2"
             }
           }
         },
@@ -263,7 +266,7 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
         "allOf": [
           {
             "if": {
-              "$ref": "#/$defs/constrains~1a+a=null@4"
+              "$ref": "#/definitions/constrains~1a+a=null@4"
             },
             "then": {
               "if": {
@@ -295,10 +298,10 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
             "if": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null@3"
+                  "$ref": "#/definitions/constrains~1a+a=null@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null@5"
+                  "$ref": "#/definitions/constrains~1a+a=null@5"
                 }
               ]
             },
@@ -342,12 +345,12 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
         }
       },
       {
-        "$defs": {
+        "definitions": {
           "constrains/a+a=null": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@2": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@3": {
             "anyOf": [
@@ -379,12 +382,12 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
           },
           "constrains/a+a=null@4": {
             "not": {
-              "$ref": "#/$defs/constrains~1a+a=null"
+              "$ref": "#/definitions/constrains~1a+a=null"
             }
           },
           "constrains/a+a=null@5": {
             "not": {
-              "$ref": "#/$defs/constrains~1a+a=null@2"
+              "$ref": "#/definitions/constrains~1a+a=null@2"
             }
           }
         },
@@ -393,7 +396,7 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
         "allOf": [
           {
             "if": {
-              "$ref": "#/$defs/constrains~1a+a=null@4"
+              "$ref": "#/definitions/constrains~1a+a=null@4"
             },
             "then": {
               "if": {
@@ -425,10 +428,10 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
             "if": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null@3"
+                  "$ref": "#/definitions/constrains~1a+a=null@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null@5"
+                  "$ref": "#/definitions/constrains~1a+a=null@5"
                 }
               ]
             },
@@ -577,12 +580,12 @@ const DICT_CONTEXT_HELPER_ENCODED: &str = indoc! {r#"
 const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
     [
       {
-        "$defs": {
+        "definitions": {
           "constrains/a+a=null": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@2": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@3": {
             "not": {
@@ -649,7 +652,7 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
                 {
                   "properties": {
                     "a": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -658,10 +661,10 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null@2"
+                  "$ref": "#/definitions/constrains~1a+a=null@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null"
+                  "$ref": "#/definitions/constrains~1a+a=null"
                 }
               ]
             },
@@ -712,12 +715,12 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
         }
       },
       {
-        "$defs": {
+        "definitions": {
           "constrains/a+a=null": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@2": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@3": {
             "not": {
@@ -784,7 +787,7 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
                 {
                   "properties": {
                     "a": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -793,10 +796,10 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null@2"
+                  "$ref": "#/definitions/constrains~1a+a=null@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null"
+                  "$ref": "#/definitions/constrains~1a+a=null"
                 }
               ]
             },
@@ -852,12 +855,12 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
 const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
     [
       {
-        "$defs": {
+        "definitions": {
           "constrains/a+a=null": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@2": {
-            "$ref": "#/$defs/constrains~1a+a=null@3"
+            "$ref": "#/definitions/constrains~1a+a=null@3"
           },
           "constrains/a+a=null@3": {
             "not": {
@@ -924,7 +927,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
                 {
                   "properties": {
                     "a": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -933,10 +936,10 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null@2"
+                  "$ref": "#/definitions/constrains~1a+a=null@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1a+a=null"
+                  "$ref": "#/definitions/constrains~1a+a=null"
                 }
               ]
             },
@@ -987,7 +990,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
         }
       },
       {
-        "$defs": {
+        "definitions": {
           "t": {
             "anyOf": [
               {
@@ -1021,7 +1024,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
             "if": {
               "properties": {
                 "a": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -1093,7 +1096,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
         }
       },
       {
-        "$defs": {
+        "definitions": {
           "t": {
             "anyOf": [
               {
@@ -1127,7 +1130,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
             "if": {
               "properties": {
                 "a": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -1199,7 +1202,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
         }
       },
       {
-        "$defs": {
+        "definitions": {
           "t": {
             "anyOf": [
               {
@@ -1233,7 +1236,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
             "if": {
               "properties": {
                 "a": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -1310,11 +1313,11 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
 const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
     [
       {
-        "$defs": {
+        "definitions": {
           "constrains/enabled:t": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -1383,7 +1386,7 @@ const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
                   ]
                 },
                 {
-                  "$ref": "#/$defs/constrains~1enabled:t"
+                  "$ref": "#/definitions/constrains~1enabled:t"
                 }
               ]
             },
@@ -1391,7 +1394,7 @@ const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
           },
           {
             "if": {
-              "$ref": "#/$defs/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t"
             },
             "then": {
               "if": {
@@ -1458,11 +1461,11 @@ const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
         }
       },
       {
-        "$defs": {
+        "definitions": {
           "constrains/enabled:t": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -1531,7 +1534,7 @@ const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
                   ]
                 },
                 {
-                  "$ref": "#/$defs/constrains~1enabled:t"
+                  "$ref": "#/definitions/constrains~1enabled:t"
                 }
               ]
             },
@@ -1539,7 +1542,7 @@ const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
           },
           {
             "if": {
-              "$ref": "#/$defs/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t"
             },
             "then": {
               "if": {
@@ -2520,10 +2523,10 @@ fn expected_range_members(
     let all_of = if guarded {
         let constraint = format!("constrains/{host}:t");
         let choice = format!("when/{host}:t/then/any/else/fail");
-        let constraint_ref = format!("#/$defs/{}", constraint.replace('/', "~1"));
-        let choice_ref = format!("#/$defs/{}", choice.replace('/', "~1"));
+        let constraint_ref = format!("#/definitions/{}", constraint.replace('/', "~1"));
+        let choice_ref = format!("#/definitions/{}", choice.replace('/', "~1"));
         object.insert(
-            "$defs".to_owned(),
+            "definitions".to_owned(),
             json!({
                 "t": {"anyOf": [
                     {"minProperties": 1, "type": "object"},
@@ -2533,7 +2536,7 @@ fn expected_range_members(
                     {"const": true}
                 ]},
                 (constraint): {
-                    "properties": {host: {"$ref": "#/$defs/t"}},
+                    "properties": {host: {"$ref": "#/definitions/t"}},
                     "required": [host], "type": "object"
                 },
                 (choice): {"else": false, "if": {"$ref": constraint_ref}, "then": true}
@@ -2568,6 +2571,54 @@ fn assert_member_verdicts(expected: &Value, actual: &[Value]) -> eyre::Result<()
             );
         }
     }
+    Ok(())
+}
+
+/// Compare complete schemas after expanding transport definitions and sorting junctions.
+fn expanded_contract(schema: &Value) -> eyre::Result<Value> {
+    let mut schema =
+        helm_schema::flatten::flatten_prepared_refs(schema, &std::env::current_dir()?)?;
+    if let Some(object) = schema.as_object_mut() {
+        object.remove("definitions");
+    }
+    normalize_junctions(&mut schema);
+    Ok(schema)
+}
+
+fn normalize_junctions(schema: &mut Value) {
+    visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut normalize_junctions);
+    for keyword in ["allOf", "anyOf"] {
+        let Some(children) = schema.get_mut(keyword).and_then(Value::as_array_mut) else {
+            continue;
+        };
+        let mut flat = Vec::new();
+        for child in std::mem::take(children) {
+            match child {
+                Value::Object(mut object) if object.len() == 1 => match object.remove(keyword) {
+                    Some(Value::Array(mut nested)) => flat.append(&mut nested),
+                    Some(value) => {
+                        object.insert(keyword.to_owned(), value);
+                        flat.push(Value::Object(object));
+                    }
+                    None => flat.push(Value::Object(object)),
+                },
+                child => flat.push(child),
+            }
+        }
+        flat.sort_by_cached_key(canonical_json_string);
+        flat.dedup();
+        *children = flat;
+    }
+}
+
+fn assert_expanded_contracts(actual: &[Value], expected: &[Value]) -> eyre::Result<()> {
+    let expand = |schemas: &[Value]| {
+        schemas
+            .iter()
+            .map(expanded_contract)
+            .collect::<eyre::Result<Vec<_>>>()
+    };
+    sim_assert_eq!(have: expand(actual)?, want: expand(expected)?);
     Ok(())
 }
 
@@ -2691,7 +2742,7 @@ fn bound_and_grouped_receivers() -> eyre::Result<()> {
         .collect::<eyre::Result<Vec<_>>>()?;
     assert_member_verdicts(&expected, &schemas)?;
     let encoded: Vec<Value> = serde_json::from_str(BOUND_AND_GROUPED_RECEIVERS_ENCODED)?;
-    sim_assert_eq!(have: schemas, want: encoded, "{programs:?}");
+    assert_expanded_contracts(&schemas, &encoded)?;
     Ok(())
 }
 
@@ -2818,7 +2869,7 @@ fn coalesce_and_default_dict() -> eyre::Result<()> {
         .collect::<eyre::Result<Vec<_>>>()?;
     assert_member_verdicts(&expected, &schemas)?;
     let encoded: Vec<Value> = serde_json::from_str(COALESCE_AND_DEFAULT_DICT_ENCODED)?;
-    sim_assert_eq!(have: schemas, want: encoded, "{programs:?}");
+    assert_expanded_contracts(&schemas, &encoded)?;
     Ok(())
 }
 
@@ -2893,7 +2944,7 @@ fn with_if_and_nonempty_guards() -> eyre::Result<()> {
         .collect::<eyre::Result<Vec<_>>>()?;
     assert_member_verdicts(&expected, &schemas)?;
     let encoded: Vec<Value> = serde_json::from_str(WITH_IF_AND_NONEMPTY_GUARDS_ENCODED)?;
-    sim_assert_eq!(have: schemas, want: encoded, "{programs:?}");
+    assert_expanded_contracts(&schemas, &encoded)?;
     Ok(())
 }
 
@@ -2981,7 +3032,7 @@ fn independent_gate() -> eyre::Result<()> {
         .collect::<eyre::Result<Vec<_>>>()?;
     assert_member_verdicts(&expected, &schemas)?;
     let encoded: Vec<Value> = serde_json::from_str(INDEPENDENT_GATE_ENCODED)?;
-    sim_assert_eq!(have: schemas, want: encoded, "{programs:?}");
+    assert_expanded_contracts(&schemas, &encoded)?;
     Ok(())
 }
 
@@ -3585,7 +3636,7 @@ fn kps_range_member() -> eyre::Result<()> {
         program,
     )?;
     assert_member_verdicts(&expected, std::slice::from_ref(&schema))?;
-    sim_assert_eq!(have: schema, want: expected);
+    sim_assert_eq!(have: expanded_contract(&schema)?, want: expanded_contract(&expected)?);
     Ok(())
 }
 

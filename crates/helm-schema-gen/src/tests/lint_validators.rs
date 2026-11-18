@@ -19,7 +19,7 @@ fn whole_document_verdicts(
 ) -> Option<Vec<bool>> {
     let document = json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": definitions,
+        "definitions": definitions,
         "allOf": [{ "if": condition, "then": then_value }],
     });
     let validator = jsonschema::validator_for(&document).ok()?;
@@ -56,18 +56,18 @@ fn parts_judge_as_the_whole_constraint_document() {
     let conditions = BTreeMap::from([
         (
             "helm-condition-0".to_string(),
-            json!({ "properties": { "enabled": { "$ref": "#/$defs/t" } }, "required": ["enabled"] }),
+            json!({ "properties": { "enabled": { "$ref": "#/definitions/t" } }, "required": ["enabled"] }),
         ),
         (
             "helm-condition-1".to_string(),
             json!({ "anyOf": [
-                { "$ref": "#/$defs/helm-condition-0" },
+                { "$ref": "#/definitions/helm-condition-0" },
                 { "not": { "required": ["mode"] } },
             ] }),
         ),
         (
             "helm-condition-2".to_string(),
-            json!({ "not": { "$ref": "#/$defs/helm-condition-1" } }),
+            json!({ "not": { "$ref": "#/definitions/helm-condition-1" } }),
         ),
     ]);
     let instances = [
@@ -83,33 +83,39 @@ fn parts_judge_as_the_whole_constraint_document() {
     let constraints = [
         (
             json!({ "allOf": [
-                { "$ref": "#/$defs/helm-condition-1" },
+                { "$ref": "#/definitions/helm-condition-1" },
                 { "properties": { "mode": { "const": "a" } } },
             ] }),
-            json!({ "properties": { "port": { "$ref": "#/$defs/port" } }, "required": ["port"] }),
-        ),
-        (json!({ "$ref": "#/$defs/helm-condition-2" }), json!(false)),
-        (
-            json!({ "anyOf": [{ "$ref": "#/$defs/helm-condition-0" }, { "required": ["mode"] }] }),
-            json!({ "properties": { "port": { "$ref": "#/$defs/port" } } }),
+            json!({ "properties": { "port": { "$ref": "#/definitions/port" } }, "required": ["port"] }),
         ),
         (
-            json!({ "properties": { "enabled": { "$ref": "#/$defs/t" } } }),
+            json!({ "$ref": "#/definitions/helm-condition-2" }),
+            json!(false),
+        ),
+        (
+            json!({ "anyOf": [{ "$ref": "#/definitions/helm-condition-0" }, { "required": ["mode"] }] }),
+            json!({ "properties": { "port": { "$ref": "#/definitions/port" } } }),
+        ),
+        (
+            json!({ "properties": { "enabled": { "$ref": "#/definitions/t" } } }),
             json!({ "required": ["port"] }),
         ),
         // A dangling reference leaves the constraint uncompilable.
         (
-            json!({ "$ref": "#/$defs/helm-condition-0" }),
-            json!({ "properties": { "port": { "$ref": "#/$defs/missing" } } }),
+            json!({ "$ref": "#/definitions/helm-condition-0" }),
+            json!({ "properties": { "port": { "$ref": "#/definitions/missing" } } }),
         ),
         // A provider definition only a condition body references is not in
         // the constraint's document.
-        (json!({ "$ref": "#/$defs/helm-condition-3" }), json!(true)),
+        (
+            json!({ "$ref": "#/definitions/helm-condition-3" }),
+            json!(true),
+        ),
     ];
     let mut conditions = conditions;
     conditions.insert(
         "helm-condition-3".to_string(),
-        json!({ "properties": { "port": { "$ref": "#/$defs/port" } } }),
+        json!({ "properties": { "port": { "$ref": "#/definitions/port" } } }),
     );
     let validators = LintValidators::new(&providers);
     for (condition, then_value) in &constraints {
@@ -117,7 +123,7 @@ fn parts_judge_as_the_whole_constraint_document() {
         let constraint = json!({ "if": condition, "then": then_value });
         let text = constraint.to_string();
         for (name, body) in &providers {
-            if text.contains(&format!("#/$defs/{name}\"")) {
+            if text.contains(&format!("#/definitions/{name}\"")) {
                 definitions.insert(name.clone(), body.clone());
             }
         }
@@ -150,7 +156,7 @@ fn assert_parts_judge_as_the_whole_document(
     let text = json!({ "if": condition, "then": then_value }).to_string();
     let mut definitions = BTreeMap::new();
     for (name, body) in providers {
-        if text.contains(&format!("#/$defs/{name}\"")) {
+        if text.contains(&format!("#/definitions/{name}\"")) {
             definitions.insert(name.clone(), body.clone());
         }
     }
@@ -175,7 +181,7 @@ fn a_definition_with_invalid_annotations_judges_as_in_the_whole_document() {
         &providers,
         &BTreeMap::new(),
         &json!({ "required": ["a"] }),
-        &json!({ "$ref": "#/$defs/x" }),
+        &json!({ "$ref": "#/definitions/x" }),
         &[json!({ "a": 1 }), json!("s"), json!({})],
     );
 }

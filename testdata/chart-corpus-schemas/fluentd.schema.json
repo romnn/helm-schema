@@ -1,5 +1,148 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "aggregator": {
+              "properties": {
+                "ingress": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "aggregator"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "properties": {
+              "aggregator": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "secrets": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "secrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "aggregator"
+            ],
+            "type": "object"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "aggregator": {
+            "additionalProperties": {},
+            "description": "Aggregator parameters",
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure the ingress resource that allows you to access the\nFluentd aggregator. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "secrets": {
+                    "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: fluentd.local-tls\nkey:\ncertificate:",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1aggregator+aggregator=null"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "aggregator": {
+                    "$ref": "#/definitions/constrains~1ingress=null"
+                  }
+                },
+                "required": [
+                  "aggregator"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "aggregator": {
+                      "properties": {
+                        "ingress": {}
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "aggregator"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1aggregator+aggregator=null"
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "constrains/aggregator+aggregator=null": {
       "anyOf": [
         {
@@ -27,59 +170,6 @@
           }
         }
       ]
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "bitnami-common": {}
-            },
-            "required": [
-              "bitnami-common"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null"
-      }
-    },
-    "constrains/ingress": {
-      "properties": {
-        "ingress": {}
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
     },
     "constrains/ingress=null": {
       "properties": {
@@ -118,151 +208,8 @@
           "const": true
         }
       ]
-    },
-    "when/aggregator.ingress.enabled:t/then/aggregator.ingress.secrets:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "aggregator": {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "aggregator"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1aggregator.ingress.secrets:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/aggregator.ingress.secrets:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "aggregator": {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "secrets": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "secrets"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "aggregator"
-        ],
-        "type": "object"
-      },
-      "then": true
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/when~1aggregator.ingress.enabled:t~1then~1aggregator.ingress.secrets:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "aggregator": {
-            "additionalProperties": {},
-            "description": "Aggregator parameters",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Configure the ingress resource that allows you to access the\nFluentd aggregator. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "secrets": {
-                    "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: fluentd.local-tls\nkey:\ncertificate:",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1aggregator+aggregator=null"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "aggregator": {
-                    "$ref": "#/$defs/constrains~1ingress=null"
-                  }
-                },
-                "required": [
-                  "aggregator"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "aggregator": {
-                      "$ref": "#/$defs/constrains~1ingress"
-                    }
-                  },
-                  "required": [
-                    "aggregator"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1aggregator+aggregator=null"
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "aggregator": {
       "additionalProperties": {},
@@ -272,11 +219,17 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1ingress"
+                  "properties": {
+                    "ingress": {}
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1ingress=null"
+                "$ref": "#/definitions/constrains~1ingress=null"
               }
             ]
           },
@@ -349,7 +302,45 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null@2"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "bitnami-common": {}
+                    },
+                    "required": [
+                      "bitnami-common"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
           "then": false
         }

@@ -1,680 +1,31 @@
 {
-  "$defs": {
-    "constrains/admissionWebhooks.autoGenerateCert.enabled:t": {
-      "properties": {
-        "admissionWebhooks": {
-          "$ref": "#/$defs/constrains~1autoGenerateCert.enabled:t"
-        }
-      },
-      "required": [
-        "admissionWebhooks"
-      ],
-      "type": "object"
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      }
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t": {
-      "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds": {
-      "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds.create:t"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1crds.create:t"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@8": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@3"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@9": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3"
-      }
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@7": {
-      "not": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t"
-      }
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      }
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t@3": {
-      "properties": {
-        "admissionWebhooks": {
-          "$ref": "#/$defs/constrains~1certManager.enabled:t@2"
-        }
-      },
-      "required": [
-        "admissionWebhooks"
-      ],
-      "type": "object"
-    },
-    "constrains/admissionWebhooks.create:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      }
-    },
-    "constrains/admissionWebhooks.create:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      }
-    },
-    "constrains/admissionWebhooks.create:t@3": {
-      "properties": {
-        "admissionWebhooks": {
-          "$ref": "#/$defs/constrains~1create:t"
-        }
-      },
-      "required": [
-        "admissionWebhooks"
-      ],
-      "type": "object"
-    },
-    "constrains/autoGenerateCert.enabled:t": {
-      "properties": {
-        "autoGenerateCert": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "autoGenerateCert"
-      ],
-      "type": "object"
-    },
-    "constrains/certManager.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1certManager.enabled:t@2"
-      }
-    },
-    "constrains/certManager.enabled:t@2": {
-      "properties": {
-        "certManager": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "certManager"
-      ],
-      "type": "object"
-    },
-    "constrains/crds.create:t": {
-      "properties": {
-        "crds": {
-          "$ref": "#/$defs/constrains~1create:t"
-        }
-      },
-      "required": [
-        "crds"
-      ],
-      "type": "object"
-    },
-    "constrains/create:t": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride:t": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/admissionWebhooks.autoGenerateCert.enabled:t/then/admissionWebhooks+admissionWebhooks.certManager+crds.create:t+1more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1crds.create:t+namespaceOverride:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1crds.create:t+namespaceOverride:t~1else~1admissionWebhooks"
-      }
-    },
-    "when/admissionWebhooks.autoGenerateCert.enabled:t/then/admissionWebhooks+admissionWebhooks.certManager+crds.create:t+fullnameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1crds.create:t+fullnameOverride:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1crds.create:t+fullnameOverride:t~1else~1admissionWebhooks"
-      }
-    },
-    "when/admissionWebhooks.autoGenerateCert.enabled:t/then/admissionWebhooks.certManager+admissionWebhooks.create:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1fail~1else~1admissionWebhooks.create:t+admissionWebhooks.secretName:t"
-      }
-    },
-    "when/admissionWebhooks.autoGenerateCert.enabled:t/then/fail/else/admissionWebhooks.certManager+admissionWebhooks.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1fail~1else~1admissionWebhooks.create:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
-      },
-      "then": false
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/crds.create:t+fullnameOverride:t+nameOverride:t/else/admissionWebhooks": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.create:t~1then~1nameOverride:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1crds.create:t~1then~1fullnameOverride:t+nameOverride:t~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/crds.create:t+fullnameOverride:t/else/admissionWebhooks": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.create:t~1then~1fullnameOverride:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1crds.create:t~1then~1fullnameOverride:t~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/crds.create:t+fullnameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1crds.create:t~1then~1fullnameOverride:t~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/crds.create:t+namespaceOverride:t/else/admissionWebhooks": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.create:t~1then~1namespaceOverride:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1crds.create:t~1then~1namespaceOverride:t~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/crds.create:t+namespaceOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1crds.create:t~1then~1namespaceOverride:t~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/fail/else/admissionWebhooks.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.create:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": false
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/fail/else/admissionWebhooks.create:t+admissionWebhooks.secretName:t": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.create:t~1then~1admissionWebhooks.secretName:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": false
-    },
-    "when/admissionWebhooks.certManager.enabled:t/then/fail/else/admissionWebhooks.create:t+manager.image.tag:t": {
-      "else": {
-        "$ref": "#/$defs/when~1admissionWebhooks.create:t~1then~1manager.image.tag:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      },
-      "then": false
-    },
-    "when/admissionWebhooks.create:t/then/admissionWebhooks.secretName:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1admissionWebhooks.secretName:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.create:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      },
-      "then": true
-    },
-    "when/admissionWebhooks.create:t/then/fullnameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.create:t/then/manager.image.tag:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1manager.image.tag:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.create:t/then/nameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.create:t/then/namespaceOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/admissionWebhooks.secretName:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "admissionWebhooks": {
-            "properties": {
-              "secretName": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "secretName"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "admissionWebhooks"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/autoGenerateCert.enabled:t/then/fail/else/certManager+create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1certManager.enabled:t~1then~1fail~1else~1create:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1autoGenerateCert.enabled:t"
-      },
-      "then": false
-    },
-    "when/certManager.enabled:t/then/fail/else/create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1create:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1certManager.enabled:t@2"
-      },
-      "then": false
-    },
-    "when/crds.create:t/then/fullnameOverride:t+nameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1crds.create:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t"
-      }
-    },
-    "when/crds.create:t/then/fullnameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1crds.create:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/crds.create:t/then/namespaceOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1crds.create:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/create:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1create:t"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/fail/else/nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t"
-      },
-      "then": false
-    },
-    "when/manager.image.tag:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "manager": {
-            "properties": {
-              "image": {
-                "properties": {
-                  "tag": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "tag"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "manager"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/namespaceOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "namespaceOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1fail~1else~1admissionWebhooks.create:t+manager.image.tag:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "manager": {
-            "additionalProperties": {},
-            "description": "Provide OpenTelemetry Operator manager container image and resources.",
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "tag": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@4"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "admissionWebhooks": {
-            "additionalProperties": {},
-            "description": "Admission webhooks make sure only requests with correctly formatted rules will get into the Operator.\nThey also enable the sidecar injection for OpenTelemetryCollector and Instrumentation CR's",
-            "properties": {
-              "certManager": {
-                "description": "https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-operator/README.md#tls-certificate-requirement\nTLS Certificate Option 1: Use certManager to generate self-signed certificate.\ncertManager must be enabled. If enabled, always takes precedence over options 2 and 3.",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@7"
-          },
-          {
-            "anyOf": [
-              {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
                 "properties": {
                   "admissionWebhooks": {
                     "properties": {
-                      "certManager": {
-                        "enum": [
-                          null
-                        ]
+                      "secretName": {
+                        "$ref": "#/definitions/t"
                       }
                     },
                     "required": [
-                      "certManager"
+                      "secretName"
                     ],
                     "type": "object"
                   }
@@ -684,45 +35,24 @@
                 ],
                 "type": "object"
               },
-              {
-                "not": {
-                  "properties": {
-                    "admissionWebhooks": {
-                      "properties": {
-                        "certManager": {}
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "admissionWebhooks"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
+              "then": true
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          },
+          "then": false
+        }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "manager": {
+          "admissionWebhooks": {
             "additionalProperties": {},
-            "description": "Provide OpenTelemetry Operator manager container image and resources.",
+            "description": "Admission webhooks make sure only requests with correctly formatted rules will get into the Operator.\nThey also enable the sidecar injection for OpenTelemetryCollector and Instrumentation CR's",
             "properties": {
-              "featureGatesMap": {
-                "description": "The featureGatesMap will enable or disable specific feature gates in the operator as well as deploy any prerequisites for the feature gate.\nA full list of valid identifiers can be found here: https://github.com/open-telemetry/opentelemetry-operator/blob/main/pkg/featuregate/featuregate.go",
-                "type": "object"
+              "secretName": {
+                "type": "string"
               }
             }
           }
@@ -731,87 +61,23 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1admissionWebhooks.certManager.enabled:t~1then~1crds.create:t+fullnameOverride:t+nameOverride:t~1else~1admissionWebhooks"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "Provide a name in place of opentelemetry-operator (includes the chart's release name).",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "crds": {}
-                  },
-                  "required": [
-                    "crds"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
+        "else": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+            },
+            "then": true
           },
-          {
-            "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@8"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1admissionWebhooks.autoGenerateCert.enabled:t~1then~1admissionWebhooks+admissionWebhooks.certManager+crds.create:t+1more~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "Top level field indicating an override for the namespace",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@6"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "crds": {
-            "description": "Install CRDS with the right webhook settings\nThese are installed as templates, so they will clash with existing OpenTelemetry Operator CRDs in your cluster that are not already managed by the helm chart.\nSee https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-operator/UPGRADING.md#0560-to-0570 for more details.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1admissionWebhooks.autoGenerateCert.enabled:t~1then~1fail~1else~1admissionWebhooks.certManager+admissionWebhooks.create:t"
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          },
+          "then": false
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
+        },
+        "then": false
       },
       "then": {
         "allOf": [
@@ -865,7 +131,219 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1admissionWebhooks.autoGenerateCert.enabled:t~1then~1admissionWebhooks+admissionWebhooks.certManager+crds.create:t+fullnameOverride:t~1else~1any"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1crds.create:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "manager": {
+            "additionalProperties": {},
+            "description": "Provide OpenTelemetry Operator manager container image and resources.",
+            "properties": {
+              "featureGatesMap": {
+                "description": "The featureGatesMap will enable or disable specific feature gates in the operator as well as deploy any prerequisites for the feature gate.\nA full list of valid identifiers can be found here: https://github.com/open-telemetry/opentelemetry-operator/blob/main/pkg/featuregate/featuregate.go",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1crds.create:t~1then~1namespaceOverride:t~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1namespaceOverride:t~1then~1any~1else~1fail"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1crds.create:t~1then~1namespaceOverride:t~1else~1fail"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "Top level field indicating an override for the namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1crds.create:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            "then": false
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "Provide a name in place of opentelemetry-operator (includes the chart's release name).",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "crds": {}
+                  },
+                  "required": [
+                    "crds"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "crds": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "manager": {
+            "description": "Provide OpenTelemetry Operator manager container image and resources.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1crds.create:t~1then~1fullnameOverride:t~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1fullnameOverride:t~1then~1any~1else~1fail"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1crds.create:t~1then~1fullnameOverride:t~1else~1fail"
+          }
+        }
       },
       "then": {
         "additionalProperties": {},
@@ -879,50 +357,160 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
-      },
-      "then": {
         "allOf": [
           {
-            "additionalProperties": {},
-            "properties": {
-              "admissionWebhooks": {
-                "additionalProperties": {},
-                "description": "Admission webhooks make sure only requests with correctly formatted rules will get into the Operator.\nThey also enable the sidecar injection for OpenTelemetryCollector and Instrumentation CR's",
-                "properties": {
-                  "autoGenerateCert": {
-                    "description": "TLS Certificate Option 2: Use Helm to automatically generate self-signed certificate.\ncertManager must be disabled and autoGenerateCert must be enabled.\nIf true and certManager.enabled is false, Helm will automatically create a self-signed cert and secret for you.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4"
           },
           {
-            "additionalProperties": {},
-            "properties": {
-              "manager": {
-                "additionalProperties": {},
-                "description": "Provide OpenTelemetry Operator manager container image and resources.",
+            "anyOf": [
+              {
                 "properties": {
-                  "image": {
+                  "manager": {
+                    "properties": {
+                      "featureGatesMap": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "featureGatesMap"
+                    ],
                     "type": "object"
+                  }
+                },
+                "required": [
+                  "manager"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "manager": {
+                      "properties": {
+                        "featureGatesMap": {}
+                      },
+                      "required": [
+                        "featureGatesMap"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "manager"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1crds.create:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "properties": {
+                "manager": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "tag": {
+                          "$ref": "#/definitions/t"
+                        }
+                      },
+                      "required": [
+                        "tag"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "manager"
+              ],
+              "type": "object"
+            },
+            "then": true
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "manager": {
+            "additionalProperties": {},
+            "description": "Provide OpenTelemetry Operator manager container image and resources.",
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "properties": {
+                  "tag": {
+                    "type": "string"
                   }
                 }
               }
             }
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
+          },
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+          }
         ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "admissionWebhooks": {
+            "additionalProperties": {},
+            "description": "Admission webhooks make sure only requests with correctly formatted rules will get into the Operator.\nThey also enable the sidecar injection for OpenTelemetryCollector and Instrumentation CR's",
+            "properties": {
+              "certManager": {
+                "description": "https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-operator/README.md#tls-certificate-requirement\nTLS Certificate Option 1: Use certManager to generate self-signed certificate.\ncertManager must be enabled. If enabled, always takes precedence over options 2 and 3.",
+                "type": "object"
+              }
+            }
+          }
+        }
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1admissionWebhooks.create:t@3"
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t@2"
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
           },
           {
             "anyOf": [
@@ -974,56 +562,90 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "crds": {
+            "description": "Install CRDS with the right webhook settings\nThese are installed as templates, so they will clash with existing OpenTelemetry Operator CRDs in your cluster that are not already managed by the helm chart.\nSee https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-operator/UPGRADING.md#0560-to-0570 for more details.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@7"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+              }
+            ]
           },
           {
             "anyOf": [
               {
                 "properties": {
-                  "manager": {
+                  "admissionWebhooks": {
                     "properties": {
-                      "featureGatesMap": {
+                      "certManager": {
                         "enum": [
                           null
                         ]
                       }
                     },
                     "required": [
-                      "featureGatesMap"
+                      "certManager"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "manager"
+                  "admissionWebhooks"
                 ],
                 "type": "object"
               },
               {
                 "not": {
                   "properties": {
-                    "manager": {
+                    "admissionWebhooks": {
                       "properties": {
-                        "featureGatesMap": {}
+                        "certManager": {}
                       },
                       "required": [
-                        "featureGatesMap"
+                        "certManager"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "manager"
+                    "admissionWebhooks"
                   ],
                   "type": "object"
                 }
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1crds.create:t"
           }
         ]
       },
@@ -1033,8 +655,50 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@9"
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t"
           },
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "admissionWebhooks": {
+                "additionalProperties": {},
+                "description": "Admission webhooks make sure only requests with correctly formatted rules will get into the Operator.\nThey also enable the sidecar injection for OpenTelemetryCollector and Instrumentation CR's",
+                "properties": {
+                  "autoGenerateCert": {
+                    "description": "TLS Certificate Option 2: Use Helm to automatically generate self-signed certificate.\ncertManager must be disabled and autoGenerateCert must be enabled.\nIf true and certManager.enabled is false, Helm will automatically create a self-signed cert and secret for you.",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "manager": {
+                "additionalProperties": {},
+                "description": "Provide OpenTelemetry Operator manager container image and resources.",
+                "properties": {
+                  "image": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "anyOf": [
               {
@@ -1062,43 +726,20 @@
                 }
               }
             ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
+              }
+            ]
           }
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "manager": {
-            "description": "Provide OpenTelemetry Operator manager container image and resources.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1admissionWebhooks.autoGenerateCert.enabled:t~1then~1admissionWebhooks.certManager+admissionWebhooks.create:t+1more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "admissionWebhooks": {
-            "additionalProperties": {},
-            "description": "Admission webhooks make sure only requests with correctly formatted rules will get into the Operator.\nThey also enable the sidecar injection for OpenTelemetryCollector and Instrumentation CR's",
-            "properties": {
-              "secretName": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -1132,6 +773,266 @@
       "then": false
     }
   ],
+  "definitions": {
+    "constrains/admissionWebhooks.autoGenerateCert.enabled:t": {
+      "properties": {
+        "admissionWebhooks": {
+          "$ref": "#/definitions/constrains~1autoGenerateCert.enabled:t"
+        }
+      },
+      "required": [
+        "admissionWebhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+      }
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.create:t"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.create:t"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t"
+      }
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4": {
+      "not": {
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
+      }
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+      }
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t@3": {
+      "properties": {
+        "admissionWebhooks": {
+          "$ref": "#/definitions/constrains~1certManager.enabled:t"
+        }
+      },
+      "required": [
+        "admissionWebhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/admissionWebhooks.create:t": {
+      "properties": {
+        "admissionWebhooks": {
+          "$ref": "#/definitions/constrains~1create:t"
+        }
+      },
+      "required": [
+        "admissionWebhooks"
+      ],
+      "type": "object"
+    },
+    "constrains/autoGenerateCert.enabled:t": {
+      "properties": {
+        "autoGenerateCert": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "autoGenerateCert"
+      ],
+      "type": "object"
+    },
+    "constrains/certManager.enabled:t": {
+      "properties": {
+        "certManager": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "certManager"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.create:t": {
+      "properties": {
+        "crds": {
+          "$ref": "#/definitions/constrains~1create:t"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/create:t": {
+      "properties": {
+        "create": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/autoGenerateCert.enabled:t/then/fail/else/certManager+create:t": {
+      "else": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1create:t"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1certManager.enabled:t"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1autoGenerateCert.enabled:t"
+      },
+      "then": false
+    },
+    "when/crds.create:t/then/fullnameOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1crds.create:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1fullnameOverride:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/crds.create:t/then/namespaceOverride:t/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1crds.create:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1namespaceOverride:t~1then~1any~1else~1fail"
+      }
+    },
+    "when/fullnameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+      },
+      "then": true
+    },
+    "when/nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/definitions/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": true
+    },
+    "when/namespaceOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "namespaceOverride": {
+            "$ref": "#/definitions/t"
+          }
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      },
+      "then": true
+    }
+  },
   "properties": {
     "additionalLabels": {
       "description": "Common labels to add to all otel-operator resources. Evaluated as a template."
@@ -1143,7 +1044,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
+                "$ref": "#/definitions/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
               },
               {
                 "anyOf": [
@@ -1181,7 +1082,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
+                "$ref": "#/definitions/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
               },
               {
                 "anyOf": [
@@ -1219,7 +1120,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1certManager.enabled:t"
+                "$ref": "#/definitions/constrains~1create:t"
               },
               {
                 "anyOf": [
@@ -1250,7 +1151,9 @@
                 ]
               },
               {
-                "$ref": "#/$defs/constrains~1create:t"
+                "not": {
+                  "$ref": "#/definitions/constrains~1certManager.enabled:t"
+                }
               }
             ]
           },
@@ -1260,7 +1163,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
+                "$ref": "#/definitions/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
               },
               {
                 "anyOf": [

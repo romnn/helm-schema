@@ -320,8 +320,9 @@ fn helm_ready_companions_are_the_shortened_artifact_and_its_name_map() -> eyre::
     let mut restored = shortened.clone();
     helm_schema_json_schema_minify::rename_definitions(&mut restored, &readable_names);
     sim_assert_eq!(have: restored, want: artifact);
+    let keyword = helm_schema_json_schema_walk::DefinitionsKeyword::for_schema(&shortened);
     let defs = shortened
-        .get("$defs")
+        .get(keyword.as_str())
         .and_then(Value::as_object)
         .ok_or_eyre("shortened definitions expected")?;
     sim_assert_eq!(

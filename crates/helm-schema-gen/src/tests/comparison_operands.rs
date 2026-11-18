@@ -103,7 +103,7 @@ fn defaulted_int_cast_region_claims_only_truthy_inputs() {
     sim_assert_eq!(
         have: call.clone(),
         want: serde_json::json!({
-            "$defs": {
+            "definitions": {
                 "t": {
                     "anyOf": [
                         {
@@ -139,7 +139,7 @@ fn defaulted_int_cast_region_claims_only_truthy_inputs() {
                             {
                                 "properties": {
                                     "count": {
-                                        "$ref": "#/$defs/t"
+                                        "$ref": "#/definitions/t"
                                     }
                                 },
                                 "required": [
@@ -232,7 +232,7 @@ fn ordering_comparison_keeps_its_subset_inside_or() {
     sim_assert_eq!(
         have: schema.clone(),
         want: serde_json::json!({
-            "$defs": {
+            "definitions": {
                 "t": {
                     "anyOf": [
                         {
@@ -268,7 +268,7 @@ fn ordering_comparison_keeps_its_subset_inside_or() {
                             {
                                 "properties": {
                                     "enabled": {
-                                        "$ref": "#/$defs/t"
+                                        "$ref": "#/definitions/t"
                                     }
                                 },
                                 "required": [

@@ -154,7 +154,7 @@ fn judge(
             };
         }
         json!({
-            "$defs": { HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema() },
+            "definitions": { HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema() },
             "allOf": [constraint],
         })
     });
@@ -378,7 +378,7 @@ fn an_absence_guard_on_the_deciding_path_withdraws() -> eyre::Result<()> {
 /// outside the member, so the member's presence requirements decide.
 #[test]
 fn a_dependency_supplied_member_decides_a_member_requirement() -> eyre::Result<()> {
-    let truthy = json!({ "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}") });
+    let truthy = json!({ "$ref": format!("#/definitions/{HELM_TRUTHY_DEFINITION_NAME}") });
     let (document, relaxed) = judge(
         &json!({ "kid": { "entries": {} } }),
         &json!({ "kid": { "entries": { "alpha": { "enabled": false, "p": 80 } } } }),
@@ -495,7 +495,7 @@ fn an_uncompilable_constraint_is_kept_without_relaxation() -> eyre::Result<()> {
     // though the dependency supplies the key missing from the lint floor.
     let then_schema = json!({ "properties": { "kid": {
         "required": ["p"],
-        "properties": { "p": { "$ref": "#/$defs/missing" } },
+        "properties": { "p": { "$ref": "#/definitions/missing" } },
     } } });
     let (document, relaxed) = judge(
         &json!({ "kid": {} }),
@@ -570,7 +570,7 @@ fn tuple_guard_lint_projection_uses_the_emitted_draft07_dialect() -> eyre::Resul
     )?;
     let document = document.ok_or_eyre("tuple condition was withdrawn")?;
     sim_assert_eq!(have: &document, want: &json!({
-        "$defs": { HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema() },
+        "definitions": { HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema() },
         "allOf": [{
             "if": {"not": {
                 "type": "object", "required": ["subject"],

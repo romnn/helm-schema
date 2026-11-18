@@ -199,7 +199,7 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() -> eyre::Resu
     );
 
     let expected = serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     { "const": true },
@@ -218,7 +218,7 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() -> eyre::Resu
                     "properties": {
                         "params": {
                             "properties": {
-                                "create": { "$ref": "#/$defs/t" },
+                                "create": { "$ref": "#/definitions/t" },
                             },
                             "required": ["create"],
                             "type": "object",
@@ -251,7 +251,7 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() -> eyre::Resu
                             "properties": {
                                 "params": {
                                     "properties": {
-                                        "create": { "$ref": "#/$defs/t" },
+                                        "create": { "$ref": "#/definitions/t" },
                                     },
                                     "required": ["create"],
                                     "type": "object",
@@ -311,14 +311,14 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() -> eyre::Resu
                 "allOf": [{
                     "if": {
                         "properties": {
-                            "create": { "$ref": "#/$defs/t" },
+                            "create": { "$ref": "#/definitions/t" },
                         },
                         "required": ["create"],
                         "type": "object",
                     },
                     "then": {
                         "anyOf": [
-                            { "not": { "$ref": "#/$defs/t" } },
+                            { "not": { "$ref": "#/definitions/t" } },
                             { "type": "array" },
                             { "type": "null" },
                             { "type": "object" },
@@ -3242,14 +3242,14 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
     });
     sim_assert_eq!(
         have: schema.pointer("/properties/first"),
-        want: Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
+        want: Some(&serde_json::json!({ "$ref": "#/definitions/providerSchema1" }))
     );
     sim_assert_eq!(
         have: schema.pointer("/properties/second"),
-        want: Some(&serde_json::json!({ "$ref": "#/$defs/providerSchema1" }))
+        want: Some(&serde_json::json!({ "$ref": "#/definitions/providerSchema1" }))
     );
     sim_assert_eq!(
-        have: schema.pointer("/$defs/providerSchema1"),
+        have: schema.pointer("/definitions/providerSchema1"),
         want: Some(&expected_definition)
     );
 }
@@ -4530,7 +4530,7 @@ fn nested_fragment_control_keeps_the_containers_provider_slot() {
 
 fn expected_nested_fragment_control_schema() -> serde_json::Value {
     serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     { "const": true },
@@ -4547,7 +4547,7 @@ fn expected_nested_fragment_control_schema() -> serde_json::Value {
             "if": {
                 "not": {
                     "properties": {
-                        "sidecar": { "$ref": "#/$defs/t" },
+                        "sidecar": { "$ref": "#/definitions/t" },
                     },
                     "required": ["sidecar"],
                     "type": "object",
@@ -4573,7 +4573,7 @@ fn expected_nested_fragment_control_schema() -> serde_json::Value {
                                 },
                                 "type": "array",
                             },
-                            { "not": { "$ref": "#/$defs/t" } },
+                            { "not": { "$ref": "#/definitions/t" } },
                         ],
                     },
                 },

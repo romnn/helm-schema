@@ -60,7 +60,7 @@ fn bitnami_redis_values_descriptions_apply() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Resolve a JSON pointer while following local `$defs` refs: output
+/// Resolve a JSON pointer while following local `definitions` refs: output
 /// interning may move any subtree into a root-level definition.
 fn pointer_through_refs<'schema>(
     root: &'schema serde_json::Value,

@@ -102,7 +102,7 @@ const KID_FLAG_ON_VALUES: &str = indoc! {"
 /// The schema both root `kid.flag` defaults produce.
 fn expected_lint_root_schema() -> serde_json::Value {
     serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     { "const": true },
@@ -120,7 +120,7 @@ fn expected_lint_root_schema() -> serde_json::Value {
                 "if": {
                     "properties": {
                         "kid": {
-                            "properties": { "flag": { "$ref": "#/$defs/t" } },
+                            "properties": { "flag": { "$ref": "#/definitions/t" } },
                             "required": ["flag"],
                             "type": "object",
                         },

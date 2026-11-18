@@ -527,7 +527,7 @@ fn template_call_stringifies_the_helper_value_before_provider_projection() {
                             "allOf": ordinary_string_exclusions
                         },
                         crate::resolve_policy::plain_scalar_safe_comment_string_schema(),
-                        { "not": { "$ref": "#/$defs/t" } },
+                        { "not": { "$ref": "#/definitions/t" } },
                         {
                             "type": "string",
                             "pattern": "[\\r\\n]",

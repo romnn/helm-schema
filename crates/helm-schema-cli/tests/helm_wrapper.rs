@@ -1,5 +1,5 @@
 //! `helm-schema lint` and `helm-schema template`: the real Helm on a chart
-//! copy whose root schema has short `$defs` keys.
+//! copy whose root schema has short `definitions` keys.
 //!
 //! Needs Helm 4.2.3 on `PATH` (`mise install`).
 
@@ -154,13 +154,13 @@ fn rendered_manifests_are_relayed_byte_for_byte() -> eyre::Result<()> {
     let case = Case::new()?;
     // A value that spells a short definition reference is data, not a
     // diagnostic: `template` output keeps it.
-    let literal = ["--set-literal", "message=#/$defs/1"];
+    let literal = ["--set-literal", "message=#/definitions/1"];
     for command in ["lint", "template"] {
         let wrapped = run(case.wrapper(command).args(literal))?;
         let direct = run(case.helm(command).args(literal))?;
         sim_assert_eq!(have: wrapped.status.code(), want: Some(0), "{command}: {wrapped:?}");
         if command == "template" {
-            assert!(text(&direct.stdout)?.contains("message: \"#/$defs/1\""));
+            assert!(text(&direct.stdout)?.contains("message: \"#/definitions/1\""));
             sim_assert_eq!(have: text(&wrapped.stdout)?, want: text(&direct.stdout)?);
         }
     }
@@ -207,7 +207,7 @@ fn schema_errors_name_readable_definitions() -> eyre::Result<()> {
     // Helm 4.2.3 reports value errors by instance path; a schema that does
     // not compile is reported by definition.
     case.edit_schema(|schema| {
-        schema["$defs"]["values/message"]["pattern"] = json!("^(?=x)");
+        schema["definitions"]["values/message"]["pattern"] = json!("^(?=x)");
     })?;
     let shortened = case.path("shortened");
     copy_dir(&case.chart(), &shortened)?;
@@ -221,21 +221,22 @@ fn schema_errors_name_readable_definitions() -> eyre::Result<()> {
         let direct = run(Command::new("helm").arg(command).arg(&shortened))?;
         let direct_out = text(&direct.stdout)? + &text(&direct.stderr)?;
         assert!(
-            direct_out.contains("#/$defs/1\""),
+            direct_out.contains("at '/definitions/1/pattern'"),
             "{command}: {direct_out}"
         );
 
         let wrapped = run(&mut case.wrapper(command))?;
         let wrapped_out = text(&wrapped.stdout)? + &text(&wrapped.stderr)?;
         assert!(
-            wrapped_out.contains("#/$defs/values~1message\"") && !wrapped_out.contains("$defs/1\""),
+            wrapped_out.contains("at '/definitions/values~1message/pattern'")
+                && !wrapped_out.contains("at '/definitions/1/pattern'"),
             "{command}: {wrapped_out}"
         );
         sim_assert_eq!(have: wrapped.status.code(), want: direct.status.code(), "{command}");
         if command == "template" {
             sim_assert_eq!(
                 have: text(&wrapped.stderr)?,
-                want: text(&direct.stderr)?.replace("$defs/1\"", "$defs/values~1message\"")
+                want: text(&direct.stderr)?.replace("/definitions/1/pattern", "/definitions/values~1message/pattern")
             );
         }
     }
@@ -252,11 +253,11 @@ fn oversized_schemas_pass_only_through_the_wrapper() -> eyre::Result<()> {
             let name = format!("values/{index}/{}", "x".repeat(4000));
             properties.insert(
                 format!("p{index}"),
-                json!({ "$ref": format!("#/$defs/{}", name.replace('/', "~1")) }),
+                json!({ "$ref": format!("#/definitions/{}", name.replace('/', "~1")) }),
             );
             definitions.insert(name, json!({ "type": "string" }));
         }
-        schema["$defs"] = Value::Object(definitions);
+        schema["definitions"] = Value::Object(definitions);
         schema["properties"] = Value::Object(properties);
     })?;
     let size = std::fs::metadata(case.chart().join("values.schema.json"))?.len();
@@ -394,11 +395,11 @@ mod unix {
             indoc::indoc! {r#"
                 i=0
                 while [ $i -lt 10000 ]; do
-                  echo "out $i #/\$defs/1"
-                  echo "err $i #/\$defs/1" >&2
+                  echo "out $i #/definitions/1"
+                  echo "err $i #/definitions/1" >&2
                   i=$((i+1))
                 done
-                printf 'crlf #/\044defs/1\r\n\377 last #/\044defs/1'
+                printf 'crlf #/definitions/1\r\n\377 last #/definitions/1'
                 exit 7
             "#},
         )?;
@@ -406,10 +407,12 @@ mod unix {
         let mut stdout = Vec::new();
         let mut stderr = Vec::new();
         for index in 0..10000 {
-            stdout.extend(format!("out {index} #/$defs/values~1message\n").bytes());
-            stderr.extend(format!("err {index} #/$defs/values~1message\n").bytes());
+            stdout.extend(format!("out {index} #/definitions/values~1message\n").bytes());
+            stderr.extend(format!("err {index} #/definitions/values~1message\n").bytes());
         }
-        stdout.extend(b"crlf #/$defs/values~1message\r\n\xff last #/$defs/values~1message");
+        stdout.extend(
+            b"crlf #/definitions/values~1message\r\n\xff last #/definitions/values~1message",
+        );
         sim_assert_eq!(have: output.status.code(), want: Some(7));
         assert!(output.stdout == stdout, "stdout differs");
         assert!(output.stderr == stderr, "stderr differs");

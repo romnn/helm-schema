@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 
 use helm_schema_core::{ProviderOrigin, ProviderSchemaSource};
 use helm_schema_json_schema_minify::DefinitionOrigin;
-use helm_schema_json_schema_walk::SchemaMetadataIndex;
+use helm_schema_json_schema_walk::{GENERATED_DEFINITIONS, SchemaMetadataIndex};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
@@ -13,14 +13,12 @@ use crate::provider_schema::{ProviderSchemaCandidate, rewrite_internal_refs_for_
 use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
 
-const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
 const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
 const PROVIDER_SHARED_DEFINITION_PREFIX: &str = "providerShared";
 const MIN_SHARED_PROVIDER_PAYLOAD_BYTES: usize = 16 * 1024;
 
-/// Extract repeated provider-owned schema leaves into root `$defs`
-/// definitions, rewriting each extracted `resolved_path.schema` to an
+/// Extract repeated provider-owned schema leaves into root definitions, rewriting each extracted `resolved_path.schema` to an
 /// internal `$ref`.
 /// Returns the definitions keyed by definition name.
 ///
@@ -94,7 +92,7 @@ pub(crate) fn extract_provider_definitions(
         let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
             continue;
         };
-        conditional.schema = SchemaNode::reference(format!("#/{DEFINITIONS_KEY}/{name}"));
+        conditional.schema = SchemaNode::reference(GENERATED_DEFINITIONS.reference(name));
     }
 
     definitions_by_name
@@ -112,7 +110,7 @@ pub(crate) fn insert_definitions_into_root(
         return;
     };
     let definitions = root
-        .entry(DEFINITIONS_KEY.to_string())
+        .entry(GENERATED_DEFINITIONS.as_str().to_string())
         .or_insert_with(|| Value::Object(Map::new()));
     let Value::Object(definitions) = definitions else {
         return;
@@ -201,7 +199,9 @@ fn collect_referenced_definitions(
 }
 
 fn root_definition_name(reference: &str) -> Option<String> {
-    helm_schema_json_schema_walk::parse_definition_reference(reference).map(|parsed| parsed.name)
+    helm_schema_json_schema_walk::parse_definition_reference(reference)
+        .filter(|parsed| parsed.keyword == GENERATED_DEFINITIONS)
+        .map(|parsed| parsed.name)
 }
 
 #[derive(Debug)]
@@ -601,7 +601,7 @@ fn reference_schema(name: &str) -> Value {
     Value::Object(
         [(
             "$ref".to_string(),
-            Value::String(format!("#/{DEFINITIONS_KEY}/{name}")),
+            Value::String(GENERATED_DEFINITIONS.reference(name)),
         )]
         .into_iter()
         .collect(),

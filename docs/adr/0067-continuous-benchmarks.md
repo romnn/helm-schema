@@ -26,8 +26,8 @@ the user's benchtrail dashboard.
   kube-prometheus-stack's phase proportions.
 - Per configuration it records the median CPU time, wall time and peak RSS of a stated
   number of untraced runs (9 for kubeview, 5 for bitnami-redis, 3 for the heavy tails), the
-  pretty and the compact short-`$defs` schema size (`helm-schema shorten --compact`), the
-  `$defs` count, and six phase times read from one separate
+  pretty and the compact schema size with short definition names (`helm-schema shorten --compact`), the
+  definition count, and six phase times read from one separate
   `helm-schema-dev --trace-output` run of the existing spans; no timers or dependencies
   are added to the core crates. Untraced runs that write different bytes fail the benchmark
   (ADR 0063).

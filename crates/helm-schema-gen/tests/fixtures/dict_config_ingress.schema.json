@@ -1,5 +1,47 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/t"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/helm-condition-0"
+          },
+          {
+            "$ref": "#/definitions/helm-condition-1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
     "helm-condition-0": {
       "not": {
         "anyOf": [
@@ -86,48 +128,6 @@
       ]
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "ingress": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/t"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-0"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "type": "object"
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "global": {},
     "ingress": {

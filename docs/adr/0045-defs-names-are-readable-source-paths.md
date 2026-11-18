@@ -1,4 +1,4 @@
-# 0045. `$defs` entries are named by readable source paths
+# 0045. `definitions` entries are named by readable source paths
 
 Status: Accepted
 Date: 2026-09-27
@@ -11,7 +11,7 @@ building more adjudication around it.
 
 ## Decision
 
-- Every `$defs` entry helm-schema creates is named by a deterministic,
+- Every `definitions` entry helm-schema creates is named by a deterministic,
   human-interpretable schema path. By default (`--defs-names source`) the
   name is the definition's SOURCE: provider document + JSON pointer for
   Kubernetes/CRD content (`k8s/...`, `crd/...`), `values/<path>` for
@@ -46,6 +46,6 @@ does not make a fixture reviewable. Source paths replaced them the same day.
 
 - Session memory `fixture-defs-naming.md` (agreed policy and scheme,
   2026-09-27); `fix-uninterpretable-output-first.md`
-- `docs/content/docs/reference/output.md` (`$defs` naming)
+- `docs/content/docs/reference/output.md` (`definitions` naming)
 - Commits 0c21000f (Land readable $defs names, 2026-09-27), 1ec44c73,
   8678808d, bbef70d5

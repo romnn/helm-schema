@@ -1,9 +1,442 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "dask-gateway": {
+          "additionalProperties": {},
+          "properties": {
+            "traefik": {
+              "additionalProperties": {},
+              "description": "traefik nested config relates to the traefik Pod and Traefik running within it\nthat is acting as a proxy for traffic towards the gateway or user created\nDaskCluster resources.",
+              "properties": {
+                "additionalArguments": {
+                  "description": "Any additional arguments to forward to traefik",
+                  "type": [
+                    "array",
+                    "integer",
+                    "null",
+                    "object"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "dask-kubernetes": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "dask-kubernetes"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "dask-kubernetes": {}
+              },
+              "required": [
+                "dask-kubernetes"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "jupyterhub": {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          },
+          "required": [
+            "jupyterhub"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1jupyterhub.scheduling.userScheduler.enabled:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "properties": {
+                "jupyterhub": {
+                  "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
+                }
+              },
+              "required": [
+                "jupyterhub"
+              ],
+              "type": "object"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "properties": {
+                  "jupyterhub": {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  }
+                },
+                "required": [
+                  "jupyterhub"
+                ],
+                "type": "object"
+              },
+              "then": false
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jupyterhub": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "dask-gateway": {
+            "properties": {
+              "rbac": {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "dask-gateway"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "rbac": {
+                "additionalProperties": {},
+                "description": "rbac nested configuration relates to the choice of creating or replacing\nresources like (Cluster)Role, (Cluster)RoleBinding, and ServiceAccount.",
+                "properties": {
+                  "traefik": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "dask-gateway": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "traefik": {}
+                          },
+                          "required": [
+                            "traefik"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "traefik": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "traefik"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "dask-gateway"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "dask-gateway": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "traefik": {
+                              "properties": {
+                                "service": {}
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "traefik"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "traefik": {
+                            "properties": {
+                              "service": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "service"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "traefik"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "dask-gateway"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "dask-gateway": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "dask-gateway"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1jupyterhub.scheduling.userScheduler.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jupyterhub": {
+            "additionalProperties": {},
+            "properties": {
+              "scheduling": {
+                "additionalProperties": {},
+                "description": "scheduling relates to the user-scheduler pods and user-placeholder pods.",
+                "properties": {
+                  "userScheduler": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceAccount": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "dask-gateway": {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          },
+          "required": [
+            "dask-gateway"
+          ],
+          "type": "object"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "description": "Provide a name to partially substitute for the full names of resources (will maintain the release name)",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {}
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1dask-kubernetes.enabled:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1dask-kubernetes.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbac": {
+            "description": "DaskHub configuration values",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "dask-gateway": {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            }
+          },
+          "required": [
+            "dask-gateway"
+          ],
+          "type": "object"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "description": "Provide a name to substitute for the full names of resources",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
     "constrains/dask-kubernetes.enabled:t": {
       "properties": {
         "dask-kubernetes": {
-          "$ref": "#/$defs/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
@@ -14,7 +447,7 @@
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -23,9 +456,15 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
     },
     "constrains/fullnameOverride!=null": {
       "properties": {
@@ -42,184 +481,10 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride+nameOverride:t+scheduling.userScheduler.enabled:t+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride+nameOverride:t+scheduling.userScheduler.enabled:t+1more@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride+nameOverride:t+scheduling.userScheduler.enabled:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@2"
-      }
-    },
-    "constrains/fullnameOverride+nameOverride+nameOverride:t+scheduling.userScheduler.enabled:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+nameOverride+nameOverride:t+scheduling.userScheduler.enabled:t+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+nameOverride+nameOverride:t+scheduling.userScheduler.enabled:t+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
-        }
-      ]
-    },
     "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
       "properties": {
         "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -230,7 +495,7 @@
     "constrains/jupyterhub.scheduling.userScheduler.enabled:t": {
       "properties": {
         "jupyterhub": {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@4"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
         }
       },
       "required": [
@@ -240,38 +505,18 @@
     },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
+        "$ref": "#/definitions/constrains~1nameOverride@2"
       }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -291,38 +536,46 @@
       "type": "object"
     },
     "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@3"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+2more"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t+1more"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@4"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@6"
         }
       ]
     },
     "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more/anyOf/string;pattern-x20-x2d": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
+          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more/anyOf/string;pattern-x20-x2d@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
         }
       ]
     },
@@ -331,15 +584,15 @@
         "additionalProperties": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+              "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
             },
             {
-              "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
+              "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
             }
           ]
         },
         "propertyNames": {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
         },
         "type": "object"
       }
@@ -370,39 +623,11 @@
     "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name:t"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
         },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@6"
-        }
-      ]
-    },
-    "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@3": {
-      "anyOf": [
         {
           "properties": {
             "scheduling": {
@@ -418,20 +643,24 @@
                                 "anyOf": [
                                   false,
                                   {
-                                    "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
+                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
                                   }
                                 ]
                               },
                               "propertyNames": {
-                                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d@2"
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+                                  }
+                                ]
                               },
                               "type": "object"
                             },
                             {
-                              "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
+                              "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
                             }
                           ]
                         }
@@ -460,25 +689,28 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount+1more"
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@4"
+              }
+            ]
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name:t"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@5"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@2"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@3"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@3"
         },
         {
           "properties": {
@@ -491,24 +723,24 @@
                         "name": {
                           "allOf": [
                             {
-                              "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
+                              "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
                             },
                             {
                               "additionalProperties": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
+                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
+                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
                                   }
                                 ]
                               },
                               "propertyNames": {
-                                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
+                                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
                               },
                               "type": "object"
                             }
@@ -539,60 +771,47 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@7"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@6"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@6"
         }
       ]
     },
-    "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more"
-      }
-    },
     "constrains/scheduling.userScheduler.enabled:t": {
-      "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@3"
+      "not": {
+        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
+      }
     },
     "constrains/scheduling.userScheduler.enabled:t+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@3"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
         }
       ]
     },
     "constrains/scheduling.userScheduler.enabled:t+2more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name:t@2"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t@2"
         }
       ]
     },
     "constrains/scheduling.userScheduler.enabled:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@4"
-      }
-    },
-    "constrains/scheduling.userScheduler.enabled:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t@4"
-      }
-    },
-    "constrains/scheduling.userScheduler.enabled:t@4": {
       "properties": {
         "scheduling": {
           "properties": {
             "userScheduler": {
-              "$ref": "#/$defs/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t"
             }
           },
           "required": [
@@ -606,29 +825,12 @@
       ],
       "type": "object"
     },
-    "constrains/scheduling.userScheduler.serviceAccount+1more": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name@4"
-          }
-        ]
-      }
-    },
     "constrains/scheduling.userScheduler.serviceAccount.create:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@3"
+        "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
       }
     },
     "constrains/scheduling.userScheduler.serviceAccount.create:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@3"
-      }
-    },
-    "constrains/scheduling.userScheduler.serviceAccount.create:t@3": {
       "properties": {
         "scheduling": {
           "properties": {
@@ -637,7 +839,7 @@
                 "serviceAccount": {
                   "properties": {
                     "create": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -704,22 +906,22 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@4"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@4"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -727,7 +929,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
           }
         }
       ]
@@ -736,7 +938,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
           }
         },
         {
@@ -744,10 +946,10 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -759,32 +961,32 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@4"
               }
             ]
           },
@@ -796,20 +998,20 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -823,36 +1025,36 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@4"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
           }
         }
       ]
@@ -863,33 +1065,37 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@4"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@4"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
           }
         }
       ]
@@ -900,24 +1106,24 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
           }
         }
       ]
@@ -926,7 +1132,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
           }
         },
         {
@@ -934,15 +1140,19 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         }
@@ -952,16 +1162,16 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
           }
         ]
       },
@@ -971,16 +1181,16 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
           }
         ]
       },
@@ -990,10 +1200,10 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
           }
         ]
       },
@@ -1004,21 +1214,21 @@
         "additionalProperties": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
             },
             {
-              "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
             },
             {
-              "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+              "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
             },
             {
-              "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
             }
           ]
         },
         "propertyNames": {
-          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
         },
         "type": "object"
       }
@@ -1027,21 +1237,21 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -1049,21 +1259,21 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@3"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@3"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -1071,15 +1281,15 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -1093,7 +1303,7 @@
     },
     "constrains/scheduling.userScheduler.serviceAccount.name:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name:t@2"
+        "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t@2"
       }
     },
     "constrains/scheduling.userScheduler.serviceAccount.name:t@2": {
@@ -1105,7 +1315,7 @@
                 "serviceAccount": {
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -1145,13 +1355,13 @@
                           "additionalProperties": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
+                                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
+                                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                               },
                               {
                                 "allOf": [
@@ -1159,25 +1369,25 @@
                                     "items": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
+                                          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@3"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@3"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
                                         }
                                       ]
                                     },
@@ -1185,13 +1395,13 @@
                                   },
                                   {
                                     "not": {
-                                      "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
+                                      "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
                                     }
                                   }
                                 ]
                               },
                               {
-                                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
                               },
                               {
                                 "allOf": [
@@ -1199,52 +1409,52 @@
                                     "additionalProperties": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@3"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array@3"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
+                                          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
                                         }
                                       ]
                                     },
                                     "propertyNames": {
-                                      "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
+                                      "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
                                     },
                                     "type": "object"
                                   },
                                   {
                                     "not": {
-                                      "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
+                                      "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
                                     }
                                   }
                                 ]
                               },
                               {
-                                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
+                                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
                               }
                             ]
                           },
                           "propertyNames": {
-                            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
+                            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
                           },
                           "type": "object"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1not~1object"
+                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1not~1object"
                         }
                       ]
                     }
@@ -1286,13 +1496,13 @@
                           "additionalProperties": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
+                                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
+                                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                               },
                               {
                                 "allOf": [
@@ -1300,22 +1510,22 @@
                                     "items": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x20-x2d"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array"
                                         }
                                       ]
                                     },
@@ -1323,46 +1533,50 @@
                                   },
                                   {
                                     "not": {
-                                      "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
+                                      "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array"
                                     }
                                   }
                                 ]
                               },
                               {
-                                "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
                               },
                               {
                                 "allOf": [
                                   {
                                     "not": {
-                                      "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
+                                      "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object"
                                     }
                                   },
                                   {
                                     "additionalProperties": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1not~1object+object@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1array@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1string;pattern-x3a-x2d"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1object@2"
                                         },
                                         {
-                                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array"
+                                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1allOf~1array+not~1array"
                                         }
                                       ]
                                     },
                                     "propertyNames": {
-                                      "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d@2"
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+                                        }
+                                      ]
                                     },
                                     "type": "object"
                                   }
@@ -1371,12 +1585,16 @@
                             ]
                           },
                           "propertyNames": {
-                            "$ref": "#/$defs/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d@2"
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+                              }
+                            ]
                           },
                           "type": "object"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.name~1not~1object"
+                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name~1not~1object"
                         }
                       ]
                     }
@@ -1577,10 +1795,6 @@
       "additionalProperties": {},
       "type": "object"
     },
-    "values/dask-gateway.controller.tolerations": {
-      "items": {},
-      "type": "array"
-    },
     "values/jupyterhub.debug": {
       "additionalProperties": {},
       "properties": {
@@ -1598,7 +1812,8 @@
         },
         "pullPolicy": {},
         "pullSecrets": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         },
         "tag": {
           "type": "string"
@@ -1610,19 +1825,22 @@
       "additionalProperties": {},
       "properties": {
         "allowedIngressPorts": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         },
         "egress": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         },
         "egressAllowRules": {
-          "$ref": "#/$defs/values~1jupyterhub.hub.networkPolicy.egressAllowRules"
+          "$ref": "#/definitions/values~1jupyterhub.hub.networkPolicy.egressAllowRules"
         },
         "enabled": {
           "type": "boolean"
         },
         "ingress": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         },
         "interNamespaceAccessLabels": {
           "type": "string"
@@ -1671,7 +1889,7 @@
       "additionalProperties": {},
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+          "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
         },
         "create": {
           "type": "boolean"
@@ -1728,16 +1946,18 @@
           "type": "array"
         },
         "egress": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         },
         "egressAllowRules": {
-          "$ref": "#/$defs/values~1jupyterhub.hub.networkPolicy.egressAllowRules"
+          "$ref": "#/definitions/values~1jupyterhub.hub.networkPolicy.egressAllowRules"
         },
         "enabled": {
           "type": "boolean"
         },
         "ingress": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         },
         "interNamespaceAccessLabels": {
           "type": "string"
@@ -1800,473 +2020,68 @@
       "additionalProperties": {},
       "properties": {
         "preferred": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         },
         "required": {
-          "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+          "items": {},
+          "type": "array"
         }
       },
       "type": "object"
-    },
-    "when/dask-gateway.fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "dask-gateway": {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-          }
-        },
-        "required": [
-          "dask-gateway"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/dask-gateway.nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "dask-gateway": {
-            "$ref": "#/$defs/constrains~1nameOverride:t@3"
-          }
-        },
-        "required": [
-          "dask-gateway"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/jupyterhub.fullnameOverride/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "properties": {
-          "jupyterhub": {
-            "$ref": "#/$defs/constrains~1fullnameOverride@3"
-          }
-        },
-        "required": [
-          "jupyterhub"
-        ],
-        "type": "object"
-      },
-      "then": false
-    },
-    "when/jupyterhub.nameOverride:t/then/jupyterhub.fullnameOverride+jupyterhub.scheduling.userScheduler.enabled:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "jupyterhub": {
-            "$ref": "#/$defs/constrains~1nameOverride:t@3"
-          }
-        },
-        "required": [
-          "jupyterhub"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1jupyterhub.scheduling.userScheduler.enabled:t~1then~1jupyterhub.fullnameOverride+1more~1else~1fail"
-      }
-    },
-    "when/jupyterhub.scheduling.userScheduler.enabled:t/then/jupyterhub.fullnameOverride+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1jupyterhub.scheduling.userScheduler.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1jupyterhub.scheduling.userScheduler.serviceAccount.create:t~1then~1jupyterhub.fullnameOverride~1else~1fail"
-      }
-    },
-    "when/jupyterhub.scheduling.userScheduler.serviceAccount.create:t/then/jupyterhub.fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "jupyterhub": {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t@3"
-          }
-        },
-        "required": [
-          "jupyterhub"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1jupyterhub.fullnameOverride~1then~1fail~1else~1any"
-      }
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "additionalProperties": {},
-      "properties": {
-        "dask-gateway": {
-          "additionalProperties": {},
-          "properties": {
-            "traefik": {
-              "additionalProperties": {},
-              "description": "traefik nested config relates to the traefik Pod and Traefik running within it\nthat is acting as a proxy for traffic towards the gateway or user created\nDaskCluster resources.",
-              "properties": {
-                "additionalArguments": {
-                  "description": "Any additional arguments to forward to traefik",
-                  "type": [
-                    "array",
-                    "integer",
-                    "null",
-                    "object"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "dask-kubernetes": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "dask-kubernetes"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "dask-kubernetes": {}
-              },
-              "required": [
-                "dask-kubernetes"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1dask-kubernetes.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "rbac": {
-            "description": "DaskHub configuration values",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1jupyterhub.scheduling.userScheduler.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jupyterhub": {
-            "additionalProperties": {},
-            "properties": {
-              "scheduling": {
-                "additionalProperties": {},
-                "description": "scheduling relates to the user-scheduler pods and user-placeholder pods.",
-                "properties": {
-                  "userScheduler": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "serviceAccount": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "rbac": {}
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1dask-kubernetes.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1jupyterhub.nameOverride:t~1then~1jupyterhub.fullnameOverride+jupyterhub.scheduling.userScheduler.enabled:t+1more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jupyterhub": {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "dask-gateway": {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "traefik": {}
-                          },
-                          "required": [
-                            "traefik"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "traefik": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "traefik"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "dask-gateway"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "dask-gateway": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "traefik": {
-                              "properties": {
-                                "service": {}
-                              },
-                              "required": [
-                                "service"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "traefik"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "traefik": {
-                            "properties": {
-                              "service": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "service"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "traefik"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "dask-gateway"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "dask-gateway": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "dask-gateway"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1dask-gateway.nameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dask-gateway": {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "description": "Provide a name to partially substitute for the full names of resources (will maintain the release name)",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "dask-gateway": {
-            "properties": {
-              "rbac": {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "dask-gateway"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dask-gateway": {
-            "additionalProperties": {},
-            "properties": {
-              "rbac": {
-                "additionalProperties": {},
-                "description": "rbac nested configuration relates to the choice of creating or replacing\nresources like (Cluster)Role, (Cluster)RoleBinding, and ServiceAccount.",
-                "properties": {
-                  "traefik": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1dask-gateway.fullnameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dask-gateway": {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "description": "Provide a name to substitute for the full names of resources",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "dask-gateway": {
       "additionalProperties": {},
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              }
+            ]
           },
           "then": {
             "if": {
@@ -2287,7 +2102,7 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1fullnameOverride!=null"
+                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
                 }
               ]
             },
@@ -2301,7 +2116,7 @@
           "description": "controller nested config relates to the controller Pod and the\ndask-gateway-server running within it that makes things happen when changes to\nDaskCluster k8s resources are observed.",
           "properties": {
             "affinity": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "annotations": {
               "additionalProperties": {},
@@ -2370,7 +2185,8 @@
               "type": "object"
             },
             "tolerations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             }
           },
           "type": "object"
@@ -2387,7 +2203,7 @@
           "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
           "properties": {
             "affinity": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "annotations": {
               "additionalProperties": {},
@@ -2662,13 +2478,14 @@
               "description": "Configuration for the gateway-server service",
               "properties": {
                 "annotations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 }
               },
               "type": "object"
             },
             "tolerations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             }
           },
           "type": "object"
@@ -2719,7 +2536,7 @@
               "description": "Any additional arguments to forward to traefik"
             },
             "affinity": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "annotations": {
               "description": "Any annotations to add to the proxy pods"
@@ -2739,7 +2556,8 @@
               "type": "object"
             },
             "imagePullSecrets": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "loglevel": {
               "description": "The proxy log level"
@@ -2794,7 +2612,8 @@
               "type": "object"
             },
             "tolerations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             }
           },
           "type": "object"
@@ -2819,10 +2638,125 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@4"
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+2more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+1more"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride@2"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        }
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
+                      }
+                    ]
+                  }
+                ]
               },
               {
-                "$ref": "#/$defs/constrains~1fullnameOverride+nameOverride+nameOverride:t+scheduling+scheduling.userScheduler+5more@3"
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
+                          }
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
+                          }
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+2more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+1more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -2900,7 +2834,7 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1fullnameOverride!=null"
+                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
                 }
               ]
             },
@@ -2953,7 +2887,7 @@
           "type": "object"
         },
         "debug": {
-          "$ref": "#/$defs/values~1jupyterhub.debug"
+          "$ref": "#/definitions/values~1jupyterhub.debug"
         },
         "enabled": {
           "description": "enabled is ignored by the jupyterhub chart itself, but a chart depending on\nthe jupyterhub chart conditionally can make use this config option as the\ncondition."
@@ -2971,17 +2905,19 @@
               "type": "boolean"
             },
             "annotations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "args": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "authenticatePrometheus": {},
             "baseUrl": {
               "type": "string"
             },
             "command": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "concurrentSpawnLimit": {
               "type": "integer"
@@ -3037,10 +2973,10 @@
                       "type": "array"
                     },
                     "annotations": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                      "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                     },
                     "selector": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                      "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                     },
                     "storage": {
                       "type": "string"
@@ -3080,34 +3016,38 @@
               "type": "object"
             },
             "extraContainers": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "extraEnv": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraFiles": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraPodSpec": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraVolumeMounts": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "extraVolumes": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "image": {
-              "$ref": "#/$defs/values~1jupyterhub.hub.image"
+              "$ref": "#/definitions/values~1jupyterhub.hub.image"
             },
             "initContainers": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "labels": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "lifecycle": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "livenessProbe": {
               "additionalProperties": {},
@@ -3132,17 +3072,17 @@
               "type": "object"
             },
             "loadRoles": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "namedServerLimitPerUser": {},
             "networkPolicy": {
-              "$ref": "#/$defs/values~1jupyterhub.hub.networkPolicy"
+              "$ref": "#/definitions/values~1jupyterhub.hub.networkPolicy"
             },
             "nodeSelector": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "pdb": {
-              "$ref": "#/$defs/values~1jupyterhub.hub.pdb"
+              "$ref": "#/definitions/values~1jupyterhub.hub.pdb"
             },
             "podSecurityContext": {
               "additionalProperties": {},
@@ -3177,17 +3117,18 @@
             },
             "redirectToServer": {},
             "resources": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "revisionHistoryLimit": {},
             "service": {
               "additionalProperties": {},
               "properties": {
                 "annotations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "extraPorts": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "loadBalancerIP": {},
                 "ports": {
@@ -3204,7 +3145,7 @@
               "type": "object"
             },
             "serviceAccount": {
-              "$ref": "#/$defs/values~1jupyterhub.hub.serviceAccount"
+              "$ref": "#/definitions/values~1jupyterhub.hub.serviceAccount"
             },
             "services": {
               "additionalProperties": {},
@@ -3223,13 +3164,15 @@
             },
             "shutdownOnLogout": {},
             "templatePaths": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "templateVars": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "tolerations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             }
           },
           "type": "object"
@@ -3260,13 +3203,14 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "enabled": {
               "type": "boolean"
             },
             "hosts": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "ingressClassName": {},
             "pathSuffix": {},
@@ -3274,7 +3218,8 @@
               "type": "string"
             },
             "tls": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             }
           },
           "type": "object"
@@ -3285,26 +3230,27 @@
           "description": "prePuller relates to the hook|continuous-image-puller DaemonsSets",
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "containerSecurityContext": {
-              "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+              "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
             },
             "continuous": {
-              "$ref": "#/$defs/values~1jupyterhub.debug"
+              "$ref": "#/definitions/values~1jupyterhub.debug"
             },
             "extraImages": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraTolerations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "hook": {
               "additionalProperties": {},
               "description": "hook relates to the hook-image-awaiter Job and hook-image-puller DaemonSet",
               "properties": {
                 "containerSecurityContext": {
-                  "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+                  "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
                 },
                 "enabled": {
                   "type": "boolean"
@@ -3318,7 +3264,8 @@
                     },
                     "pullPolicy": {},
                     "pullSecrets": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                      "items": {},
+                      "type": "array"
                     },
                     "tag": {
                       "type": "string"
@@ -3327,7 +3274,7 @@
                   "type": "object"
                 },
                 "nodeSelector": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "podSchedulingWaitDuration": {
                   "type": "integer"
@@ -3336,25 +3283,26 @@
                   "type": "boolean"
                 },
                 "resources": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "serviceAccount": {
-                  "$ref": "#/$defs/values~1jupyterhub.hub.serviceAccount"
+                  "$ref": "#/definitions/values~1jupyterhub.hub.serviceAccount"
                 },
                 "tolerations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 }
               },
               "type": "object"
             },
             "labels": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "pause": {
               "additionalProperties": {},
               "properties": {
                 "containerSecurityContext": {
-                  "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+                  "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
                 },
                 "image": {
                   "additionalProperties": {},
@@ -3364,7 +3312,8 @@
                     },
                     "pullPolicy": {},
                     "pullSecrets": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                      "items": {},
+                      "type": "array"
                     },
                     "tag": {
                       "description": "tag is automatically bumped to new patch versions by the\nwatch-dependencies.yaml workflow.\nIf you update this, also update scheduling.userPlaceholder.image.tag",
@@ -3380,7 +3329,7 @@
               "type": "boolean"
             },
             "resources": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "revisionHistoryLimit": {}
           },
@@ -3391,25 +3340,26 @@
           "description": "proxy relates to the proxy pod, the proxy-public service, and the autohttps\npod and proxy-http service.",
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "chp": {
               "additionalProperties": {},
               "description": "chp relates to the proxy pod, which is responsible for routing traffic based\non dynamic configuration sent from JupyterHub to CHP's REST API.",
               "properties": {
                 "containerSecurityContext": {
-                  "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+                  "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
                 },
                 "defaultTarget": {},
                 "errorTarget": {},
                 "extraCommandLineFlags": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "extraEnv": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "extraPodSpec": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "image": {
                   "additionalProperties": {},
@@ -3419,7 +3369,8 @@
                     },
                     "pullPolicy": {},
                     "pullSecrets": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                      "items": {},
+                      "type": "array"
                     },
                     "tag": {
                       "description": "tag is automatically bumped to new patch versions by the\nwatch-dependencies.yaml workflow.\nhttps://github.com/jupyterhub/configurable-http-proxy/tags",
@@ -3429,26 +3380,27 @@
                   "type": "object"
                 },
                 "livenessProbe": {
-                  "$ref": "#/$defs/values~1jupyterhub.proxy.chp.livenessProbe"
+                  "$ref": "#/definitions/values~1jupyterhub.proxy.chp.livenessProbe"
                 },
                 "networkPolicy": {
-                  "$ref": "#/$defs/values~1jupyterhub.proxy.chp.networkPolicy"
+                  "$ref": "#/definitions/values~1jupyterhub.proxy.chp.networkPolicy"
                 },
                 "nodeSelector": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "pdb": {
-                  "$ref": "#/$defs/values~1jupyterhub.hub.pdb"
+                  "$ref": "#/definitions/values~1jupyterhub.hub.pdb"
                 },
                 "readinessProbe": {
-                  "$ref": "#/$defs/values~1jupyterhub.proxy.chp.livenessProbe"
+                  "$ref": "#/definitions/values~1jupyterhub.proxy.chp.livenessProbe"
                 },
                 "resources": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "revisionHistoryLimit": {},
                 "tolerations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 }
               },
               "type": "object"
@@ -3473,7 +3425,8 @@
                   "type": "boolean"
                 },
                 "hosts": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "letsencrypt": {
                   "additionalProperties": {},
@@ -3515,19 +3468,19 @@
               "type": "object"
             },
             "labels": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "secretSync": {
               "additionalProperties": {},
               "properties": {
                 "containerSecurityContext": {
-                  "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+                  "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
                 },
                 "image": {
-                  "$ref": "#/$defs/values~1jupyterhub.hub.image"
+                  "$ref": "#/definitions/values~1jupyterhub.hub.image"
                 },
                 "resources": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 }
               },
               "type": "object"
@@ -3538,20 +3491,22 @@
               "description": "service relates to the proxy-public service",
               "properties": {
                 "annotations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "disableHttpPort": {
                   "type": "boolean"
                 },
                 "extraPorts": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "labels": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "loadBalancerIP": {},
                 "loadBalancerSourceRanges": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "nodePorts": {
                   "additionalProperties": {},
@@ -3572,31 +3527,35 @@
               "description": "traefik relates to the autohttps pod, which is responsible for TLS\ntermination when proxy.https.type=letsencrypt.",
               "properties": {
                 "containerSecurityContext": {
-                  "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+                  "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
                 },
                 "extraDynamicConfig": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "extraEnv": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "extraInitContainers": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "extraPodSpec": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "extraPorts": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "extraStaticConfig": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "extraVolumeMounts": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "extraVolumes": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "hsts": {
                   "additionalProperties": {},
@@ -3622,7 +3581,8 @@
                     },
                     "pullPolicy": {},
                     "pullSecrets": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                      "items": {},
+                      "type": "array"
                     },
                     "tag": {
                       "description": "tag is automatically bumped to new patch versions by the\nwatch-dependencies.yaml workflow.\nref: https://hub.docker.com/_/traefik?tab=tags",
@@ -3632,26 +3592,27 @@
                   "type": "object"
                 },
                 "labels": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "networkPolicy": {
-                  "$ref": "#/$defs/values~1jupyterhub.proxy.chp.networkPolicy"
+                  "$ref": "#/definitions/values~1jupyterhub.proxy.chp.networkPolicy"
                 },
                 "nodeSelector": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "pdb": {
-                  "$ref": "#/$defs/values~1jupyterhub.hub.pdb"
+                  "$ref": "#/definitions/values~1jupyterhub.hub.pdb"
                 },
                 "resources": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "revisionHistoryLimit": {},
                 "serviceAccount": {
-                  "$ref": "#/$defs/values~1jupyterhub.hub.serviceAccount"
+                  "$ref": "#/definitions/values~1jupyterhub.hub.serviceAccount"
                 },
                 "tolerations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 }
               },
               "type": "object"
@@ -3673,7 +3634,7 @@
           "description": "scheduling relates to the user-scheduler pods and user-placeholder pods.",
           "properties": {
             "corePods": {
-              "$ref": "#/$defs/values~1jupyterhub.scheduling.corePods"
+              "$ref": "#/definitions/values~1jupyterhub.scheduling.corePods"
             },
             "podPriority": {
               "additionalProperties": {},
@@ -3700,10 +3661,10 @@
               "additionalProperties": {},
               "properties": {
                 "annotations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "containerSecurityContext": {
-                  "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+                  "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
                 },
                 "enabled": {
                   "type": "boolean"
@@ -3716,7 +3677,8 @@
                     },
                     "pullPolicy": {},
                     "pullSecrets": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                      "items": {},
+                      "type": "array"
                     },
                     "tag": {
                       "description": "tag is automatically bumped to new patch versions by the\nwatch-dependencies.yaml workflow.\nIf you update this, also update prePuller.pause.image.tag",
@@ -3726,35 +3688,35 @@
                   "type": "object"
                 },
                 "labels": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "replicas": {
                   "type": "integer"
                 },
                 "resources": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "revisionHistoryLimit": {}
               },
               "type": "object"
             },
             "userPods": {
-              "$ref": "#/$defs/values~1jupyterhub.scheduling.corePods"
+              "$ref": "#/definitions/values~1jupyterhub.scheduling.corePods"
             },
             "userScheduler": {
               "additionalProperties": {},
               "properties": {
                 "annotations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "containerSecurityContext": {
-                  "$ref": "#/$defs/values~1jupyterhub.prePuller.containerSecurityContext"
+                  "$ref": "#/definitions/values~1jupyterhub.prePuller.containerSecurityContext"
                 },
                 "enabled": {
                   "type": "boolean"
                 },
                 "extraPodSpec": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "image": {
                   "additionalProperties": {},
@@ -3765,7 +3727,8 @@
                     },
                     "pullPolicy": {},
                     "pullSecrets": {
-                      "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                      "items": {},
+                      "type": "array"
                     },
                     "tag": {
                       "description": "tag is automatically bumped to new patch versions by the\nwatch-dependencies.yaml workflow. The minor version is pinned in the\nworkflow, and should be updated there if a minor version bump is done\nhere. We aim to stay around 1 minor version behind the latest k8s\nversion.\nref: https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG",
@@ -3775,13 +3738,13 @@
                   "type": "object"
                 },
                 "labels": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "logLevel": {
                   "type": "integer"
                 },
                 "nodeSelector": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "pdb": {
                   "additionalProperties": {},
@@ -3807,7 +3770,7 @@
                             "additionalProperties": {},
                             "properties": {
                               "resources": {
-                                "$ref": "#/$defs/values~1jupyterhub.scheduling.userScheduler.pluginConfig@items.args.scoringStrategy.resources"
+                                "$ref": "#/definitions/values~1jupyterhub.scheduling.userScheduler.pluginConfig@items.args.scoringStrategy.resources"
                               },
                               "type": {
                                 "type": "string"
@@ -3847,7 +3810,7 @@
                           "type": "array"
                         },
                         "enabled": {
-                          "$ref": "#/$defs/values~1jupyterhub.scheduling.userScheduler.pluginConfig@items.args.scoringStrategy.resources"
+                          "$ref": "#/definitions/values~1jupyterhub.scheduling.userScheduler.pluginConfig@items.args.scoringStrategy.resources"
                         }
                       },
                       "type": "object"
@@ -3859,7 +3822,7 @@
                   "type": "integer"
                 },
                 "resources": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "revisionHistoryLimit": {},
                 "serviceAccount": {
@@ -3870,7 +3833,8 @@
                   }
                 },
                 "tolerations": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 }
               },
               "type": "object"
@@ -3917,16 +3881,17 @@
               "type": "boolean"
             },
             "extraAnnotations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraContainers": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "extraEnv": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraFiles": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraLabels": {
               "additionalProperties": {},
@@ -3938,31 +3903,32 @@
               "type": "object"
             },
             "extraNodeAffinity": {
-              "$ref": "#/$defs/values~1jupyterhub.singleuser.extraNodeAffinity"
+              "$ref": "#/definitions/values~1jupyterhub.singleuser.extraNodeAffinity"
             },
             "extraPodAffinity": {
-              "$ref": "#/$defs/values~1jupyterhub.singleuser.extraNodeAffinity"
+              "$ref": "#/definitions/values~1jupyterhub.singleuser.extraNodeAffinity"
             },
             "extraPodAntiAffinity": {
-              "$ref": "#/$defs/values~1jupyterhub.singleuser.extraNodeAffinity"
+              "$ref": "#/definitions/values~1jupyterhub.singleuser.extraNodeAffinity"
             },
             "extraPodConfig": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "extraResource": {
               "additionalProperties": {},
               "properties": {
                 "guarantees": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "limits": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 }
               },
               "type": "object"
             },
             "extraTolerations": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "fsGid": {
               "type": "integer"
@@ -3976,7 +3942,8 @@
                 },
                 "pullPolicy": {},
                 "pullSecrets": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "tag": {
                   "type": "string"
@@ -3985,10 +3952,11 @@
               "type": "object"
             },
             "initContainers": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "lifecycleHooks": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "memory": {
               "additionalProperties": {},
@@ -4001,26 +3969,27 @@
               "type": "object"
             },
             "networkPolicy": {
-              "$ref": "#/$defs/values~1jupyterhub.hub.networkPolicy"
+              "$ref": "#/definitions/values~1jupyterhub.hub.networkPolicy"
             },
             "networkTools": {
               "additionalProperties": {},
               "properties": {
                 "image": {
-                  "$ref": "#/$defs/values~1jupyterhub.hub.image"
+                  "$ref": "#/definitions/values~1jupyterhub.hub.image"
                 },
                 "resources": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 }
               },
               "type": "object"
             },
             "nodeSelector": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
             },
             "podNameTemplate": {},
             "profileList": {
-              "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+              "items": {},
+              "type": "array"
             },
             "serviceAccountName": {},
             "startTimeout": {
@@ -4052,13 +4021,15 @@
                   "type": "object"
                 },
                 "extraLabels": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.affinity"
+                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
                 },
                 "extraVolumeMounts": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "extraVolumes": {
-                  "$ref": "#/$defs/values~1dask-gateway.controller.tolerations"
+                  "items": {},
+                  "type": "array"
                 },
                 "homeMountPath": {
                   "type": "string"

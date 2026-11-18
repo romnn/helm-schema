@@ -96,7 +96,7 @@ fn rewrites_internal_source_refs_for_root_definition_location() {
     sim_assert_eq!(
         have: rewritten.pointer("/properties/labels/$ref"),
         want: Some(&Value::String(
-            "#/$defs/provider~1source~0name/$defs/StringMap".to_string()
+            "#/definitions/provider~1source~0name/$defs/StringMap".to_string()
         ))
     );
 }
@@ -140,7 +140,7 @@ fn source_ref_rewrite_treats_property_names_as_schema_map_keys() {
     sim_assert_eq!(
         have: rewritten.pointer("/properties/enum/$ref"),
         want: Some(&Value::String(
-            "#/$defs/providerSource/$defs/StringValue".to_string()
+            "#/definitions/providerSource/$defs/StringValue".to_string()
         ))
     );
 }

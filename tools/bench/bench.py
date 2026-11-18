@@ -6,8 +6,8 @@ per chart and configuration:
 
 - CPU time, wall time and peak RSS: the median of a stated number of untraced runs (CASES);
 - the output's size: the pretty schema the CLI writes by default, and the compact schema with
-  short `$defs` keys that `helm-schema shorten --compact` makes of it (what a chart over Helm's
-  5 MiB limit ships), plus the number of `$defs` entries;
+  short definition keys that `helm-schema shorten --compact` makes of it (what a chart over Helm's
+  5 MiB limit ships), plus the number of definitions;
 - per-phase wall times from the dev binary's tracing spans (`--trace-output`), taken from a separate
   traced run, since tracing slows the run it observes (ADR 0064);
 - for the cheap charts (INSTRUCTION_CASES), the instructions one run executes, counted by valgrind's
@@ -334,7 +334,9 @@ def bench(
         "peak_rss": statistics.median(run.peak_rss for run in runs),
         "pretty": output.stat().st_size,
         "compact": shortened.stat().st_size,
-        "defs": len(schema.get("$defs", {})),
+        "defs": sum(
+            len(schema.get(keyword, {})) for keyword in ("definitions", "$defs")
+        ),
         "phases": {
             phase: statistics.median(run[phase] for run in phase_runs) for phase in PHASES
         },
@@ -470,12 +472,12 @@ def entries(result: dict, valgrind: str | None) -> list[dict]:
         entry(
             result,
             "compact-size",
-            "Compact schema size (short $defs)",
+            "Compact schema size (short definition names)",
             "KiB",
             round(result["compact"] / 1024, 1),
         ),
         # More or fewer shared definitions is neither better nor worse in itself.
-        entry(result, "defs", "$defs entries", "count", result["defs"], direction="unknown"),
+        entry(result, "defs", "Definitions", "count", result["defs"], direction="unknown"),
     ]
     for phase, label in PHASES.items():
         out.append(
@@ -509,7 +511,7 @@ def instruction_entries(result: dict, valgrind: str) -> list[dict]:
 
 def markdown(results: list[dict], traces: int) -> str:
     header = ["chart", "profile", "runs", "cpu s", "wall s", "peak RSS MiB", "schema KiB"]
-    header += ["compact KiB", "$defs", *PHASES]
+    header += ["compact KiB", "definitions", *PHASES]
     lines = [
         f"helm-schema benchmark: medians of untraced runs; phases (wall s) from {traces} traced "
         f"run(s) per configuration. Host: {CPU_NAME}, {os.cpu_count()} CPUs; {RUSTC}.",

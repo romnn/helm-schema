@@ -1316,7 +1316,7 @@ fn collect_positive_self_types(
 
 fn schema_allows_non_falsy_type(schema: &Value, schema_type: &str) -> bool {
     if SchemaNode::from_value(schema.clone()).is_not_reference(
-        &helm_schema_json_schema_walk::definition_reference(HELM_TRUTHY_DEFINITION_NAME),
+        &helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(HELM_TRUTHY_DEFINITION_NAME),
     ) {
         return false;
     }

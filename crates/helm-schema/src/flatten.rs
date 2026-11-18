@@ -20,13 +20,14 @@
 //! HTTP via `ureq`, both gated by an explicit fetch policy.
 //!
 //! Self-contained output mode keeps use sites as `$ref`s but re-homes
-//! external documents under root-level `$defs`. For tests, the lower-level
+//! external documents under root-level definitions. For tests, the lower-level
 //! entry points accept any `Retrieve` impl so callers can wire in an
 //! in-memory map keyed by URI and avoid disk I/O entirely.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
+use helm_schema_json_schema_walk::DefinitionsKeyword;
 use helm_schema_json_schema_walk::try_visit_subschemas_mut;
 use jsonschema::{Retrieve, Uri};
 use referencing::uri;
@@ -82,12 +83,12 @@ pub fn flatten_prepared_refs(schema: &Value, base_dir: &Path) -> EngineResult<Va
     flatten_with_retriever(schema, &base_uri, NoExternalRetrieve)
 }
 
-/// Resolve external `$ref`s into root-level `$defs` entries while preserving
+/// Resolve external `$ref`s into root-level definition entries while preserving
 /// internal refs as refs.
 ///
 /// The result is self-contained: file and URL references are loaded through
 /// the same [`Retrieve`] implementation used by [`flatten_refs`], but the
-/// referenced schema is re-homed under `#/$defs/...` instead of being inlined
+/// referenced schema is re-homed under the root definitions container instead of being inlined
 /// at each use site.
 ///
 /// # Errors
@@ -102,7 +103,7 @@ pub fn bundle_refs(
     fetch_policy: FetchPolicy,
     load_budget: LoadBudget,
 ) -> EngineResult<Value> {
-    let mut namespace = BundleNamespace::default();
+    let mut namespace = BundleNamespace::new(DefinitionsKeyword::for_schema(&schema));
     bundle_refs_in_namespace(schema, base_dir, fetch_policy, load_budget, &mut namespace)
 }
 
@@ -123,7 +124,7 @@ pub(crate) fn bundle_refs_in_namespace(
 /// retrieval.
 ///
 /// Internal refs are preserved. External refs fail, because input assembly
-/// should have already re-homed them under root-level `$defs`.
+/// should have already re-homed them under root-level definitions.
 ///
 /// # Errors
 ///
@@ -162,7 +163,7 @@ pub fn flatten_with_retriever(
 /// Low-level bundling entry point for tests and custom retrievers.
 ///
 /// `base_uri` is the URI relative refs resolve against. External refs are
-/// fetched through `retriever`, rewritten to root-level `$defs`, and any refs
+/// fetched through `retriever`, rewritten to root-level definitions, and any refs
 /// inside fetched schemas are interpreted relative to the document they came
 /// from before being re-homed.
 ///
@@ -176,7 +177,7 @@ pub fn bundle_with_retriever(
     base_uri: &str,
     retriever: impl Retrieve,
 ) -> EngineResult<Value> {
-    let mut namespace = BundleNamespace::default();
+    let mut namespace = BundleNamespace::new(DefinitionsKeyword::for_schema(&schema));
     bundle_with_retriever_in_namespace(schema, base_uri, retriever, &mut namespace)
 }
 
@@ -200,20 +201,27 @@ fn bundle_with_retriever_in_namespace(
 }
 
 /// Generated-definition name allocator shared by separately bundled documents.
-#[derive(Default)]
 pub(crate) struct BundleNamespace {
+    keyword: DefinitionsKeyword,
     definition_names: BTreeSet<String>,
     names_by_target_uri: BTreeMap<String, String>,
     next_definition_id: usize,
 }
 
 impl BundleNamespace {
+    pub(crate) fn new(keyword: DefinitionsKeyword) -> Self {
+        Self {
+            keyword,
+            definition_names: BTreeSet::new(),
+            names_by_target_uri: BTreeMap::new(),
+            next_definition_id: 0,
+        }
+    }
+
     pub(crate) fn reserve_schema(&mut self, schema: &Value) {
-        // Bundled targets are emitted only under `$defs`; legacy
-        // `definitions` entries therefore occupy a distinct reference
-        // namespace and cannot collide with generated target names.
-        self.definition_names
-            .extend(existing_definition_names(schema));
+        if let Some(definitions) = schema.get(self.keyword.as_str()).and_then(Value::as_object) {
+            self.definition_names.extend(definitions.keys().cloned());
+        }
     }
 
     fn next_definition_name(&mut self) -> String {
@@ -260,7 +268,7 @@ impl<'a, R: Retrieve> BundleState<'a, R> {
                 return Ok(());
             }
             let definition_name = self.definition_name_for_target(&target_uri)?;
-            *schema = definition_ref(&definition_name);
+            *schema = definition_ref(self.namespace.keyword, &definition_name);
             return Ok(());
         }
 
@@ -331,12 +339,13 @@ impl<'a, R: Retrieve> BundleState<'a, R> {
             ));
         };
         let entry = root
-            .entry("$defs".to_string())
+            .entry(self.namespace.keyword.as_str().to_string())
             .or_insert_with(|| Value::Object(Map::new()));
         let Value::Object(existing) = entry else {
-            return Err(CliError::RefBundling(
-                "cannot insert bundled definitions because root $defs is not an object".to_string(),
-            ));
+            return Err(CliError::RefBundling(format!(
+                "cannot insert bundled definitions because root {} is not an object",
+                self.namespace.keyword.as_str(),
+            )));
         };
         for (name, definition) in self.definitions {
             existing.insert(name, definition);
@@ -487,18 +496,10 @@ fn select_fragment(document: Value, target_uri: &Uri<String>) -> EngineResult<Va
     })
 }
 
-fn existing_definition_names(schema: &Value) -> BTreeSet<String> {
-    schema
-        .get("$defs")
-        .and_then(Value::as_object)
-        .map(|definitions| definitions.keys().cloned().collect())
-        .unwrap_or_default()
-}
-
-fn definition_ref(name: &str) -> Value {
+fn definition_ref(keyword: DefinitionsKeyword, name: &str) -> Value {
     Value::Object(Map::from_iter([(
         "$ref".to_string(),
-        Value::String(helm_schema_json_schema_walk::definition_reference(name)),
+        Value::String(keyword.reference(name)),
     )]))
 }
 

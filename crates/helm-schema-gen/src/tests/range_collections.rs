@@ -82,7 +82,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
                 "if": {
                     "anyOf": [
                         { "type": "object" },
-                        { "$ref": "#/$defs/t" },
+                        { "$ref": "#/definitions/t" },
                     ]
                 },
                 "then": {
@@ -99,7 +99,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
             "environment": {
                 "anyOf": [
                     { "type": "object" },
-                    { "$ref": "#/$defs/t" },
+                    { "$ref": "#/definitions/t" },
                 ]
             }
         },

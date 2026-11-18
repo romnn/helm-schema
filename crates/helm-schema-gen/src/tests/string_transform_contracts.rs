@@ -27,7 +27,7 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
     let schema = schema_for_values_yaml(contract, None);
     let expected: serde_json::Value = serde_json::from_str(indoc! {r##"
         {
-          "$defs": {
+          "definitions": {
             "t": {
               "anyOf": [
                 { "const": true },
@@ -48,7 +48,7 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
                     "properties": {
                       "global": {
                         "properties": {
-                          "imageRegistry": { "$ref": "#/$defs/t" }
+                          "imageRegistry": { "$ref": "#/definitions/t" }
                         },
                         "required": ["imageRegistry"],
                         "type": "object"
@@ -107,7 +107,7 @@ fn dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback() -
                         "properties": {
                           "global": {
                             "properties": {
-                              "imageRegistry": { "$ref": "#/$defs/t" }
+                              "imageRegistry": { "$ref": "#/definitions/t" }
                             },
                             "required": ["imageRegistry"],
                             "type": "object"

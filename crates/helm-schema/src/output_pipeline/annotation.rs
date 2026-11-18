@@ -13,7 +13,6 @@ use crate::output_pipeline::overrides::PreparedOverridesIdentity;
 const ANNOTATION_FORMAT_VERSION: u64 = 1;
 const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 const POLICY_ANNOTATION_KEY: &str = "x-helm-schema-policy";
-const DRAFT_07_URI: &str = "http://json-schema.org/draft-07/schema#";
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct FinalOutputPolicy {
@@ -100,7 +99,7 @@ pub(crate) fn annotate_final_schema(
         Value::Bool(boolean) => Map::from_iter([
             (
                 "$schema".to_string(),
-                Value::String(DRAFT_07_URI.to_string()),
+                Value::String(helm_schema_json_schema_walk::GENERATED_SCHEMA_URI.to_string()),
             ),
             (
                 "allOf".to_string(),

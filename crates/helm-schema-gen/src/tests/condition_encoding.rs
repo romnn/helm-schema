@@ -1081,30 +1081,30 @@ fn private_condition_names_avoid_definitions_and_dangling_references() {
         dependency_roots: &roots,
     };
     let mut cache = ConditionFragmentCache::new();
-    cache.reserve(&serde_json::json!({ "$defs": { "helm-condition-0": true }, "allOf": [{ "$ref": "#/$defs/helm-condition-1" }], "properties": { "id": { "const": { "$id": "data" } } } }));
+    cache.reserve(&serde_json::json!({ "definitions": { "helm-condition-0": true }, "allOf": [{ "$ref": "#/definitions/helm-condition-1" }], "properties": { "id": { "const": { "$id": "data" } } } }));
     let guard = ConditionalGuard::Not(std::sync::Arc::new(ConditionalGuard::Truthy {
         path: ValuesPath::parse("flag"),
     }));
     let encoded = cache.clauses(&[guard], &[], &empty, absence, ConditionPolarity::Widen);
-    sim_assert_eq!(have: encoded.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>(), want: vec![serde_json::json!({ "$ref": "#/$defs/helm-condition-2" })]);
+    sim_assert_eq!(have: encoded.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>(), want: vec![serde_json::json!({ "$ref": "#/definitions/helm-condition-2" })]);
     sim_assert_eq!(have: cache.definitions.keys().cloned().collect::<Vec<_>>(), want: vec!["helm-condition-2".to_owned()]);
 }
 
 #[test]
 fn scalar_default_validation_resolves_only_the_supplied_condition_definitions() {
-    let schema = serde_json::json!({ "if": { "$ref": "#/$defs/condition" }, "then": { "const": "yes" }, "else": { "const": "" } });
+    let schema = serde_json::json!({ "if": { "$ref": "#/definitions/condition" }, "then": { "const": "yes" }, "else": { "const": "" } });
     let definitions = std::collections::BTreeMap::from([
         (
             "condition".to_owned(),
-            serde_json::json!({ "$ref": "#/$defs/inner" }),
+            serde_json::json!({ "$ref": "#/definitions/inner" }),
         ),
         (
             "inner".to_owned(),
-            serde_json::json!({ "$ref": format!("#/$defs/{}", crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME) }),
+            serde_json::json!({ "$ref": format!("#/definitions/{}", crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME) }),
         ),
         (
             "unreachable".to_owned(),
-            serde_json::json!({ "$ref": "#/$defs/missing" }),
+            serde_json::json!({ "$ref": "#/definitions/missing" }),
         ),
     ]);
     let declared = serde_json::json!("yes");
@@ -1280,11 +1280,11 @@ fn requirement_decisions_test_coalesced_empty_maps_exactly() -> eyre::Result<()>
     let clauses = cache.clauses(&[guard], &[], &defaults, absence, ConditionPolarity::Widen);
     let truthy = json!({"anyOf": [{"const": true}, {"type": "number", "not": {"const": 0}}, {"type": "string", "minLength": 1}, {"type": "array", "minItems": 1}, {"type": "object", "minProperties": 1}]});
     cache.definitions.insert("t".to_owned(), truthy.clone());
-    let schema = json!({"$schema": "http://json-schema.org/draft-07/schema#", "$defs": cache.definitions, "allOf": clauses.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>()});
+    let schema = json!({"$schema": "http://json-schema.org/draft-07/schema#", "definitions": cache.definitions, "allOf": clauses.into_iter().map(crate::schema_node::SchemaNode::into_value).collect::<Vec<_>>()});
     sim_assert_eq!(have: &schema, want: &json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": {"t": truthy, "helm-condition-0": {"if": {"type": "object", "properties": {"feature": {"$ref": "#/$defs/t"}}, "required": ["feature"]}, "then": true, "else": false}},
-        "allOf": [{"$ref": "#/$defs/helm-condition-0"}]
+        "definitions": {"t": truthy, "helm-condition-0": {"if": {"type": "object", "properties": {"feature": {"$ref": "#/definitions/t"}}, "required": ["feature"]}, "then": true, "else": false}},
+        "allOf": [{"$ref": "#/definitions/helm-condition-0"}]
     }));
     let validator = jsonschema::validator_for(&schema)?;
     for feature in [json!({}), json!([]), json!(false), json!(0), json!("")] {

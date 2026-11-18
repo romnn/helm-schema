@@ -1,187 +1,46 @@
 {
-  "$defs": {
-    "constrains/auth:t": {
-      "properties": {
-        "auth": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "constrains/existingSecret": {
-      "not": {
-        "properties": {
-          "existingSecret": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "existingSecret"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/existingSecret:t": {
-      "properties": {
-        "existingSecret": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "existingSecret"
-      ],
-      "type": "object"
-    },
-    "constrains/sentinel.auth:t": {
-      "properties": {
-        "sentinel": {
-          "$ref": "#/$defs/constrains~1auth:t"
-        }
-      },
-      "required": [
-        "sentinel"
-      ],
-      "type": "object"
-    },
-    "constrains/sentinel.existingSecret:t": {
-      "$ref": "#/$defs/when~1sentinel.existingSecret:t~1then~1fail~1else~1any"
-    },
-    "constrains/sentinel.existingSecret:t@2": {
-      "$ref": "#/$defs/when~1sentinel.existingSecret:t~1then~1fail~1else~1any"
-    },
-    "constrains/sentinel.existingSecret:t@3": {
-      "$ref": "#/$defs/when~1sentinel.existingSecret:t~1then~1fail~1else~1any"
-    },
-    "constrains/sentinel.existingSecret:t@4": {
-      "properties": {
-        "sentinel": {
-          "$ref": "#/$defs/constrains~1existingSecret:t"
-        }
-      },
-      "required": [
-        "sentinel"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/fullnameOverride:t/then/sentinel.auth:t+sentinel.existingSecret:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1fail@2"
-      }
-    },
-    "when/nameOverride:t/then/sentinel.auth:t+sentinel.existingSecret:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1fail@3"
-      }
-    },
-    "when/sentinel.auth:t/then/sentinel.existingSecret:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1sentinel.existingSecret:t"
-      }
-    },
-    "when/sentinel.auth:t/then/sentinel.existingSecret:t/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1sentinel.existingSecret:t@2"
-      }
-    },
-    "when/sentinel.auth:t/then/sentinel.existingSecret:t/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1sentinel.existingSecret:t@3"
-      }
-    },
-    "when/sentinel.auth:t/then/sentinel.existingSecret:t/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1sentinel.existingSecret:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/sentinel.existingSecret:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1sentinel.existingSecret:t@4"
-      },
-      "then": true
-    },
-    "when/sentinel.existingSecret:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1sentinel.existingSecret:t@4"
-      },
-      "then": false
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1fail"
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1sentinel.auth:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sentinel": {
+            "additionalProperties": {},
+            "description": "Sentinel specific configuration options",
+            "properties": {
+              "existingSecret": {
+                "description": "An existing secret containing a key defined by `sentinel.authKey` that configures `requirepass`\nin the conf parameters (Requires `sentinel.auth: enabled`, cannot be used in conjunction with `.Values.sentinel.password`)\nSupports templates like \"{{ .Release.Name }}-sentinel-creds\"",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1sentinel.auth:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1sentinel.existingSecret:t~1then~1fail~1else~1any"
+        }
       },
       "then": {
         "additionalProperties": {},
@@ -230,41 +89,27 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1fail@4"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "sentinel": {
-            "additionalProperties": {},
-            "description": "Sentinel specific configuration options",
-            "properties": {
-              "existingSecret": {
-                "description": "An existing secret containing a key defined by `sentinel.authKey` that configures `requirepass`\nin the conf parameters (Requires `sentinel.auth: enabled`, cannot be used in conjunction with `.Values.sentinel.password`)\nSupports templates like \"{{ .Release.Name }}-sentinel-creds\"",
-                "type": "string"
-              }
+        "else": false,
+        "if": {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/definitions/t"
             }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1sentinel.auth:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1sentinel.existingSecret:t~1then~1fail~1else~1any"
           }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1sentinel.auth:t+sentinel.existingSecret:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "Full name of the Redis HA Resources",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1sentinel.auth:t+sentinel.existingSecret:t~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -275,8 +120,120 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1sentinel.auth:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1sentinel.existingSecret:t~1then~1fail~1else~1any"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "Full name of the Redis HA Resources",
+            "type": "string"
+          }
+        }
+      }
     }
   ],
+  "definitions": {
+    "constrains/auth:t": {
+      "properties": {
+        "auth": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "constrains/existingSecret:t": {
+      "properties": {
+        "existingSecret": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "existingSecret"
+      ],
+      "type": "object"
+    },
+    "constrains/sentinel.auth:t": {
+      "properties": {
+        "sentinel": {
+          "$ref": "#/definitions/constrains~1auth:t"
+        }
+      },
+      "required": [
+        "sentinel"
+      ],
+      "type": "object"
+    },
+    "constrains/sentinel.existingSecret:t": {
+      "properties": {
+        "sentinel": {
+          "$ref": "#/definitions/constrains~1existingSecret:t"
+        }
+      },
+      "required": [
+        "sentinel"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/sentinel.existingSecret:t/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+      },
+      "then": false
+    }
+  },
   "properties": {
     "additionalAffinities": {
       "description": "Additional affinities to add to the Redis server pods.\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nExample:\nnodeAffinity:\npreferredDuringSchedulingIgnoredDuringExecution:\n- weight: 50\npreference:\nmatchExpressions:\n- key: spot\noperator: NotIn\nvalues:\n- \"true\""
@@ -400,13 +357,23 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1existingSecret"
+                "not": {
+                  "properties": {
+                    "existingSecret": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
               },
               {
-                "$ref": "#/$defs/constrains~1auth:t"
+                "$ref": "#/definitions/constrains~1auth:t"
               },
               {
-                "$ref": "#/$defs/constrains~1existingSecret:t"
+                "$ref": "#/definitions/constrains~1existingSecret:t"
               }
             ]
           },

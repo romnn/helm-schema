@@ -1,1316 +1,529 @@
 {
-  "$defs": {
-    "constrains/connectInject+connectInject=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "connectInject": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "connectInject"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "connectInject": {}
-            },
-            "required": [
-              "connectInject"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t": {
-      "properties": {
-        "connectInject": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "connectInject"
-      ],
-      "type": "object"
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride+fullnameOverride:t+global.name+7more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name:t+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name:t+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride:t+global.name:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+5more"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name+global.name:t+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.enabled:t+fullnameOverride:t+global.name:t+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-        }
-      ]
-    },
-    "constrains/connectInject.tlsCert.secretName:t": {
-      "properties": {
-        "connectInject": {
-          "properties": {
-            "tlsCert": {
-              "$ref": "#/$defs/constrains~1secretName:t"
-            }
-          },
-          "required": [
-            "tlsCert"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "connectInject"
-      ],
-      "type": "object"
-    },
-    "constrains/connectInjectRole:t": {
-      "properties": {
-        "connectInjectRole": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "connectInjectRole"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride": {
-      "$ref": "#/$defs/constrains~1fullnameOverride@2"
-    },
-    "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/global+global=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "global": {}
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "global": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/global.name": {
-      "$ref": "#/$defs/constrains~1global.name@2"
-    },
-    "constrains/global.name:t": {
-      "$ref": "#/$defs/constrains~1global.name:t@2"
-    },
-    "constrains/global.name:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.name:t@3"
-      }
-    },
-    "constrains/global.name:t@3": {
-      "properties": {
-        "global": {
-          "properties": {
-            "name": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.name@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.name@3"
-      }
-    },
-    "constrains/global.name@3": {
-      "properties": {
-        "global": {
-          "properties": {
-            "name": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.secretsBackend+global.secretsBackend=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "global": {
-                "$ref": "#/$defs/constrains~1secretsBackend"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "global": {
-              "$ref": "#/$defs/constrains~1secretsBackend=null"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/global.secretsBackend.vault.connectInject.caCert.secretName:t": {
-      "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
-    },
-    "constrains/global.secretsBackend.vault.connectInject.caCert.secretName:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-      }
-    },
-    "constrains/global.secretsBackend.vault.connectInject.caCert.secretName:t@3": {
-      "properties": {
-        "global": {
-          "properties": {
-            "secretsBackend": {
-              "properties": {
-                "vault": {
-                  "properties": {
-                    "connectInject": {
-                      "properties": {
-                        "caCert": {
-                          "$ref": "#/$defs/constrains~1secretName:t"
-                        }
-                      },
-                      "required": [
-                        "caCert"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "connectInject"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "vault"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secretsBackend"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.secretsBackend.vault.connectInject.tlsCert.secretName:t": {
-      "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
-    },
-    "constrains/global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-      }
-    },
-    "constrains/global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3": {
-      "properties": {
-        "global": {
-          "properties": {
-            "secretsBackend": {
-              "properties": {
-                "vault": {
-                  "$ref": "#/$defs/constrains~1connectInject.tlsCert.secretName:t"
-                }
-              },
-              "required": [
-                "vault"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secretsBackend"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.secretsBackend.vault.connectInjectRole:t": {
-      "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
-    },
-    "constrains/global.secretsBackend.vault.connectInjectRole:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-      }
-    },
-    "constrains/global.secretsBackend.vault.connectInjectRole:t@3": {
-      "properties": {
-        "global": {
-          "properties": {
-            "secretsBackend": {
-              "properties": {
-                "vault": {
-                  "$ref": "#/$defs/constrains~1connectInjectRole:t"
-                }
-              },
-              "required": [
-                "vault"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secretsBackend"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.secretsBackend.vault.enabled:t": {
-      "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@5"
-    },
-    "constrains/global.secretsBackend.vault.enabled:t@2": {
-      "$ref": "#/$defs/when~1global.secretsBackend.vault.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/global.secretsBackend.vault.enabled:t@3": {
-      "$ref": "#/$defs/when~1global.secretsBackend.vault.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/global.secretsBackend.vault.enabled:t@4": {
-      "$ref": "#/$defs/when~1global.secretsBackend.vault.enabled:t~1then~1fail~1else~1any"
-    },
-    "constrains/global.secretsBackend.vault.enabled:t@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@6"
-      }
-    },
-    "constrains/global.secretsBackend.vault.enabled:t@6": {
-      "properties": {
-        "global": {
-          "properties": {
-            "secretsBackend": {
-              "properties": {
-                "vault": {
-                  "$ref": "#/$defs/constrains~1enabled:t"
-                }
-              },
-              "required": [
-                "vault"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "secretsBackend"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "$ref": "#/$defs/constrains~1nameOverride@2"
-    },
-    "constrains/nameOverride:t": {
-      "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-    },
-    "constrains/nameOverride:t@2": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/secretName:t": {
-      "properties": {
-        "secretName": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "secretName"
-      ],
-      "type": "object"
-    },
-    "constrains/secretsBackend": {
-      "properties": {
-        "secretsBackend": {}
-      },
-      "required": [
-        "secretsBackend"
-      ],
-      "type": "object"
-    },
-    "constrains/secretsBackend=null": {
-      "properties": {
-        "secretsBackend": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "secretsBackend"
-      ],
-      "type": "object"
-    },
-    "constrains/vault": {
-      "properties": {
-        "vault": {}
-      },
-      "required": [
-        "vault"
-      ],
-      "type": "object"
-    },
-    "constrains/vault=null": {
-      "properties": {
-        "vault": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "vault"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/connectInject.enabled:t/then/fullnameOverride:t+global.name:t+global.secretsBackend.vault+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1global.name:t+global.secretsBackend.vault.connectInject.caCert.secretName:t+3more"
-      }
-    },
-    "when/connectInject.enabled:t/then/fullnameOverride:t+global.secretsBackend.vault+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1global.secretsBackend.vault.connectInject.caCert.secretName:t+3more~1else~1fail"
-      }
-    },
-    "when/connectInject.enabled:t/then/global.imagePullSecrets:t+global.secretsBackend.vault+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.imagePullSecrets:t~1then~1global.secretsBackend.vault.connectInject.caCert.secretName:t+3more~1else~1fail"
-      }
-    },
-    "when/connectInject.enabled:t/then/global.secretsBackend.vault+4more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1connectInject.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.caCert.secretName:t~1then~1global.secretsBackend.vault.connectInject.tlsCert+3more~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/fail/else/global.name:t+global.secretsBackend.vault.connectInject.caCert.secretName:t+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1global.name:t~1then~1global.secretsBackend.vault.connectInject.caCert.secretName:t+3more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": false
-    },
-    "when/fullnameOverride:t/then/global.secretsBackend.vault.connectInject.caCert.secretName:t+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.caCert.secretName:t~1then~1global.secretsBackend.vault.connectInject.tlsCert+2more~1else~1any@2"
-      }
-    },
-    "when/global.imagePullSecrets:t/then/global.secretsBackend.vault.connectInject.caCert.secretName:t+3more/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "global": {
-            "properties": {
-              "imagePullSecrets": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "imagePullSecrets"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.caCert.secretName:t~1then~1global.secretsBackend.vault.connectInject.tlsCert+2more~1else~1any@3"
-      }
-    },
-    "when/global.name:t/then/global.secretsBackend.vault.connectInject.caCert.secretName:t+3more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.name:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.caCert.secretName:t~1then~1global.secretsBackend.vault.connectInject.tlsCert+2more~1else~1any"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.caCert.secretName:t/then/global.secretsBackend.vault.connectInject.tlsCert+2more/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t~1then~1global.secretsBackend.vault.connectInjectRole:t+1more~1else~1any"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.caCert.secretName:t/then/global.secretsBackend.vault.connectInject.tlsCert+2more/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t~1then~1global.secretsBackend.vault.connectInjectRole:t+1more~1else~1any@2"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.caCert.secretName:t/then/global.secretsBackend.vault.connectInject.tlsCert+2more/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t~1then~1global.secretsBackend.vault.connectInjectRole:t+1more~1else~1any@3"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.caCert.secretName:t/then/global.secretsBackend.vault.connectInject.tlsCert+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t~1then~1global.secretsBackend.vault.connectInjectRole:t+2more~1else~1any"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.tlsCert.secretName:t/then/global.secretsBackend.vault.connectInjectRole:t+1more/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInjectRole:t~1then~1global.secretsBackend.vault.enabled:t~1else~1any@2"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.tlsCert.secretName:t/then/global.secretsBackend.vault.connectInjectRole:t+1more/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInjectRole:t~1then~1global.secretsBackend.vault.enabled:t~1else~1any"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.tlsCert.secretName:t/then/global.secretsBackend.vault.connectInjectRole:t+1more/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInjectRole:t~1then~1global.secretsBackend.vault.enabled:t~1else~1any@3"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInject.tlsCert.secretName:t/then/global.secretsBackend.vault.connectInjectRole:t+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.connectInjectRole:t~1then~1global.secretsBackend.vault.enabled:t+nameOverride:t~1else~1any"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInjectRole:t/then/global.secretsBackend.vault.enabled:t+nameOverride:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.secretsBackend.vault.enabled:t~1then~1fail~1else~1nameOverride:t"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInjectRole:t/then/global.secretsBackend.vault.enabled:t/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@2"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInjectRole:t/then/global.secretsBackend.vault.enabled:t/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@3"
-      }
-    },
-    "when/global.secretsBackend.vault.connectInjectRole:t/then/global.secretsBackend.vault.enabled:t/else/any@3": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@4"
-      }
-    },
-    "when/global.secretsBackend.vault.enabled:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@6"
-      },
-      "then": false
-    },
-    "when/global.secretsBackend.vault.enabled:t/then/fail/else/nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@6"
-      },
-      "then": false
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1connectInject.enabled:t+fullnameOverride+fullnameOverride:t+global.name+7more"
+        "$ref": "#/definitions/constrains~1connectInject+connectInject=null"
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1connectInject+connectInject=null"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1global+global=null"
       },
       "then": false
     },
@@ -1318,10 +531,334 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
+            "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@6"
+            "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Holds values that affect multiple components of the chart.",
+            "properties": {
+              "secretsBackend": {
+                "additionalProperties": {},
+                "description": "secretsBackend is used to configure Vault as the secrets backend for the Consul on Kubernetes installation.\nThe Vault cluster needs to have the Kubernetes Auth Method, KV2 and PKI secrets engines enabled\nand have necessary secrets, policies and roles created prior to installing Consul.\nRefer to [Vault as the Secrets Backend](https://developer.hashicorp.com/consul/docs/deploy/server/k8s/vault)\ndocumentation for full instructions.\nThe Vault cluster _must_ not have the Consul cluster installed by this Helm chart as its storage backend\nas that would cause a circular dependency.\nVault can have Consul as its storage backend as long as that Consul cluster is not running on this Kubernetes cluster\nand is being managed separately from this Helm installation.\nNote: When using Vault KV2 secrets engines the \"data\" field is implicitly required for Vault API calls,\nsecretName should be in the form of  \"vault-kv2-mount-path/data/secret-name\".\nsecretKey should be in the form of \"key\".",
+                "properties": {
+                  "vault": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "connectInject": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "caCert": {
+                            "description": "Configuration to the Vault Secret that Kubernetes uses on\nKubernetes pod creation, deletion, and update, to get CA certificates\nused issued from vault to send webhooks to the ConnectInject.",
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.secretsBackend+global.secretsBackend=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1global.name:t@2"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+              },
+              "then": {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+                },
+                "then": {
+                  "else": true,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1global.secretsBackend.vault.enabled:t~1then~1fail~1else~1any"
+                  }
+                }
+              }
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "global": {
+              "properties": {
+                "name": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "global": {
+              "additionalProperties": {},
+              "description": "Holds values that affect multiple components of the chart.",
+              "properties": {
+                "name": {
+                  "description": "Set the prefix used for all resources in the Helm chart. If not set,\nthe prefix will be `<helm release name>-consul`.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          "then": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              },
+              "then": {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1global.secretsBackend.vault.enabled:t~1then~1fail~1else~1any"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "secretsBackend": {
+                        "properties": {
+                          "vault": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "vault"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "secretsBackend"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "secretsBackend": {
+                          "properties": {
+                            "vault": {}
+                          },
+                          "required": [
+                            "vault"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "secretsBackend"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.secretsBackend+global.secretsBackend=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "properties": {
+              "global": {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+              },
+              "then": {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1global.secretsBackend.vault.enabled:t~1then~1fail~1else~1any"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Holds values that affect multiple components of the chart.",
+            "properties": {
+              "imagePullSecrets": {
+                "description": "Array of objects containing image pull secret names that will be applied to each service account.\nThis can be used to reference image pull secrets if using a custom consul or consul-k8s-control-plane Docker image.\nRefer to https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry.\nExample:\n```yaml\nimagePullSecrets:\n- name: pull-secret-name\n- name: pull-secret-name-2\n```",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t@2"
           }
         ]
       },
@@ -1388,38 +925,43 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1global+global=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1connectInject.enabled:t~1then~1global.imagePullSecrets:t+global.secretsBackend.vault+3more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "description": "Holds values that affect multiple components of the chart.",
-            "properties": {
-              "imagePullSecrets": {
-                "description": "Array of objects containing image pull secret names that will be applied to each service account.\nThis can be used to reference image pull secrets if using a custom consul or consul-k8s-control-plane Docker image.\nRefer to https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry.\nExample:\n```yaml\nimagePullSecrets:\n- name: pull-secret-name\n- name: pull-secret-name-2\n```",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1connectInject.enabled:t"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t@2"
+                },
+                "then": false
               }
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1connectInject.enabled:t~1then~1global.secretsBackend.vault+4more~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -1429,179 +971,466 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
+    }
+  ],
+  "definitions": {
+    "constrains/connectInject+connectInject=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "connectInject": {
+              "enum": [
+                null
+              ]
+            }
           },
-          {
-            "$ref": "#/$defs/constrains~1global.secretsBackend+global.secretsBackend=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1connectInject.enabled:t~1then~1fullnameOverride:t+global.secretsBackend.vault+3more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
+          "required": [
+            "connectInject"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "connectInject": {}
+            },
+            "required": [
+              "connectInject"
+            ],
+            "type": "object"
           }
         }
+      ]
+    },
+    "constrains/connectInject.enabled:t": {
+      "properties": {
+        "connectInject": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "connectInject"
+      ],
+      "type": "object"
+    },
+    "constrains/connectInject.tlsCert.secretName:t": {
+      "properties": {
+        "connectInject": {
+          "properties": {
+            "tlsCert": {
+              "$ref": "#/definitions/constrains~1secretName:t"
+            }
+          },
+          "required": [
+            "tlsCert"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "connectInject"
+      ],
+      "type": "object"
+    },
+    "constrains/connectInjectRole:t": {
+      "properties": {
+        "connectInjectRole": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "connectInjectRole"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "secretsBackend": {
-                        "$ref": "#/$defs/constrains~1vault=null"
-                      }
-                    },
-                    "required": [
-                      "secretsBackend"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "secretsBackend": {
-                          "$ref": "#/$defs/constrains~1vault"
-                        }
-                      },
-                      "required": [
-                        "secretsBackend"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.secretsBackend+global.secretsBackend=null"
-          }
-        ]
-      },
-      "then": false
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
     },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1connectInject.enabled:t~1then~1fullnameOverride:t+global.name:t+global.secretsBackend.vault+3more~1else~1fail"
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
       },
-      "then": {
-        "if": {
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/global+global=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {}
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
           "properties": {
             "global": {
-              "properties": {
-                "name": {
-                  "not": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
+              "enum": [
+                null
+              ]
             }
           },
           "required": [
             "global"
           ],
           "type": "object"
-        },
-        "then": {
-          "additionalProperties": {},
-          "properties": {
-            "global": {
-              "additionalProperties": {},
-              "description": "Holds values that affect multiple components of the chart.",
-              "properties": {
-                "name": {
-                  "description": "Set the prefix used for all resources in the Helm chart. If not set,\nthe prefix will be `<helm release name>-consul`.",
-                  "type": "string"
-                }
-              }
-            }
-          }
         }
+      ]
+    },
+    "constrains/global.name": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.name@2"
       }
     },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.secretsBackend.vault.connectInjectRole:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.secretsBackend.vault.enabled:t@6"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "description": "Holds values that affect multiple components of the chart.",
-            "properties": {
-              "secretsBackend": {
-                "additionalProperties": {},
-                "description": "secretsBackend is used to configure Vault as the secrets backend for the Consul on Kubernetes installation.\nThe Vault cluster needs to have the Kubernetes Auth Method, KV2 and PKI secrets engines enabled\nand have necessary secrets, policies and roles created prior to installing Consul.\nRefer to [Vault as the Secrets Backend](https://developer.hashicorp.com/consul/docs/deploy/server/k8s/vault)\ndocumentation for full instructions.\nThe Vault cluster _must_ not have the Consul cluster installed by this Helm chart as its storage backend\nas that would cause a circular dependency.\nVault can have Consul as its storage backend as long as that Consul cluster is not running on this Kubernetes cluster\nand is being managed separately from this Helm installation.\nNote: When using Vault KV2 secrets engines the \"data\" field is implicitly required for Vault API calls,\nsecretName should be in the form of  \"vault-kv2-mount-path/data/secret-name\".\nsecretKey should be in the form of \"key\".",
-                "properties": {
-                  "vault": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "connectInject": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "caCert": {
-                            "description": "Configuration to the Vault Secret that Kubernetes uses on\nKubernetes pod creation, deletion, and update, to get CA certificates\nused issued from vault to send webhooks to the ConnectInject.",
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+    "constrains/global.name:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.name:t@2"
       }
+    },
+    "constrains/global.name:t@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.name@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.secretsBackend+global.secretsBackend=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {
+                "$ref": "#/definitions/constrains~1secretsBackend"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "global": {
+              "$ref": "#/definitions/constrains~1secretsBackend=null"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/global.secretsBackend.vault.connectInject.caCert.secretName:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.caCert.secretName:t@2"
+      }
+    },
+    "constrains/global.secretsBackend.vault.connectInject.caCert.secretName:t@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "secretsBackend": {
+              "properties": {
+                "vault": {
+                  "properties": {
+                    "connectInject": {
+                      "properties": {
+                        "caCert": {
+                          "$ref": "#/definitions/constrains~1secretName:t"
+                        }
+                      },
+                      "required": [
+                        "caCert"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "connectInject"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "vault"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "secretsBackend"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.secretsBackend.vault.connectInject.tlsCert.secretName:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2"
+      }
+    },
+    "constrains/global.secretsBackend.vault.connectInject.tlsCert.secretName:t@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "secretsBackend": {
+              "properties": {
+                "vault": {
+                  "$ref": "#/definitions/constrains~1connectInject.tlsCert.secretName:t"
+                }
+              },
+              "required": [
+                "vault"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "secretsBackend"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.secretsBackend.vault.connectInjectRole:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.secretsBackend.vault.connectInjectRole:t@2"
+      }
+    },
+    "constrains/global.secretsBackend.vault.connectInjectRole:t@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "secretsBackend": {
+              "properties": {
+                "vault": {
+                  "$ref": "#/definitions/constrains~1connectInjectRole:t"
+                }
+              },
+              "required": [
+                "vault"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "secretsBackend"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/global.secretsBackend.vault.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t@2"
+      }
+    },
+    "constrains/global.secretsBackend.vault.enabled:t@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "secretsBackend": {
+              "properties": {
+                "vault": {
+                  "$ref": "#/definitions/constrains~1enabled:t"
+                }
+              },
+              "required": [
+                "vault"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "secretsBackend"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/secretName:t": {
+      "properties": {
+        "secretName": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "constrains/secretsBackend": {
+      "properties": {
+        "secretsBackend": {}
+      },
+      "required": [
+        "secretsBackend"
+      ],
+      "type": "object"
+    },
+    "constrains/secretsBackend=null": {
+      "properties": {
+        "secretsBackend": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "secretsBackend"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/global.secretsBackend.vault.enabled:t/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1global.secretsBackend.vault.enabled:t@2"
+      },
+      "then": false
+    },
+    "when/nameOverride:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t"
+      },
+      "then": true
     }
-  ],
+  },
   "properties": {
     "client": {
       "description": "Values that configure running a Consul client on Kubernetes nodes."
@@ -1631,11 +1460,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1secretsBackend"
+                  "$ref": "#/definitions/constrains~1secretsBackend"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1secretsBackend=null"
+                "$ref": "#/definitions/constrains~1secretsBackend=null"
               }
             ]
           },
@@ -1657,11 +1486,27 @@
               "if": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1vault=null"
+                    "properties": {
+                      "vault": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "vault"
+                    ],
+                    "type": "object"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/constrains~1vault"
+                      "properties": {
+                        "vault": {}
+                      },
+                      "required": [
+                        "vault"
+                      ],
+                      "type": "object"
                     }
                   }
                 ]
@@ -1678,13 +1523,13 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1connectInject+connectInject=null"
+                        "$ref": "#/definitions/constrains~1connectInject+connectInject=null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1enabled:t"
+                        "$ref": "#/definitions/constrains~1connectInjectRole:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1connectInjectRole:t"
+                        "$ref": "#/definitions/constrains~1enabled:t"
                       }
                     ]
                   },
@@ -1694,10 +1539,7 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1connectInject.tlsCert.secretName:t"
+                        "$ref": "#/definitions/constrains~1connectInject.tlsCert.secretName:t"
                       },
                       {
                         "anyOf": [
@@ -1744,7 +1586,10 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/constrains~1connectInjectRole:t"
+                        "$ref": "#/definitions/constrains~1connectInjectRole:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
                       }
                     ]
                   },
@@ -1754,10 +1599,7 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1connectInjectRole:t"
+                        "$ref": "#/definitions/constrains~1connectInjectRole:t"
                       },
                       {
                         "anyOf": [
@@ -1802,6 +1644,9 @@
                             }
                           }
                         ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
                       }
                     ]
                   },

@@ -31,9 +31,9 @@ fn double_quoted_safe_definition() -> Value {
         "anyOf": [
             { "type": ["boolean", "integer", "null", "number"] },
             { "pattern": SAFE_QUOTED_CONTENT, "type": "string" },
-            { "items": { "$ref": "#/$defs/helm-double-quoted-safe" }, "type": "array" },
+            { "items": { "$ref": "#/definitions/helm-double-quoted-safe" }, "type": "array" },
             {
-                "additionalProperties": { "$ref": "#/$defs/helm-double-quoted-safe" },
+                "additionalProperties": { "$ref": "#/definitions/helm-double-quoted-safe" },
                 "propertyNames": { "pattern": SAFE_QUOTED_CONTENT },
                 "type": "object"
             }
@@ -135,7 +135,7 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
     sim_assert_eq!(
         have: schema,
         want: json!({
-            "$defs": { "helm-double-quoted-safe": double_quoted_safe_definition() },
+            "definitions": { "helm-double-quoted-safe": double_quoted_safe_definition() },
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             // the manually quoted splice (`enabled: "{{ … }}"`) breaks on
@@ -146,7 +146,7 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
                 "additionalProperties": {},
                 "properties": {
                     "enabled": {
-                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "$ref": "#/definitions/helm-double-quoted-safe",
                         "description": "Whether the config map is enabled"
                     }
                 }
@@ -736,7 +736,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
     sim_assert_eq!(
         have: &resolved.schema,
         want: &json!({
-            "$defs": {
+            "definitions": {
                 "helm-double-quoted-safe": double_quoted_safe_definition(),
                 "t": {
                     "anyOf": [
@@ -760,7 +760,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
                         "properties": {
                             "serviceAccount": {
                                 "properties": {
-                                    "create": { "$ref": "#/$defs/t" }
+                                    "create": { "$ref": "#/definitions/t" }
                                 },
                                 "required": ["create"],
                                 "type": "object"
@@ -772,7 +772,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
                     "then": {
                         "additionalProperties": {},
                         "properties": {
-                            "mode": { "$ref": "#/$defs/helm-double-quoted-safe" }
+                            "mode": { "$ref": "#/definitions/helm-double-quoted-safe" }
                         }
                     }
                 },
@@ -1367,7 +1367,7 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
     sim_assert_eq!(
         have: &schema,
         want: &json!({
-            "$defs": { "helm-double-quoted-safe": double_quoted_safe_definition() },
+            "definitions": { "helm-double-quoted-safe": double_quoted_safe_definition() },
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             // the manually quoted `mode: "{{ … }}"` splice breaks on
@@ -1375,7 +1375,7 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
             "allOf": [{
                 "additionalProperties": {},
                 "properties": {
-                    "mode": { "$ref": "#/$defs/helm-double-quoted-safe" }
+                    "mode": { "$ref": "#/definitions/helm-double-quoted-safe" }
                 }
             }],
             "properties": {

@@ -1,11 +1,11 @@
 {
-  "$defs": {
+  "definitions": {
     "helm-condition-0": {
       "else": false,
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -20,7 +20,7 @@
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -32,12 +32,12 @@
     },
     "helm-condition-2": {
       "else": {
-        "$ref": "#/$defs/helm-condition-1"
+        "$ref": "#/definitions/helm-condition-1"
       },
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -65,7 +65,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -74,7 +74,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-3"
+          "$ref": "#/definitions/helm-condition-3"
         }
       ]
     },
@@ -82,7 +82,7 @@
       "not": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -109,7 +109,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -118,20 +118,20 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-5"
+          "$ref": "#/definitions/helm-condition-5"
         },
         {
-          "$ref": "#/$defs/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-6"
         }
       ]
     },
     "helm-condition-8": {
       "anyOf": [
         {
-          "$ref": "#/$defs/helm-condition-4"
+          "$ref": "#/definitions/helm-condition-4"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         }
       ]
     },
@@ -166,7 +166,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-0"
+        "$ref": "#/definitions/helm-condition-0"
       },
       "then": {
         "if": {
@@ -196,7 +196,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-2"
+        "$ref": "#/definitions/helm-condition-2"
       },
       "then": {
         "if": {
@@ -226,7 +226,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/helm-condition-8"
+        "$ref": "#/definitions/helm-condition-8"
       },
       "then": false
     }

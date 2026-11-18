@@ -1,360 +1,41 @@
 {
-  "$defs": {
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/exec=null": {
-      "properties": {
-        "exec": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "exec"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+useDeploy:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1useDeploy:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+useDeploy:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+useDeploy:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+useDeploy:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+useDeploy:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+useDeploy:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1useDeploy:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+useDeploy:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1useDeploy:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/livenessProbe.enabled:t": {
-      "properties": {
-        "livenessProbe": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "livenessProbe"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/readinessProbe.enabled:t": {
-      "properties": {
-        "readinessProbe": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "readinessProbe"
-      ],
-      "type": "object"
-    },
-    "constrains/readinessProbe.exec.command:t": {
-      "$ref": "#/$defs/constrains~1readinessProbe.exec.command:t@3"
-    },
-    "constrains/readinessProbe.exec.command:t@2": {
-      "$ref": "#/$defs/constrains~1readinessProbe.exec.command:t@3"
-    },
-    "constrains/readinessProbe.exec.command:t@3": {
-      "not": {
-        "properties": {
-          "readinessProbe": {
-            "properties": {
-              "exec": {
-                "properties": {
-                  "command": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "command"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "exec"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "readinessProbe"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/useDeploy:t": {
-      "$ref": "#/$defs/constrains~1useDeploy:t@4"
-    },
-    "constrains/useDeploy:t@2": {
-      "$ref": "#/$defs/constrains~1useDeploy:t@3"
-    },
-    "constrains/useDeploy:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1useDeploy:t@5"
-      }
-    },
-    "constrains/useDeploy:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1useDeploy:t@5"
-      }
-    },
-    "constrains/useDeploy:t@5": {
-      "properties": {
-        "useDeploy": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "useDeploy"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/fullnameOverride:t/then/useDeploy:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1useDeploy:t~1then~1fail~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/useDeploy:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1useDeploy:t~1then~1fail~1else~1any@2"
-      }
-    },
-    "when/useDeploy:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1useDeploy:t@5"
-      },
-      "then": false
-    },
-    "when/useDeploy:t/then/fail/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1useDeploy:t@5"
-      },
-      "then": false
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+useDeploy:t@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {
-                      "properties": {
-                        "httpGet": {}
-                      },
-                      "required": [
-                        "httpGet"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "readinessProbe": {
-                    "properties": {
-                      "httpGet": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "httpGet"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "readinessProbe"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1readinessProbe.exec.command:t"
           },
           {
-            "$ref": "#/$defs/constrains~1readinessProbe.exec.command:t@2"
+            "$ref": "#/definitions/constrains~1useDeploy:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1readinessProbe.enabled:t"
+            "$ref": "#/definitions/constrains~1readinessProbe.enabled:t"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "readinessProbe": {
+            "additionalProperties": {},
+            "properties": {
+              "httpGet": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
         "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t"
+          },
           {
             "anyOf": [
               {
@@ -382,9 +63,6 @@
                 }
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
           }
         ]
       },
@@ -392,147 +70,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "livenessProbe": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "livenessProbe"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {}
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1useDeploy:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1readinessProbe.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "readinessProbe": {
-            "additionalProperties": {},
-            "properties": {
-              "exec": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1livenessProbe.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "livenessProbe": {
-            "additionalProperties": {},
-            "properties": {
-              "exec": {
-                "description": "The NodeJS Version of this Healthcheck is no longer supported, therefore we don't specify a node command.\nhttps://github.com/louislam/uptime-kuma/blob/ae224f9e188b1fc32ed8729818710975589cdce7/extra/healthcheck.js#L6",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1useDeploy:t@2"
+        "$ref": "#/definitions/constrains~1useDeploy:t@2"
       },
       "then": {
         "allOf": [
@@ -592,109 +130,16 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {
-                      "properties": {
-                        "exec": {}
-                      },
-                      "required": [
-                        "exec"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "readinessProbe": {
-                    "$ref": "#/$defs/constrains~1exec=null"
-                  }
-                },
-                "required": [
-                  "readinessProbe"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1useDeploy:t"
           },
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1readinessProbe.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1useDeploy:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "readinessProbe": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "readinessProbe"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {}
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
           {
             "anyOf": [
               {
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/constrains~1exec=null"
+                    "enum": [
+                      null
+                    ]
                   }
                 },
                 "required": [
@@ -705,15 +150,7 @@
               {
                 "not": {
                   "properties": {
-                    "livenessProbe": {
-                      "properties": {
-                        "exec": {}
-                      },
-                      "required": [
-                        "exec"
-                      ],
-                      "type": "object"
-                    }
+                    "livenessProbe": {}
                   },
                   "required": [
                     "livenessProbe"
@@ -722,12 +159,6 @@
                 }
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1livenessProbe.enabled:t"
           }
         ]
       },
@@ -737,43 +168,8 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/definitions/constrains~1useDeploy:t"
           },
-          {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
           {
             "anyOf": [
               {
@@ -801,9 +197,65 @@
                 }
               }
             ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1useDeploy:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
           },
           {
-            "$ref": "#/$defs/constrains~1useDeploy:t"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1useDeploy:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1useDeploy:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
           }
         ]
       },
@@ -813,13 +265,154 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1readinessProbe.exec.command:t"
+            "$ref": "#/definitions/constrains~1readinessProbe.exec.command:t"
           },
           {
-            "$ref": "#/$defs/constrains~1useDeploy:t@2"
+            "$ref": "#/definitions/constrains~1useDeploy:t"
           },
           {
-            "$ref": "#/$defs/constrains~1readinessProbe.enabled:t"
+            "$ref": "#/definitions/constrains~1readinessProbe.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "readinessProbe": {
+                      "properties": {
+                        "httpGet": {}
+                      },
+                      "required": [
+                        "httpGet"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "readinessProbe": {
+                    "properties": {
+                      "httpGet": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "httpGet"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        "then": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1useDeploy:t@3"
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        "then": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1useDeploy:t@3"
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1readinessProbe.enabled:t"
           }
         ]
       },
@@ -829,13 +422,165 @@
           "readinessProbe": {
             "additionalProperties": {},
             "properties": {
-              "httpGet": {
+              "exec": {
                 "type": "object"
               }
             }
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1readinessProbe.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "readinessProbe": {
+                      "properties": {
+                        "exec": {}
+                      },
+                      "required": [
+                        "exec"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "readinessProbe": {
+                    "properties": {
+                      "exec": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "exec"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "readinessProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "readinessProbe": {}
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1livenessProbe.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "livenessProbe": {
+                    "properties": {
+                      "exec": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "exec"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "livenessProbe"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "livenessProbe": {
+                      "properties": {
+                        "exec": {}
+                      },
+                      "required": [
+                        "exec"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -867,8 +612,228 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1livenessProbe.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "livenessProbe": {
+            "additionalProperties": {},
+            "properties": {
+              "exec": {
+                "description": "The NodeJS Version of this Healthcheck is no longer supported, therefore we don't specify a node command.\nhttps://github.com/louislam/uptime-kuma/blob/ae224f9e188b1fc32ed8729818710975589cdce7/extra/healthcheck.js#L6",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1useDeploy:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
+  "definitions": {
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/livenessProbe.enabled:t": {
+      "properties": {
+        "livenessProbe": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "livenessProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/readinessProbe.enabled:t": {
+      "properties": {
+        "readinessProbe": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "readinessProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/readinessProbe.exec.command:t": {
+      "not": {
+        "properties": {
+          "readinessProbe": {
+            "properties": {
+              "exec": {
+                "properties": {
+                  "command": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "exec"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "readinessProbe"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/useDeploy:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1useDeploy:t@3"
+      }
+    },
+    "constrains/useDeploy:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1useDeploy:t@3"
+      }
+    },
+    "constrains/useDeploy:t@3": {
+      "properties": {
+        "useDeploy": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "useDeploy"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    }
+  },
   "properties": {
     "additionalVolumeMounts": {
       "description": "A list of additional volumeMounts to be added to the pod"

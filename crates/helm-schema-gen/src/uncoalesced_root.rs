@@ -94,7 +94,7 @@ impl<'a> UncoalescedRootGate<'a> {
         });
         let mut conditions = ConditionFragmentCache::new();
         for (name, definition) in definitions {
-            conditions.reserve(&serde_json::json!({ "$ref": helm_schema_json_schema_walk::definition_reference(name) }));
+            conditions.reserve(&serde_json::json!({ "$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(name) }));
             conditions.reserve(definition);
         }
         Self {

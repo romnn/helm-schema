@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
+use helm_schema_json_schema_walk::DefinitionsKeyword;
 use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -11,11 +12,13 @@ struct DefinitionId {
 #[derive(Debug, Default)]
 pub(crate) struct OwnedDefinitions {
     original: BTreeMap<DefinitionId, Value>,
+    generated_keyword: Option<DefinitionsKeyword>,
 }
 
 impl OwnedDefinitions {
     pub(crate) fn capture(schema: &Value) -> Self {
         Self {
+            generated_keyword: DefinitionsKeyword::existing_in(schema),
             original: root_definitions(schema)
                 .into_iter()
                 .map(|(id, definition)| (id, definition.clone()))
@@ -23,11 +26,13 @@ impl OwnedDefinitions {
         }
     }
 
-    /// Whether the generator still owns root `$defs` entry `name` unchanged.
+    /// Whether the generator still owns root definition `name` unchanged.
     pub(crate) fn owns_root_definition(&self, name: &str) -> bool {
-        self.original.contains_key(&DefinitionId {
-            keyword: "$defs".to_string(),
-            name: name.to_string(),
+        self.generated_keyword.is_some_and(|keyword| {
+            self.original.contains_key(&DefinitionId {
+                keyword: keyword.as_str().to_string(),
+                name: name.to_string(),
+            })
         })
     }
 

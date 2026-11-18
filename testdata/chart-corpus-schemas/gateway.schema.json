@@ -1,66 +1,282 @@
 {
-  "$defs": {
-    "constrains/_internal_defaults_do_not_set": {
-      "not": {
-        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": {},
+  "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
       }
     },
-    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set"
-        }
-      ]
-    },
-    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+global+global:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global+global:t+global=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null"
-        }
-      ]
-    },
-    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+global+global:t+1more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+global+global:t+1more"
-      }
-    },
-    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null@2": {
-      "anyOf": [
-        {
-          "properties": {
-            "_internal_defaults_do_not_set": {
-              "enum": [
-                null
-              ]
-            }
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
           },
-          "required": [
-            "_internal_defaults_do_not_set"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "_internal_defaults_do_not_set": {}
-            },
-            "required": [
-              "_internal_defaults_do_not_set"
-            ],
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
             "type": "object"
           }
         }
-      ]
+      }
     },
-    "constrains/_internal_defaults_do_not_set+_internal_defaults_do_not_set=null@3": {
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1global:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "global": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "global"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global+global=null@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "_internal_defaults_do_not_set": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "_internal_defaults_do_not_set"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "properties": {
+                                "_internal_defaults_do_not_set": {}
+                              },
+                              "required": [
+                                "_internal_defaults_do_not_set"
+                              ],
+                              "type": "object"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1defaults:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1defaults:t"
+        },
+        "then": true
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "serviceAccount": {
+              "properties": {
+                "create": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "properties": {
+                    "serviceAccount": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+            },
+            "then": false
+          },
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "labels": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "labels": {}
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1global+global=null"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1global+global=null@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "constrains/_internal_defaults_do_not_set": {
       "not": {
-        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null@2"
+        "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
       }
     },
     "constrains/_internal_defaults_do_not_set@2": {
@@ -77,7 +293,7 @@
     "constrains/defaults:t": {
       "properties": {
         "defaults": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -85,39 +301,7 @@
       ],
       "type": "object"
     },
-    "constrains/global": {
-      "not": {
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/global+global:t+global=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global+global=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global:t"
-        }
-      ]
-    },
     "constrains/global+global=null": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
-    },
-    "constrains/global+global=null@2": {
-      "$ref": "#/$defs/constrains~1global+global=null@3"
-    },
-    "constrains/global+global=null@3": {
       "anyOf": [
         {
           "not": {
@@ -145,20 +329,15 @@
         }
       ]
     },
-    "constrains/global+global=null@4": {
+    "constrains/global+global=null@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1global+global=null"
-      }
-    },
-    "constrains/global+global=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global+global=null@2"
+        "$ref": "#/definitions/constrains~1global+global=null"
       }
     },
     "constrains/global:t": {
       "properties": {
         "global": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -194,11 +373,6 @@
         }
       ]
     },
-    "constrains/serviceAccount+serviceAccount=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null"
-      }
-    },
     "t": {
       "anyOf": [
         {
@@ -223,233 +397,8 @@
           "const": true
         }
       ]
-    },
-    "when/_internal_defaults_do_not_set/then/fail/else/serviceAccount": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceAccount~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set@2"
-      },
-      "then": false
-    },
-    "when/defaults:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1defaults:t"
-      },
-      "then": true
-    },
-    "when/labels+labels=null/then/fail/else/_internal_defaults_do_not_set+serviceAccount+serviceAccount=null": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceAccount+serviceAccount=null~1then~1fail~1else~1_internal_defaults_do_not_set+serviceAccount"
-      },
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "labels": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "labels"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "labels": {}
-              },
-              "required": [
-                "labels"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/serviceAccount+serviceAccount=null/then/fail/else/_internal_defaults_do_not_set+serviceAccount": {
-      "else": {
-        "$ref": "#/$defs/when~1_internal_defaults_do_not_set~1then~1fail~1else~1serviceAccount"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null"
-      },
-      "then": false
-    },
-    "when/serviceAccount.create:t/then/_internal_defaults_do_not_set+labels+labels=null+serviceAccount+1more/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1labels+labels=null~1then~1fail~1else~1_internal_defaults_do_not_set+serviceAccount+serviceAccount=null"
-      }
-    },
-    "when/serviceAccount/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "serviceAccount": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      },
-      "then": true
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": {},
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1global+global=null@5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "_internal_defaults_do_not_set": {
-          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1serviceAccount.create:t~1then~1_internal_defaults_do_not_set+labels+labels=null+serviceAccount+1more~1else~1fail"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global=null@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceAccount+serviceAccount=null@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1global:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": [
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1_internal_defaults_do_not_set+_internal_defaults_do_not_set=null+global+global:t+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1defaults:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1defaults:t~1then~1any~1else~1fail"
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "_internal_defaults_do_not_set": {
       "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`."

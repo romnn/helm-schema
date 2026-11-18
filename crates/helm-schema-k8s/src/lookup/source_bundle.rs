@@ -2,7 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::convert::Infallible;
 
 use helm_schema_json_schema_walk::{
-    SchemaTraversalContext, ref_points_inside, try_map_schema_context,
+    DefinitionsKeyword, GENERATED_DEFINITIONS, SchemaTraversalContext, ref_points_inside,
+    try_map_schema_context,
 };
 use serde_json::{Map, Value};
 
@@ -75,6 +76,7 @@ pub(crate) fn bundle_source_schema(
 
 struct SourceSchemaBundler<R> {
     root_schema: Value,
+    keyword: DefinitionsKeyword,
     resolve_external_ref: R,
     definition_names_by_location: BTreeMap<SourceBundleLocation, String>,
     definitions_by_name: BTreeMap<String, Value>,
@@ -87,8 +89,14 @@ where
     R: FnMut(&SourceBundleLocation, &str) -> Option<SourceBundleNode>,
 {
     fn new(root_schema: Value, resolve_external_ref: R) -> Self {
+        let keyword = if root_schema.get("$schema").is_some() {
+            DefinitionsKeyword::for_schema(&root_schema)
+        } else {
+            GENERATED_DEFINITIONS
+        };
         Self {
             root_schema,
+            keyword,
             resolve_external_ref,
             definition_names_by_location: BTreeMap::new(),
             definitions_by_name: BTreeMap::new(),
@@ -104,7 +112,7 @@ where
         if !self.definitions_by_name.is_empty() {
             let definitions = schema.as_object_mut().and_then(|object| {
                 object
-                    .entry("$defs".to_string())
+                    .entry(self.keyword.as_str().to_string())
                     .or_insert_with(|| Value::Object(Map::new()))
                     .as_object_mut()
             });
@@ -118,8 +126,8 @@ where
     }
 
     fn seed_existing_definition_names(&mut self, schema: &Value) {
-        for key in ["$defs", "definitions"] {
-            let Some(definitions) = schema.get(key).and_then(Value::as_object) else {
+        for keyword in DefinitionsKeyword::ALL {
+            let Some(definitions) = schema.get(keyword.as_str()).and_then(Value::as_object) else {
                 continue;
             };
             self.used_definition_names
@@ -209,9 +217,7 @@ where
         }
 
         let definition_name = self.definition_name_for_target(target, depth + 1);
-        ref_object(helm_schema_json_schema_walk::definition_reference(
-            &definition_name,
-        ))
+        ref_object(self.keyword.reference(&definition_name))
     }
 
     fn definition_name_for_target(&mut self, target: SourceBundleNode, depth: usize) -> String {

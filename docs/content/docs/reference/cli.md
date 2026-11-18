@@ -5,7 +5,7 @@ weight: 1
 
 # CLI reference
 
-`helm-schema` generates a schema from one positional argument (the chart) plus flags. The generated schema goes to standard output unless `--output` is given; diagnostics go to standard error. The subcommands hand an already generated schema to Helm: `shorten` writes a copy with short `$defs` keys, and `lint` and `template` run Helm on a shortened copy of the chart.
+`helm-schema` generates a schema from one positional argument (the chart) plus flags. The generated schema goes to standard output unless `--output` is given; diagnostics go to standard error. The subcommands hand an already generated schema to Helm: `shorten` writes a copy with short `definitions` keys, and `lint` and `template` run Helm on a shortened copy of the chart.
 
 ```
 helm-schema [OPTIONS] <CHART_DIR>
@@ -35,28 +35,28 @@ Run `helm-schema --help` for the authoritative, version-specific summary.
 | `--local-conditionals <on\|off>` | Override locally anchored ordinary conditional emission. |
 | `--terminal-clauses <on\|off>` | Override unconditional and guarded terminal emission. |
 | `--kind-partitions <on\|off>` | Override kind-partition refinements. At least one applicable anchor lane must remain enabled when this is on. |
-| `--keep-refs` | Leave file/URL `$ref` strings as-is. By default external refs are resolved into root-level `$defs` so the output is self-contained. Conflicts with `--inline-refs`. |
-| `--inline-refs` | Fully inline resolved file/URL `$ref`s instead of writing `$defs`. |
-| `--no-minimize` | Keep repeated subtrees inline instead of interning them into root-level `$defs`. Interning is on by default. |
-| `--defs-names <source\|destination>` | Name the `$defs` entries helm-schema creates by the schema path their content comes from (`source`, the default) or by their first reference (`destination`). |
+| `--keep-refs` | Leave file/URL `$ref` strings as-is. By default external refs are resolved into root-level `definitions` so the output is self-contained. Conflicts with `--inline-refs`. |
+| `--inline-refs` | Fully inline resolved file/URL `$ref`s instead of writing `definitions`. |
+| `--no-minimize` | Keep repeated subtrees inline instead of interning them into root-level `definitions`. Interning is on by default. |
+| `--defs-names <source\|destination>` | Name the `definitions` entries helm-schema creates by the schema path their content comes from (`source`, the default) or by their first reference (`destination`). |
 | `--shorten-defs` | Deprecated: short definition names only; pretty JSON unless `--compact` is also used. Conflicts with explicit `--output-layout`. |
 | `--defs-map <PATH>` | Write the map from each short key to its readable name; an empty object when the chosen layout keeps names unchanged. |
 
 ## `shorten`
 
-`helm-schema shorten <INPUT> <OUTPUT>` renames the `$defs` entries of a generated schema to short keys, the form to hand Helm when the readable schema exceeds Helm's 5 MiB chart-file limit. `--map <PATH>` writes the map from each short key to its readable name; `--compact` writes compact JSON. This subcommand and all generation layouts warn when the written schema is over the limit and still exit successfully. Default generation automatically compacts and shortens oversized pretty output and reports the resulting size on stderr.
+`helm-schema shorten <INPUT> <OUTPUT>` renames the `definitions` entries of a generated schema to short keys, the form to hand Helm when the readable schema exceeds Helm's 5 MiB chart-file limit. `--map <PATH>` writes the map from each short key to its readable name; `--compact` writes compact JSON. This subcommand and all generation layouts warn when the written schema is over the limit and still exit successfully. Default generation automatically compacts and shortens oversized pretty output and reports the resulting size on stderr.
 
 ## `lint` and `template`
 
 `helm-schema lint <CHART> [HELM_ARGS]...` and `helm-schema template <CHART> [HELM_ARGS]...` run `helm lint` or `helm template` on a copy of the chart directory whose root `values.schema.json` is shortened and compact, so a reviewed readable schema over Helm's limit still works. The copy lives in a fresh directory under `TMPDIR` (or the platform's temporary directory) and is removed when Helm ends, also when SIGINT, SIGTERM or SIGQUIT stops Helm on Unix, however slowly its output is read (on Windows only a console Ctrl-C is caught, and other console events such as closing the window may end helm-schema before the copy is removed; a failed removal is reported on standard error without changing the exit status); links in the chart are copied as the files and directories they point to, and a link to a directory that contains it is refused. Dependency schemas and archives are copied unchanged, and Helm still applies `.helmignore`. A chart without a root `values.schema.json` runs unchanged, without a copy.
 
-Everything after the chart is passed to Helm verbatim, including `--help`; one `--` right after the chart is dropped. Helm keeps the current directory, so relative `-f` and `--set-file` paths mean what they mean for Helm. Helm's standard output and error are relayed line by line; in diagnostics (both streams of `lint`, standard error of `template`) each complete `#/$defs/<short key>` reference token is replaced by the readable name, while the manifests `template` writes to standard output stay byte for byte; the command exits with Helm's status (on Unix, a signal that ended Helm ends helm-schema too). `template` puts the chart first, so name the release with `--name-template` rather than Helm's positional `NAME CHART` form.
+Everything after the chart is passed to Helm verbatim, including `--help`; one `--` right after the chart is dropped. Helm keeps the current directory, so relative `-f` and `--set-file` paths mean what they mean for Helm. Helm's standard output and error are relayed line by line; in diagnostics (both streams of `lint`, standard error of `template`) each short key in a reference or a quoted JSON Pointer is expanded to its readable name, while the manifests `template` writes to standard output stay byte for byte; the command exits with Helm's status (on Unix, a signal that ended Helm ends helm-schema too). `template` puts the chart first, so name the release with `--name-template` rather than Helm's positional `NAME CHART` form.
 
 | Flag | Description |
 |---|---|
 | `--helm <PATH>` | The Helm executable. Defaults to `$HELM`, then `helm` on `PATH`. |
 
-Short keys are looked up in the root schema's map only; a dependency schema whose own `$defs` use the same short spelling is translated as if it were the root's.
+Short keys are looked up in the root schema's map only; a dependency schema whose own `definitions` use the same short spelling is translated as if it were the root's.
 
 See [Output]({{< relref "output.md" >}}) for what these produce.
 

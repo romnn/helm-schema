@@ -449,7 +449,7 @@ fn read_fixture(path: &Path) -> eyre::Result<Value> {
 }
 
 /// The bytes Helm reads for `schema`: the compact document with short
-/// `$defs` keys that `helm-schema lint` / `template` write into the chart
+/// `definitions` keys that `helm-schema lint` / `template` write into the chart
 /// copy they hand to Helm (`helm_schema::helm`). The fixture's own bytes on
 /// disk are the readable corpus serialization, not what ships.
 fn shipped_bytes(schema: &Value) -> eyre::Result<usize> {

@@ -1,11 +1,60 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-0"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-1"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-4"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/helm-condition-11"
+          },
+          {
+            "$ref": "#/definitions/helm-condition-21"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "helm-condition-0": {
       "else": false,
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -20,7 +69,7 @@
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -33,24 +82,24 @@
     "helm-condition-10": {
       "allOf": [
         {
-          "$ref": "#/$defs/helm-condition-5"
+          "$ref": "#/definitions/helm-condition-5"
         },
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-9"
+          "$ref": "#/definitions/helm-condition-9"
         }
       ]
     },
     "helm-condition-11": {
       "not": {
-        "$ref": "#/$defs/helm-condition-10"
+        "$ref": "#/definitions/helm-condition-10"
       }
     },
     "helm-condition-12": {
       "not": {
-        "$ref": "#/$defs/helm-condition-9"
+        "$ref": "#/definitions/helm-condition-9"
       }
     },
     "helm-condition-13": {
@@ -70,7 +119,7 @@
       "not": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -93,7 +142,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-14"
+          "$ref": "#/definitions/helm-condition-14"
         }
       ]
     },
@@ -102,7 +151,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -111,23 +160,23 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-13"
+          "$ref": "#/definitions/helm-condition-13"
         },
         {
-          "$ref": "#/$defs/helm-condition-15"
+          "$ref": "#/definitions/helm-condition-15"
         }
       ]
     },
     "helm-condition-17": {
       "not": {
-        "$ref": "#/$defs/helm-condition-5"
+        "$ref": "#/definitions/helm-condition-5"
       }
     },
     "helm-condition-18": {
       "not": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -150,7 +199,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-18"
+          "$ref": "#/definitions/helm-condition-18"
         }
       ]
     },
@@ -172,32 +221,32 @@
     "helm-condition-20": {
       "allOf": [
         {
-          "$ref": "#/$defs/helm-condition-17"
+          "$ref": "#/definitions/helm-condition-17"
         },
         {
-          "$ref": "#/$defs/helm-condition-19"
+          "$ref": "#/definitions/helm-condition-19"
         },
         {
-          "$ref": "#/$defs/helm-condition-15"
+          "$ref": "#/definitions/helm-condition-15"
         }
       ]
     },
     "helm-condition-21": {
       "anyOf": [
         {
-          "$ref": "#/$defs/helm-condition-12"
+          "$ref": "#/definitions/helm-condition-12"
         },
         {
-          "$ref": "#/$defs/helm-condition-16"
+          "$ref": "#/definitions/helm-condition-16"
         },
         {
-          "$ref": "#/$defs/helm-condition-20"
+          "$ref": "#/definitions/helm-condition-20"
         }
       ]
     },
     "helm-condition-3": {
       "else": {
-        "$ref": "#/$defs/helm-condition-2"
+        "$ref": "#/definitions/helm-condition-2"
       },
       "if": {
         "anyOf": [
@@ -231,7 +280,7 @@
     },
     "helm-condition-4": {
       "else": {
-        "$ref": "#/$defs/helm-condition-3"
+        "$ref": "#/definitions/helm-condition-3"
       },
       "if": {
         "anyOf": [
@@ -338,7 +387,7 @@
       "not": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -361,7 +410,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-6"
         }
       ]
     },
@@ -369,7 +418,7 @@
       "not": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -392,7 +441,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-8"
+          "$ref": "#/definitions/helm-condition-8"
         }
       ]
     },
@@ -422,55 +471,6 @@
       ]
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-0"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-1"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-4"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/helm-condition-11"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-21"
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "affinity": {},
     "configAwsOrGcp": {},

@@ -50,7 +50,7 @@ fn schema_node_for_values_path<'schema>(
     Some(resolve_local_ref(schema, current))
 }
 
-/// Interned subtrees live in root-level `$defs`; follow local refs so
+/// Interned subtrees live in root-level `definitions`; follow local refs so
 /// values-path lookups see through the output interning.
 fn resolve_local_ref<'schema>(root: &'schema Value, node: &'schema Value) -> &'schema Value {
     node.get("$ref")

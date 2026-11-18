@@ -1,5 +1,61 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "worker": {
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "constrains/enabled!=0+enabled=true": {
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "minProperties": 1,
+              "type": "object"
+            },
+            {
+              "not": {
+                "const": 0
+              },
+              "type": "number"
+            },
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "const": true
+            }
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled=null": {
       "anyOf": [
         {
@@ -28,17 +84,6 @@
         }
       ]
     },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
     "constrains/replicas": {
       "properties": {
         "replicas": {
@@ -61,40 +106,15 @@
       ],
       "type": "object"
     },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
     "values/replicas/allOf/not/object": {
       "allOf": [
         {
           "not": {
             "additionalProperties": {
-              "$ref": "#/$defs/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
+              "$ref": "#/definitions/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
             },
             "propertyNames": {
-              "$ref": "#/$defs/values~1replicas~1string"
+              "$ref": "#/definitions/values~1replicas~1string"
             },
             "type": "object"
           }
@@ -126,10 +146,21 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1replicas~1anyOf~1null,boolean,number+string"
+            "anyOf": [
+              {
+                "type": [
+                  "null",
+                  "boolean",
+                  "number"
+                ]
+              },
+              {
+                "$ref": "#/definitions/values~1replicas~1string"
+              }
+            ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/values~1replicas~1string"
+            "$ref": "#/definitions/values~1replicas~1string"
           },
           "type": "object"
         },
@@ -142,26 +173,23 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/values~1replicas~1anyOf~1null,boolean,number+string"
+            "anyOf": [
+              {
+                "type": [
+                  "null",
+                  "boolean",
+                  "number"
+                ]
+              },
+              {
+                "$ref": "#/definitions/values~1replicas~1string"
+              }
+            ]
           },
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1replicas~1string"
-        }
-      ]
-    },
-    "values/replicas/anyOf/null,boolean,number+string": {
-      "anyOf": [
-        {
-          "type": [
-            "null",
-            "boolean",
-            "number"
-          ]
-        },
-        {
-          "$ref": "#/$defs/values~1replicas~1string"
+          "$ref": "#/definitions/values~1replicas~1string"
         }
       ]
     },
@@ -185,10 +213,6 @@
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "values/replicas/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
     "values/replicas/string;pattern-r-n": {
       "not": {
         "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
@@ -197,29 +221,6 @@
       "type": "string"
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "additionalProperties": {},
-      "properties": {
-        "version": {
-          "type": "string"
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "worker": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    }
-  ],
   "properties": {
     "dynamic": {
       "additionalProperties": {},
@@ -284,7 +285,7 @@
           "then": {
             "not": {
               "items": {
-                "$ref": "#/$defs/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
+                "$ref": "#/definitions/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
               },
               "type": "array"
             }
@@ -295,19 +296,19 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/values~1replicas~1allOf~1not~1object"
+            "$ref": "#/definitions/values~1replicas~1allOf~1not~1object"
           }
         }
       ],
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1replicas~1string;pattern-r-n"
+          "$ref": "#/definitions/values~1replicas~1string;pattern-r-n"
         },
         {
-          "$ref": "#/$defs/values~1replicas~1integer:int32;number-of-desired-pods"
+          "$ref": "#/definitions/values~1replicas~1integer:int32;number-of-desired-pods"
         },
         {
-          "$ref": "#/$defs/values~1replicas~1null:int32;number-of-desired-pods"
+          "$ref": "#/definitions/values~1replicas~1null:int32;number-of-desired-pods"
         },
         {
           "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
@@ -318,10 +319,11 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1replicas~1string;pattern-0-1-9"
+          "$ref": "#/definitions/values~1replicas~1string;pattern-0-1-9"
         },
         {
-          "$ref": "#/$defs/values~1replicas~1string;pattern-null-null-null"
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
         }
       ]
     },
@@ -336,23 +338,60 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1replicas"
+                    "$ref": "#/definitions/constrains~1replicas@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled:t"
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1replicas"
+                    "$ref": "#/definitions/constrains~1replicas@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                    "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "$ref": "#/definitions/values~1replicas~1allOf~1not~1object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1replicas"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
                   },
                   {
                     "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1replicas"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
                   }
                 ]
               }
@@ -364,7 +403,7 @@
               "replicas": {
                 "not": {
                   "items": {
-                    "$ref": "#/$defs/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
+                    "$ref": "#/definitions/values~1replicas~1anyOf~1array+null,boolean,number+object+string"
                   },
                   "type": "array"
                 }
@@ -378,7 +417,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
                   },
                   {
                     "type": "object"
@@ -386,7 +425,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t"
+                "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
               }
             ]
           },
@@ -396,13 +435,13 @@
               "replicas": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1replicas~1string;pattern-r-n"
+                    "$ref": "#/definitions/values~1replicas~1string;pattern-r-n"
                   },
                   {
-                    "$ref": "#/$defs/values~1replicas~1integer:int32;number-of-desired-pods"
+                    "$ref": "#/definitions/values~1replicas~1integer:int32;number-of-desired-pods"
                   },
                   {
-                    "$ref": "#/$defs/values~1replicas~1null:int32;number-of-desired-pods"
+                    "$ref": "#/definitions/values~1replicas~1null:int32;number-of-desired-pods"
                   },
                   {
                     "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
@@ -413,49 +452,13 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1replicas~1string;pattern-0-1-9"
+                    "$ref": "#/definitions/values~1replicas~1string;pattern-0-1-9"
                   },
                   {
-                    "$ref": "#/$defs/values~1replicas~1string;pattern-null-null-null"
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
                   }
                 ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1replicas@2"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled+enabled=null"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1replicas@2"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "replicas": {
-                "$ref": "#/$defs/values~1replicas~1allOf~1not~1object"
               }
             }
           }

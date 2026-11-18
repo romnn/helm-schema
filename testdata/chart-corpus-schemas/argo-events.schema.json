@@ -1,150 +1,836 @@
 {
-  "$defs": {
-    "constrains/annotations": {
-      "allOf": [
-        {
-          "properties": {
-            "annotations": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "annotations": {
-              "minProperties": 1,
-              "type": "object"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        }
-      ]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1webhook+webhook=null"
+      },
+      "then": false
     },
-    "constrains/annotations+annotations:helm-marker-free+annotations=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations+annotations=null@2"
-        }
-      ]
-    },
-    "constrains/annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations@2"
-        },
-        {
-          "properties": {
-            "keep": {
-              "$ref": "#/$defs/t"
-            }
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
           },
-          "required": [
-            "keep"
-          ],
-          "type": "object"
+          "then": {
+            "$ref": "#/definitions/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
+          }
         },
-        {
-          "$ref": "#/$defs/constrains~1install:t"
+        "if": {
+          "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override \"argo-events.fullname\" template",
+            "type": "string"
+          }
         }
-      ]
+      }
     },
-    "constrains/annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null"
-        }
-      ]
-    },
-    "constrains/annotations+annotations:helm-marker-free+annotations=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations=null"
-        },
-        {
-          "properties": {
-            "annotations": {
-              "$ref": "#/$defs/helm-marker-free"
-            }
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1namespaceOverride"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+                  }
+                ]
+              }
+            ]
           },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations@3"
-        }
-      ]
-    },
-    "constrains/annotations+annotations=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "annotations": {
-              "type": "null"
+          {
+            "not": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                    }
+                  ]
+                },
+                {
+                  "not": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride"
+                    }
+                  ]
+                }
+              ]
             }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations=null"
-        },
-        {
-          "properties": {
-            "annotations": {
-              "$ref": "#/$defs/constrains~1annotations+annotations=null~1object,null"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations@3"
-        }
-      ]
-    },
-    "constrains/annotations+annotations=null/object,null": {
-      "additionalProperties": {
-        "type": [
-          "string",
-          "null"
+          }
         ]
       },
-      "type": [
-        "object",
-        "null"
-      ]
+      "then": false
     },
-    "constrains/annotations+annotations=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1annotations+annotations=null"
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "Override the namespace",
+            "type": "string"
+          }
+        }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "controller": {}
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "serviceAccount": {
+                    "$ref": "#/definitions/constrains~1annotations:t"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "description": "Argo Events admission webhook",
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "description": "Annotations applied to created service account",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "description": "Argo Events controller",
+                "properties": {
+                  "rbac": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "description": "Argo Events controller",
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/definitions/constrains~1serviceAccount=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+          },
+          "then": false
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "Provide a name in place of `argo-events`",
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "constrains/annotations": {
+      "not": {
+        "properties": {
+          "annotations": {}
+        },
+        "required": [
+          "annotations"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/annotations+annotations:helm-marker-free+annotations=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "annotations": {
+              "$ref": "#/definitions/helm-marker-free"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1annotations=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1annotations"
+        }
+      ]
     },
     "constrains/annotations:t": {
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -165,534 +851,48 @@
       ],
       "type": "object"
     },
-    "constrains/annotations@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1annotations"
-      }
-    },
-    "constrains/annotations@3": {
-      "not": {
-        "properties": {
-          "annotations": {}
-        },
-        "required": [
-          "annotations"
-        ],
-        "type": "object"
-      }
-    },
     "constrains/controller.rbac.namespaced:t": {
-      "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@2"
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@5"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@5"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+3more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride:t+namespaceOverride+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+3more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride:t+namespaceOverride+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+2more@2"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more@2"
+        "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
       }
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+2more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride+nameOverride:t+3more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride:t+namespaceOverride+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+fullnameOverride:t+nameOverride:t+namespaceOverride+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
     },
     "constrains/controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t"
-        }
-      ]
-    },
-    "constrains/controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@3"
-      }
-    },
-    "constrains/controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+webhook+webhook.serviceAccount+7more"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+              }
+            ]
+          }
+        ]
       }
     },
     "constrains/controller.rbac.namespaced:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-      }
-    },
-    "constrains/controller.rbac.namespaced:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-      }
-    },
-    "constrains/controller.rbac.namespaced:t@4": {
       "properties": {
         "controller": {
           "properties": {
             "rbac": {
               "properties": {
                 "namespaced": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -714,49 +914,23 @@
     },
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        }
-      ]
-    },
     "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-        }
-      ]
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+      }
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
       }
     },
     "constrains/fullnameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      }
-    },
-    "constrains/fullnameOverride:t@4": {
       "properties": {
         "fullnameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -765,11 +939,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -783,7 +952,7 @@
     "constrains/install:t": {
       "properties": {
         "install": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -792,45 +961,9 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@3"
-    },
-    "constrains/nameOverride:t@2": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@4"
-    },
-    "constrains/nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      }
-    },
-    "constrains/nameOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      }
-    },
-    "constrains/nameOverride:t@5": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "type": "string"
         }
       },
       "required": [
@@ -838,15 +971,20 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
+    "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@3"
       }
     },
-    "constrains/nameOverride@3": {
+    "constrains/nameOverride:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
-          "type": "string"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -865,54 +1003,24 @@
       ],
       "type": "object"
     },
-    "constrains/namespaceOverride+namespaceOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/namespaceOverride+namespaceOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
-      }
-    },
     "constrains/namespaceOverride:t": {
-      "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
+      "not": {
+        "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+      }
     },
     "constrains/namespaceOverride:t@2": {
-      "$ref": "#/$defs/constrains~1namespaceOverride:t@4"
+      "not": {
+        "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+      }
     },
     "constrains/namespaceOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@5"
-      }
-    },
-    "constrains/namespaceOverride:t@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@5"
-      }
-    },
-    "constrains/namespaceOverride:t@5": {
       "properties": {
         "namespaceOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
         "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount": {
-      "properties": {
-        "serviceAccount": {}
-      },
-      "required": [
-        "serviceAccount"
       ],
       "type": "object"
     },
@@ -929,628 +1037,715 @@
       ],
       "type": "object"
     },
-    "constrains/webhook+webhook.serviceAccount+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount+webhook.serviceAccount.automountServiceAccountToken"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1allOf~1not~1object+object"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/allOf/not/object+object": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              false,
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a@2"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d@2"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1object"
-          }
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/allOf/not/object+object@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1object"
-          }
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/anyOf/string;pattern-x20-x2d": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/anyOf/string;pattern-x20-x2d@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/null,boolean,number": {
-      "type": [
-        "null",
-        "boolean",
-        "number"
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a@2"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
-      "type": "string"
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
-      "type": "string"
-    },
-    "constrains/webhook+webhook.serviceAccount+1more/string;pattern-x3a@2": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
-      "type": "string"
-    },
-    "constrains/webhook+webhook.serviceAccount+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount+webhook.serviceAccount.automountServiceAccountToken"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1allOf~1not~1object+object@2"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+1more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount+webhook.serviceAccount.automountServiceAccountToken"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1object"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+4more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more@3"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "pattern": "^(?:(?:[\\x20])*)$",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "enum": [
-                        false
-                      ]
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@3"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.automountServiceAccountToken"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "type": "null"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/array": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/array@2": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/array@3": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/object@2": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/object@3": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/object@4": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
-    "constrains/webhook+webhook.serviceAccount+4more/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
     "constrains/webhook+webhook.serviceAccount+6more": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1webhook.serviceAccount+webhook.serviceAccount.automountServiceAccountToken"
+            },
+            {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "automountServiceAccountToken": {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object"
+                        }
+                      },
+                      "required": [
+                        "automountServiceAccountToken"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@5"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1webhook.serviceAccount+webhook.serviceAccount.automountServiceAccountToken"
+            },
+            {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "automountServiceAccountToken": {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@8"
+                        }
+                      },
+                      "required": [
+                        "automountServiceAccountToken"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount+webhook.serviceAccount.automountServiceAccountToken"
+                    },
+                    {
+                      "properties": {
+                        "webhook": {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "automountServiceAccountToken": {
+                                  "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@4"
+                                }
+                              },
+                              "required": [
+                                "automountServiceAccountToken"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "pattern": "^(?:(?:[\\x20])*)$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@3"
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1webhook.serviceAccount.automountServiceAccountToken"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "type": "null"
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "automountServiceAccountToken": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          },
+                          "required": [
+                            "automountServiceAccountToken"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "webhook": {
+                                  "properties": {
+                                    "serviceAccount": {
+                                      "properties": {
+                                        "name": {
+                                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@8"
+                                        }
+                                      },
+                                      "required": [
+                                        "name"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "serviceAccount"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "webhook"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1webhook.serviceAccount+webhook.serviceAccount.name"
+                            }
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "webhook": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "name": {
+                                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@4"
+                                    }
+                                  },
+                                  "required": [
+                                    "name"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webhook"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "webhook": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "name": {
+                                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2e"
+                                    }
+                                  },
+                                  "required": [
+                                    "name"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webhook"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.name:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "webhook": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "name": {
+                                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x25"
+                                    }
+                                  },
+                                  "required": [
+                                    "name"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webhook"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook.serviceAccount.name"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.name:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook.serviceAccount.name"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.name:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name"
+                        },
+                        {
+                          "properties": {
+                            "webhook": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "name": {
+                                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x5b"
+                                    }
+                                  },
+                                  "required": [
+                                    "name"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webhook"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook.serviceAccount.name"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.serviceAccount.name:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "properties": {
+            "webhook": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2e"
+                    }
+                  },
+                  "required": [
+                    "automountServiceAccountToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhook"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhook": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@5"
+                    }
+                  },
+                  "required": [
+                    "automountServiceAccountToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhook"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhook": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x5b"
+                    }
+                  },
+                  "required": [
+                    "automountServiceAccountToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhook"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhook": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x25"
+                    }
+                  },
+                  "required": [
+                    "automountServiceAccountToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhook"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "webhook": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@4"
+                    }
+                  },
+                  "required": [
+                    "automountServiceAccountToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhook"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -1560,22 +1755,22 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@6"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@7"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
               }
             ]
           },
@@ -1583,7 +1778,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
           }
         }
       ]
@@ -1592,7 +1787,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
           }
         },
         {
@@ -1600,10 +1795,10 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
               }
             ]
           },
@@ -1615,32 +1810,32 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@5"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@6"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@3"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@4"
               }
             ]
           },
@@ -1652,20 +1847,20 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@3"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
               }
             ]
           },
@@ -1678,37 +1873,27 @@
         {
           "additionalProperties": {
             "anyOf": [
+              false,
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@5"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a@2"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@4"
           }
         }
       ]
@@ -1719,33 +1904,36 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@3"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@6"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@6"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@4"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
           }
         }
       ]
@@ -1756,107 +1944,37 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
               },
               {
-                "allOf": [
-                  {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x20-x2d@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@3"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
-                        }
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array"
-                    }
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@7"
               },
               {
-                "allOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@3"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@3"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
           }
         }
       ]
@@ -1867,13 +1985,13 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
                 "allOf": [
@@ -1881,22 +1999,25 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@2"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@3"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x20-x2d"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
                         }
                       ]
                     },
@@ -1904,61 +2025,67 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array"
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array"
                     }
                   }
                 ]
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
               },
               {
                 "allOf": [
                   {
-                    "not": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object"
-                    }
-                  },
-                  {
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@2"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1array@2"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@2"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@2"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
                         }
                       ]
                     },
                     "propertyNames": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d@2"
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1anyOf~1string;pattern-x20-x2d"
                     },
                     "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object"
+                    }
                   }
                 ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@3"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@3"
           }
         }
       ]
@@ -1969,24 +2096,106 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+              },
+              {
+                "allOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1array+not~1array"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@3"
           }
         }
       ]
@@ -1994,8 +2203,36 @@
     "constrains/webhook+webhook.serviceAccount+6more/allOf/not/object+object@6": {
       "allOf": [
         {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
           "not": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1object@4"
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
+          }
+        }
+      ]
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/allOf/not/object+object@7": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
           }
         },
         {
@@ -2003,22 +2240,232 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+4more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         }
       ]
     },
+    "constrains/webhook+webhook.serviceAccount+6more/allOf/not/object+object@8": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@4"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/anyOf/string;pattern-x20-x2d": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/array": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/array@2": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/array@3": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/null,boolean,number": {
+      "type": [
+        "null",
+        "boolean",
+        "number"
+      ]
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@2"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/object@2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object@5"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/object@3": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1array"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/object@4": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a@2"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/object@5": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
     "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x20-x25": {
       "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "type": "string"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x20-x2d@2": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x20-x2d@3": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
     "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x20-x2e": {
@@ -2029,158 +2476,17 @@
       "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
-    "constrains/webhook+webhook.serviceAccount+6more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2e"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@4"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x5b"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x25"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@3"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
+    "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "type": "string"
     },
-    "constrains/webhook+webhook.serviceAccount+6more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more@2"
-      }
+    "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x3a-x2d": {
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/webhook+webhook.serviceAccount+6more/string;pattern-x3a@2": {
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "type": "string"
     },
     "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name": {
       "allOf": [
@@ -2191,7 +2497,7 @@
                 "serviceAccount": {
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1allOf~1not~1object+object"
+                      "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object"
                     }
                   },
                   "required": [
@@ -2212,242 +2518,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount+webhook.serviceAccount.name"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.name:t"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name+1more"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name@2": {
-      "allOf": [
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1allOf~1not~1object+object@2"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount+webhook.serviceAccount.name"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.name"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x5b"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.name"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name@2"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@3"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x2e"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.serviceAccount+webhook.serviceAccount.name@6": {
-      "anyOf": [
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1string;pattern-x20-x25"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+webhook.serviceAccount.name"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.name"
+          "$ref": "#/definitions/constrains~1webhook.serviceAccount+webhook.serviceAccount.name"
         }
       ]
     },
@@ -2510,7 +2581,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.serviceAccount.automountServiceAccountToken"
+          "$ref": "#/definitions/constrains~1webhook.serviceAccount.automountServiceAccountToken"
         }
       ]
     },
@@ -2601,41 +2672,23 @@
       }
     },
     "constrains/webhook.serviceAccount.create:t": {
-      "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@7"
+      "not": {
+        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+      }
     },
     "constrains/webhook.serviceAccount.create:t@2": {
-      "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@8"
+      "not": {
+        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
+      }
     },
     "constrains/webhook.serviceAccount.create:t@3": {
-      "$ref": "#/$defs/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
-    },
-    "constrains/webhook.serviceAccount.create:t@4": {
-      "$ref": "#/$defs/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
-    },
-    "constrains/webhook.serviceAccount.create:t@5": {
-      "$ref": "#/$defs/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
-    },
-    "constrains/webhook.serviceAccount.create:t@6": {
-      "$ref": "#/$defs/when~1webhook.serviceAccount.create:t~1then~1any~1else~1fail"
-    },
-    "constrains/webhook.serviceAccount.create:t@7": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-      }
-    },
-    "constrains/webhook.serviceAccount.create:t@8": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-      }
-    },
-    "constrains/webhook.serviceAccount.create:t@9": {
       "properties": {
         "webhook": {
           "properties": {
             "serviceAccount": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -2662,7 +2715,7 @@
             "serviceAccount": {
               "properties": {
                 "name": {
-                  "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@4"
+                  "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1allOf~1not~1object+object@5"
                 }
               },
               "required": [
@@ -2689,7 +2742,7 @@
             "serviceAccount": {
               "properties": {
                 "name": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -2713,7 +2766,7 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/helm-marker-free"
+            "$ref": "#/definitions/helm-marker-free"
           },
           "propertyNames": {
             "not": {
@@ -2723,11 +2776,11 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook+webhook.serviceAccount+1more~1null,boolean,number"
+          "$ref": "#/definitions/constrains~1webhook+webhook.serviceAccount+6more~1null,boolean,number"
         },
         {
           "items": {
-            "$ref": "#/$defs/helm-marker-free"
+            "$ref": "#/definitions/helm-marker-free"
           },
           "type": "array"
         },
@@ -2764,398 +2817,14 @@
         }
       ]
     },
-    "when/controller.rbac.namespaced:t/then/fail/else/fullnameOverride:t+nameOverride:t+webhook.serviceAccount.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t+webhook.serviceAccount.create:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-      },
-      "then": false
-    },
-    "when/controller.rbac.namespaced:t/then/fail/else/fullnameOverride:t+webhook.serviceAccount.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1webhook.serviceAccount.create:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-      },
-      "then": false
-    },
-    "when/controller.rbac.namespaced:t/then/fail/else/namespaceOverride:t+webhook.serviceAccount.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1webhook.serviceAccount.create:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-      },
-      "then": false
-    },
-    "when/controller.rbac.namespaced:t/then/fail/else/webhook.serviceAccount.annotations:t+webhook.serviceAccount.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.serviceAccount.annotations:t~1then~1webhook.serviceAccount.create:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t@4"
-      },
-      "then": false
-    },
-    "when/fullnameOverride:t/then/fail/else/nameOverride:t+webhook.serviceAccount.create:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1webhook.serviceAccount.create:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      },
-      "then": false
-    },
-    "when/fullnameOverride:t/then/webhook.serviceAccount.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@3"
-      }
-    },
-    "when/nameOverride:t/then/webhook.serviceAccount.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@5"
-      }
-    },
-    "when/namespaceOverride:t/then/webhook.serviceAccount.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@5"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@6"
-      }
-    },
-    "when/webhook.serviceAccount.annotations:t/then/webhook.serviceAccount.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "webhook": {
-            "properties": {
-              "serviceAccount": {
-                "$ref": "#/$defs/constrains~1annotations:t"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "webhook"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@4"
-      }
-    },
     "when/webhook.serviceAccount.create:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
+        "$ref": "#/definitions/constrains~1webhook.serviceAccount.create:t@3"
       },
       "then": true
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/when~1controller.rbac.namespaced:t~1then~1fail~1else~1webhook.serviceAccount.annotations:t+webhook.serviceAccount.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "description": "Argo Events admission webhook",
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "description": "Annotations applied to created service account",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook+webhook=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "crds": {}
-              },
-              "required": [
-                "crds"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "crds": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "crds"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "controller": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "controller": {}
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1controller.rbac.namespaced:t~1then~1fail~1else~1fullnameOverride:t+webhook.serviceAccount.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override \"argo-events.fullname\" template",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "rbac": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "controller": {
-                      "properties": {
-                        "rbac": {}
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1controller.rbac.namespaced:t+fullnameOverride+fullnameOverride:t+nameOverride+12more@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1controller.rbac.namespaced:t~1then~1fail~1else~1namespaceOverride:t+webhook.serviceAccount.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "Override the namespace",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1serviceAccount"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1serviceAccount=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1controller.rbac.namespaced:t~1then~1fail~1else~1fullnameOverride:t+nameOverride:t+webhook.serviceAccount.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "Provide a name in place of `argo-events`",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.serviceAccount.create:t@9"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "description": "Argo Events controller",
-                "properties": {
-                  "rbac": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "description": "Argo Events controller",
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    }
-  ],
   "properties": {
     "configs": {
       "description": "Event bus configuration"
@@ -3179,7 +2848,124 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1install:t"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1annotations:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "properties": {
+                                "annotations": {
+                                  "type": "null"
+                                }
+                              },
+                              "required": [
+                                "annotations"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1annotations=null"
+                            },
+                            {
+                              "properties": {
+                                "annotations": {
+                                  "additionalProperties": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "annotations"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1annotations"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1annotations+annotations:helm-marker-free+annotations=null"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "keep": {
+                            "$ref": "#/definitions/t"
+                          }
+                        },
+                        "required": [
+                          "keep"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1annotations+annotations:helm-marker-free+annotations=null"
+                      },
+                      {
+                        "not": {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "annotations": {
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "annotations"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "annotations": {
+                                  "minProperties": 1,
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "annotations"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1install:t"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1install:t"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "$ref": "#/definitions/constrains~1install:t"
           },
           "then": {
             "additionalProperties": {},
@@ -3188,15 +2974,24 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/helm-marker-free"
                     }
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations+annotations=null~1object,null"
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ]
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-marker-free"
+                      "$ref": "#/definitions/t"
                     }
                   }
                 ],
@@ -3204,22 +2999,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1annotations+annotations:helm-marker-free+annotations=null+install:t+keep:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1annotations:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1install:t"
-              }
-            ]
-          },
-          "then": false
         }
       ],
       "description": "Custom resource configuration",
@@ -3262,11 +3041,17 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1serviceAccount=null"
+                "$ref": "#/definitions/constrains~1serviceAccount=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1serviceAccount"
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
                 }
               }
             ]

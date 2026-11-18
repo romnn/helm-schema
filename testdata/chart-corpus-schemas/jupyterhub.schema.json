@@ -1,9 +1,173 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "nameOverride": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "nameOverride"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1scheduling+scheduling=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              "then": false
+            }
+          }
+        }
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "nameOverride": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "scheduling": {
+                      "properties": {
+                        "userScheduler": {}
+                      },
+                      "required": [
+                        "userScheduler"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "scheduling"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "scheduling": {
+                    "$ref": "#/definitions/constrains~1userScheduler=null"
+                  }
+                },
+                "required": [
+                  "scheduling"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1scheduling+scheduling=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "scheduling": {
+            "additionalProperties": {},
+            "description": "scheduling relates to the user-scheduler pods and user-placeholder pods.",
+            "properties": {
+              "userScheduler": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceAccount": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -12,11 +176,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride@2": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -27,23 +186,10 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
     "constrains/nameOverride:t": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -84,7 +230,7 @@
         "scheduling": {
           "properties": {
             "userScheduler": {
-              "$ref": "#/$defs/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t"
             }
           },
           "required": [
@@ -107,7 +253,7 @@
                 "serviceAccount": {
                   "properties": {
                     "create": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -130,15 +276,6 @@
       },
       "required": [
         "scheduling"
-      ],
-      "type": "object"
-    },
-    "constrains/userScheduler": {
-      "properties": {
-        "userScheduler": {}
-      },
-      "required": [
-        "userScheduler"
       ],
       "type": "object"
     },
@@ -179,166 +316,8 @@
           "const": true
         }
       ]
-    },
-    "when/fullnameOverride/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      },
-      "then": false
-    },
-    "when/nameOverride:t/then/fullnameOverride+scheduling.userScheduler.enabled:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1scheduling.userScheduler.enabled:t~1then~1fullnameOverride+scheduling.userScheduler.serviceAccount.create:t~1else~1fail"
-      }
-    },
-    "when/scheduling.userScheduler.enabled:t/then/fullnameOverride+scheduling.userScheduler.serviceAccount.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1scheduling.userScheduler.serviceAccount.create:t~1then~1fullnameOverride~1else~1fail"
-      }
-    },
-    "when/scheduling.userScheduler.serviceAccount.create:t/then/fullnameOverride/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1fullnameOverride~1then~1fail~1else~1any"
-      }
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "scheduling": {
-            "additionalProperties": {},
-            "description": "scheduling relates to the user-scheduler pods and user-placeholder pods.",
-            "properties": {
-              "userScheduler": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceAccount": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1scheduling+scheduling=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1fullnameOverride+scheduling.userScheduler.enabled:t+1more~1else~1fail"
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "nameOverride": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "additionalProperties": {},
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "scheduling": {
-                      "$ref": "#/$defs/constrains~1userScheduler"
-                    }
-                  },
-                  "required": [
-                    "scheduling"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "scheduling": {
-                    "$ref": "#/$defs/constrains~1userScheduler=null"
-                  }
-                },
-                "required": [
-                  "scheduling"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1scheduling+scheduling=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.serviceAccount.create:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1scheduling.userScheduler.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "cull": {
       "description": "cull relates to the jupyterhub-idle-culler service, responsible for evicting\ninactive singleuser pods.\nThe configuration below, except for enabled, corresponds to command-line flags\nfor jupyterhub-idle-culler as documented here:\nhttps://github.com/jupyterhub/jupyterhub-idle-culler#as-a-standalone-script"
@@ -380,11 +359,17 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1userScheduler=null"
+                "$ref": "#/definitions/constrains~1userScheduler=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1userScheduler"
+                  "properties": {
+                    "userScheduler": {}
+                  },
+                  "required": [
+                    "userScheduler"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -400,9 +385,6 @@
             {
               "if": {
                 "allOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1enabled:t"
-                  },
                   {
                     "anyOf": [
                       {
@@ -430,6 +412,9 @@
                         }
                       }
                     ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
                   }
                 ]
               },

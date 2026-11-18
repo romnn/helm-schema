@@ -338,9 +338,82 @@ pub fn unescape_json_pointer_segment(segment: &str) -> String {
     referencing::unescape_segment(segment).into_owned()
 }
 
-/// A local reference into a root `$defs` entry.
+/// Dialect of schemas generated from Helm templates.
+pub const GENERATED_SCHEMA_URI: &str = "http://json-schema.org/draft-07/schema#";
+
+/// Definitions containers supported by the schema walker.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum DefinitionsKeyword {
+    /// The container used through Draft-07.
+    Definitions,
+    /// The container used by later drafts.
+    Defs,
+}
+
+/// Definitions keyword for schemas generated from Helm templates.
+pub const GENERATED_DEFINITIONS: DefinitionsKeyword =
+    DefinitionsKeyword::for_draft(referencing::Draft::Draft7);
+
+impl DefinitionsKeyword {
+    /// Both spellings, including the spelling used in historical output.
+    pub const ALL: [Self; 2] = [Self::Definitions, Self::Defs];
+
+    /// Determines the keyword from the document's declared dialect, defaulting
+    /// to Draft 2020-12 for standalone schemas without a recognized dialect.
+    #[must_use]
+    pub fn for_schema(schema: &Value) -> Self {
+        Self::for_draft(referencing::Draft::default().detect(schema))
+    }
+
+    const fn for_draft(draft: referencing::Draft) -> Self {
+        match draft {
+            referencing::Draft::Draft4
+            | referencing::Draft::Draft6
+            | referencing::Draft::Draft7 => Self::Definitions,
+            _ => Self::Defs,
+        }
+    }
+
+    /// The JSON object member.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Definitions => "definitions",
+            Self::Defs => "$defs",
+        }
+    }
+
+    /// Selects the document's existing definitions container, accepting the
+    /// other spelling when the dialect's own container is absent.
+    #[must_use]
+    pub fn existing_in(schema: &Value) -> Option<Self> {
+        let preferred = Self::for_schema(schema);
+        if schema.get(preferred.as_str()).is_some() {
+            Some(preferred)
+        } else {
+            Self::ALL
+                .into_iter()
+                .find(|keyword| schema.get(keyword.as_str()).is_some())
+        }
+    }
+
+    /// The `$ref` value naming root definition `name`.
+    #[must_use]
+    pub fn reference(self, name: &str) -> String {
+        DefinitionReference {
+            keyword: self,
+            name: name.to_string(),
+            suffix: String::new(),
+        }
+        .to_reference()
+    }
+}
+
+/// A local reference into a root definitions container.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DefinitionReference {
+    /// The container addressed by the reference.
+    pub keyword: DefinitionsKeyword,
     /// The definition's name, unescaped.
     pub name: String,
     /// The JSON Pointer below the definition, empty for the definition itself.
@@ -348,11 +421,11 @@ pub struct DefinitionReference {
 }
 
 impl DefinitionReference {
-    /// The `$ref` value: `#/$defs/<name><suffix>`, the name escaped as a JSON
-    /// Pointer token and the fragment percent-encoded where RFC 3986 requires.
+    /// The `$ref` value with the name escaped as a JSON Pointer token and
+    /// the fragment percent-encoded where RFC 3986 requires.
     #[must_use]
     pub fn to_reference(&self) -> String {
-        let mut pointer = String::from("/$defs/");
+        let mut pointer = format!("/{}/", self.keyword.as_str());
         referencing::write_escaped_str(&mut pointer, &self.name);
         pointer.push_str(&self.suffix);
         let mut fragment = fluent_uri::pct_enc::EString::<Fragment>::new();
@@ -361,30 +434,23 @@ impl DefinitionReference {
     }
 }
 
-/// The `$ref` value naming root definition `name`.
-#[must_use]
-pub fn definition_reference(name: &str) -> String {
-    DefinitionReference {
-        name: name.to_string(),
-        suffix: String::new(),
-    }
-    .to_reference()
-}
-
-/// The root definition a local `#/$defs/…` reference addresses.
+/// The root definition a local JSON Pointer addresses, in either container.
 ///
-/// `None` for anything else: a reference with a scheme, authority, path or
-/// query, one that is not a valid URI reference, or a fragment that is not a
-/// pointer into the root `$defs`.
+/// Returns `None` when the URI reference is invalid, points to another
+/// document, or does not point into a definitions container.
 #[must_use]
 pub fn parse_definition_reference(reference: &str) -> Option<DefinitionReference> {
     let fragment = local_reference_fragment(reference)?;
-    let rest = fragment.strip_prefix("/$defs/")?;
+    let (container, rest) = fragment.strip_prefix('/')?.split_once('/')?;
+    let keyword = DefinitionsKeyword::ALL
+        .into_iter()
+        .find(|keyword| keyword.as_str() == container)?;
     let (token, suffix) = match rest.split_once('/') {
         Some((token, suffix)) => (token, format!("/{suffix}")),
         None => (rest, String::new()),
     };
     Some(DefinitionReference {
+        keyword,
         name: unescape_json_pointer_segment(token),
         suffix,
     })

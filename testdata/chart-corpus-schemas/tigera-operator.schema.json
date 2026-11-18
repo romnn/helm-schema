@@ -1,5 +1,175 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1installation.kubernetesProvider"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tigeraOperator": {
+                      "properties": {
+                        "registry": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "registry"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tigeraOperator"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1tigeraOperator+tigeraOperator=null"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1tigeraOperator+tigeraOperator=null"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1installation.kubernetesProvider"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tigeraOperator.registry!=0+tigeraOperator.registry=true"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "installation": {
+          "additionalProperties": {},
+          "description": "Configures general installation parameters for Calico. Schema is based\non the operator.tigera.io/Installation API documented\nhere: https://docs.tigera.io/calico/latest/reference/installation/api#installationspec",
+          "properties": {
+            "kubernetesProvider": {
+              "description": "Valid options: EKS, GKE, AKS, RKE2, OpenShift, DockerEnterprise, TKG, Kind.\nIf empty the operator will attempt to automatically determine the current provider.",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1tigeraOperator.registry!=0+tigeraOperator.registry=true"
+        },
+        "then": {
+          "else": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1tigeraOperator+tigeraOperator=null"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1tigeraOperator+tigeraOperator=null"
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tigeraOperator": {
+            "additionalProperties": {},
+            "description": "Image and registry configuration for the tigera/operator pod.",
+            "properties": {
+              "registry": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "imagePullSecrets": {
+          "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "installation": {
+                    "$ref": "#/definitions/constrains~1kubernetesProvider=null"
+                  }
+                },
+                "required": [
+                  "installation"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "installation": {
+                      "$ref": "#/definitions/constrains~1kubernetesProvider"
+                    }
+                  },
+                  "required": [
+                    "installation"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1installation+installation=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1installation+installation=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1tigeraOperator+tigeraOperator=null"
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "constrains/installation+installation=null": {
       "anyOf": [
         {
@@ -29,40 +199,6 @@
       ]
     },
     "constrains/installation.kubernetesProvider": {
-      "not": {
-        "$ref": "#/$defs/constrains~1installation.kubernetesProvider@2"
-      }
-    },
-    "constrains/installation.kubernetesProvider+tigeraOperator+tigeraOperator.registry+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1tigeraOperator.registry:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tigeraOperator.registry"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tigeraOperator+tigeraOperator=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1tigeraOperator+tigeraOperator=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1installation.kubernetesProvider@2"
-        }
-      ]
-    },
-    "constrains/installation.kubernetesProvider+tigeraOperator+tigeraOperator.registry+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1installation.kubernetesProvider"
-        },
-        {
-          "$ref": "#/$defs/constrains~1installation.kubernetesProvider+tigeraOperator+tigeraOperator.registry+2more"
-        }
-      ]
-    },
-    "constrains/installation.kubernetesProvider@2": {
       "properties": {
         "installation": {
           "properties": {
@@ -131,43 +267,34 @@
         }
       ]
     },
-    "constrains/tigeraOperator+tigeraOperator=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1tigeraOperator+tigeraOperator=null"
-      }
-    },
-    "constrains/tigeraOperator+tigeraOperator=null@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1tigeraOperator+tigeraOperator=null"
-      }
-    },
-    "constrains/tigeraOperator.registry": {
-      "not": {
-        "properties": {
-          "tigeraOperator": {
-            "properties": {
-              "registry": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "registry"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tigeraOperator"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/tigeraOperator.registry:t": {
+    "constrains/tigeraOperator.registry!=0+tigeraOperator.registry=true": {
       "properties": {
         "tigeraOperator": {
           "properties": {
             "registry": {
-              "$ref": "#/$defs/t"
+              "anyOf": [
+                {
+                  "minProperties": 1,
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "const": 0
+                  },
+                  "type": "number"
+                },
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "const": true
+                }
+              ]
             }
           },
           "required": [
@@ -180,165 +307,8 @@
         "tigeraOperator"
       ],
       "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/tigeraOperator+tigeraOperator=null/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1tigeraOperator+tigeraOperator=null"
-      },
-      "then": false
-    },
-    "when/tigeraOperator+tigeraOperator=null/then/fail/else/any@2": {
-      "else": {
-        "$ref": "#/$defs/when~1tigeraOperator+tigeraOperator=null~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1tigeraOperator+tigeraOperator=null"
-      },
-      "then": false
-    },
-    "when/tigeraOperator.registry:t/then/tigeraOperator+tigeraOperator=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1tigeraOperator.registry:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1tigeraOperator+tigeraOperator=null~1then~1fail~1else~1any@2"
-      }
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "additionalProperties": {},
-      "properties": {
-        "installation": {
-          "additionalProperties": {},
-          "description": "Configures general installation parameters for Calico. Schema is based\non the operator.tigera.io/Installation API documented\nhere: https://docs.tigera.io/calico/latest/reference/installation/api#installationspec",
-          "properties": {
-            "kubernetesProvider": {
-              "description": "Valid options: EKS, GKE, AKS, RKE2, OpenShift, DockerEnterprise, TKG, Kind.\nIf empty the operator will attempt to automatically determine the current provider.",
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1tigeraOperator.registry:t~1then~1tigeraOperator+tigeraOperator=null~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tigeraOperator": {
-            "additionalProperties": {},
-            "description": "Image and registry configuration for the tigera/operator pod.",
-            "properties": {
-              "registry": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "imagePullSecrets": {
-          "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json",
-          "type": [
-            "array",
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1installation.kubernetesProvider+tigeraOperator+tigeraOperator.registry+2more@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "installation": {
-                    "$ref": "#/$defs/constrains~1kubernetesProvider=null"
-                  }
-                },
-                "required": [
-                  "installation"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "installation": {
-                      "$ref": "#/$defs/constrains~1kubernetesProvider"
-                    }
-                  },
-                  "required": [
-                    "installation"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1installation+installation=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1installation+installation=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1tigeraOperator+tigeraOperator=null"
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "additionalLabels": {
       "description": "Common labels for all resources created by this chart"
@@ -379,11 +349,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1kubernetesProvider"
+                  "$ref": "#/definitions/constrains~1kubernetesProvider"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1kubernetesProvider=null"
+                "$ref": "#/definitions/constrains~1kubernetesProvider=null"
               }
             ]
           },

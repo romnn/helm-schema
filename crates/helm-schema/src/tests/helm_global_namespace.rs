@@ -97,13 +97,19 @@ fn share_expected_conditions(
     mut schema: serde_json::Value,
     locations: &[&str],
 ) -> eyre::Result<serde_json::Value> {
-    let mut definitions = schema.get("$defs").cloned().unwrap_or_else(|| json!({}));
+    let mut definitions = schema
+        .get("definitions")
+        .cloned()
+        .unwrap_or_else(|| json!({}));
     for (ordinal, location) in locations.iter().enumerate() {
         let name = format!("helm-condition-{ordinal}");
         let condition = schema
             .pointer_mut(location)
             .ok_or_eyre("expected condition is missing")?;
-        let body = std::mem::replace(condition, json!({ "$ref": format!("#/$defs/{name}") }));
+        let body = std::mem::replace(
+            condition,
+            json!({ "$ref": format!("#/definitions/{name}") }),
+        );
         definitions
             .as_object_mut()
             .ok_or_eyre("expected definitions are not an object")?
@@ -112,7 +118,7 @@ fn share_expected_conditions(
     schema
         .as_object_mut()
         .ok_or_eyre("expected schema is not an object")?
-        .insert("$defs".to_string(), definitions);
+        .insert("definitions".to_string(), definitions);
     Ok(schema)
 }
 
@@ -172,7 +178,7 @@ fn every_discovered_chart_instance_reserves_global() -> eyre::Result<()> {
 fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
     let schema = generated_schema(witness_parent(true)?)?;
     let expected_schema = json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     {
@@ -210,7 +216,7 @@ fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
                                 "global": {
                                     "properties": {
                                         "imageRegistry": {
-                                            "$ref": "#/$defs/t"
+                                            "$ref": "#/definitions/t"
                                         }
                                     },
                                     "required": [
@@ -290,7 +296,7 @@ fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
                                         "global": {
                                             "properties": {
                                                 "imageRegistry": {
-                                                    "$ref": "#/$defs/t"
+                                                    "$ref": "#/definitions/t"
                                                 }
                                             },
                                             "required": [
@@ -463,7 +469,7 @@ fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
                                                 "global": {
                                                     "properties": {
                                                         "imageRegistry": {
-                                                            "$ref": "#/$defs/t"
+                                                            "$ref": "#/definitions/t"
                                                         }
                                                     },
                                                     "required": [
@@ -680,7 +686,7 @@ fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
                                         "global": {
                                             "properties": {
                                                 "imageRegistry": {
-                                                    "$ref": "#/$defs/t"
+                                                    "$ref": "#/definitions/t"
                                                 }
                                             },
                                             "required": [
@@ -853,7 +859,7 @@ fn a_nested_global_consumer_follows_the_helm_matrix() -> eyre::Result<()> {
                                                 "global": {
                                                     "properties": {
                                                         "imageRegistry": {
-                                                            "$ref": "#/$defs/t"
+                                                            "$ref": "#/definitions/t"
                                                         }
                                                     },
                                                     "required": [
@@ -1498,7 +1504,7 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
         .collect::<Vec<_>>();
     sim_assert_eq!(have: have, want: want);
     sim_assert_eq!(have: schema, want: share_expected_conditions(json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     {
@@ -1709,7 +1715,7 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
                                 {
                                     "properties": {
                                         "kidEnabled": {
-                                            "$ref": "#/$defs/t"
+                                            "$ref": "#/definitions/t"
                                         }
                                     },
                                     "required": [

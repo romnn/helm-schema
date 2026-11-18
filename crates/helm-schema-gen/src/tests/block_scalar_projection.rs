@@ -275,7 +275,7 @@ fn shallow_control_after_block_scalar_remains_a_mapping_sibling() {
     sim_assert_eq!(
         have: schema,
         want: serde_json::json!({
-            "$defs": {
+            "definitions": {
                 "t": {
                     "anyOf": [
                         { "const": true },
@@ -306,7 +306,7 @@ fn shallow_control_after_block_scalar_remains_a_mapping_sibling() {
                         },
                         {
                             "not": {
-                                "$ref": "#/$defs/t",
+                                "$ref": "#/definitions/t",
                             },
                         },
                         {

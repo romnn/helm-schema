@@ -101,7 +101,7 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() -> eyre
     let schema = schema_for_values_yaml(parse_ir(REGISTRY_CONSUMER), Some(DECLARED_GLOBAL));
     let expected = executed_registry_expected(
         serde_json::json!({
-            "$defs": {
+            "definitions": {
                 "helm-condition-0": {
                     "not": {
                         "properties": {
@@ -186,7 +186,7 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() -> eyre
                                     {
                                         "properties": {
                                             "imageRegistry": {
-                                                "$ref": "#/$defs/t"
+                                                "$ref": "#/definitions/t"
                                             }
                                         },
                                         "required": [
@@ -195,7 +195,7 @@ fn consumed_global_member_keeps_its_contract_and_admits_shared_members() -> eyre
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/$defs/helm-condition-0"
+                                        "$ref": "#/definitions/helm-condition-0"
                                     }
                                 ]
                             },
@@ -236,7 +236,7 @@ fn guarded_global_reads_keep_their_guards() -> eyre::Result<()> {
     let schema = schema_for_values_yaml(parse_ir(GUARDED_CONSUMER), None);
     let expected = executed_registry_expected(
         serde_json::json!({
-            "$defs": {
+            "definitions": {
                 "helm-condition-0": {
                     "not": {
                         "properties": {
@@ -321,7 +321,7 @@ fn guarded_global_reads_keep_their_guards() -> eyre::Result<()> {
                                     {
                                         "properties": {
                                             "enabled": {
-                                                "$ref": "#/$defs/t"
+                                                "$ref": "#/definitions/t"
                                             }
                                         },
                                         "required": [
@@ -330,7 +330,7 @@ fn guarded_global_reads_keep_their_guards() -> eyre::Result<()> {
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/$defs/helm-condition-0"
+                                        "$ref": "#/definitions/helm-condition-0"
                                     }
                                 ]
                             },
@@ -539,7 +539,7 @@ fn root_and_alias_local_global_members_are_both_admitted() {
         "",
     );
     let expected_schema = serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     {
@@ -577,7 +577,7 @@ fn root_and_alias_local_global_members_are_both_admitted() {
                                 "global": {
                                     "properties": {
                                         "imageRegistry": {
-                                            "$ref": "#/$defs/t"
+                                            "$ref": "#/definitions/t"
                                         }
                                     },
                                     "required": [
@@ -657,7 +657,7 @@ fn root_and_alias_local_global_members_are_both_admitted() {
                                         "global": {
                                             "properties": {
                                                 "imageRegistry": {
-                                                    "$ref": "#/$defs/t"
+                                                    "$ref": "#/definitions/t"
                                                 }
                                             },
                                             "required": [
@@ -955,7 +955,7 @@ fn executed_registry_expected(
         .as_object_mut()
         .ok_or_eyre("expected schema object")?;
     let definitions = object
-        .get_mut("$defs")
+        .get_mut("definitions")
         .and_then(Value::as_object_mut)
         .ok_or_eyre("expected definitions")?;
     let old = definitions
@@ -963,16 +963,16 @@ fn executed_registry_expected(
         .ok_or_eyre("expected legacy condition")?;
     definitions.insert("helm-condition-1".to_owned(), old);
     definitions.insert("helm-condition-0".to_owned(), serde_json::json!({
-        "if": {"type": "object", "properties": {"global": {"type": "object", "properties": {(key): {"$ref": "#/$defs/t"}}, "required": [key]}}, "required": ["global"]},
+        "if": {"type": "object", "properties": {"global": {"type": "object", "properties": {(key): {"$ref": "#/definitions/t"}}, "required": [key]}}, "required": ["global"]},
         "then": true, "else": false
     }));
     if presence {
         definitions.insert("helm-condition-2".to_owned(), serde_json::json!({
-            "if": {"type": "object", "properties": {"enabled": {"$ref": "#/$defs/t"}}, "required": ["enabled"]}, "then": true, "else": false
+            "if": {"type": "object", "properties": {"enabled": {"$ref": "#/definitions/t"}}, "required": ["enabled"]}, "then": true, "else": false
         }));
     }
     object.get_mut("allOf").and_then(Value::as_array_mut).ok_or_eyre("expected root conjuncts")?.insert(0, serde_json::json!({
-        "if": {"$ref": "#/$defs/helm-condition-0"},
+        "if": {"$ref": "#/definitions/helm-condition-0"},
         "then": {"additionalProperties": {}, "properties": {"global": {"additionalProperties": {}, "properties": {"imageRegistry": {"type": "string"}}}}}
     }));
     if presence {
@@ -986,7 +986,7 @@ fn executed_registry_expected(
             {"anyOf": [
                 {"not": {"type": "object", "properties": {"imageRegistry": {}}, "required": ["imageRegistry"]}},
                 {"type": "object", "properties": {"imageRegistry": {"enum": [null]}}, "required": ["imageRegistry"]}
-            ]}, {"$ref": "#/$defs/helm-condition-2"}
+            ]}, {"$ref": "#/definitions/helm-condition-2"}
         ]}, "then": false}));
     }
     Ok(expected)
@@ -996,8 +996,8 @@ fn rename_registry_condition(value: &mut Value) {
     match value {
         Value::Object(object) => {
             for (key, value) in object {
-                if key == "$ref" && value.as_str() == Some("#/$defs/helm-condition-0") {
-                    *value = Value::String("#/$defs/helm-condition-1".to_owned());
+                if key == "$ref" && value.as_str() == Some("#/definitions/helm-condition-0") {
+                    *value = Value::String("#/definitions/helm-condition-1".to_owned());
                 } else {
                     rename_registry_condition(value);
                 }

@@ -2515,6 +2515,7 @@ fn battery_config(charts: &[ComparedChart]) -> eyre::Result<ComparisonConfig> {
 /// `u`-mode regex check rejects outright.
 /// The schema passes through the same exact respelling that provider
 /// ingestion now applies, so it accepts the same values and still compiles.
+/// Definition pointers keep the spelling recorded in the fixture.
 fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serde_json::Value> {
     let bytes = read_schema_bytes_at_ref(reference, relative_path)?;
     let mut schema = serde_json::from_slice(&bytes)

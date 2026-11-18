@@ -1,299 +1,1419 @@
 {
-  "$defs": {
-    "constrains/creator": {
-      "$ref": "#/$defs/when~1creator~1then~1fail~1else~1any"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "$ref": "#/definitions/constrains~1validatingWebhookConfiguration"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/definitions/constrains~1validatingWebhookConfiguration=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          }
+        ]
+      },
+      "then": false
     },
-    "constrains/creator+creator=null": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@5"
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1webhook"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1creator+creator=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1webhook"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1global.nodeSelector=null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1global.nodeSelector:t"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1global.nodeSelector"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1global.nodeSelector@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1creator+creator=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1webhook"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1global"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1creator+creator=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1webhook"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1creator+creator=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1webhook"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1creator+creator=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget.enabled:t"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1global"
+                  }
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1webhook"
+                  }
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1webhook.nodeSelector"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1webhook.nodeSelector=null"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1webhook.nodeSelector@2"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.nodeSelector:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1global.nodeSelector@2"
+                      }
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1global.nodeSelector=null"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.nodeSelector"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.nodeSelector:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": false
     },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global+14more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook@3"
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "$ref": "#/definitions/constrains~1mutatingWebhookConfiguration"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/definitions/constrains~1mutatingWebhookConfiguration=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1webhook+webhook=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1webhook.nodeSelector:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "nodeSelector": {
+                "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property",
+                "type": [
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
         }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global@3"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global@3"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global@3"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global+14more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+13more"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more"
       }
     },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
+    {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/when~1creator+creator=null~1then~1fail~1else~1creator@2"
         },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
+        "if": {
+          "$ref": "#/definitions/constrains~1global.rbac.create:t"
         },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more"
-      }
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+13more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null@8"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more"
-        }
-      ]
-    },
-    "constrains/creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@2"
-      }
-    },
-    "constrains/creator+creator=null@2": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@4"
-    },
-    "constrains/creator+creator=null@3": {
-      "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator"
-    },
-    "constrains/creator+creator=null@4": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@6"
-    },
-    "constrains/creator+creator=null@5": {
-      "$ref": "#/$defs/constrains~1creator+creator=null@6"
-    },
-    "constrains/creator+creator=null@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1creator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator@2"
-        }
-      ]
-    },
-    "constrains/creator+creator=null@7": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1creator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1creator@2"
-        }
-      ]
-    },
-    "constrains/creator+creator=null@8": {
-      "not": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@2"
-      }
-    },
-    "constrains/creator=null": {
-      "properties": {
-        "creator": {
-          "enum": [
-            null
-          ]
+        "then": {
+          "else": {
+            "$ref": "#/definitions/when~1creator+creator=null~1then~1fail~1else~1creator@2"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic:t"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": {
+                            "else": true,
+                            "if": {
+                              "$ref": "#/definitions/constrains~1creator"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1then~1fail~1else~1any"
+                            }
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/when~1creator~1then~1fail~1else~1any"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/when~1creator~1then~1fail~1else~1any"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1creator~1then~1fail~1else~1any"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1creator+creator=null@4"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1creator+creator=null~1then~1fail~1else~1creator"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1creator+creator=null~1then~1fail~1else~1creator"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1creator+creator=null~1then~1fail~1else~1creator"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1creator+creator=null@4"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+                  },
+                  "then": false
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+              },
+              "then": false
+            }
+          }
         }
       },
-      "required": [
-        "creator"
-      ],
-      "type": "object"
+      "then": false
     },
-    "constrains/creator@2": {
-      "not": {
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "livenessProbe": {}
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/definitions/constrains~1livenessProbe=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1global+global=null"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "properties": {
-          "creator": {}
+          "prometheus": {
+            "$ref": "#/definitions/constrains~1enabled:t"
+          }
         },
         "required": [
-          "creator"
+          "prometheus"
         ],
         "type": "object"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "prometheus": {
+                "additionalProperties": {},
+                "properties": {
+                  "servicemonitor": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "prometheus": {
+                "additionalProperties": {},
+                "properties": {
+                  "podmonitor": {
+                    "description": "Note that you cannot enable both PodMonitor and ServiceMonitor as they are mutually exclusive. Enabling both will result in an error.",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
-    "constrains/creator@3": {
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "$ref": "#/definitions/constrains~1podDisruptionBudget"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/definitions/constrains~1podSecurityPolicy"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "$ref": "#/definitions/constrains~1podSecurityPolicy=null"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null@2"
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "healthzPort": {
+                            "$ref": "#/definitions/t"
+                          }
+                        },
+                        "required": [
+                          "healthzPort"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null@2"
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "securePort": {
+                            "$ref": "#/definitions/t"
+                          }
+                        },
+                        "required": [
+                          "securePort"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.create:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac.create:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.create:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
+                "properties": {
+                  "metricsTLSConfig": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "podDisruptionBudget": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1global.nodeSelector:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "nodeSelector": {
+                "description": "Global node selector\nThe nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nIf a component-specific nodeSelector is also set, it will be merged and take precedence.\n+docs:property",
+                "type": [
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.tlsConfig+webhook.config.tlsConfig=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.tlsConfig+webhook.config.tlsConfig=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null@2"
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "tlsConfig": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "tlsConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
+                "properties": {
+                  "tlsConfig": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1creator+creator=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1creator+creator=null@2"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "prometheus": {}
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/definitions/constrains~1serviceAccount=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "webhook": {
+                    "$ref": "#/definitions/constrains~1readinessProbe=null"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "readinessProbe": {}
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.create:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
+                "properties": {
+                  "metricsTLSConfig": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "dynamic": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": false
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "url": {}
+                      },
+                      "required": [
+                        "url"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "url": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "url"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook+webhook=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1creator+creator=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1creator+creator=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.create:t"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
+    "constrains/creator": {
       "properties": {
         "creator": {
           "type": "string"
@@ -304,10 +1424,75 @@
       ],
       "type": "object"
     },
+    "constrains/creator+creator=null": {
+      "$ref": "#/definitions/constrains~1creator+creator=null@3"
+    },
+    "constrains/creator+creator=null@2": {
+      "$ref": "#/definitions/constrains~1creator+creator=null@3"
+    },
+    "constrains/creator+creator=null@3": {
+      "anyOf": [
+        {
+          "properties": {
+            "creator": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "creator"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1creator"
+        },
+        {
+          "not": {
+            "properties": {
+              "creator": {}
+            },
+            "required": [
+              "creator"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/creator+creator=null@4": {
+      "anyOf": [
+        {
+          "properties": {
+            "creator": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "creator"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "creator": {}
+            },
+            "required": [
+              "creator"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -316,104 +1501,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t@4"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t@4"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -424,81 +1511,100 @@
       ],
       "type": "object"
     },
-    "constrains/global": {
+    "constrains/fullnameOverride+fullnameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          }
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1global@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/global": {
+      "properties": {
+        "global": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
     },
     "constrains/global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector+global.nodeSelector=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector:t@3"
-        }
-      ]
-    },
-    "constrains/global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null+2more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook"
+          "$ref": "#/definitions/constrains~1global.nodeSelector=null"
         },
         {
-          "$ref": "#/$defs/constrains~1global"
+          "not": {
+            "$ref": "#/definitions/constrains~1global.nodeSelector:t"
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null"
+          "$ref": "#/definitions/constrains~1global.nodeSelector"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null"
+          "$ref": "#/definitions/constrains~1global.nodeSelector@2"
         }
       ]
-    },
-    "constrains/global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null+2more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null+2more"
-      }
-    },
-    "constrains/global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector@3"
-        }
-      ]
-    },
-    "constrains/global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector@3"
-        }
-      ]
-    },
-    "constrains/global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null@2"
-      }
     },
     "constrains/global+global=null": {
       "anyOf": [
@@ -530,38 +1636,27 @@
     },
     "constrains/global.nodeSelector": {
       "not": {
-        "$ref": "#/$defs/constrains~1global.nodeSelector@3"
-      }
-    },
-    "constrains/global.nodeSelector+global.nodeSelector=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector=null"
+        "properties": {
+          "global": {
+            "properties": {
+              "nodeSelector": {}
+            },
+            "required": [
+              "nodeSelector"
+            ],
+            "type": "object"
+          }
         },
-        {
-          "$ref": "#/$defs/constrains~1global.nodeSelector@2"
-        }
-      ]
-    },
-    "constrains/global.nodeSelector+global.nodeSelector=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.nodeSelector+global.nodeSelector=null"
+        "required": [
+          "global"
+        ],
+        "type": "object"
       }
     },
     "constrains/global.nodeSelector:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.nodeSelector:t@3"
-      }
-    },
-    "constrains/global.nodeSelector:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.nodeSelector:t@3"
-      }
-    },
-    "constrains/global.nodeSelector:t@3": {
       "properties": {
         "global": {
-          "$ref": "#/$defs/constrains~1nodeSelector:t"
+          "$ref": "#/definitions/constrains~1nodeSelector:t"
         }
       },
       "required": [
@@ -572,7 +1667,7 @@
     "constrains/global.nodeSelector=null": {
       "properties": {
         "global": {
-          "$ref": "#/$defs/constrains~1nodeSelector=null"
+          "$ref": "#/definitions/constrains~1nodeSelector=null"
         }
       },
       "required": [
@@ -581,22 +1676,9 @@
       "type": "object"
     },
     "constrains/global.nodeSelector@2": {
-      "not": {
-        "properties": {
-          "global": {
-            "$ref": "#/$defs/constrains~1nodeSelector@2"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/global.nodeSelector@3": {
       "properties": {
         "global": {
-          "$ref": "#/$defs/constrains~1nodeSelector"
+          "$ref": "#/definitions/constrains~1nodeSelector"
         }
       },
       "required": [
@@ -605,114 +1687,13 @@
       "type": "object"
     },
     "constrains/global.rbac.create:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-      }
-    },
-    "constrains/global.rbac.create:t+webhook.config+webhook.config.healthzPort:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config.securePort:t+webhook.config=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config.healthzPort:t+webhook.config=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-        }
-      ]
-    },
-    "constrains/global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more": {
-      "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@3"
-    },
-    "constrains/global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
-        }
-      ]
-    },
-    "constrains/global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
-        }
-      ]
-    },
-    "constrains/global.rbac.create:t+webhook.config+webhook.config=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-        }
-      ]
-    },
-    "constrains/global.rbac.create:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-      }
-    },
-    "constrains/global.rbac.create:t@3": {
       "properties": {
         "global": {
           "properties": {
             "rbac": {
               "properties": {
                 "create": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -732,43 +1713,75 @@
       ],
       "type": "object"
     },
-    "constrains/global@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1global@3"
-      }
-    },
-    "constrains/global@3": {
-      "properties": {
-        "global": {
-          "type": "object"
+    "constrains/global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1global.rbac.create:t"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
         }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
+      ]
     },
-    "constrains/image=null": {
-      "properties": {
-        "image": {
-          "enum": [
-            null
-          ]
+    "constrains/global.rbac.create:t+webhook.config+webhook.config.metricsTLSConfig+6more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1global.rbac.create:t"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
         }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/livenessProbe": {
-      "properties": {
-        "livenessProbe": {}
-      },
-      "required": [
-        "livenessProbe"
-      ],
-      "type": "object"
+      ]
     },
     "constrains/livenessProbe=null": {
       "properties": {
@@ -816,35 +1829,15 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-      }
-    },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -866,7 +1859,7 @@
     "constrains/nodeSelector:t": {
       "properties": {
         "nodeSelector": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -887,15 +1880,6 @@
       ],
       "type": "object"
     },
-    "constrains/nodeSelector@2": {
-      "properties": {
-        "nodeSelector": {}
-      },
-      "required": [
-        "nodeSelector"
-      ],
-      "type": "object"
-    },
     "constrains/podDisruptionBudget": {
       "properties": {
         "podDisruptionBudget": {}
@@ -905,22 +1889,10 @@
       ],
       "type": "object"
     },
-    "constrains/podDisruptionBudget+podDisruptionBudget=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1podDisruptionBudget=null"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget"
-          }
-        }
-      ]
-    },
     "constrains/podDisruptionBudget.enabled:t": {
       "properties": {
         "podDisruptionBudget": {
-          "$ref": "#/$defs/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
@@ -963,28 +1935,6 @@
       ],
       "type": "object"
     },
-    "constrains/rbac=null": {
-      "properties": {
-        "rbac": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "constrains/readinessProbe": {
-      "properties": {
-        "readinessProbe": {}
-      },
-      "required": [
-        "readinessProbe"
-      ],
-      "type": "object"
-    },
     "constrains/readinessProbe=null": {
       "properties": {
         "readinessProbe": {
@@ -998,15 +1948,6 @@
       ],
       "type": "object"
     },
-    "constrains/serviceAccount": {
-      "properties": {
-        "serviceAccount": {}
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
     "constrains/serviceAccount=null": {
       "properties": {
         "serviceAccount": {
@@ -1017,19 +1958,6 @@
       },
       "required": [
         "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/url=null": {
-      "properties": {
-        "url": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "url"
       ],
       "type": "object"
     },
@@ -1056,43 +1984,41 @@
       "type": "object"
     },
     "constrains/webhook": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook@3"
-      }
+      "properties": {
+        "webhook": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhook"
+      ],
+      "type": "object"
     },
     "constrains/webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector+webhook.nodeSelector=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector:t@2"
-        }
-      ]
-    },
-    "constrains/webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector:t"
+          "not": {
+            "properties": {
+              "webhook": {
+                "$ref": "#/definitions/constrains~1nodeSelector:t"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector@3"
+          "$ref": "#/definitions/constrains~1webhook.nodeSelector@2"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector@2"
+          "$ref": "#/definitions/constrains~1webhook.nodeSelector"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector=null"
+          "$ref": "#/definitions/constrains~1webhook.nodeSelector=null"
         }
       ]
-    },
-    "constrains/webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook+webhook.nodeSelector+webhook.nodeSelector:t+webhook.nodeSelector=null@2"
-      }
     },
     "constrains/webhook+webhook=null": {
       "anyOf": [
@@ -1122,87 +2048,7 @@
         }
       ]
     },
-    "constrains/webhook.config+webhook.config.healthzPort:t+webhook.config=null": {
-      "allOf": [
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "healthzPort": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "healthzPort"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@6"
-        }
-      ]
-    },
-    "constrains/webhook.config+webhook.config.securePort:t+webhook.config=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@6"
-        },
-        {
-          "properties": {
-            "webhook": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "securePort": {
-                      "$ref": "#/$defs/t"
-                    }
-                  },
-                  "required": [
-                    "securePort"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/webhook.config+webhook.config=null": {
-      "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@3"
-    },
-    "constrains/webhook.config+webhook.config=null@2": {
-      "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@3"
-    },
-    "constrains/webhook.config+webhook.config=null@3": {
       "anyOf": [
         {
           "properties": {
@@ -1246,24 +2092,14 @@
         }
       ]
     },
-    "constrains/webhook.config+webhook.config=null@4": {
+    "constrains/webhook.config+webhook.config=null@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null"
+        "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null"
       }
     },
-    "constrains/webhook.config+webhook.config=null@5": {
+    "constrains/webhook.config+webhook.config=null@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@2"
-      }
-    },
-    "constrains/webhook.config+webhook.config=null@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@3"
-      }
-    },
-    "constrains/webhook.config+webhook.config=null@7": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@3"
+        "$ref": "#/definitions/constrains~1webhook.config+webhook.config=null"
       }
     },
     "constrains/webhook.config.metricsTLSConfig": {
@@ -1293,58 +2129,24 @@
         "type": "object"
       }
     },
-    "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
-        }
-      ]
-    },
-    "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      }
-    },
     "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig=null"
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig=null"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig"
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig"
         }
       ]
     },
     "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+        "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
       }
     },
     "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
-      }
-    },
-    "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
-      }
-    },
-    "constrains/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
+        "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
       }
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic": {
@@ -1385,22 +2187,12 @@
     "constrains/webhook.config.metricsTLSConfig.dynamic+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic"
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic=null"
         }
       ]
-    },
-    "constrains/webhook.config.metricsTLSConfig.dynamic+1more@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
-      }
-    },
-    "constrains/webhook.config.metricsTLSConfig.dynamic+1more@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
-      }
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
       "not": {
@@ -1448,10 +2240,10 @@
     "constrains/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace=null"
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
         }
       ]
     },
@@ -1544,16 +2336,6 @@
       "type": "object"
     },
     "constrains/webhook.config.metricsTLSConfig.dynamic:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
-      }
-    },
-    "constrains/webhook.config.metricsTLSConfig.dynamic:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
-      }
-    },
-    "constrains/webhook.config.metricsTLSConfig.dynamic:t@3": {
       "properties": {
         "webhook": {
           "properties": {
@@ -1562,7 +2344,7 @@
                 "metricsTLSConfig": {
                   "properties": {
                     "dynamic": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -1655,12 +2437,6 @@
       "type": "object"
     },
     "constrains/webhook.config.tlsConfig+webhook.config.tlsConfig=null": {
-      "$ref": "#/$defs/constrains~1webhook.config.tlsConfig+webhook.config.tlsConfig=null@3"
-    },
-    "constrains/webhook.config.tlsConfig+webhook.config.tlsConfig=null@2": {
-      "$ref": "#/$defs/constrains~1webhook.config.tlsConfig+webhook.config.tlsConfig=null@3"
-    },
-    "constrains/webhook.config.tlsConfig+webhook.config.tlsConfig=null@3": {
       "not": {
         "anyOf": [
           {
@@ -1724,29 +2500,15 @@
     },
     "constrains/webhook.nodeSelector": {
       "not": {
-        "$ref": "#/$defs/constrains~1webhook.nodeSelector@3"
-      }
-    },
-    "constrains/webhook.nodeSelector+webhook.nodeSelector=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.nodeSelector=null"
-        }
-      ]
-    },
-    "constrains/webhook.nodeSelector+webhook.nodeSelector=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.nodeSelector+webhook.nodeSelector=null"
-      }
-    },
-    "constrains/webhook.nodeSelector:t": {
-      "not": {
         "properties": {
           "webhook": {
-            "$ref": "#/$defs/constrains~1nodeSelector:t"
+            "properties": {
+              "nodeSelector": {}
+            },
+            "required": [
+              "nodeSelector"
+            ],
+            "type": "object"
           }
         },
         "required": [
@@ -1755,17 +2517,17 @@
         "type": "object"
       }
     },
-    "constrains/webhook.nodeSelector:t@2": {
+    "constrains/webhook.nodeSelector:t": {
       "properties": {
         "webhook": {
           "properties": {
             "nodeSelector": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/t"
+                  "type": "object"
                 },
                 {
-                  "type": "object"
+                  "$ref": "#/definitions/t"
                 }
               ]
             }
@@ -1784,7 +2546,7 @@
     "constrains/webhook.nodeSelector=null": {
       "properties": {
         "webhook": {
-          "$ref": "#/$defs/constrains~1nodeSelector=null"
+          "$ref": "#/definitions/constrains~1nodeSelector=null"
         }
       },
       "required": [
@@ -1793,22 +2555,9 @@
       "type": "object"
     },
     "constrains/webhook.nodeSelector@2": {
-      "not": {
-        "properties": {
-          "webhook": {
-            "$ref": "#/$defs/constrains~1nodeSelector@2"
-          }
-        },
-        "required": [
-          "webhook"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/webhook.nodeSelector@3": {
       "properties": {
         "webhook": {
-          "$ref": "#/$defs/constrains~1nodeSelector"
+          "$ref": "#/definitions/constrains~1nodeSelector"
         }
       },
       "required": [
@@ -1836,58 +2585,21 @@
       "type": "object"
     },
     "constrains/webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t": {
-      "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t@3"
-    },
-    "constrains/webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget.enabled:t"
+          "not": {
+            "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget.enabled:t"
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget"
-        }
-      ]
-    },
-    "constrains/webhook.podDisruptionBudget+webhook.podDisruptionBudget.enabled:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget.enabled:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget"
+          "$ref": "#/definitions/constrains~1webhook.podDisruptionBudget"
         }
       ]
     },
     "constrains/webhook.podDisruptionBudget.enabled:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget.enabled:t@3"
-      }
-    },
-    "constrains/webhook.podDisruptionBudget.enabled:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget.enabled:t@3"
-      }
-    },
-    "constrains/webhook.podDisruptionBudget.enabled:t@3": {
       "properties": {
         "webhook": {
-          "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
-        }
-      },
-      "required": [
-        "webhook"
-      ],
-      "type": "object"
-    },
-    "constrains/webhook@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1webhook@3"
-      }
-    },
-    "constrains/webhook@3": {
-      "properties": {
-        "webhook": {
-          "type": "object"
+          "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t"
         }
       },
       "required": [
@@ -1931,1058 +2643,58 @@
     },
     "when/creator+creator=null/then/fail/else/creator": {
       "else": {
-        "$ref": "#/$defs/constrains~1creator"
+        "$ref": "#/definitions/when~1creator~1then~1fail~1else~1any"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@7"
+        "$ref": "#/definitions/constrains~1creator+creator=null@4"
       },
       "then": false
     },
     "when/creator+creator=null/then/fail/else/creator@2": {
       "else": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@3"
+        "$ref": "#/definitions/when~1creator+creator=null~1then~1fail~1else~1creator"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@7"
+        "$ref": "#/definitions/constrains~1creator+creator=null@4"
       },
       "then": false
-    },
-    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      }
-    },
-    "when/creator+creator=null/then/webhook.config+webhook.config.metricsTLSConfig+5more/else/creator@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@7"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
-      }
     },
     "when/creator/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1creator@3"
+        "$ref": "#/definitions/constrains~1creator"
       },
       "then": false
-    },
-    "when/creator/then/webhook.config.metricsTLSConfig.dynamic.secretNamespace/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1creator@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1then~1fail~1else~1any"
-      }
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/fail/else/nameOverride:t": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": false
-    },
-    "when/global.rbac.create:t/then/creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+6more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic:t~1then~1creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more~1else~1any"
-      }
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@3"
-      }
-    },
-    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/creator/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1creator"
-      }
     },
     "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
       "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig.dynamic+2more"
+        "else": {
+          "else": {
+            "$ref": "#/definitions/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1then~1fail~1else~1any"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+          },
+          "then": false
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
+        },
+        "then": false
       },
       "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
-      },
-      "then": false
-    },
-    "when/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
-      },
-      "then": false
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator+creator=null~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@3"
-      }
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic+2more": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1creator~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1creator"
-      }
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
-      },
-      "then": false
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic+1more/then/fail/else/webhook.config.metricsTLSConfig.dynamic+2more": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more~1then~1fail~1else~1webhook.config.metricsTLSConfig.dynamic.secretNamespace"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more"
-      },
-      "then": false
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator+creator=null/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1creator+creator=null@3"
-      }
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/creator/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
-      "else": {
-        "$ref": "#/$defs/when~1creator~1then~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1creator"
-      }
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null~1then~1fail~1else~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
-      },
-      "then": false
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more/then/fail/else/webhook.config.metricsTLSConfig.dynamic.secretNamespace": {
-      "else": {
-        "$ref": "#/$defs/when~1webhook.config.metricsTLSConfig.dynamic.secretNamespace~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace+1more"
+        "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null"
       },
       "then": false
     },
     "when/webhook.config.metricsTLSConfig.dynamic.secretNamespace/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
+        "$ref": "#/definitions/constrains~1webhook.config.metricsTLSConfig.dynamic.secretNamespace@2"
       },
       "then": false
-    },
-    "when/webhook.config.metricsTLSConfig.dynamic:t/then/creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+5more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1creator+creator=null~1then~1fail~1else~1creator@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1creator+creator=null~1then~1webhook.config+webhook.config.metricsTLSConfig+5more~1else~1creator@2"
-      }
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global.rbac.create:t+10more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig.dynamic+3more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1validatingWebhookConfiguration"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1validatingWebhookConfiguration=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1mutatingWebhookConfiguration"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1mutatingWebhookConfiguration=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1global.rbac.create:t~1then~1creator+creator=null+webhook.config+webhook.config.metricsTLSConfig+6more~1else~1any"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook+webhook=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.nodeSelector:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "nodeSelector": {
-                "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property",
-                "type": [
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                "properties": {
-                  "metricsTLSConfig": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+global+17more@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global+global.nodeSelector+global.nodeSelector:t+global.nodeSelector=null+2more@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1livenessProbe"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1livenessProbe=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1image=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {}
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "$ref": "#/$defs/constrains~1rbac=null"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1global+global=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config.healthzPort:t+2more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1podDisruptionBudget=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1podDisruptionBudget"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global+global=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/constrains~1podSecurityPolicy"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "$ref": "#/$defs/constrains~1podSecurityPolicy=null"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@5"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic+1more@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig+webhook.config.metricsTLSConfig=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.metricsTLSConfig.dynamic:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                "properties": {
-                  "metricsTLSConfig": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "dynamic": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "prometheus": {}
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1serviceAccount"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1serviceAccount=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1readinessProbe=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "$ref": "#/$defs/constrains~1readinessProbe"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.rbac.create:t+webhook.config+webhook.config=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "properties": {
-          "prometheus": {
-            "$ref": "#/$defs/constrains~1enabled:t"
-          }
-        },
-        "required": [
-          "prometheus"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "prometheus": {
-                "additionalProperties": {},
-                "properties": {
-                  "servicemonitor": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "prometheus": {
-                "additionalProperties": {},
-                "properties": {
-                  "podmonitor": {
-                    "description": "Note that you cannot enable both PodMonitor and ServiceMonitor as they are mutually exclusive. Enabling both will result in an error.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1fail~1else~1nameOverride:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.tlsConfig+webhook.config.tlsConfig=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@7"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config.tlsConfig+webhook.config.tlsConfig=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook.config+webhook.config=null@6"
-          },
-          {
-            "properties": {
-              "webhook": {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "tlsConfig": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "tlsConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhook"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                "properties": {
-                  "tlsConfig": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1global.nodeSelector:t@3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "nodeSelector": {
-                "description": "Global node selector\nThe nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nIf a component-specific nodeSelector is also set, it will be merged and take precedence.\n+docs:property",
-                "type": [
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "url": {}
-                      },
-                      "required": [
-                        "url"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "$ref": "#/$defs/constrains~1url=null"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1webhook+webhook=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1creator+creator=null+fullnameOverride+fullnameOverride:t+nameOverride+1more@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1webhook.podDisruptionBudget.enabled:t@3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "acmesolver": {},
     "affinity": {
@@ -3018,7 +2730,7 @@
       "description": "When this flag is enabled, secrets will be automatically removed when the certificate resource is deleted."
     },
     "enableServiceLinks": {
-      "$ref": "#/$defs/values~1enableServiceLinks"
+      "$ref": "#/definitions/values~1enableServiceLinks"
     },
     "enabled": {
       "description": "Field that can be used as a condition when cert-manager is a dependency.\nThis definition is only here as a placeholder such that it is included in\nthe json schema.\nSee https://helm.sh/docs/chart_best_practices/dependencies/#conditions-and-tags\nfor more info.\n+docs:hidden"
@@ -3054,7 +2766,17 @@
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1rbac=null"
+                "properties": {
+                  "rbac": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -3064,11 +2786,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1podSecurityPolicy=null"
+                "$ref": "#/definitions/constrains~1podSecurityPolicy=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1podSecurityPolicy"
+                  "$ref": "#/definitions/constrains~1podSecurityPolicy"
                 }
               }
             ]
@@ -3142,7 +2864,7 @@
       "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart)."
     },
     "nodeSelector": {
-      "$ref": "#/$defs/values~1nodeSelector"
+      "$ref": "#/definitions/values~1nodeSelector"
     },
     "podDisruptionBudget": {},
     "podLabels": {
@@ -3154,47 +2876,6 @@
         {
           "if": {
             "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "podmonitor": {}
-                      },
-                      "required": [
-                        "podmonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "podmonitor": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "podmonitor"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1enabled:t"
-              },
               {
                 "anyOf": [
                   {
@@ -3222,6 +2903,47 @@
                     "type": "object"
                   }
                 ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "podmonitor": {}
+                      },
+                      "required": [
+                        "podmonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "podmonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "podmonitor"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
               }
             ]
           },
@@ -3273,7 +2995,7 @@
       "description": "A list of Kubernetes TopologySpreadConstraints, if required. For more information, see [Topology spread constraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: ScheduleAnyway\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cert-manager\napp.kubernetes.io/component: controller"
     },
     "volumeMounts": {
-      "$ref": "#/$defs/values~1volumeMounts"
+      "$ref": "#/definitions/values~1volumeMounts"
     },
     "volumes": {
       "description": "Additional volumes to add to the cert-manager controller pod."
@@ -3285,32 +3007,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1validatingWebhookConfiguration=null"
+                "$ref": "#/definitions/constrains~1validatingWebhookConfiguration=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1validatingWebhookConfiguration"
-                }
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/constrains~1serviceAccount=null"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1serviceAccount"
+                  "$ref": "#/definitions/constrains~1validatingWebhookConfiguration"
                 }
               }
             ]
@@ -3321,7 +3022,53 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1url=null"
+                "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1podDisruptionBudget"
+                }
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount=null"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "url": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -3342,11 +3089,17 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1readinessProbe=null"
+                "$ref": "#/definitions/constrains~1readinessProbe=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1readinessProbe"
+                  "properties": {
+                    "readinessProbe": {}
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -3357,12 +3110,40 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1livenessProbe=null"
+                "$ref": "#/definitions/constrains~1livenessProbe=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1livenessProbe"
+                  "properties": {
+                    "livenessProbe": {}
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
                 }
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1podDisruptionBudget"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t"
               }
             ]
           },
@@ -3372,7 +3153,17 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1image=null"
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -3393,25 +3184,12 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1mutatingWebhookConfiguration=null"
+                "$ref": "#/definitions/constrains~1mutatingWebhookConfiguration=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1mutatingWebhookConfiguration"
+                  "$ref": "#/definitions/constrains~1mutatingWebhookConfiguration"
                 }
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1podDisruptionBudget.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1podDisruptionBudget+podDisruptionBudget=null"
               }
             ]
           },
@@ -3461,7 +3239,7 @@
           "description": "enableClientVerification turns on client verification of requests\nmade to the webhook server"
         },
         "enableServiceLinks": {
-          "$ref": "#/$defs/values~1enableServiceLinks"
+          "$ref": "#/definitions/values~1enableServiceLinks"
         },
         "extraArgs": {
           "description": "Additional command line flags to pass to cert-manager webhook binary.\nTo see all available flags run `docker run quay.io/jetstack/cert-manager-webhook:<version> --help`.\nPath to a file containing a WebhookConfiguration object used to configure the webhook.\n- --config=<path-to-config-file>"
@@ -3515,7 +3293,7 @@
         },
         "mutatingWebhookConfigurationAnnotations": {},
         "nodeSelector": {
-          "$ref": "#/$defs/values~1nodeSelector"
+          "$ref": "#/definitions/values~1nodeSelector"
         },
         "podAnnotations": {},
         "podDisruptionBudget": {
@@ -3610,7 +3388,7 @@
         },
         "validatingWebhookConfigurationAnnotations": {},
         "volumeMounts": {
-          "$ref": "#/$defs/values~1volumeMounts"
+          "$ref": "#/definitions/values~1volumeMounts"
         }
       },
       "type": "object"

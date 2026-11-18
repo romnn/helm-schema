@@ -1,4 +1,4 @@
-# 0050. Output is self-contained by default; external `$ref`s move into `$defs`
+# 0050. Output is self-contained by default; external `$ref`s move into `definitions`
 
 Status: Accepted
 Date: 2026-06-11 (`plan/from-scratch-architecture.md`, ab03ed3e; landed in cc6d75de, 2026-06-15)
@@ -12,23 +12,23 @@ path and then re-deduplicates it in the minifier".
 ## Decision
 
 The output contract defaults to a bundled, self-contained Draft-07 document
-with internal `$defs`: external `$ref`s discovered during analysis are
-resolved and re-homed into root-level `$defs`, so the schema stands alone
+with internal `definitions`: external `$ref`s discovered during analysis are
+resolved and re-homed into root-level `definitions`, so the schema stands alone
 while still sharing referenced subschemas. Full flattening is an explicit
-export mode. Repeated subtrees are also interned into root `$defs` by
+export mode. Repeated subtrees are also interned into root `definitions` by
 default (`--no-minimize` opts out): a lossless output-only transform that
 never feeds back into inference.
 
 | Flag | Effect |
 |---|---|
-| *(default)* | Resolve external refs into root-level `$defs`. |
+| *(default)* | Resolve external refs into root-level `definitions`. |
 | `--keep-refs` | Leave external `$ref` strings exactly as-is. |
-| `--inline-refs` | Fully inline resolved refs instead of writing `$defs`. |
+| `--inline-refs` | Fully inline resolved refs instead of writing `definitions`. |
 
 ## Consequences
 
 - The from-scratch design's reason: "bundled output is the honest product
-  contract"; internal `$defs` with deterministic names keep output small,
+  contract"; internal `definitions` with deterministic names keep output small,
   self-contained, offline-validatable and diff-friendly, while inline-by-default
   would re-expand the sharing the lazy `SchemaDoc` tier preserves.
 - `--keep-refs` and `--inline-refs` are mutually exclusive.

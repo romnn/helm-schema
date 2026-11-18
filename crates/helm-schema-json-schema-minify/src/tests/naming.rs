@@ -421,7 +421,8 @@ fn private_handles_decide_extraction_before_their_final_names_apply() {
         want: document(readable)
     );
     // Measured with the readable spelling, the same subtree would move.
-    sim_assert_eq!(have: definitions(&minimize(document(readable))).len(), want: 2);
+    let shared = minimize(document(readable));
+    sim_assert_eq!(have: reference_at(&shared, "/properties/a"), want: Some("#/$defs/values~1a"));
 }
 
 #[test]
@@ -655,7 +656,7 @@ fn helm_errors_translate_back_to_readable_names() -> eyre::Result<()> {
     "#};
 
     sim_assert_eq!(
-        have: String::from_utf8(expand_short_definition_names(helm_error.as_bytes(), &readable_names))?,
+        have: String::from_utf8(expand_short_definition_names(helm_error.as_bytes(), helm_schema_json_schema_walk::DefinitionsKeyword::Defs, &readable_names))?,
         want: indoc::indoc! {r#"
             [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
             refchk:
@@ -685,11 +686,11 @@ fn only_complete_definition_tokens_translate() {
         b"$defs/1",
     ];
     for text in unchanged {
-        sim_assert_eq!(have: expand_short_definition_names(text, &readable_names), want: text.to_vec());
+        sim_assert_eq!(have: expand_short_definition_names(text, helm_schema_json_schema_walk::DefinitionsKeyword::Defs, &readable_names), want: text.to_vec());
     }
     let log = b"'#/$defs/1' \"#/$defs/1/$defs/1\"\r\n\xff#/$defs/1";
     sim_assert_eq!(
-        have: expand_short_definition_names(log, &readable_names),
+        have: expand_short_definition_names(log, helm_schema_json_schema_walk::DefinitionsKeyword::Defs, &readable_names),
         want: b"'#/$defs/values~1web' \"#/$defs/values~1web/$defs/1\"\r\n\xff#/$defs/values~1web".to_vec()
     );
 }
@@ -734,9 +735,14 @@ fn guard(flag: &str, field: &str) -> Value {
 
 #[test]
 fn guard_fragments_are_named_by_what_they_test_and_constrain() {
-    let before = minimize(guarded(&[guard("enabled", "image")]));
+    let with_shared_truthy = |arms: &[Value]| {
+        let mut schema = guarded(arms);
+        schema["properties"]["shared"] = json!({"$ref": "#/$defs/t"});
+        schema
+    };
+    let before = minimize(with_shared_truthy(&[guard("enabled", "image")]));
     // An unrelated guard inserted before it shifts every `allOf` index.
-    let after = minimize(guarded(&[
+    let after = minimize(with_shared_truthy(&[
         guard("debug", "logLevel"),
         guard("enabled", "image"),
     ]));
@@ -954,7 +960,7 @@ fn definitions_of(schema: &Value) -> Vec<String> {
 #[test]
 fn definition_names_with_pointer_and_percent_characters_round_trip() -> eyre::Result<()> {
     let name = "values/a~b%c d";
-    let reference = helm_schema_json_schema_walk::definition_reference(name);
+    let reference = helm_schema_json_schema_walk::DefinitionsKeyword::Defs.reference(name);
     sim_assert_eq!(have: reference.as_str(), want: "#/$defs/values~1a~0b%25c%20d");
     let parsed = helm_schema_json_schema_walk::parse_definition_reference(&reference)
         .ok_or_eyre("the built reference parses")?;

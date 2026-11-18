@@ -1,606 +1,866 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1namespaceOverride"
+                                }
+                              ]
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                                  }
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@2"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1kind+kind=null@2"
+                },
+                {
+                  "not": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor.apiVersion:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor.apiVersion:t+serviceMonitor.enabled=true"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1kind+kind=null@2"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind+kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind+kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor.apiVersion:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor.apiVersion:t+serviceMonitor.enabled=true"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@4"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more"
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "allOf": [
+                                  {
+                                    "anyOf": [
+                                      {
+                                        "allOf": [
+                                          {
+                                            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                                          },
+                                          {
+                                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "allOf": [
+                                          {
+                                            "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+                                          },
+                                          {
+                                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "not": {
+                                      "$ref": "#/definitions/constrains~1namespaceOverride"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "allOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1kind+kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1kind+kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1namespaceOverride"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1kind+kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@4"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1kind+kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1kind+kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kind=Deployment@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/when~1kind+kind=null~1then~1fail~1else~1kind"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1kind+kind=null@4"
+          },
+          "then": false
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1kind=Deployment@3"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1kind+kind=null~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null~1else~1kind"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1kind+kind=null~1then~1fail~1else~1kind"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "else": {
+                        "else": true,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1kind"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/when~1serviceMonitor.enabled~1then~1serviceMonitor.insecureSkipVerify~1else~1any"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1kind~1then~1serviceMonitor.enabled~1else~1any"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1kind~1else~1serviceMonitor.insecureSkipVerify"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1kind+kind=null@4"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1serviceMonitor.enabled"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1kind+kind=null~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null~1else~1kind"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+              },
+              "then": {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1kind~1else~1serviceMonitor.insecureSkipVerify"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1kind+kind=null@4"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1fail~1else~1serviceMonitor.insecureSkipVerify"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1kind+kind=null~1then~1fail~1else~1kind"
+                }
+              }
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1kind+kind=null@4"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1fail~1else~1serviceMonitor.enabled"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1serviceMonitor.enabled"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1fail~1else~1serviceMonitor.enabled"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1fail~1else~1serviceMonitor.insecureSkipVerify"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+                },
+                "then": false
+              }
+            }
+          }
+        }
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1kind=Deployment@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1serviceMonitor.enabled=true~1then~1any~1else~1fail"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1kind=Deployment@3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1kind=Deployment@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1serviceMonitor.enabled=true~1then~1any~1else~1fail"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "Override the deployment namespace; defaults to .Release.Namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1kind=Deployment@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1serviceMonitor.enabled=true~1then~1any~1else~1fail"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1kind=Deployment@3"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceMonitor": {}
+                  },
+                  "required": [
+                    "serviceMonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceMonitor": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
     "constrains/fullnameOverride+fullnameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.apiVersion:t+serviceMonitor.enabled=true"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.apiVersion:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+9more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+7more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=Deployment+kind=null+serviceMonitor+serviceMonitor.enabled+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+nameOverride:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+7more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+9more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more@3"
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+serviceMonitor+3more"
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+serviceMonitor+3more@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+4more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+namespaceOverride:t+serviceMonitor+serviceMonitor.enabled+2more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+namespaceOverride:t+serviceMonitor+serviceMonitor.enabled+2more@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+5more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+6more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+nameOverride:t+8more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+4more@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+serviceMonitor+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride+serviceMonitor+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+nameOverride:t+serviceMonitor+serviceMonitor.enabled+2more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+nameOverride:t+serviceMonitor+serviceMonitor.enabled+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+nameOverride:t+4more@2"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@2"
+            }
+          ]
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@3"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@4"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind=Deployment+serviceMonitor+3more@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@3"
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@4"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
-    },
-    "constrains/fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+nameOverride:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2"
-        }
-      ]
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
+          "$ref": "#/definitions/constrains~1nameOverride"
         },
         {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -609,11 +869,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -625,142 +880,127 @@
       "type": "object"
     },
     "constrains/kind": {
-      "not": {
-        "properties": {
-          "kind": {}
-        },
-        "required": [
-          "kind"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/kind+kind=Deployment+kind=null+serviceMonitor+serviceMonitor.enabled+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind+kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment@4"
+      "properties": {
+        "kind": {
+          "type": "string"
         }
-      ]
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
     },
     "constrains/kind+kind=null": {
-      "$ref": "#/$defs/constrains~1kind+kind=null@3"
+      "$ref": "#/definitions/constrains~1kind+kind=null@3"
     },
     "constrains/kind+kind=null@2": {
-      "$ref": "#/$defs/constrains~1kind+kind=null@4"
+      "$ref": "#/definitions/constrains~1kind+kind=null@3"
     },
     "constrains/kind+kind=null@3": {
-      "$ref": "#/$defs/constrains~1kind+kind=null@4"
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "kind": {}
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1kind"
+        }
+      ]
     },
     "constrains/kind+kind=null@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1kind"
+          "not": {
+            "properties": {
+              "kind": {}
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1kind=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind@2"
+          "properties": {
+            "kind": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
         }
       ]
-    },
-    "constrains/kind+kind=null@5": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=null"
-        }
-      ]
-    },
-    "constrains/kind+kind=null@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1kind+kind=null@2"
-      }
     },
     "constrains/kind=Deployment": {
-      "$ref": "#/$defs/constrains~1kind=Deployment@2"
-    },
-    "constrains/kind=Deployment+nameOverride:t+serviceMonitor+serviceMonitor.enabled+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+nameOverride:t+serviceMonitor+serviceMonitor.enabled+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+namespaceOverride:t+serviceMonitor+serviceMonitor.enabled+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+namespaceOverride:t+serviceMonitor+serviceMonitor.enabled+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-        }
-      ]
+      "not": {
+        "$ref": "#/definitions/constrains~1kind=Deployment@3"
+      }
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@2"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@3"
         },
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@3"
+          "$ref": "#/definitions/constrains~1kind=Deployment"
         },
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.apiVersion:t+serviceMonitor.enabled=true"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.apiVersion:t"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t@3"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@2"
         }
       ]
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more/anyOf/string;pattern-x20-x2d": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
         },
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more/anyOf/string;pattern-x20-x2d@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
         }
       ]
     },
@@ -769,15 +1009,15 @@
         "additionalProperties": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+              "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
             },
             {
-              "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a@2"
+              "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a@2"
             }
           ]
         },
         "propertyNames": {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
         },
         "type": "object"
       }
@@ -808,59 +1048,34 @@
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@3"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@3"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@4"
+          "$ref": "#/definitions/constrains~1kind=Deployment"
         },
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t"
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion"
+              }
+            ]
+          }
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@4"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@6"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@6"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@2"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.apiVersion"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@6"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@5"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@5"
         },
         {
           "properties": {
@@ -873,20 +1088,24 @@
                         "anyOf": [
                           false,
                           {
-                            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a@2"
+                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a@2"
                           }
                         ]
                       },
                       "propertyNames": {
-                        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d@2"
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+                          }
+                        ]
                       },
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1not~1object"
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1not~1object"
                     }
                   ]
                 }
@@ -903,7 +1122,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@7"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@7"
         },
         {
           "properties": {
@@ -912,24 +1131,24 @@
                 "apiVersion": {
                   "allOf": [
                     {
-                      "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1not~1object"
+                      "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1not~1object"
                     },
                     {
                       "additionalProperties": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a@2"
+                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a@2"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
+                            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
                           }
                         ]
                       },
                       "propertyNames": {
-                        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
                       },
                       "type": "object"
                     }
@@ -948,207 +1167,157 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@2"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@2"
         }
       ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more"
-      }
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment"
+          "$ref": "#/definitions/constrains~1kind=Deployment"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@5"
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@4"
         }
       ]
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment@3"
+          "$ref": "#/definitions/constrains~1kind=Deployment@2"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@6"
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+          }
         }
       ]
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=null"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled"
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled@2"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled@2"
         }
       ]
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2"
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=null"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled@2"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled@2"
         }
       ]
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more": {
-      "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@5"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2": {
-      "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@6"
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.enabled=true@3"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.enabled=true@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@3"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@3"
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1kind=Deployment@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                    }
+                  ]
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+                  }
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@2"
+            }
+          ]
         },
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@6": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor+serviceMonitor.enabled+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@4"
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.enabled+1more@2"
         }
       ]
     },
     "constrains/kind=Deployment+serviceMonitor.apiVersion:t": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion:t"
         },
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment@4"
+          "$ref": "#/definitions/constrains~1kind=Deployment@3"
         }
       ]
     },
     "constrains/kind=Deployment+serviceMonitor.apiVersion:t+serviceMonitor.enabled=true": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1kind=Deployment"
+          "$ref": "#/definitions/constrains~1kind=Deployment"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion:t"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor.enabled=true": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor.enabled=true@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor.enabled=true@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.enabled=true"
-        }
-      ]
-    },
-    "constrains/kind=Deployment+serviceMonitor.enabled=true@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor.enabled=true@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@5"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
         }
       ]
     },
     "constrains/kind=Deployment@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1kind=Deployment@4"
+        "$ref": "#/definitions/constrains~1kind=Deployment@3"
       }
     },
     "constrains/kind=Deployment@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1kind=Deployment@4"
-      }
-    },
-    "constrains/kind=Deployment@4": {
       "properties": {
         "kind": {
           "enum": [
@@ -1161,74 +1330,10 @@
       ],
       "type": "object"
     },
-    "constrains/kind=null": {
-      "properties": {
-        "kind": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "kind"
-      ],
-      "type": "object"
-    },
-    "constrains/kind@2": {
-      "properties": {
-        "kind": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "kind"
-      ],
-      "type": "object"
-    },
     "constrains/nameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
-      }
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "type": "string"
         }
       },
       "required": [
@@ -1236,15 +1341,42 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
+    "constrains/nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@3"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        ]
       }
     },
-    "constrains/nameOverride@3": {
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+      }
+    },
+    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
-          "type": "string"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -1253,62 +1385,6 @@
       "type": "object"
     },
     "constrains/namespaceOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride@3"
-      }
-    },
-    "constrains/namespaceOverride+namespaceOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        }
-      ]
-    },
-    "constrains/namespaceOverride+namespaceOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride@3"
-        }
-      ]
-    },
-    "constrains/namespaceOverride+namespaceOverride:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride+namespaceOverride:t@2"
-      }
-    },
-    "constrains/namespaceOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-      }
-    },
-    "constrains/namespaceOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-      }
-    },
-    "constrains/namespaceOverride:t@3": {
-      "properties": {
-        "namespaceOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1namespaceOverride@3"
-      }
-    },
-    "constrains/namespaceOverride@3": {
       "properties": {
         "namespaceOverride": {
           "type": "string"
@@ -1319,77 +1395,73 @@
       ],
       "type": "object"
     },
-    "constrains/serviceMonitor+serviceMonitor.apiVersion": {
+    "constrains/namespaceOverride:t": {
       "not": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
       }
     },
+    "constrains/namespaceOverride:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1namespaceOverride:t@3"
+      }
+    },
+    "constrains/namespaceOverride:t@3": {
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
+    },
     "constrains/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null": {
-      "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@2"
+      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@3"
     },
     "constrains/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@2": {
-      "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@4"
+      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@3"
     },
     "constrains/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@3": {
-      "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@4"
-    },
-    "constrains/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=null"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled@2"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled@2"
         }
       ]
     },
-    "constrains/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@5": {
+    "constrains/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@3"
-      }
-    },
-    "constrains/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@6": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null"
+        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null@2"
       }
     },
     "constrains/serviceMonitor+serviceMonitor.insecureSkipVerify+1more": {
-      "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@3"
+      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@3"
     },
     "constrains/serviceMonitor+serviceMonitor.insecureSkipVerify+1more@2": {
-      "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@3"
+      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@3"
     },
     "constrains/serviceMonitor+serviceMonitor.insecureSkipVerify+1more@3": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify"
+          "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify@2"
+          "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify@2"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify=null"
+          "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify=null"
         }
       ]
     },
     "constrains/serviceMonitor+serviceMonitor.insecureSkipVerify+1more@4": {
       "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more"
-      }
-    },
-    "constrains/serviceMonitor+serviceMonitor.insecureSkipVerify+1more@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@2"
+        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more@2"
       }
     },
     "constrains/serviceMonitor.apiVersion": {
@@ -1417,22 +1489,22 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@4"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@4"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -1440,7 +1512,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
           }
         }
       ]
@@ -1449,7 +1521,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
           }
         },
         {
@@ -1457,10 +1529,10 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -1472,32 +1544,32 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@4"
               }
             ]
           },
@@ -1509,20 +1581,20 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -1536,36 +1608,36 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
               },
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@4"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
           }
         }
       ]
@@ -1576,33 +1648,37 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@4"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@4"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
           }
         }
       ]
@@ -1613,24 +1689,24 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
           }
         }
       ]
@@ -1639,7 +1715,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
           }
         },
         {
@@ -1647,15 +1723,19 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d@2"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         }
@@ -1665,16 +1745,16 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
           },
           {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
           }
         ]
       },
@@ -1684,16 +1764,16 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
           }
         ]
       },
@@ -1703,10 +1783,10 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
           }
         ]
       },
@@ -1717,21 +1797,21 @@
         "additionalProperties": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object"
+              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object"
             },
             {
-              "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array"
+              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array"
             },
             {
-              "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+              "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
             },
             {
-              "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
             }
           ]
         },
         "propertyNames": {
-          "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
         },
         "type": "object"
       }
@@ -1740,21 +1820,21 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
           },
           {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -1762,21 +1842,21 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@3"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@3"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@3"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -1784,15 +1864,15 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
           },
           {
-            "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
@@ -1805,19 +1885,16 @@
       "type": "string"
     },
     "constrains/serviceMonitor.apiVersion:t": {
-      "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t@2"
-    },
-    "constrains/serviceMonitor.apiVersion:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion:t@3"
+        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion:t@2"
       }
     },
-    "constrains/serviceMonitor.apiVersion:t@3": {
+    "constrains/serviceMonitor.apiVersion:t@2": {
       "properties": {
         "serviceMonitor": {
           "properties": {
             "apiVersion": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -1841,13 +1918,13 @@
                   "additionalProperties": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object"
+                        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array"
+                        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                       },
                       {
                         "allOf": [
@@ -1855,25 +1932,25 @@
                             "items": {
                               "anyOf": [
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                                  "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
+                                  "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@3"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@3"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
                                 }
                               ]
                             },
@@ -1881,13 +1958,13 @@
                           },
                           {
                             "not": {
-                              "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array"
+                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array"
                             }
                           }
                         ]
                       },
                       {
-                        "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
                       },
                       {
                         "allOf": [
@@ -1895,52 +1972,52 @@
                             "additionalProperties": {
                               "anyOf": [
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                                  "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@3"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array@3"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
+                                  "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
                                 }
                               ]
                             },
                             "propertyNames": {
-                              "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
+                              "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
                             },
                             "type": "object"
                           },
                           {
                             "not": {
-                              "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object"
+                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object"
                             }
                           }
                         ]
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x3a"
                       }
                     ]
                   },
                   "propertyNames": {
-                    "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
+                    "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d"
                   },
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1not~1object"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1not~1object"
                 }
               ]
             }
@@ -1966,13 +2043,13 @@
                   "additionalProperties": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object"
+                        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array"
+                        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                       },
                       {
                         "allOf": [
@@ -1980,22 +2057,22 @@
                             "items": {
                               "anyOf": [
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                                  "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x20-x2d"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array"
                                 }
                               ]
                             },
@@ -2003,46 +2080,50 @@
                           },
                           {
                             "not": {
-                              "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array"
+                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array"
                             }
                           }
                         ]
                       },
                       {
-                        "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
                       },
                       {
                         "allOf": [
                           {
                             "not": {
-                              "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object"
+                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object"
                             }
                           },
                           {
                             "additionalProperties": {
                               "anyOf": [
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1not~1object+object@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1array@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
+                                  "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1null,boolean,number"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1string;pattern-x3a-x2d"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1object@2"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1object@2"
                                 },
                                 {
-                                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1allOf~1array+not~1array"
                                 }
                               ]
                             },
                             "propertyNames": {
-                              "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d@2"
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+                                }
+                              ]
                             },
                             "type": "object"
                           }
@@ -2051,12 +2132,16 @@
                     ]
                   },
                   "propertyNames": {
-                    "$ref": "#/$defs/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1anyOf~1string;pattern-x20-x2d@2"
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1kind=Deployment+serviceMonitor+serviceMonitor.apiVersion+2more~1string;pattern-x20-x2d"
+                      }
+                    ]
                   },
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1serviceMonitor.apiVersion~1not~1object"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion~1not~1object"
                 }
               ]
             }
@@ -2174,10 +2259,10 @@
     "constrains/serviceMonitor.enabled+serviceMonitor.enabled=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled=null"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.enabled"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled"
         }
       ]
     },
@@ -2203,25 +2288,11 @@
       "type": "object"
     },
     "constrains/serviceMonitor.enabled=true": {
-      "$ref": "#/$defs/when~1serviceMonitor.enabled=true~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
+      }
     },
     "constrains/serviceMonitor.enabled=true@2": {
-      "$ref": "#/$defs/when~1serviceMonitor.enabled=true~1then~1any~1else~1fail"
-    },
-    "constrains/serviceMonitor.enabled=true@3": {
-      "$ref": "#/$defs/when~1serviceMonitor.enabled=true~1then~1any~1else~1fail"
-    },
-    "constrains/serviceMonitor.enabled=true@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-      }
-    },
-    "constrains/serviceMonitor.enabled=true@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-      }
-    },
-    "constrains/serviceMonitor.enabled=true@6": {
       "properties": {
         "serviceMonitor": {
           "properties": {
@@ -2283,10 +2354,10 @@
     "constrains/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify"
+          "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify"
         },
         {
-          "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify=null"
+          "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify=null"
         }
       ]
     },
@@ -2355,502 +2426,135 @@
         }
       ]
     },
-    "when/fullnameOverride:t/then/kind=Deployment+serviceMonitor.enabled=true/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind=Deployment~1then~1serviceMonitor.enabled=true~1else~1fail"
-      }
-    },
     "when/kind+kind=null/then/fail/else/kind": {
       "else": {
-        "$ref": "#/$defs/when~1kind~1then~1fail~1else~1any"
+        "$ref": "#/definitions/when~1kind~1then~1fail~1else~1any"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1kind+kind=null@5"
+        "$ref": "#/definitions/constrains~1kind+kind=null@4"
       },
       "then": false
-    },
-    "when/kind+kind=null/then/fail/else/kind@2": {
-      "else": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1fail~1else~1kind"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kind+kind=null@5"
-      },
-      "then": false
-    },
-    "when/kind+kind=null/then/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+2more/else/kind": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1kind+serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1serviceMonitor.enabled"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kind+kind=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1serviceMonitor.enabled"
-      }
-    },
-    "when/kind+kind=null/then/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+3more/else/kind": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled=true~1then~1kind+kind=null+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+2more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kind+kind=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled=true~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+2more~1else~1any"
-      }
     },
     "when/kind+kind=null/then/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null/else/kind": {
       "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1kind~1else~1serviceMonitor.enabled"
+        "else": {
+          "$ref": "#/definitions/when~1kind~1then~1serviceMonitor.enabled~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1kind~1then~1fail~1else~1any"
+        }
       },
       "if": {
-        "$ref": "#/$defs/constrains~1kind+kind=null@5"
+        "$ref": "#/definitions/constrains~1kind+kind=null@4"
       },
       "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1fail~1else~1serviceMonitor.enabled"
-      }
-    },
-    "when/kind+kind=null/then/serviceMonitor+serviceMonitor.insecureSkipVerify+1more/else/kind": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1kind~1else~1serviceMonitor.insecureSkipVerify"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kind+kind=null@5"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1fail~1else~1serviceMonitor.insecureSkipVerify"
+        "$ref": "#/definitions/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1fail~1else~1serviceMonitor.enabled"
       }
     },
     "when/kind/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1kind@2"
+        "$ref": "#/definitions/constrains~1kind"
       },
       "then": false
-    },
-    "when/kind/then/serviceMonitor.enabled+serviceMonitor.insecureSkipVerify/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1kind@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled~1then~1serviceMonitor.insecureSkipVerify~1else~1any"
-      }
     },
     "when/kind/then/serviceMonitor.enabled/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1kind@2"
+        "$ref": "#/definitions/constrains~1kind"
       },
       "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled~1then~1fail~1else~1any"
-      }
-    },
-    "when/kind/then/serviceMonitor.insecureSkipVerify/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1kind@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify~1then~1fail~1else~1any"
-      }
-    },
-    "when/kind=Deployment/then/kind+kind=null+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+3more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1fail~1else~1kind@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1kind=Deployment@4"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+3more~1else~1kind"
-      }
-    },
-    "when/kind=Deployment/then/serviceMonitor.enabled=true/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kind=Deployment@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true"
-      }
-    },
-    "when/kind=Deployment/then/serviceMonitor.enabled=true/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kind=Deployment@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@2"
-      }
-    },
-    "when/kind=Deployment/then/serviceMonitor.enabled=true/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1kind=Deployment@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@3"
-      }
-    },
-    "when/nameOverride:t/then/kind=Deployment+serviceMonitor.enabled=true/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind=Deployment~1then~1serviceMonitor.enabled=true~1else~1fail@2"
-      }
-    },
-    "when/namespaceOverride:t/then/kind=Deployment+serviceMonitor.enabled=true/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind=Deployment~1then~1serviceMonitor.enabled=true~1else~1fail@3"
+        "$ref": "#/definitions/when~1serviceMonitor.enabled~1then~1fail~1else~1any"
       }
     },
     "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/fail/else/serviceMonitor.enabled": {
       "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled~1then~1fail~1else~1any"
+        "$ref": "#/definitions/when~1serviceMonitor.enabled~1then~1fail~1else~1any"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
       },
       "then": false
-    },
-    "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/fail/else/serviceMonitor.enabled@2": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1fail~1else~1serviceMonitor.enabled"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
-      },
-      "then": false
-    },
-    "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/kind+kind=null+serviceMonitor+serviceMonitor.insecureSkipVerify+1more/else/serviceMonitor.enabled": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1kind+kind=null+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null~1else~1serviceMonitor.insecureSkipV..."
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1kind+kind=null~1else~1serviceMonitor.insecureSkipVerify"
-      }
-    },
-    "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/kind+kind=null/else/serviceMonitor.enabled": {
-      "else": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null~1else~1kind"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1fail~1else~1kind"
-      }
-    },
-    "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/kind+serviceMonitor+serviceMonitor.insecureSkipVerify+1more/else/serviceMonitor.enabled": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1kind+serviceMonitor.enabled~1else~1serviceMonitor.insecureSkipVerify"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1kind~1else~1serviceMonitor.insecureSkipVerify"
-      }
-    },
-    "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/kind/else/serviceMonitor.enabled": {
-      "else": {
-        "$ref": "#/$defs/when~1kind~1then~1serviceMonitor.enabled~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind~1then~1fail~1else~1any"
-      }
     },
     "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/serviceMonitor+serviceMonitor.insecureSkipVerify+1more/else/serviceMonitor.enabled": {
       "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1serviceMonitor.enabled~1else~1serviceMonitor.insecureSkipVerify"
+        "else": {
+          "$ref": "#/definitions/when~1serviceMonitor.enabled~1then~1serviceMonitor.insecureSkipVerify~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1serviceMonitor.enabled~1then~1fail~1else~1any"
+        }
       },
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
       },
       "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1fail~1else~1serviceMonitor.insecureSkipVerify"
-      }
-    },
-    "when/serviceMonitor.enabled+serviceMonitor.enabled=null/then/serviceMonitor+serviceMonitor.insecureSkipVerify+1more/else/serviceMonitor.enabled@2": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null~1else~1serviceMonitor.insecureSkipVerify"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1fail~1else~1serviceMonitor.insecureSkipVerify@2"
+        "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1fail~1else~1serviceMonitor.insecureSkipVerify"
       }
     },
     "when/serviceMonitor.enabled/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled@2"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled@2"
       },
       "then": false
     },
     "when/serviceMonitor.enabled/then/serviceMonitor.insecureSkipVerify/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled@2"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled@2"
       },
       "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify~1then~1fail~1else~1any"
+        "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify~1then~1fail~1else~1any"
       }
     },
     "when/serviceMonitor.enabled=true/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled=true@2"
       },
       "then": true
     },
-    "when/serviceMonitor.enabled=true/then/kind+kind=null+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1kind+kind=null~1else~1serviceMonitor.enabled"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1kind+kind=null+serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1serviceMonitor.enabled"
-      }
-    },
-    "when/serviceMonitor.enabled=true/then/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+2more/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1fail~1else~1serviceMonitor.enabled@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.enabled=true@6"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1serviceMonitor.enabled@2"
-      }
-    },
     "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/fail/else/serviceMonitor.insecureSkipVerify": {
       "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify~1then~1fail~1else~1any"
+        "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify~1then~1fail~1else~1any"
       },
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+        "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
       },
       "then": false
-    },
-    "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/fail/else/serviceMonitor.insecureSkipVerify@2": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null~1then~1fail~1else~1serviceMonitor.insecureSkipVerify"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
-      },
-      "then": false
-    },
-    "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/kind+kind=null+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null/else/serviceMonitor.insecureSkipV...": {
-      "else": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+2more~1else~1kind"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null~1else~1kind"
-      }
-    },
-    "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/kind+kind=null/else/serviceMonitor.insecureSkipVerify": {
-      "else": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1kind"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind+kind=null~1then~1fail~1else~1kind"
-      }
-    },
-    "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/kind+serviceMonitor.enabled/else/serviceMonitor.insecureSkipVerify": {
-      "else": {
-        "$ref": "#/$defs/when~1kind~1then~1serviceMonitor.enabled+serviceMonitor.insecureSkipVerify~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1kind~1then~1serviceMonitor.enabled~1else~1any"
-      }
     },
     "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/kind/else/serviceMonitor.insecureSkipVerify": {
       "else": {
-        "$ref": "#/$defs/when~1kind~1then~1serviceMonitor.insecureSkipVerify~1else~1any"
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1kind"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1serviceMonitor.insecureSkipVerify~1then~1fail~1else~1any"
+        }
       },
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
+        "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
       },
       "then": {
-        "$ref": "#/$defs/when~1kind~1then~1fail~1else~1any"
-      }
-    },
-    "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null/else/serviceMonitor.insecureSkipVerify": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1serviceMonitor+serviceMonitor.insecureSkipVerify+1more~1else~1serviceMonitor.enabled"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled+serviceMonitor.enabled=null~1then~1fail~1else~1serviceMonitor.enabled"
-      }
-    },
-    "when/serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null/then/serviceMonitor.enabled/else/serviceMonitor.insecureSkipVerify": {
-      "else": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled~1then~1serviceMonitor.insecureSkipVerify~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify+serviceMonitor.insecureSkipVerify=null"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1serviceMonitor.enabled~1then~1fail~1else~1any"
+        "$ref": "#/definitions/when~1kind~1then~1fail~1else~1any"
       }
     },
     "when/serviceMonitor.insecureSkipVerify/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1serviceMonitor.insecureSkipVerify@2"
+        "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify@2"
       },
       "then": false
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/when~1kind=Deployment~1then~1kind+kind=null+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+3more~1else~1any"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1kind=Deployment+serviceMonitor.enabled=true~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1kind=Deployment+serviceMonitor.enabled=true~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "Override the deployment namespace; defaults to .Release.Namespace",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1kind=Deployment@4"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+kind+kind=Deployment+kind=null+nameOverride+11more@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1kind=Deployment+serviceMonitor.enabled=true~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1kind=Deployment@4"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceMonitor": {}
-                  },
-                  "required": [
-                    "serviceMonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceMonitor": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceMonitor"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "affinity": {},
     "cmdOptions": {},

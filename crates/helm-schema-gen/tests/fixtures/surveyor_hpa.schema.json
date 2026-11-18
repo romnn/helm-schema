@@ -1,5 +1,111 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscaling": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/helm-condition-0"
+          },
+          {
+            "$ref": "#/definitions/helm-condition-1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-5"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "autoscaling": {}
+              },
+              "required": [
+                "autoscaling"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "autoscaling": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-12"
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "helm-condition-0": {
       "not": {
         "anyOf": [
@@ -64,7 +170,7 @@
       "not": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -80,7 +186,7 @@
             "autoscaling": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -97,7 +203,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -106,23 +212,23 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-10"
+          "$ref": "#/definitions/helm-condition-10"
         },
         {
-          "$ref": "#/$defs/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-6"
         }
       ]
     },
     "helm-condition-12": {
       "anyOf": [
         {
-          "$ref": "#/$defs/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-7"
         },
         {
-          "$ref": "#/$defs/helm-condition-9"
+          "$ref": "#/definitions/helm-condition-9"
         },
         {
-          "$ref": "#/$defs/helm-condition-11"
+          "$ref": "#/definitions/helm-condition-11"
         }
       ]
     },
@@ -131,7 +237,7 @@
       "if": {
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -148,7 +254,7 @@
           "autoscaling": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -163,7 +269,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-2"
+        "$ref": "#/definitions/helm-condition-2"
       }
     },
     "helm-condition-4": {
@@ -171,7 +277,7 @@
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/t"
+            "$ref": "#/definitions/t"
           }
         },
         "required": [
@@ -188,7 +294,7 @@
           "autoscaling": {
             "properties": {
               "enabled": {
-                "$ref": "#/$defs/t"
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
@@ -203,7 +309,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/helm-condition-4"
+        "$ref": "#/definitions/helm-condition-4"
       }
     },
     "helm-condition-6": {
@@ -226,7 +332,7 @@
             "autoscaling": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -243,7 +349,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -254,7 +360,7 @@
         {
           "properties": {
             "nameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -274,7 +380,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-6"
         }
       ]
     },
@@ -298,7 +404,7 @@
             "autoscaling": {
               "properties": {
                 "enabled": {
-                  "$ref": "#/$defs/t"
+                  "$ref": "#/definitions/t"
                 }
               },
               "required": [
@@ -315,7 +421,7 @@
         {
           "properties": {
             "fullnameOverride": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -324,7 +430,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/helm-condition-8"
+          "$ref": "#/definitions/helm-condition-8"
         }
       ]
     },
@@ -354,112 +460,6 @@
       ]
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "autoscaling": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "autoscaling"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-0"
-          },
-          {
-            "$ref": "#/$defs/helm-condition-1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "autoscaling": {}
-              },
-              "required": [
-                "autoscaling"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "autoscaling": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "autoscaling"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/helm-condition-12"
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "affinity": {},
     "autoscaling": {

@@ -1,611 +1,4 @@
 {
-  "$defs": {
-    "constrains/auth=null": {
-      "properties": {
-        "auth": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "bitnami-common": {}
-            },
-            "required": [
-              "bitnami-common"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "bitnami-common": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/bitnami-common+bitnami-common:t+bitnami-common=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null"
-      }
-    },
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+passwordUpdateJob.enabled:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+namespaceOverride+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+namespaceOverride+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+passwordUpdateJob.enabled:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+namespaceOverride+namespaceOverride:t+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+namespaceOverride+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+passwordUpdateJob.enabled:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+namespaceOverride+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+passwordUpdateJob.enabled:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+namespaceOverride+namespaceOverride:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql.auth.username:t": {
-      "$ref": "#/$defs/constrains~1global.postgresql.auth.username:t@3"
-    },
-    "constrains/global.postgresql.auth.username:t@2": {
-      "$ref": "#/$defs/constrains~1global.postgresql.auth.username:t@3"
-    },
-    "constrains/global.postgresql.auth.username:t@3": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "postgresql": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "username": {
-                        "$ref": "#/$defs/t"
-                      }
-                    },
-                    "required": [
-                      "username"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/nameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride": {
-      "$ref": "#/$defs/constrains~1namespaceOverride@2"
-    },
-    "constrains/namespaceOverride:t": {
-      "properties": {
-        "namespaceOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride@2": {
-      "not": {
-        "properties": {
-          "namespaceOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/passwordUpdateJob.enabled:t": {
-      "properties": {
-        "passwordUpdateJob": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@3"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@4"
-      }
-    },
-    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@4"
-      }
-    },
-    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t@4": {
-      "properties": {
-        "passwordUpdateJob": {
-          "properties": {
-            "previousPasswords": {
-              "properties": {
-                "existingSecret": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "existingSecret"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "previousPasswords"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.postgresPassword:t": {
-      "$ref": "#/$defs/when~1passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.postgresPassword:t@2": {
-      "$ref": "#/$defs/when~1passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.postgresPassword:t@3": {
-      "$ref": "#/$defs/when~1passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.postgresPassword:t@4": {
-      "properties": {
-        "passwordUpdateJob": {
-          "properties": {
-            "previousPasswords": {
-              "properties": {
-                "postgresPassword": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "postgresPassword"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "previousPasswords"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/fullnameOverride:t/then/passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1passwordUpdateJob.enabled:t~1then~1passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail@2"
-      }
-    },
-    "when/nameOverride:t/then/passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1passwordUpdateJob.enabled:t~1then~1passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail@3"
-      }
-    },
-    "when/namespaceOverride:t/then/passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1passwordUpdateJob.enabled:t~1then~1passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail"
-      }
-    },
-    "when/passwordUpdateJob.enabled:t/then/passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-      }
-    },
-    "when/passwordUpdateJob.enabled:t/then/passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-      }
-    },
-    "when/passwordUpdateJob.enabled:t/then/passwordUpdateJob.previousPasswords.existingSecret:t+1more/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1passwordUpdateJob.previousPasswords.existingSecret:t~1then~1fail~1else~1passwordUpdateJob.previousPasswords.postgresPassword:t@3"
-      }
-    },
-    "when/passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/passwordUpdateJob.previousPasswords.postgresPassword:t": {
-      "else": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@4"
-      },
-      "then": false
-    },
-    "when/passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/passwordUpdateJob.previousPasswords.postgresPassword:t@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@4"
-      },
-      "then": false
-    },
-    "when/passwordUpdateJob.previousPasswords.existingSecret:t/then/fail/else/passwordUpdateJob.previousPasswords.postgresPassword:t@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@4"
-      },
-      "then": false
-    },
-    "when/passwordUpdateJob.previousPasswords.postgresPassword:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -613,78 +6,25 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
           },
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
+            "$ref": "#/definitions/constrains~1global.postgresql.auth.username:t"
           },
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "postgresql": {
-                          "properties": {
-                            "auth": {}
-                          },
-                          "required": [
-                            "auth"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "postgresql"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "postgresql": {
-                        "$ref": "#/$defs/constrains~1auth=null"
-                      }
-                    },
-                    "required": [
-                      "postgresql"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "namespaceOverride": {
-            "description": "String to fully override common.names.namespace",
-            "type": "string"
+          "auth": {
+            "description": "Authentication parameters\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-user-on-first-run",
+            "type": "object"
           }
         }
       }
@@ -693,126 +33,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
           },
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override common.names.fullname template",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "passwordUpdateJob": {
-            "additionalProperties": {},
-            "properties": {
-              "previousPasswords": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1global.postgresql.auth.username:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "auth": {}
-                  },
-                  "required": [
-                    "auth"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1auth=null"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
           }
         ]
       },
@@ -867,28 +94,260 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "passwordUpdateJob": {}
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
               },
-              "required": [
-                "passwordUpdateJob"
-              ],
-              "type": "object"
-            }
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
           },
           {
-            "properties": {
-              "passwordUpdateJob": {
-                "enum": [
-                  null
-                ]
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
               }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
             },
-            "required": [
-              "passwordUpdateJob"
-            ],
-            "type": "object"
+            "if": {
+              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@3"
+            },
+            "then": false
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "String to fully override common.names.namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
           }
         ]
       },
@@ -898,13 +357,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
           },
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
           },
           {
             "anyOf": [
@@ -956,7 +415,106 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more~1else~1fail"
+        "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "passwordUpdateJob": {
+            "additionalProperties": {},
+            "properties": {
+              "previousPasswords": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "passwordUpdateJob": {}
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "passwordUpdateJob": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "passwordUpdateJob"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@3"
+            },
+            "then": false
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override common.names.fullname template",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@3"
+            },
+            "then": false
+          }
+        }
       },
       "then": {
         "additionalProperties": {},
@@ -972,36 +530,366 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
           },
           {
-            "$ref": "#/$defs/constrains~1global.postgresql.auth.username:t"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.enabled:t"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t@4"
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "postgresql": {
+                          "properties": {
+                            "auth": {}
+                          },
+                          "required": [
+                            "auth"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "postgresql"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "auth": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "auth"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "auth": {
-            "description": "Authentication parameters\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-user-on-first-run",
-            "type": "object"
-          }
-        }
-      }
+      "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more@2"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.postgresql.auth.username:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "auth": {}
+                  },
+                  "required": [
+                    "auth"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "auth": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "auth"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
       },
       "then": false
     }
   ],
+  "definitions": {
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/global.postgresql.auth.username:t": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "postgresql": {
+                "properties": {
+                  "auth": {
+                    "properties": {
+                      "username": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "username"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "auth"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride@2"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      }
+    },
+    "constrains/nameOverride:t@2": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaceOverride": {
+      "not": {
+        "properties": {
+          "namespaceOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/namespaceOverride:t": {
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.enabled:t": {
+      "properties": {
+        "passwordUpdateJob": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      }
+    },
+    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      }
+    },
+    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t@3": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "existingSecret": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "existingSecret"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.previousPasswords.postgresPassword:t": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "postgresPassword": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "postgresPassword"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/passwordUpdateJob.previousPasswords.postgresPassword:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+      },
+      "then": true
+    }
+  },
   "properties": {
     "architecture": {
       "description": "PostgreSQL architecture (`standalone` or `replication`)"
@@ -1118,7 +1006,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t"
+                "$ref": "#/definitions/constrains~1enabled:t"
               }
             ]
           },
@@ -1179,7 +1067,45 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/constrains~1bitnami-common+bitnami-common:t+bitnami-common=null@2"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "bitnami-common": {}
+                    },
+                    "required": [
+                      "bitnami-common"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "bitnami-common": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
           "then": false
         }

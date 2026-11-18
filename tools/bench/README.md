@@ -1,7 +1,7 @@
 # Continuous benchmark
 
 `bench.py` runs a release `helm-schema-dev` offline against the committed provider bundle on four
-corpus charts and records CPU and wall time, peak RSS, schema sizes, the `$defs` count and phase
+corpus charts and records CPU and wall time, peak RSS, schema sizes, the definition count and phase
 times from the unpublished dev binary's tracing spans.
 Every metric records the compiler as environment; only CPU, wall and phase times also record the
 host's CPU model (shortened by `short_cpu`: "AMD EPYC 7763 64-Core Processor" is "EPYC 7763").
@@ -48,7 +48,7 @@ benchtrail judges a change in it.
 Lines are colored by CPU and dashed by profile, read as `full (EPYC 7763)` inside a chart, and each
 chart of the corpus has a chart per metric.
 
-Peak RSS, pretty and compact schema sizes, `$defs` counts and instruction counts omit `cpu`, so
+Peak RSS, pretty and compact schema sizes, definition counts and instruction counts omit `cpu`, so
 each chart/profile keeps one series across runners, labelled `full` or `lean` without a CPU suffix.
 RSS measures memory use: allocator behavior and kernel accounting can add noise, but CPU model
 is not a useful comparison boundary for it in this runner pool.

@@ -34,8 +34,8 @@ fn bundles_provider_document_refs_into_local_definitions() {
         have: bundled,
         want: json!({
             "type": "object",
-            "additionalProperties": { "$ref": "#/$defs/StringMap" },
-            "$defs": {
+            "additionalProperties": { "$ref": "#/definitions/StringMap" },
+            "definitions": {
                 "StringMap": {
                     "type": "object",
                     "additionalProperties": { "type": "string" }
@@ -111,13 +111,13 @@ fn bundles_cross_file_refs_into_local_definitions() {
         want: json!({
             "type": "object",
             "properties": {
-                "selector": { "$ref": "#/$defs/Selector" }
+                "selector": { "$ref": "#/definitions/Selector" }
             },
-            "$defs": {
+            "definitions": {
                 "Selector": {
                     "type": "object",
                     "properties": {
-                        "matchLabels": { "$ref": "#/$defs/StringMap" }
+                        "matchLabels": { "$ref": "#/definitions/StringMap" }
                     }
                 },
                 "StringMap": {

@@ -877,7 +877,7 @@ fn branch_root_reassignment_joins_value_and_mode_per_arm() -> eyre::Result<()> {
 
 fn expected_branch_root_reassignment_schema() -> serde_json::Value {
     let rebind_is_truthy = serde_json::json!({
-        "properties": { "rebind": { "$ref": "#/$defs/t" } },
+        "properties": { "rebind": { "$ref": "#/definitions/t" } },
         "required": ["rebind"],
         "type": "object",
     });
@@ -1894,7 +1894,7 @@ fn conditional_local_specialized_string_consumers_use_proven_leaves() -> eyre::R
 
 fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
     let mut condition_definitions = BTreeMap::new();
-    if let Some(definitions) = schema.get("$defs").and_then(Value::as_object) {
+    if let Some(definitions) = schema.get("definitions").and_then(Value::as_object) {
         for (name, definition) in definitions {
             if name.starts_with("helm-condition-") {
                 condition_definitions.insert(name.clone(), definition.clone());
@@ -1903,7 +1903,7 @@ fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
     }
     *schema = super::condition_encoding::expand_conditions(schema.clone(), &condition_definitions);
     let mut empty_definitions = false;
-    if let Some(definitions) = schema.get_mut("$defs").and_then(Value::as_object_mut) {
+    if let Some(definitions) = schema.get_mut("definitions").and_then(Value::as_object_mut) {
         definitions.retain(|name, _| !condition_definitions.contains_key(name));
         empty_definitions = definitions.is_empty();
     }
@@ -1911,7 +1911,7 @@ fn normalize_selected_string_rejection(schema: &mut Value) -> eyre::Result<()> {
         schema
             .as_object_mut()
             .ok_or_eyre("schema is not an object")?
-            .remove("$defs");
+            .remove("definitions");
     }
     let atoms = [
         helm_truthy_guard("useB"),
@@ -2595,7 +2595,7 @@ fn later_if_header_declaration_reaches_its_else_and_restores_after_the_region() 
     "#};
     let schema = schema_for(parse_ir(src));
     let expected = serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     { "const": true },
@@ -2612,7 +2612,7 @@ fn later_if_header_declaration_reaches_its_else_and_restores_after_the_region() 
             {
                 "if": {
                     "not": {
-                        "properties": { "first": { "$ref": "#/$defs/t" } },
+                        "properties": { "first": { "$ref": "#/definitions/t" } },
                         "required": ["first"],
                         "type": "object"
                     }
@@ -3380,13 +3380,13 @@ fn canonical_expected_schema(
         .collect();
     let mut schema = expected_values_schema(properties, clauses, truthy);
     for (ordinal, condition) in conditions.into_iter().enumerate() {
-        schema["$defs"][format!("helm-condition-{ordinal}")] = condition;
+        schema["definitions"][format!("helm-condition-{ordinal}")] = condition;
     }
     schema
 }
 
 fn expected_condition_ref(ordinal: usize) -> serde_json::Value {
-    serde_json::json!({ "$ref": format!("#/$defs/helm-condition-{ordinal}") })
+    serde_json::json!({ "$ref": format!("#/definitions/helm-condition-{ordinal}") })
 }
 
 fn canonical_nil_safe_selector_schema(receiver: &str, leaf: &str) -> serde_json::Value {

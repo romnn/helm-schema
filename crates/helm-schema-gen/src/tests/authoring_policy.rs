@@ -158,7 +158,7 @@ fn annotate_drops_assertions_only_declared_defaults_supply() {
         SchemaProfile::Full,
     );
     sim_assert_eq!(have: &strict, want: &serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     {
@@ -259,7 +259,7 @@ fn annotate_drops_assertions_only_declared_defaults_supply() {
                         "if": {
                             "properties": {
                                 "enabled": {
-                                    "$ref": "#/$defs/t"
+                                    "$ref": "#/definitions/t"
                                 }
                             },
                             "required": [

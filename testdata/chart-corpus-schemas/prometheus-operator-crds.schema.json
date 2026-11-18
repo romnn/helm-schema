@@ -1,10 +1,12 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
     "helm-marker-free": {
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/helm-marker-free"
+            "$ref": "#/definitions/helm-marker-free"
           },
           "propertyNames": {
             "not": {
@@ -22,7 +24,7 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/helm-marker-free"
+            "$ref": "#/definitions/helm-marker-free"
           },
           "type": "array"
         },
@@ -64,8 +66,6 @@
       "type": "boolean"
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
   "properties": {
     "crds": {
       "additionalProperties": {},
@@ -76,7 +76,7 @@
               "prometheusrules": {
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/t"
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
@@ -97,7 +97,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/t"
+                      "$ref": "#/definitions/helm-marker-free"
                     }
                   },
                   {
@@ -118,7 +118,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/helm-marker-free"
+                      "$ref": "#/definitions/t"
                     }
                   }
                 ],
@@ -135,7 +135,7 @@
           "description": "alertmanagerconfigs configures the AlertManagerConfig CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -145,7 +145,7 @@
           "description": "alertmanagers configures the AlertManager CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -159,7 +159,7 @@
           "description": "podmonitors configures the PodMonitor CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -169,7 +169,7 @@
           "description": "probes configures the Probe CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -179,7 +179,7 @@
           "description": "prometheusagents configures the PrometheusAgent CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -189,7 +189,7 @@
           "description": "prometheuses configures the Prometheus CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -199,7 +199,7 @@
           "description": "prometheusrules configures the PrometheusRule CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -209,7 +209,7 @@
           "description": "scrapeconfigs configures the ScrapeConfig CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -219,7 +219,7 @@
           "description": "servicemonitors configures the ServiceMonitor CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -229,7 +229,7 @@
           "description": "thanosrulers configures the ThanosRuler CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
+              "$ref": "#/definitions/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"

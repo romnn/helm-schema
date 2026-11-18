@@ -636,7 +636,7 @@ pub struct ChartRecipe {
     pub infer_required: bool,
     /// Primary Kubernetes version of the vendored provider bundle.
     pub k8s_version: &'static str,
-    /// Whether repeated subtrees are interned into root `$defs`.
+    /// Whether repeated subtrees are interned into root definitions.
     pub minimize: bool,
     /// Authoring assertions the caller selects.
     pub authoring: AuthoringPolicy,

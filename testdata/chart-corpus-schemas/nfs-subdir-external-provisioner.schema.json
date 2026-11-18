@@ -1,106 +1,343 @@
 {
-  "$defs": {
-    "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "storageClass": {}
+              },
+              "required": [
+                "storageClass"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "storageClass": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.create:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+storageClass.create:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+storageClass.create:t+1more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+storageClass.create:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.create:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+storageClass.create:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.create:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1storageClass.create:t"
+          },
+          "then": true
         }
       },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
-    "constrains/fullnameOverride@2": {
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1storageClass.create:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "provisionerName": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1storageClass.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1storageClass.create:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "nfs": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "nfs"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nfs": {}
+                  },
+                  "required": [
+                    "nfs"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1storageClass.create:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "nfs": {
+              "properties": {
+                "mountOptions": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "mountOptions"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "nfs"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1storageClass.create:t"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "mountOptions": {
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1storageClass.create:t"
+          },
+          "then": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+            },
+            "then": false
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "constrains/fullnameOverride": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -111,71 +348,26 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride:t": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
+        "$ref": "#/definitions/constrains~1nameOverride@2"
       }
-    },
-    "constrains/nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.create:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.create:t"
-        }
-      ]
     },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      }
-    },
-    "constrains/nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1storageClass.create:t"
-        }
-      ]
-    },
-    "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -199,7 +391,7 @@
         "storageClass": {
           "properties": {
             "create": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -236,7 +428,7 @@
     },
     "constrains/storageClass.provisionerName:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@2"
+        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
       }
     },
     "constrains/storageClass.provisionerName:t@2": {
@@ -244,7 +436,7 @@
         "storageClass": {
           "properties": {
             "provisionerName": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -282,257 +474,8 @@
           "const": true
         }
       ]
-    },
-    "when/fullnameOverride:t/then/storageClass.create:t+storageClass.provisionerName:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1storageClass.create:t~1then~1storageClass.provisionerName:t~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/storageClass.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1storageClass.create:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/nfs.mountOptions:t/then/storageClass.create:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nfs": {
-            "properties": {
-              "mountOptions": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "mountOptions"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "nfs"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1storageClass.create:t~1then~1any~1else~1fail@2"
-      }
-    },
-    "when/storageClass.create:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.create:t"
-      },
-      "then": true
-    },
-    "when/storageClass.create:t/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.create:t"
-      },
-      "then": true
-    },
-    "when/storageClass.create:t/then/storageClass.provisionerName:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.create:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1storageClass.provisionerName:t~1then~1fail~1else~1any"
-      }
-    },
-    "when/storageClass.create:t/then/storageClass.provisionerName:t/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.create:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1storageClass.provisionerName:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/storageClass.provisionerName:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@2"
-      },
-      "then": true
-    },
-    "when/storageClass.provisionerName:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.provisionerName:t@2"
-      },
-      "then": false
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "storageClass": {}
-              },
-              "required": [
-                "storageClass"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1storageClass.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1storageClass.create:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1storageClass.create:t+storageClass.provisionerName:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1storageClass.create:t~1then~1storageClass.provisionerName:t~1else~1fail@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "provisionerName": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nfs.mountOptions:t~1then~1storageClass.create:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
-            "additionalProperties": {},
-            "properties": {
-              "mountOptions": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "nfs": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "nfs"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "nfs": {}
-                  },
-                  "required": [
-                    "nfs"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1storageClass.create:t"
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "affinity": {},
     "fullnameOverride": {},

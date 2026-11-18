@@ -1,538 +1,137 @@
 {
-  "$defs": {
-    "constrains/configMap": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "type": "object"
-        }
-      }
-    },
-    "constrains/configMap=null": {
-      "properties": {
-        "configMap": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "configMap"
-      ],
-      "type": "object"
-    },
-    "constrains/configMap@2": {
-      "properties": {
-        "configMap": {}
-      },
-      "required": [
-        "configMap"
-      ],
-      "type": "object"
-    },
-    "constrains/nats+nats=null": {
-      "$ref": "#/$defs/constrains~1nats+nats=null@5"
-    },
-    "constrains/nats+nats=null@2": {
-      "$ref": "#/$defs/constrains~1nats+nats=null@5"
-    },
-    "constrains/nats+nats=null@3": {
-      "$ref": "#/$defs/constrains~1nats+nats=null@5"
-    },
-    "constrains/nats+nats=null@4": {
-      "$ref": "#/$defs/constrains~1nats+nats=null@5"
-    },
-    "constrains/nats+nats=null@5": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "nats": {}
-              },
-              "required": [
-                "nats"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "nats": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "nats"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "constrains/nats:t": {
-      "properties": {
-        "nats": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nats"
-      ],
-      "type": "object"
-    },
-    "constrains/operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t"
-        }
-      ]
-    },
-    "constrains/operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t@2"
-        }
-      ]
-    },
-    "constrains/operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null@2"
-        }
-      ]
-    },
-    "constrains/operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt:t+2more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator+operator:t+operator=null"
-        }
-      ]
-    },
-    "constrains/operator+operator:t+operator=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator+operator=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator+operator=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator:t"
-        }
-      ]
-    },
-    "constrains/operator+operator:t+operator=null@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator+operator=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator+operator=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator:t"
-        }
-      ]
-    },
-    "constrains/operator+operator=null": {
-      "$ref": "#/$defs/constrains~1operator+operator=null@5"
-    },
-    "constrains/operator+operator=null@2": {
-      "$ref": "#/$defs/constrains~1operator+operator=null@5"
-    },
-    "constrains/operator+operator=null@3": {
-      "$ref": "#/$defs/constrains~1operator+operator=null@5"
-    },
-    "constrains/operator+operator=null@4": {
-      "$ref": "#/$defs/constrains~1operator+operator=null@5"
-    },
-    "constrains/operator+operator=null@5": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "operator": {}
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "operator": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "constrains/operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator:t"
-        }
-      ]
-    },
-    "constrains/operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+operator:t@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator:t"
-        }
-      ]
-    },
-    "constrains/operator.operatorjwt+operator.operatorjwt=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "operatorjwt": {}
-                },
-                "required": [
-                  "operatorjwt"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "operator": {
-              "properties": {
-                "operatorjwt": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "operatorjwt"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/operator.operatorjwt+operator.operatorjwt=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
-      }
-    },
-    "constrains/operator.operatorjwt+operator.operatorjwt=null@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
-      }
-    },
-    "constrains/operator.operatorjwt+operator.operatorjwt=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
-      }
-    },
-    "constrains/operator.operatorjwt+operator.operatorjwt=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
-      }
-    },
-    "constrains/operator.operatorjwt:t": {
-      "properties": {
-        "operator": {
-          "properties": {
-            "operatorjwt": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "operatorjwt"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "operator"
-      ],
-      "type": "object"
-    },
-    "constrains/operator.systemaccountjwt+operator.systemaccountjwt:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator:t"
-        }
-      ]
-    },
-    "constrains/operator.systemaccountjwt+operator.systemaccountjwt:t+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator.systemaccountjwt:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1operator:t"
-        }
-      ]
-    },
-    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "systemaccountjwt": {}
-                },
-                "required": [
-                  "systemaccountjwt"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "operator": {
-              "properties": {
-                "systemaccountjwt": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "systemaccountjwt"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
-      }
-    },
-    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
-      }
-    },
-    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
-      }
-    },
-    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
-      }
-    },
-    "constrains/operator.systemaccountjwt:t": {
-      "properties": {
-        "operator": {
-          "properties": {
-            "systemaccountjwt": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "systemaccountjwt"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "operator"
-      ],
-      "type": "object"
-    },
-    "constrains/operator:t": {
-      "properties": {
-        "operator": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "operator"
-      ],
-      "type": "object"
-    },
-    "constrains/type+type=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "type": {}
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "type": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "type": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/type+type=null@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1type+type=null"
-      }
-    },
-    "constrains/type=file": {
-      "properties": {
-        "type": {
-          "enum": [
-            "file"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "values/operator.operatorjwt": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "additionalProperties": {},
-          "properties": {
-            "key": {},
-            "name": {}
-          }
-        }
-      }
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1operator+operator=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator+operator=null@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1operator+operator:t+operator=null"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1operator.operatorjwt+operator.operatorjwt=null"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1operator.operatorjwt+operator.operatorjwt=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.operatorjwt:t"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "operator": {
+                    "properties": {
+                      "operatorjwt": {
+                        "$ref": "#/definitions/constrains~1configMap=null"
+                      }
+                    },
+                    "required": [
+                      "operatorjwt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "operator"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
+                        "operatorjwt": {
+                          "properties": {
+                            "configMap": {}
+                          },
+                          "required": [
+                            "configMap"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "operatorjwt"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1operator+operator:t+operator=null@2"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.systemaccountjwt:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator:t"
+              }
+            ]
+          }
+        ]
       },
       "then": {
         "allOf": [
@@ -543,7 +142,12 @@
                 "additionalProperties": {},
                 "properties": {
                   "systemaccountjwt": {
-                    "$ref": "#/$defs/constrains~1configMap"
+                    "additionalProperties": {},
+                    "properties": {
+                      "configMap": {
+                        "type": "object"
+                      }
+                    }
                   }
                 }
               }
@@ -567,22 +171,19 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1operator:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "store": {
-            "$ref": "#/$defs/constrains~1type=file"
+            "properties": {
+              "type": {
+                "enum": [
+                  "file"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
           }
         },
         "required": [
@@ -606,15 +207,47 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1operator:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1nats:t"
+            "$ref": "#/definitions/constrains~1operator+operator=null"
           },
           {
-            "$ref": "#/$defs/constrains~1nats+nats=null@2"
+            "$ref": "#/definitions/constrains~1operator+operator=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1nats+nats=null"
+            "$ref": "#/definitions/constrains~1operator.operatorjwt+operator.operatorjwt=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nats+nats=null@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nats+nats=null@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nats:t"
           }
         ]
       },
@@ -664,95 +297,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "operatorjwt": {
-                        "$ref": "#/$defs/constrains~1configMap=null"
-                      }
-                    },
-                    "required": [
-                      "operatorjwt"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "operator": {
-                      "properties": {
-                        "operatorjwt": {
-                          "$ref": "#/$defs/constrains~1configMap@2"
-                        }
-                      },
-                      "required": [
-                        "operatorjwt"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "operator"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more@2"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "operator": {
-                "additionalProperties": {},
-                "properties": {
-                  "operatorjwt": {
-                    "$ref": "#/$defs/constrains~1configMap"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "operator": {
-                "additionalProperties": {},
-                "properties": {
-                  "operatorjwt": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -786,32 +330,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1operator+operator=null"
+            "$ref": "#/definitions/constrains~1nats+nats=null"
           },
           {
-            "$ref": "#/$defs/constrains~1operator+operator=null@2"
+            "$ref": "#/definitions/constrains~1nats+nats=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1nats:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nats+nats=null@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1nats+nats=null@3"
+            "$ref": "#/definitions/constrains~1nats:t"
           },
           {
             "anyOf": [
@@ -863,76 +388,67 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1operator+operator=null"
+            "$ref": "#/definitions/constrains~1operator+operator:t+operator=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1operator+operator=null@2"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
+            "allOf": [
               {
                 "not": {
-                  "properties": {
-                    "operator": {
-                      "properties": {
-                        "systemaccountjwt": {
-                          "$ref": "#/$defs/constrains~1configMap@2"
-                        }
-                      },
-                      "required": [
-                        "systemaccountjwt"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "operator"
-                  ],
-                  "type": "object"
+                  "$ref": "#/definitions/constrains~1operator.operatorjwt+operator.operatorjwt=null"
                 }
               },
               {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "systemaccountjwt": {
-                        "$ref": "#/$defs/constrains~1configMap=null"
-                      }
-                    },
-                    "required": [
-                      "systemaccountjwt"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
+                "not": {
+                  "$ref": "#/definitions/constrains~1operator.operatorjwt+operator.operatorjwt=null"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.operatorjwt:t"
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more@2"
           }
         ]
       },
-      "then": false
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "operatorjwt": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configMap": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "operatorjwt": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -998,13 +514,97 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1nats:t"
+            "$ref": "#/definitions/constrains~1nats+nats=null"
           },
           {
-            "$ref": "#/$defs/constrains~1nats+nats=null@4"
+            "$ref": "#/definitions/constrains~1nats+nats=null@2"
           },
           {
-            "$ref": "#/$defs/constrains~1nats+nats=null@3"
+            "$ref": "#/definitions/constrains~1nats:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
+                        "systemaccountjwt": {
+                          "properties": {
+                            "configMap": {}
+                          },
+                          "required": [
+                            "configMap"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "systemaccountjwt"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "operator": {
+                    "properties": {
+                      "systemaccountjwt": {
+                        "$ref": "#/definitions/constrains~1configMap=null"
+                      }
+                    },
+                    "required": [
+                      "systemaccountjwt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "operator"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1operator+operator:t+operator=null"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.systemaccountjwt:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator:t"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -1042,6 +642,304 @@
       "then": false
     }
   ],
+  "definitions": {
+    "constrains/configMap=null": {
+      "properties": {
+        "configMap": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "configMap"
+      ],
+      "type": "object"
+    },
+    "constrains/nats+nats=null": {
+      "$ref": "#/definitions/constrains~1nats+nats=null@3"
+    },
+    "constrains/nats+nats=null@2": {
+      "$ref": "#/definitions/constrains~1nats+nats=null@3"
+    },
+    "constrains/nats+nats=null@3": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "nats": {}
+              },
+              "required": [
+                "nats"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "nats": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/nats:t": {
+      "properties": {
+        "nats": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nats"
+      ],
+      "type": "object"
+    },
+    "constrains/operator+operator:t+operator=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1operator+operator=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1operator+operator=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1operator:t"
+        }
+      ]
+    },
+    "constrains/operator+operator:t+operator=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1operator+operator=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1operator+operator=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1operator:t"
+        }
+      ]
+    },
+    "constrains/operator+operator=null": {
+      "$ref": "#/definitions/constrains~1operator+operator=null@3"
+    },
+    "constrains/operator+operator=null@2": {
+      "$ref": "#/definitions/constrains~1operator+operator=null@3"
+    },
+    "constrains/operator+operator=null@3": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "operator": {}
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "operator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/operator.operatorjwt+operator.operatorjwt=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "operatorjwt": {}
+                },
+                "required": [
+                  "operatorjwt"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "operator": {
+              "properties": {
+                "operatorjwt": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "operatorjwt"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/operator.operatorjwt:t": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "operatorjwt": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "operatorjwt"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "systemaccountjwt": {}
+                },
+                "required": [
+                  "systemaccountjwt"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "operator": {
+              "properties": {
+                "systemaccountjwt": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "systemaccountjwt"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/operator.systemaccountjwt:t": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "systemaccountjwt": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "systemaccountjwt"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator:t": {
+      "properties": {
+        "operator": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/operator.operatorjwt": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "additionalProperties": {},
+          "properties": {
+            "key": {},
+            "name": {}
+          }
+        }
+      }
+    }
+  },
   "properties": {
     "accountserver": {
       "additionalProperties": {},
@@ -1076,10 +974,10 @@
       "additionalProperties": {},
       "properties": {
         "operatorjwt": {
-          "$ref": "#/$defs/values~1operator.operatorjwt"
+          "$ref": "#/definitions/values~1operator.operatorjwt"
         },
         "systemaccountjwt": {
-          "$ref": "#/$defs/values~1operator.operatorjwt"
+          "$ref": "#/definitions/values~1operator.operatorjwt"
         }
       }
     },
@@ -1118,7 +1016,17 @@
                 ]
               },
               {
-                "$ref": "#/$defs/constrains~1type=file"
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "file"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -1126,7 +1034,45 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/constrains~1type+type=null@2"
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "type": {}
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
           "then": false
         }

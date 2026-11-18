@@ -210,7 +210,7 @@ pub struct ManifestEntry {
     pub helm_ready: Option<HelmReadyFiles>,
 }
 
-/// A schema artifact as handed to Helm: `$defs` renamed to short keys,
+/// A schema artifact as handed to Helm: with short definition keys,
 /// compact JSON plus a newline, and the map from each short key back to its
 /// readable name.
 ///

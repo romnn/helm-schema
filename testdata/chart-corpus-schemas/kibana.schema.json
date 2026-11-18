@@ -1,360 +1,4 @@
 {
-  "$defs": {
-    "constrains/fullnameOverride": {
-      "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "maxItems": 0,
-              "type": "array"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=null@5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride+nameOverride=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "$ref": "#/$defs/constrains~1nameOverride@6"
-    },
-    "constrains/nameOverride+nameOverride=null": {
-      "$ref": "#/$defs/constrains~1nameOverride+nameOverride=null@3"
-    },
-    "constrains/nameOverride+nameOverride=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@7"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride=null@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride+nameOverride=null@2"
-      }
-    },
-    "constrains/nameOverride:t": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@7"
-        },
-        {
-          "properties": {
-            "nameOverride": {
-              "type": "null"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/nameOverride@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
-      }
-    },
-    "constrains/nameOverride@4": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@9"
-      }
-    },
-    "constrains/nameOverride@5": {
-      "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@8"
-      }
-    },
-    "constrains/nameOverride@6": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/nameOverride@7": {
-      "not": {
-        "properties": {
-          "nameOverride": {}
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/nameOverride@8": {
-      "properties": {
-        "nameOverride": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@9": {
-      "properties": {
-        "nameOverride": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "values/extraContainers": {
-      "description": "- name: dummy-init\nimage: busybox\ncommand: ['echo', 'hey']"
-    },
-    "when/annotations:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "annotations": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "annotations"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
@@ -391,7 +35,184 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1annotations:t~1then~1any~1else~1fail"
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "fullnameOverride": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride@7"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "properties": {
+                  "nameOverride": {
+                    "maxItems": 0,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "nameOverride"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "annotations": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        },
+        "then": true
       },
       "then": {
         "additionalProperties": {},
@@ -405,27 +226,161 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
     }
   ],
+  "definitions": {
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@5"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@5"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride"
+      }
+    },
+    "constrains/nameOverride@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride@6"
+      }
+    },
+    "constrains/nameOverride@4": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride@5": {
+      "not": {
+        "properties": {
+          "nameOverride": {}
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride@6": {
+      "properties": {
+        "nameOverride": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@7": {
+      "properties": {
+        "nameOverride": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    }
+  },
   "properties": {
     "affinity": {},
     "annotations": {
@@ -442,13 +397,13 @@
       "description": "Allows you to load environment variables from kubernetes secret or config map\n- secretRef:\nname: env-secret\n- configMapRef:\nname: config-map"
     },
     "extraContainers": {
-      "$ref": "#/$defs/values~1extraContainers"
+      "description": "- name: dummy-init\nimage: busybox\ncommand: ['echo', 'hey']"
     },
     "extraEnvs": {
       "description": "Extra environment variables to append to this nodeGroup\nThis will be appended to the current 'env:' key. You can use any of the kubernetes env\nsyntax here"
     },
     "extraInitContainers": {
-      "$ref": "#/$defs/values~1extraContainers"
+      "description": "- name: dummy-init\nimage: busybox\ncommand: ['echo', 'hey']"
     },
     "extraVolumeMounts": {},
     "extraVolumes": {},

@@ -2,14 +2,15 @@
 //!
 //! This crate is deliberately independent of Helm. It treats the input as a
 //! JSON Schema document, finds repeated schema subtrees, and rewrites repeated
-//! occurrences to internal `$defs` / `$ref` entries.
+//! occurrences to internal definitions and `$ref` entries.
 
 mod naming;
+mod single_use;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_json_schema_walk::{
-    ReferenceSiblings, SchemaMetadataIndex, SchemaTraversalContext, definition_reference,
+    DefinitionsKeyword, ReferenceSiblings, SchemaMetadataIndex, SchemaTraversalContext,
     local_reference_fragment, parse_definition_reference, try_map_schema_context, visit_subschemas,
     visit_subschemas_mut,
 };
@@ -20,9 +21,7 @@ pub use naming::{
     name_definitions, rename_definitions, shorten_definition_names,
 };
 
-const DEFINITIONS_KEY: &str = "$defs";
-
-/// Deduplicate repeated JSON Schema subtrees into root-level `$defs`.
+/// Deduplicate repeated JSON Schema subtrees into root-level definitions.
 ///
 /// Only schema-position objects are eligible. Data arrays and objects used as
 /// keyword payloads, such as `required`, `enum`, `type`, or Kubernetes
@@ -45,6 +44,7 @@ pub fn minimize_schema(
     for id in generated {
         anonymous.entry(id).or_default();
     }
+    single_use::inline_single_use_definitions(&mut minimized);
     name_definitions(&mut minimized, &anonymous, names);
     minimized
 }
@@ -52,7 +52,8 @@ pub fn minimize_schema(
 /// Extracts repeated subtrees under planning ids, which are returned.
 #[tracing::instrument(skip_all)]
 fn extract_repeated_subschemas(mut schema: Value) -> (Value, BTreeSet<String>) {
-    if !can_insert_generated_definitions(&schema) {
+    let keyword = DefinitionsKeyword::for_schema(&schema);
+    if !can_insert_generated_definitions(&schema, keyword) {
         return (schema, BTreeSet::new());
     }
 
@@ -79,24 +80,31 @@ fn extract_repeated_subschemas(mut schema: Value) -> (Value, BTreeSet<String>) {
         &fingerprint_counts,
         &mut candidates,
     );
-    let existing_names = existing_definition_names(&schema);
-    let planned = plan_definitions(existing_names, candidates);
+    let existing_names = existing_definition_names(&schema, keyword);
+    let planned = plan_definitions(existing_names, candidates, keyword);
     if planned.is_empty() {
         return (schema, BTreeSet::new());
     }
 
     let mut definitions = BTreeMap::new();
-    let mut minimized = rewrite_schema(&schema, &metadata, &protected, &planned, &mut definitions);
-    inline_unprofitable_definitions(&mut minimized, &mut definitions, &planned);
+    let mut minimized = rewrite_schema(
+        &schema,
+        &metadata,
+        &protected,
+        &planned,
+        &mut definitions,
+        keyword,
+    );
+    inline_unprofitable_definitions(&mut minimized, &mut definitions, &planned, keyword);
     let generated = definitions.keys().cloned().collect::<BTreeSet<_>>();
-    insert_definitions(&mut minimized, definitions);
+    insert_definitions(&mut minimized, definitions, keyword);
     (minimized, generated)
 }
 
-fn can_insert_generated_definitions(schema: &Value) -> bool {
+fn can_insert_generated_definitions(schema: &Value, keyword: DefinitionsKeyword) -> bool {
     match schema {
         Value::Object(object) => object
-            .get(DEFINITIONS_KEY)
+            .get(keyword.as_str())
             .is_none_or(serde_json::Value::is_object),
         _ => false,
     }
@@ -203,6 +211,7 @@ fn collect_exact_candidates(
 fn plan_definitions(
     mut existing_names: BTreeSet<String>,
     candidates: HashMap<CandidateFingerprint, Vec<ExactCandidate>>,
+    keyword: DefinitionsKeyword,
 ) -> PlannedDefinitions {
     let mut repeated: Vec<(CandidateFingerprint, ExactCandidate)> = candidates
         .into_iter()
@@ -228,7 +237,13 @@ fn plan_definitions(
     let mut next_id = 1usize;
     for (fingerprint, candidate) in repeated {
         let (id, following_id) = next_planning_id(&existing_names, next_id);
-        if estimated_savings(candidate.canonical.len(), candidate.occurrences, &id) <= 0 {
+        if estimated_savings(
+            candidate.canonical.len(),
+            candidate.occurrences,
+            &id,
+            keyword,
+        ) <= 0
+        {
             continue;
         }
         existing_names.insert(id.clone());
@@ -273,14 +288,19 @@ fn base62(mut value: usize) -> String {
     reversed.into_iter().rev().collect()
 }
 
-fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> i128 {
+fn estimated_savings(
+    schema_bytes: usize,
+    occurrences: usize,
+    name: &str,
+    keyword: DefinitionsKeyword,
+) -> i128 {
     let ref_bytes =
-        helm_schema_json_schema_walk::canonical_json_string(&reference_schema(name)).len();
+        helm_schema_json_schema_walk::canonical_json_string(&reference_schema(name, keyword)).len();
     let original = schema_bytes.saturating_mul(occurrences);
     let rewritten = schema_bytes
         .saturating_add(ref_bytes.saturating_mul(occurrences))
         .saturating_add(name.len())
-        .saturating_add(DEFINITIONS_KEY.len())
+        .saturating_add(keyword.as_str().len())
         .saturating_add(16);
     original as i128 - rewritten as i128
 }
@@ -291,6 +311,7 @@ fn rewrite_schema(
     protected: &BTreeSet<usize>,
     planned: &PlannedDefinitions,
     definitions: &mut BTreeMap<String, Value>,
+    keyword: DefinitionsKeyword,
 ) -> Value {
     let rewritten = try_map_schema_context(
         schema,
@@ -310,10 +331,11 @@ fn rewrite_schema(
                 if !definitions.contains_key(name) {
                     // Traverse the immutable representative so nested bodies share
                     // the same metadata and cannot select their own root again.
-                    let body = rewrite_schema(node, metadata, protected, planned, definitions);
+                    let body =
+                        rewrite_schema(node, metadata, protected, planned, definitions, keyword);
                     definitions.insert(name.clone(), body);
                 }
-                return Ok(Some(reference_schema(name)));
+                return Ok(Some(reference_schema(name, keyword)));
             }
             Ok(None)
         },
@@ -329,12 +351,13 @@ fn inline_unprofitable_definitions(
     schema: &mut Value,
     definitions: &mut BTreeMap<String, Value>,
     planned: &PlannedDefinitions,
+    keyword: DefinitionsKeyword,
 ) {
     let names = definitions.keys().cloned().collect::<BTreeSet<_>>();
     let mut counts = BTreeMap::new();
-    count_generated_references(schema, &names, &mut counts);
+    count_generated_references(schema, &names, &mut counts, keyword);
     for body in definitions.values() {
-        count_generated_references(body, &names, &mut counts);
+        count_generated_references(body, &names, &mut counts, keyword);
     }
     // A generated body references only strictly smaller extracted subtrees.
     // Resolve its children before measuring the body's actual emitted size.
@@ -353,14 +376,14 @@ fn inline_unprofitable_definitions(
         let Some(mut body) = definitions.remove(&name) else {
             continue;
         };
-        inline_generated_references(&mut body, &removed);
+        inline_generated_references(&mut body, &removed, keyword);
         let uses = counts.get(&name).copied().unwrap_or_default();
-        if estimated_savings(body.to_string().len(), uses, &name) > 0 {
+        if estimated_savings(body.to_string().len(), uses, &name, keyword) > 0 {
             definitions.insert(name, body);
             continue;
         }
         let mut children = BTreeMap::new();
-        count_generated_references(&body, &names, &mut children);
+        count_generated_references(&body, &names, &mut children, keyword);
         for (child, references) in children {
             let count = counts.entry(child).or_default();
             *count = count
@@ -369,15 +392,20 @@ fn inline_unprofitable_definitions(
         }
         removed.insert(name, body);
     }
-    inline_generated_references(schema, &removed);
+    inline_generated_references(schema, &removed, keyword);
 }
 
-fn inline_generated_references(schema: &mut Value, replacements: &BTreeMap<String, Value>) {
+fn inline_generated_references(
+    schema: &mut Value,
+    replacements: &BTreeMap<String, Value>,
+    keyword: DefinitionsKeyword,
+) {
     if replacements.is_empty() {
         return;
     }
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str)
         && let Some(reference) = parse_definition_reference(reference)
+        && reference.keyword == keyword
         && reference.suffix.is_empty()
         && let Some(replacement) = replacements.get(&reference.name)
     {
@@ -388,7 +416,7 @@ fn inline_generated_references(schema: &mut Value, replacements: &BTreeMap<Strin
     }
     visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |subschema| {
         if !has_reference_scope(subschema) {
-            inline_generated_references(subschema, replacements);
+            inline_generated_references(subschema, replacements, keyword);
         }
     });
 }
@@ -397,9 +425,11 @@ fn count_generated_references(
     schema: &Value,
     generated_names: &BTreeSet<String>,
     counts: &mut BTreeMap<String, usize>,
+    keyword: DefinitionsKeyword,
 ) {
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str)
         && let Some(reference) = parse_definition_reference(reference)
+        && reference.keyword == keyword
         && reference.suffix.is_empty()
         && generated_names.contains(&reference.name)
     {
@@ -407,17 +437,21 @@ fn count_generated_references(
     }
     visit_subschemas(schema, ReferenceSiblings::Visit, &mut |subschema| {
         if !has_reference_scope(subschema) {
-            count_generated_references(subschema, generated_names, counts);
+            count_generated_references(subschema, generated_names, counts, keyword);
         }
     });
 }
 
-fn insert_definitions(schema: &mut Value, definitions: BTreeMap<String, Value>) {
+fn insert_definitions(
+    schema: &mut Value,
+    definitions: BTreeMap<String, Value>,
+    keyword: DefinitionsKeyword,
+) {
     let Value::Object(root) = schema else {
         return;
     };
     let entry = root
-        .entry(DEFINITIONS_KEY.to_string())
+        .entry(keyword.as_str().to_string())
         .or_insert_with(|| Value::Object(Map::new()));
     let Value::Object(existing) = entry else {
         return;
@@ -647,18 +681,18 @@ fn logical_sort_digest(value: &Value) -> u128 {
     hash
 }
 
-fn existing_definition_names(schema: &Value) -> BTreeSet<String> {
+fn existing_definition_names(schema: &Value, keyword: DefinitionsKeyword) -> BTreeSet<String> {
     schema
-        .get(DEFINITIONS_KEY)
+        .get(keyword.as_str())
         .and_then(Value::as_object)
         .map(|definitions| definitions.keys().cloned().collect())
         .unwrap_or_default()
 }
 
-fn reference_schema(name: &str) -> Value {
+fn reference_schema(name: &str, keyword: DefinitionsKeyword) -> Value {
     Value::Object(Map::from_iter([(
         "$ref".to_string(),
-        Value::String(definition_reference(name)),
+        Value::String(keyword.reference(name)),
     )]))
 }
 

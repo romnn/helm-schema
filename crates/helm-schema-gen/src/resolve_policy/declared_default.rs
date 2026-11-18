@@ -312,7 +312,7 @@ fn acceptance_document(schema: &Value, mut definitions: BTreeMap<String, Value>)
             helm_truthy_definition_schema(),
         );
     }
-    (!definitions.is_empty()).then(|| serde_json::json!({"$defs": definitions, "allOf": [schema]}))
+    (!definitions.is_empty()).then(|| serde_json::json!({(helm_schema_json_schema_walk::GENERATED_DEFINITIONS.as_str()): definitions, "allOf": [schema]}))
 }
 
 pub(super) fn should_open_fragment_values_schema(

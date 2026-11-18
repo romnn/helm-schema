@@ -1,831 +1,1029 @@
 {
-  "$defs": {
-    "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "kubectl": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
+                "type": "object"
+              }
+            }
+          }
+        ]
       }
     },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+podSecurityContext:t+securityContext+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+5more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+upgradeCRDs:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+5more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+6more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+upgradeCRDs:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+6more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+upgradeCRDs:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+6more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+6more@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+6more@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+upgradeCRDs:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+6more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext+6more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+podSecurityContext:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+upgradeCRDs:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+6more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+6more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext+6more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+podSecurityContext:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+upgradeCRDs:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+5more@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+podSecurityContext+podSecurityContext:t+5more@3": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+podSecurityContext:t+securityContext+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "image": {
+              "properties": {
+                "imagePullSecrets": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "imagePullSecrets"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1upgradeCRDs:t~1then~1any~1else~1fail"
         }
       },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
+            "properties": {
+              "imagePullSecrets": {
+                "description": "One or more secrets to be used when pulling images\n- registrySecretName",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
     },
-    "constrains/fullnameOverride@2": {
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podSecurityContext": {
+            "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337",
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1podSecurityContext@2"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1securityContext@2"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1securityContext+securityContext=null"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1securityContext:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext+securityContext=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1securityContext:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1upgradeCRDs:t~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1upgradeCRDs:t~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1securityContext:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "securityContext": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "kubectl": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "kubectl"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "kubectl": {}
+                  },
+                  "required": [
+                    "kubectl"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
+    "constrains/fullnameOverride": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -836,23 +1034,36 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
+        "$ref": "#/definitions/constrains~1nameOverride@2"
       }
     },
     "constrains/nameOverride:t": {
-      "$ref": "#/$defs/constrains~1nameOverride:t@2"
-    },
-    "constrains/nameOverride:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
-    "constrains/nameOverride:t@3": {
+    "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -872,49 +1083,11 @@
       "type": "object"
     },
     "constrains/podSecurityContext": {
-      "$ref": "#/$defs/constrains~1podSecurityContext@2"
-    },
-    "constrains/podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext:t+securityContext=null+upgradeCRDs:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+upgradeCRDs:t"
-        }
-      ]
-    },
-    "constrains/podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+3more@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+3more"
+        "$ref": "#/definitions/constrains~1podSecurityContext@2"
       }
     },
-    "constrains/podSecurityContext+podSecurityContext:t+podSecurityContext=null+upgradeCRDs:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1podSecurityContext@3"
-        }
-      ]
-    },
     "constrains/podSecurityContext+podSecurityContext=null": {
-      "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-    },
-    "constrains/podSecurityContext+podSecurityContext=null@2": {
-      "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@5"
-    },
-    "constrains/podSecurityContext+podSecurityContext=null@3": {
-      "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@6"
-    },
-    "constrains/podSecurityContext+podSecurityContext=null@4": {
       "anyOf": [
         {
           "not": {
@@ -942,33 +1115,25 @@
         }
       ]
     },
-    "constrains/podSecurityContext+podSecurityContext=null@5": {
+    "constrains/podSecurityContext+podSecurityContext=null@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
+        "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
       }
     },
-    "constrains/podSecurityContext+podSecurityContext=null@6": {
+    "constrains/podSecurityContext+podSecurityContext=null@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null@4"
-      }
-    },
-    "constrains/podSecurityContext+podSecurityContext=null@7": {
-      "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext=null"
+        "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
       }
     },
     "constrains/podSecurityContext:t": {
-      "$ref": "#/$defs/constrains~1podSecurityContext:t@2"
-    },
-    "constrains/podSecurityContext:t@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
+        "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
       }
     },
-    "constrains/podSecurityContext:t@3": {
+    "constrains/podSecurityContext:t@2": {
       "properties": {
         "podSecurityContext": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -977,16 +1142,6 @@
       "type": "object"
     },
     "constrains/podSecurityContext@2": {
-      "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext@4"
-      }
-    },
-    "constrains/podSecurityContext@3": {
-      "not": {
-        "$ref": "#/$defs/constrains~1podSecurityContext@4"
-      }
-    },
-    "constrains/podSecurityContext@4": {
       "properties": {
         "podSecurityContext": {
           "type": "object"
@@ -998,34 +1153,9 @@
       "type": "object"
     },
     "constrains/securityContext": {
-      "$ref": "#/$defs/constrains~1securityContext@4"
-    },
-    "constrains/securityContext+securityContext:t+securityContext=null+upgradeCRDs:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1securityContext"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext+securityContext=null@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1securityContext:t"
-        }
-      ]
+      "$ref": "#/definitions/constrains~1securityContext@2"
     },
     "constrains/securityContext+securityContext=null": {
-      "$ref": "#/$defs/constrains~1securityContext+securityContext=null@4"
-    },
-    "constrains/securityContext+securityContext=null@2": {
-      "$ref": "#/$defs/constrains~1securityContext+securityContext=null@6"
-    },
-    "constrains/securityContext+securityContext=null@3": {
-      "$ref": "#/$defs/constrains~1securityContext+securityContext=null@7"
-    },
-    "constrains/securityContext+securityContext=null@4": {
       "anyOf": [
         {
           "not": {
@@ -1053,25 +1183,20 @@
         }
       ]
     },
-    "constrains/securityContext+securityContext=null@5": {
+    "constrains/securityContext+securityContext=null@2": {
       "not": {
-        "$ref": "#/$defs/constrains~1securityContext+securityContext=null"
+        "$ref": "#/definitions/constrains~1securityContext+securityContext=null"
       }
     },
-    "constrains/securityContext+securityContext=null@6": {
+    "constrains/securityContext+securityContext=null@3": {
       "not": {
-        "$ref": "#/$defs/constrains~1securityContext+securityContext=null@4"
-      }
-    },
-    "constrains/securityContext+securityContext=null@7": {
-      "not": {
-        "$ref": "#/$defs/constrains~1securityContext+securityContext=null@4"
+        "$ref": "#/definitions/constrains~1securityContext+securityContext=null"
       }
     },
     "constrains/securityContext:t": {
       "properties": {
         "securityContext": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -1080,12 +1205,6 @@
       "type": "object"
     },
     "constrains/securityContext@2": {
-      "$ref": "#/$defs/constrains~1securityContext@4"
-    },
-    "constrains/securityContext@3": {
-      "$ref": "#/$defs/constrains~1securityContext@2"
-    },
-    "constrains/securityContext@4": {
       "not": {
         "properties": {
           "securityContext": {
@@ -1099,18 +1218,9 @@
       }
     },
     "constrains/upgradeCRDs:t": {
-      "$ref": "#/$defs/when~1upgradeCRDs:t~1then~1any~1else~1fail"
-    },
-    "constrains/upgradeCRDs:t@2": {
-      "$ref": "#/$defs/when~1upgradeCRDs:t~1then~1any~1else~1fail"
-    },
-    "constrains/upgradeCRDs:t@3": {
-      "$ref": "#/$defs/when~1upgradeCRDs:t~1then~1any~1else~1fail"
-    },
-    "constrains/upgradeCRDs:t@4": {
       "properties": {
         "upgradeCRDs": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -1143,274 +1253,14 @@
         }
       ]
     },
-    "when/fullnameOverride:t/then/upgradeCRDs:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1upgradeCRDs:t"
-      }
-    },
-    "when/image.imagePullSecrets:t/then/upgradeCRDs:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "imagePullSecrets": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "imagePullSecrets"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1upgradeCRDs:t@2"
-      }
-    },
-    "when/nameOverride:t/then/upgradeCRDs:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@3"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1upgradeCRDs:t@3"
-      }
-    },
     "when/upgradeCRDs:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
+        "$ref": "#/definitions/constrains~1upgradeCRDs:t"
       },
       "then": true
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1podSecurityContext:t@3"
-          },
-          {
-            "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podSecurityContext": {
-            "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337",
-            "type": [
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "kubectl": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "kubectl": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "kubectl"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "kubectl": {}
-                  },
-                  "required": [
-                    "kubectl"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1upgradeCRDs:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+3more@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1image.imagePullSecrets:t~1then~1upgradeCRDs:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
-            "properties": {
-              "imagePullSecrets": {
-                "description": "One or more secrets to be used when pulling images\n- registrySecretName",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1upgradeCRDs:t@4"
-          },
-          {
-            "$ref": "#/$defs/constrains~1securityContext:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "securityContext": {
-            "type": [
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1upgradeCRDs:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "affinity": {
       "description": "Affinity to use for the Velero deployment. Optional."

@@ -50,7 +50,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
     );
     sim_assert_eq!(
         have: schema.pointer("/properties/feature/allOf/0/if/properties/enabled/$ref"),
-        want: Some(&serde_json::json!("#/$defs/t")),
+        want: Some(&serde_json::json!("#/definitions/t")),
         "guard should lower at the nearest common ancestor, not only at the root: {schema}"
     );
     sim_assert_eq!(
@@ -277,9 +277,9 @@ fn negated_boolean_guard_lowers_to_not_condition() {
     );
 
     sim_assert_eq!(have: schema, want: serde_json::json!({
-        "$defs": {
+        "definitions": {
             "helm-condition-0": {"not": {
-                "properties": {"enabled": {"$ref": "#/$defs/t"}},
+                "properties": {"enabled": {"$ref": "#/definitions/t"}},
                 "required": ["enabled"], "type": "object"
             }}, "t": {"anyOf": [
                 {"const": true},
@@ -295,7 +295,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             "feature": {
                 "additionalProperties": {},
                 "allOf": [{
-                    "if": {"$ref": "#/$defs/helm-condition-0"},
+                    "if": {"$ref": "#/definitions/helm-condition-0"},
                     "then": {"additionalProperties": {}, "properties": {"host": {"type": "string"}}}
                 }],
                 "properties": {"enabled": {}, "host": {}}
@@ -579,14 +579,14 @@ fn or_boolean_guards_lower_to_any_of_condition() {
     );
 
     sim_assert_eq!(have: schema, want: serde_json::json!({
-        "$defs": {
+        "definitions": {
             "helm-condition-0": {"anyOf": [
                 {"properties": {"feature": {
-                    "properties": {"enabled": {"$ref": "#/$defs/t"}},
+                    "properties": {"enabled": {"$ref": "#/definitions/t"}},
                     "required": ["enabled"], "type": "object"
                 }}, "required": ["feature"], "type": "object"},
                 {"properties": {"global": {
-                    "properties": {"featureEnabled": {"$ref": "#/$defs/t"}},
+                    "properties": {"featureEnabled": {"$ref": "#/definitions/t"}},
                     "required": ["featureEnabled"], "type": "object"
                 }}, "required": ["global"], "type": "object"}
             ]}, "t": {"anyOf": [
@@ -600,7 +600,7 @@ fn or_boolean_guards_lower_to_any_of_condition() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [{
-            "if": {"$ref": "#/$defs/helm-condition-0"},
+            "if": {"$ref": "#/definitions/helm-condition-0"},
             "then": {"additionalProperties": {}, "properties": {
                 "feature": {"additionalProperties": {}, "properties": {"host": {"type": "string"}}}
             }}

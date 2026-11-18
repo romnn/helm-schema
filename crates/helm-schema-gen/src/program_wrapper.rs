@@ -31,7 +31,7 @@ use crate::resolve_policy::{
 
 /// The schema edge a wrapped node hangs from, which is the wrapper engine's
 /// parent collection kind: spread results must be slices at item edges and
-/// maps at member edges. Shared `$defs` payloads are reachable from either
+/// maps at member edges. Shared definition bodies are reachable from either
 /// edge kind, so only edge-independent rules apply there.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum WrapperEdge {
@@ -64,7 +64,7 @@ pub(crate) fn apply_program_wrapper_alternatives(
     // engine substitutes it, so its exact property path skips the wrapper
     // alternative (nats' `nameOverride` through `fullname | trunc`). The
     // exclusion applies along literal property chains only — nodes reached
-    // through `additionalProperties`, `items`, or shared `$defs` have no
+    // through `additionalProperties`, `items`, or shared definitions have no
     // stable path and keep their alternatives.
     let excluded: BTreeSet<Vec<String>> = exclusions
         .iter()
@@ -95,8 +95,8 @@ pub(crate) fn apply_program_wrapper_alternatives(
 /// The engine's recursion starts at the values document itself, so the
 /// ROOT may be a singleton REPLACE wrapper (`{"$tplYaml": program}`; the
 /// spread form is rejected separately). Union the root's own value domain
-/// with the wrapper alternative, leaving `$schema`/`$defs` and the
-/// conditional `allOf` arms as top-level conjuncts — they constrain the
+/// with the wrapper alternative, leaving the dialect declaration, definitions
+/// and conditional `allOf` arms as top-level conjuncts — they constrain the
 /// REWRITTEN tree, and `scope_conditional_arms_to_non_wrappers` makes each
 /// arm's condition vacuous for the raw singleton form.
 /// Children were already wrapped by `rewrite_document`, so no recursion.
@@ -172,7 +172,7 @@ fn rewrite_document(root: &mut Value, keys: &[(&str, bool)], excluded: &BTreeSet
                     }
                 }
             }
-            "$defs" => {
+            keyword if keyword == helm_schema_json_schema_walk::GENERATED_DEFINITIONS.as_str() => {
                 if let Some(definitions) = child.as_object_mut() {
                     for (name, definition) in definitions.iter_mut() {
                         if name == crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME

@@ -1,9 +1,634 @@
 {
-  "$defs": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1knative.enabled:t"
+        },
+        "then": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+          },
+          "then": false
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ollama": {
+            "additionalProperties": {},
+            "description": "Ollama parameters",
+            "properties": {
+              "gpu": {
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "description": "Enable GPU integration",
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1knative.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "else": true,
+                "if": {
+                  "properties": {
+                    "ollama": {
+                      "properties": {
+                        "gpu": {
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "gpu"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
+            },
+            "then": false
+          }
+        }
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ollama": {}
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ollama": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ollama"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override template",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1knative.enabled:t"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+              },
+              "then": false
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ollama": {
+                      "properties": {
+                        "gpu": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "gpu"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ollama": {
+                    "properties": {
+                      "gpu": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "gpu"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ollama"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ollama": {
+                      "properties": {
+                        "gpu": {
+                          "properties": {
+                            "type": {
+                              "$ref": "#/definitions/t"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "gpu"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ollama": {
+                    "properties": {
+                      "gpu": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "nvidia"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "gpu"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ollama"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1resources:t"
+          },
+          {
+            "properties": {
+              "resources": {
+                "properties": {
+                  "limits": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "limits"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "resources"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "resources": {
+            "additionalProperties": {},
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
+            "properties": {
+              "limits": {
+                "description": "Pod limit\nMemory limit\nmemory: 8192Mi",
+                "type": [
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ollama": {
+                      "properties": {
+                        "gpu": {}
+                      },
+                      "required": [
+                        "gpu"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ollama": {
+                    "properties": {
+                      "gpu": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "gpu"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ollama"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "knative": {}
+              },
+              "required": [
+                "knative"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "knative": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "knative"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1resources:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "resources": {
+            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1knative.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "properties": {
+              "nameOverride": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
+          },
+          "then": true
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override template  (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1knative.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ollama": {
+                "description": "Ollama parameters",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "description": "Service account\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "description": "Docker image",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ollama": {
+                "additionalProperties": {},
+                "description": "Ollama parameters",
+                "properties": {
+                  "gpu": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -14,7 +639,7 @@
     "constrains/knative.enabled:t": {
       "properties": {
         "knative": {
-          "$ref": "#/$defs/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
@@ -27,7 +652,7 @@
         "ollama": {
           "properties": {
             "gpu": {
-              "$ref": "#/$defs/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t"
             }
           },
           "required": [
@@ -101,80 +726,15 @@
         }
       ]
     },
-    "constrains/ollama.gpu.type:t": {
-      "not": {
-        "properties": {
-          "ollama": {
-            "properties": {
-              "gpu": {
-                "properties": {
-                  "type": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "gpu"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ollama"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/ollama.gpu.type:t+ollama.gpu.type=nvidia": {
-      "anyOf": [
-        {
-          "properties": {
-            "ollama": {
-              "properties": {
-                "gpu": {
-                  "properties": {
-                    "type": {
-                      "enum": [
-                        "nvidia"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "gpu"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ollama"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ollama.gpu.type:t"
-        }
-      ]
-    },
     "constrains/resources:t": {
       "properties": {
         "resources": {
           "anyOf": [
             {
-              "$ref": "#/$defs/t"
+              "type": "object"
             },
             {
-              "type": "object"
+              "$ref": "#/definitions/t"
             }
           ]
         }
@@ -208,613 +768,8 @@
           "const": true
         }
       ]
-    },
-    "when/fullnameOverride:t/then/knative.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/knative.enabled:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": true
-    },
-    "when/knative.enabled:t/then/nameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/knative.enabled:t/then/ollama+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
-      }
-    },
-    "when/knative.enabled:t/then/ollama.gpu/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1any"
-      }
-    },
-    "when/knative.enabled:t/then/ollama.gpu/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.enabled:t~1then~1fail~1else~1any@2"
-      }
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/fail/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.enabled:t/then/ollama.gpu+ollama.gpu.type+ollama.gpu.type=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1ollama.gpu.type@2"
-      }
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/ollama.gpu.type": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.type~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/ollama.gpu.type@2": {
-      "else": {
-        "$ref": "#/$defs/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1ollama.gpu.type"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-      },
-      "then": false
-    },
-    "when/ollama.gpu.type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "properties": {
-          "ollama": {
-            "properties": {
-              "gpu": {
-                "properties": {
-                  "type": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "gpu"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ollama"
-        ],
-        "type": "object"
-      },
-      "then": false
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1ollama+ollama.gpu+ollama.gpu.type+ollama.gpu.type=null~1else~1fail"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1resources:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ollama.gpu.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1ollama.gpu.type:t+ollama.gpu.type=nvidia"
-          },
-          {
-            "properties": {
-              "resources": {
-                "properties": {
-                  "limits": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "limits"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "resources"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "resources": {
-            "additionalProperties": {},
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
-            "properties": {
-              "limits": {
-                "description": "Pod limit\nMemory limit\nmemory: 8192Mi",
-                "type": [
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1knative.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ollama": {
-                "description": "Ollama parameters",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "description": "Service account\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "description": "Docker image",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ollama": {
-                "additionalProperties": {},
-                "description": "Ollama parameters",
-                "properties": {
-                  "gpu": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1resources:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "resources": {
-            "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ollama": {
-                      "properties": {
-                        "gpu": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "gpu"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ollama": {
-                    "properties": {
-                      "gpu": {
-                        "properties": {
-                          "enabled": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "gpu"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/when~1knative.enabled:t~1then~1ollama.gpu~1else~1fail@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1knative.enabled:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override template",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ollama": {
-                      "properties": {
-                        "gpu": {}
-                      },
-                      "required": [
-                        "gpu"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ollama": {
-                    "properties": {
-                      "gpu": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "gpu"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1ollama.gpu~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ollama": {
-            "additionalProperties": {},
-            "description": "Ollama parameters",
-            "properties": {
-              "gpu": {
-                "additionalProperties": {},
-                "properties": {
-                  "enabled": {
-                    "description": "Enable GPU integration",
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ollama": {}
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ollama": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "knative": {}
-              },
-              "required": [
-                "knative"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "knative": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "knative"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1knative.enabled:t~1then~1nameOverride:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override template  (will maintain the release name)",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1knative.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
   "properties": {
     "affinity": {
       "description": "Affinity for pod assignment"

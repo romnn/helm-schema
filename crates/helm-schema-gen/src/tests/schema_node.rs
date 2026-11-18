@@ -112,7 +112,7 @@ fn parsed_representation_preserves_generated_schema_bytes() {
 
 #[test]
 fn schema_node_carries_generator_provenance_in_typed_keywords() -> eyre::Result<()> {
-    let truthy_reference = "#/$defs/t";
+    let truthy_reference = "#/definitions/t";
     let null_pattern = crate::resolve_policy::PLAIN_SCALAR_NULL_TOKEN_PATTERN;
     let schema = SchemaNode::from_value(json!({
         "anyOf": [

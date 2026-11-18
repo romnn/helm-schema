@@ -206,12 +206,12 @@ fn double_quoted_safe_definition() -> serde_json::Value {
                 "type": "string",
             },
             {
-                "items": { "$ref": "#/$defs/helm-double-quoted-safe" },
+                "items": { "$ref": "#/definitions/helm-double-quoted-safe" },
                 "type": "array",
             },
             {
                 "additionalProperties": {
-                    "$ref": "#/$defs/helm-double-quoted-safe",
+                    "$ref": "#/definitions/helm-double-quoted-safe",
                 },
                 "propertyNames": {
                     "pattern": r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#,
@@ -356,7 +356,7 @@ fn conditionally_rendered_quoted_tpl_clauses() -> serde_json::Value {
             "if": {
                 "not": {
                     "properties": {
-                        "volumes": { "$ref": "#/$defs/t" },
+                        "volumes": { "$ref": "#/definitions/t" },
                     },
                     "required": ["volumes"],
                     "type": "object",
@@ -369,7 +369,7 @@ fn conditionally_rendered_quoted_tpl_clauses() -> serde_json::Value {
                         "properties": {
                             "endpoint": {
                                 "anyOf": [
-                                    { "$ref": "#/$defs/helm-double-quoted-safe" },
+                                    { "$ref": "#/definitions/helm-double-quoted-safe" },
                                     { "pattern": r"\{\{", "type": "string" },
                                 ],
                             },
@@ -410,7 +410,7 @@ fn conditionally_rendered_quoted_tpl_clauses() -> serde_json::Value {
                     {
                         "not": {
                             "properties": {
-                                "volumes": { "$ref": "#/$defs/t" },
+                                "volumes": { "$ref": "#/definitions/t" },
                             },
                             "required": ["volumes"],
                             "type": "object",
@@ -443,7 +443,7 @@ fn conditionally_rendered_double_quoted_tpl_keeps_its_placement_language() {
         "}),
     );
     let expected = serde_json::json!({
-        "$defs": {
+        "definitions": {
             "helm-double-quoted-safe": double_quoted_safe_definition(),
             "t": {
                 "anyOf": [

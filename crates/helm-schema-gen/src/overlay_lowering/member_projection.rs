@@ -197,9 +197,6 @@ pub(super) fn append_omitted_member_arms(
                 continue;
             };
             let payload = fragment.schema();
-            let definitions = ["$defs", "definitions"]
-                .iter()
-                .find_map(|key| payload.get(*key).and_then(Value::as_object));
             let Some(properties) = payload.get("properties").and_then(Value::as_object) else {
                 continue;
             };
@@ -209,7 +206,7 @@ pub(super) fn append_omitted_member_arms(
                 }
                 let Some(member_schema) = properties
                     .get(member)
-                    .and_then(|schema| dereferenced_payload_subschema(schema, definitions, 8))
+                    .and_then(|schema| dereferenced_payload_subschema(schema, payload, 8))
                 else {
                     continue;
                 };
@@ -274,11 +271,6 @@ pub(super) fn append_merge_shadow_arms(
             };
             let fragment = provider_resolutions.fragment_for_use(provider_use);
             let payload = fragment.map(ProviderSchemaFragment::schema);
-            let definitions = payload.and_then(|payload| {
-                ["$defs", "definitions"]
-                    .iter()
-                    .find_map(|key| payload.get(*key).and_then(Value::as_object))
-            });
             let target_segments = value_path
                 .segments()
                 .map(helm_schema_core::Segment::encode_component)
@@ -294,9 +286,8 @@ pub(super) fn append_merge_shadow_arms(
             // provider fragment is unavailable still types through its
             // metadata field kind (keda's CRD annotations merge).
             let provider_whole = payload
-                .and_then(Value::as_object)
-                .map(|object| Value::Object(object.clone()))
-                .and_then(|value| dereferenced_payload_subschema(&value, definitions, 8))
+                .filter(|payload| payload.is_object())
+                .and_then(|payload| dereferenced_payload_subschema(payload, payload, 8))
                 .map(|mut whole| {
                     if let Some(object) = whole.as_object_mut() {
                         object.remove("$defs");
@@ -380,15 +371,15 @@ pub(super) fn append_merge_shadow_arms(
             if merge.position() == 0 {
                 continue;
             }
-            let Some(properties) = payload
-                .and_then(|payload| payload.get("properties"))
-                .and_then(Value::as_object)
-            else {
+            let Some(payload) = payload else {
+                continue;
+            };
+            let Some(properties) = payload.get("properties").and_then(Value::as_object) else {
                 continue;
             };
             for (member, member_schema) in properties {
                 let Some(mut member_schema) =
-                    dereferenced_payload_subschema(member_schema, definitions, 8)
+                    dereferenced_payload_subschema(member_schema, payload, 8)
                 else {
                     continue;
                 };
@@ -492,30 +483,25 @@ fn metadata_sink_schema(path: &[String]) -> Option<Value> {
 /// Replace payload-internal `$ref`s with their payload-level definitions so
 /// a property subschema stays self-contained when copied into an arm.
 /// Cyclic or unresolved references abstain via the depth bound.
-fn dereferenced_payload_subschema(
-    schema: &Value,
-    definitions: Option<&serde_json::Map<String, Value>>,
-    depth: u8,
-) -> Option<Value> {
+fn dereferenced_payload_subschema(schema: &Value, payload: &Value, depth: u8) -> Option<Value> {
     if depth == 0 {
         return None;
     }
     match schema {
         Value::Object(object) => {
             if let Some(reference) = object.get("$ref").and_then(Value::as_str) {
-                let pointer = helm_schema_json_schema_walk::local_reference_fragment(reference)?;
-                let token = pointer
-                    .strip_prefix("/$defs/")
-                    .or_else(|| pointer.strip_prefix("/definitions/"))?;
-                let name = helm_schema_json_schema_walk::unescape_json_pointer_segment(token);
-                let definition = definitions?.get(&name)?;
-                return dereferenced_payload_subschema(definition, definitions, depth - 1);
+                let parsed = helm_schema_json_schema_walk::parse_definition_reference(reference)?;
+                if !parsed.suffix.is_empty() {
+                    return None;
+                }
+                let definition = payload.get(parsed.keyword.as_str())?.get(&parsed.name)?;
+                return dereferenced_payload_subschema(definition, payload, depth - 1);
             }
             let mut out = serde_json::Map::new();
             for (key, value) in object {
                 out.insert(
                     key.clone(),
-                    dereferenced_payload_subschema(value, definitions, depth)?,
+                    dereferenced_payload_subschema(value, payload, depth)?,
                 );
             }
             Some(Value::Object(out))
@@ -523,7 +509,7 @@ fn dereferenced_payload_subschema(
         Value::Array(items) => Some(Value::Array(
             items
                 .iter()
-                .map(|item| dereferenced_payload_subschema(item, definitions, depth))
+                .map(|item| dereferenced_payload_subschema(item, payload, depth))
                 .collect::<Option<_>>()?,
         )),
         other => Some(other.clone()),

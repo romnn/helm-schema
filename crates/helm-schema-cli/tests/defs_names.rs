@@ -1,4 +1,4 @@
-//! Readable `$defs` names in committed schemas and explicit shortening with a name map.
+//! Readable `definitions` names in committed schemas and explicit shortening with a name map.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -45,7 +45,7 @@ fn read_json(path: &Path) -> eyre::Result<Value> {
 
 fn definition_names(schema: &Value) -> Vec<String> {
     schema
-        .get("$defs")
+        .get("definitions")
         .and_then(Value::as_object)
         .map(|definitions| definitions.keys().cloned().collect())
         .unwrap_or_default()
@@ -163,15 +163,15 @@ fn path_arg(path: &Path) -> eyre::Result<&str> {
 
 fn readable_schema(padding: usize) -> Value {
     json!({
-        "$defs": {
+        "definitions": {
             "values/web.securityContext": { "type": "object" },
             "k8s/io.k8s.api.core.v1.Probe": { "type": "object" }
         },
         "description": "x".repeat(padding),
         "properties": {
-            "web": { "properties": { "securityContext": { "$ref": "#/$defs/values~1web.securityContext" } } },
-            "probe": { "$ref": "#/$defs/k8s~1io.k8s.api.core.v1.Probe" },
-            "probe2": { "$ref": "#/$defs/k8s~1io.k8s.api.core.v1.Probe" }
+            "web": { "properties": { "securityContext": { "$ref": "#/definitions/values~1web.securityContext" } } },
+            "probe": { "$ref": "#/definitions/k8s~1io.k8s.api.core.v1.Probe" },
+            "probe2": { "$ref": "#/definitions/k8s~1io.k8s.api.core.v1.Probe" }
         },
         "type": "object"
     })

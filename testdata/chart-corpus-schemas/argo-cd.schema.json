@@ -1,19 +1,887 @@
 {
-  "$defs": {
-    "constrains/enabled": {
-      "properties": {
-        "enabled": {}
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1redis-ha.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1redis-ha.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "redis-ha": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis-ha"
+            ],
+            "type": "object"
+          }
+        ]
       },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "type": "object"
+          }
+        }
+      }
     },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1redis-ha.sentinel.existingSecret:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1redis-ha.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1redis-ha.sentinel.existingSecret:t"
+            },
+            "then": true
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "sentinel": {
+                "additionalProperties": {},
+                "description": "Sentinel specific configuration options",
+                "properties": {
+                  "existingSecret": {
+                    "description": "An existing secret containing a key defined by `sentinel.authKey` that configures `requirepass`\nin the conf parameters (Requires `sentinel.auth: enabled`, cannot be used in conjunction with `.Values.sentinel.password`)\nSupports templates like \"{{ .Release.Name }}-sentinel-creds\"",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.nameOverride:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1redis-ha.sentinel.existingSecret:t"
+              },
+              "then": false
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1redis-ha.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.nameOverride:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1any"
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "nameOverride": {
+                "description": "Name override for Redis HA resources",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1redis-ha.enabled+redis-ha.enabled=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis-ha"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis-ha.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "sentinel": {
+                "description": "Sentinel specific configuration options",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "server": {
+              "properties": {
+                "route": {
+                  "properties": {
+                    "annotations": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "annotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "route"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "server"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1server.route.enabled:t~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "server": {
+            "additionalProperties": {},
+            "description": "Server",
+            "properties": {
+              "route": {
+                "additionalProperties": {},
+                "description": "Create a OpenShift Route with SSL passthrough for UI and CLI\nConsider setting 'hostname' e.g. https://argocd.apps-crc.testing/ using your Default Ingress Controller Domain\nFind your domain with: kubectl describe --namespace=openshift-ingress-operator ingresscontroller/default | grep Domain:\nIf 'hostname' is an empty string \"\" OpenShift will create a hostname for you.",
+                "properties": {
+                  "annotations": {
+                    "description": "Openshift Route annotations",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "server": {
+                      "properties": {
+                        "route": {}
+                      },
+                      "required": [
+                        "route"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "server": {
+                    "properties": {
+                      "route": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "route"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1server+server=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1server.name:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1redis-ha.sentinel.existingSecret:t"
+            },
+            "then": false
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1redis-ha.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1any"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "extraLabels": {
+                "description": "Labels added here are applied to all created resources",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1server.route.enabled:t~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override `\"argo-cd.fullname\"`",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.fullnameOverride:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1redis-ha.sentinel.existingSecret:t"
+              },
+              "then": false
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1redis-ha.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1redis-ha.fullnameOverride:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1redis-ha.sentinel.auth:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1any"
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "description": "Full name of the Redis HA Resources",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1server+server=null"
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "redis-ha": {
+          "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "description": "Globally shared configuration",
+                "properties": {
+                  "image": {
+                    "description": "Default image used by all components",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "description": "Globally shared configuration",
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1server.route.enabled:t~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "Override the namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1server.route.enabled:t"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1server.name:t"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1server.route.enabled:t"
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "Provide a name in place of `argocd`",
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
     "constrains/enabled+enabled=null": {
       "anyOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1enabled"
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
           }
         },
         {
@@ -34,7 +902,7 @@
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -43,222 +911,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.name:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+server.name:t+1more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+namespaceOverride+3more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+namespaceOverride+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+server.route.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+server.route.enabled:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+namespaceOverride+2more"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t+nameOverride:t+namespaceOverride+namespaceOverride:t+1more"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+server.name:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.name:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+namespaceOverride+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+namespaceOverride+3more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1server.name:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+server.route.enabled:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+namespaceOverride+2more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+server.route.enabled:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+nameOverride:t+namespaceOverride+namespaceOverride:t+1more": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1nameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t@2": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -269,20 +921,36 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride@2"
+        "$ref": "#/definitions/constrains~1nameOverride@2"
       }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
-          "$ref": "#/$defs/t"
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -302,20 +970,6 @@
       "type": "object"
     },
     "constrains/namespaceOverride": {
-      "$ref": "#/$defs/constrains~1namespaceOverride@2"
-    },
-    "constrains/namespaceOverride:t": {
-      "properties": {
-        "namespaceOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride@2": {
       "not": {
         "properties": {
           "namespaceOverride": {
@@ -327,6 +981,17 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/namespaceOverride:t": {
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
     },
     "constrains/redis-ha": {
       "not": {
@@ -341,36 +1006,17 @@
         "type": "object"
       }
     },
-    "constrains/redis-ha+redis-ha.enabled+redis-ha.enabled:t+redis-ha.enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1redis-ha.enabled+redis-ha.enabled=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1redis-ha"
-        },
-        {
-          "$ref": "#/$defs/constrains~1redis-ha.enabled:t"
-        }
-      ]
-    },
-    "constrains/redis-ha+redis-ha.enabled+redis-ha.enabled=null": {
-      "$ref": "#/$defs/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/redis-ha+redis-ha.enabled+redis-ha.enabled=null@2": {
-      "$ref": "#/$defs/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/redis-ha+redis-ha.enabled+redis-ha.enabled=null@3": {
-      "$ref": "#/$defs/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
-    },
-    "constrains/redis-ha+redis-ha.enabled+redis-ha.enabled=null@4": {
-      "$ref": "#/$defs/when~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1then~1any~1else~1fail"
-    },
     "constrains/redis-ha.enabled": {
       "not": {
         "properties": {
           "redis-ha": {
-            "$ref": "#/$defs/constrains~1enabled"
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
           }
         },
         "required": [
@@ -384,7 +1030,7 @@
         "redis-ha": {
           "allOf": [
             {
-              "$ref": "#/$defs/constrains~1enabled+enabled=null"
+              "$ref": "#/definitions/constrains~1enabled+enabled=null"
             },
             {
               "type": "object"
@@ -400,7 +1046,7 @@
     "constrains/redis-ha.enabled:t": {
       "properties": {
         "redis-ha": {
-          "$ref": "#/$defs/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
@@ -411,7 +1057,7 @@
     "constrains/redis-ha.fullnameOverride:t": {
       "properties": {
         "redis-ha": {
-          "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         }
       },
       "required": [
@@ -422,7 +1068,7 @@
     "constrains/redis-ha.nameOverride:t": {
       "properties": {
         "redis-ha": {
-          "$ref": "#/$defs/constrains~1nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       },
       "required": [
@@ -433,7 +1079,7 @@
     "constrains/redis-ha.sentinel.auth:t": {
       "properties": {
         "redis-ha": {
-          "$ref": "#/$defs/constrains~1sentinel.auth:t"
+          "$ref": "#/definitions/constrains~1sentinel.auth:t"
         }
       },
       "required": [
@@ -442,44 +1088,13 @@
       "type": "object"
     },
     "constrains/redis-ha.sentinel.existingSecret:t": {
-      "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1any"
-    },
-    "constrains/redis-ha.sentinel.existingSecret:t@2": {
-      "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1any"
-    },
-    "constrains/redis-ha.sentinel.existingSecret:t@3": {
-      "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1any"
-    },
-    "constrains/redis-ha.sentinel.existingSecret:t@4": {
       "properties": {
         "redis-ha": {
-          "$ref": "#/$defs/constrains~1sentinel.existingSecret:t"
+          "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
         }
       },
       "required": [
         "redis-ha"
-      ],
-      "type": "object"
-    },
-    "constrains/route": {
-      "properties": {
-        "route": {}
-      },
-      "required": [
-        "route"
-      ],
-      "type": "object"
-    },
-    "constrains/route=null": {
-      "properties": {
-        "route": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "route"
       ],
       "type": "object"
     },
@@ -488,7 +1103,7 @@
         "sentinel": {
           "properties": {
             "auth": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -528,7 +1143,7 @@
         "sentinel": {
           "properties": {
             "existingSecret": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -571,16 +1186,11 @@
       ]
     },
     "constrains/server.name:t": {
-      "not": {
-        "$ref": "#/$defs/constrains~1server.name:t@2"
-      }
-    },
-    "constrains/server.name:t@2": {
       "properties": {
         "server": {
           "properties": {
             "name": {
-              "$ref": "#/$defs/t"
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -595,23 +1205,14 @@
       "type": "object"
     },
     "constrains/server.route.enabled:t": {
-      "$ref": "#/$defs/when~1server.route.enabled:t~1then~1any~1else~1fail"
+      "$ref": "#/definitions/when~1server.route.enabled:t~1then~1any~1else~1fail"
     },
     "constrains/server.route.enabled:t@2": {
-      "$ref": "#/$defs/when~1server.route.enabled:t~1then~1any~1else~1fail"
-    },
-    "constrains/server.route.enabled:t@3": {
-      "$ref": "#/$defs/when~1server.route.enabled:t~1then~1any~1else~1fail"
-    },
-    "constrains/server.route.enabled:t@4": {
-      "$ref": "#/$defs/when~1server.route.enabled:t~1then~1any~1else~1fail"
-    },
-    "constrains/server.route.enabled:t@5": {
       "properties": {
         "server": {
           "properties": {
             "route": {
-              "$ref": "#/$defs/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t"
             }
           },
           "required": [
@@ -650,268 +1251,26 @@
         }
       ]
     },
-    "when/fullnameOverride:t/then/nameOverride:t+server.name:t+server.route.enabled:t/else/any": {
-      "else": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1server.route.enabled:t~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1server.name:t+server.route.enabled:t~1else~1fail"
-      }
-    },
-    "when/fullnameOverride:t/then/server.route.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1server.route.enabled:t"
-      }
-    },
-    "when/nameOverride:t/then/server.name:t+server.route.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1server.name:t~1then~1server.route.enabled:t~1else~1fail"
-      }
-    },
-    "when/nameOverride:t/then/server.route.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1server.route.enabled:t@3"
-      }
-    },
-    "when/namespaceOverride:t/then/server.route.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1namespaceOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1server.route.enabled:t@2"
-      }
-    },
     "when/redis-ha+redis-ha.enabled+redis-ha.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1redis-ha.enabled+redis-ha.enabled=null"
+            "$ref": "#/definitions/constrains~1redis-ha.enabled+redis-ha.enabled=null"
           },
           {
-            "$ref": "#/$defs/constrains~1redis-ha"
+            "$ref": "#/definitions/constrains~1redis-ha"
           }
         ]
-      },
-      "then": true
-    },
-    "when/redis-ha.enabled:t/then/redis-ha.fullnameOverride:t+redis-ha.sentinel.auth:t+1more/else/redis-ha+redis-ha.enabled+redis-ha.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1redis-ha.fullnameOverride:t~1then~1redis-ha+redis-ha.enabled+redis-ha.enabled=null+redis-ha.sentinel.auth:t+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.fullnameOverride:t~1then~1redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t~1else~1fail"
-      }
-    },
-    "when/redis-ha.enabled:t/then/redis-ha.nameOverride:t+redis-ha.sentinel.auth:t+1more/else/redis-ha+redis-ha.enabled+redis-ha.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1redis-ha.nameOverride:t~1then~1redis-ha+redis-ha.enabled+redis-ha.enabled=null+redis-ha.sentinel.auth:t+1more~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.nameOverride:t~1then~1redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t~1else~1fail"
-      }
-    },
-    "when/redis-ha.enabled:t/then/redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t/else/redis-ha+redis-ha.enabled+redis-ha.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more~1else~1fail@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha.sentinel.existingSecret:t~1else~1fail@2"
-      }
-    },
-    "when/redis-ha.enabled:t/then/redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t/else/redis-ha+redis-ha.enabled+redis-ha.enabled=null@2": {
-      "else": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more~1else~1fail@3"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha.sentinel.existingSecret:t~1else~1fail@3"
-      }
-    },
-    "when/redis-ha.fullnameOverride:t/then/redis-ha+redis-ha.enabled+redis-ha.enabled=null+redis-ha.sentinel.auth:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more~1else~1fail@4"
-      }
-    },
-    "when/redis-ha.fullnameOverride:t/then/redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.fullnameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha.sentinel.existingSecret:t~1else~1fail"
-      }
-    },
-    "when/redis-ha.nameOverride:t/then/redis-ha+redis-ha.enabled+redis-ha.enabled=null+redis-ha.sentinel.auth:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more~1else~1fail"
-      }
-    },
-    "when/redis-ha.nameOverride:t/then/redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.nameOverride:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.auth:t~1then~1redis-ha.sentinel.existingSecret:t~1else~1fail@4"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1redis-ha+redis-ha.enabled+redis-ha.enabled=null"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1redis-ha+redis-ha.enabled+redis-ha.enabled=null@2"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1redis-ha+redis-ha.enabled+redis-ha.enabled=null~1else~1fail"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha+redis-ha.enabled+redis-ha.enabled=null+1more/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1fail~1else~1redis-ha+redis-ha.enabled+redis-ha.enabled=null@3"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha.sentinel.existingSecret:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha.sentinel.existingSecret:t/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@2"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha.sentinel.existingSecret:t/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1redis-ha.sentinel.existingSecret:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/redis-ha.sentinel.auth:t/then/redis-ha.sentinel.existingSecret:t/else/fail@4": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.auth:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@3"
-      }
-    },
-    "when/redis-ha.sentinel.existingSecret:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@4"
       },
       "then": true
     },
     "when/redis-ha.sentinel.existingSecret:t/then/fail/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@4"
+        "$ref": "#/definitions/constrains~1redis-ha.sentinel.existingSecret:t"
       },
       "then": false
-    },
-    "when/redis-ha.sentinel.existingSecret:t/then/fail/else/redis-ha+redis-ha.enabled+redis-ha.enabled=null": {
-      "else": {
-        "$ref": "#/$defs/constrains~1redis-ha+redis-ha.enabled+redis-ha.enabled=null"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@4"
-      },
-      "then": false
-    },
-    "when/redis-ha.sentinel.existingSecret:t/then/fail/else/redis-ha+redis-ha.enabled+redis-ha.enabled=null@2": {
-      "else": {
-        "$ref": "#/$defs/constrains~1redis-ha+redis-ha.enabled+redis-ha.enabled=null@2"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@4"
-      },
-      "then": false
-    },
-    "when/redis-ha.sentinel.existingSecret:t/then/fail/else/redis-ha+redis-ha.enabled+redis-ha.enabled=null@3": {
-      "else": {
-        "$ref": "#/$defs/constrains~1redis-ha+redis-ha.enabled+redis-ha.enabled=null@4"
-      },
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@4"
-      },
-      "then": false
-    },
-    "when/redis-ha.sentinel.existingSecret:t/then/redis-ha+redis-ha.enabled+redis-ha.enabled=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha.sentinel.existingSecret:t@4"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1redis-ha+redis-ha.enabled+redis-ha.enabled=null@3"
-      }
     },
     "when/sentinel.auth!=null+sentinel.existingSecret!=null/then/fail": {
       "if": {
@@ -966,529 +1325,14 @@
       },
       "then": false
     },
-    "when/server.name:t/then/server.route.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1server.name:t@2"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1server.route.enabled:t@3"
-      }
-    },
-    "when/server.route.annotations:t/then/server.route.enabled:t/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "server": {
-            "properties": {
-              "route": {
-                "properties": {
-                  "annotations": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "annotations"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "route"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "server"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1server.route.enabled:t@4"
-      }
-    },
     "when/server.route.enabled:t/then/any/else/fail": {
       "else": false,
       "if": {
-        "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
+        "$ref": "#/definitions/constrains~1server.route.enabled:t@2"
       },
       "then": true
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "$ref": "#/$defs/when~1server.route.annotations:t~1then~1server.route.enabled:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "server": {
-            "additionalProperties": {},
-            "description": "Server",
-            "properties": {
-              "route": {
-                "additionalProperties": {},
-                "description": "Create a OpenShift Route with SSL passthrough for UI and CLI\nConsider setting 'hostname' e.g. https://argocd.apps-crc.testing/ using your Default Ingress Controller Domain\nFind your domain with: kubectl describe --namespace=openshift-ingress-operator ingresscontroller/default | grep Domain:\nIf 'hostname' is an empty string \"\" OpenShift will create a hostname for you.",
-                "properties": {
-                  "annotations": {
-                    "description": "Openshift Route annotations",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "redis-ha": {
-                        "properties": {
-                          "enabled": {
-                            "not": {
-                              "enum": [
-                                true
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "redis-ha"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1redis-ha.enabled"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "redis-ha": {
-                        "properties": {
-                          "enabled": {
-                            "not": {
-                              "enum": [
-                                false
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "redis-ha"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1redis-ha.enabled"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "properties": {
-              "redis-ha": {
-                "properties": {
-                  "enabled": {
-                    "enum": [
-                      true
-                    ]
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "redis-ha"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "server": {
-                      "$ref": "#/$defs/constrains~1route"
-                    }
-                  },
-                  "required": [
-                    "server"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "server": {
-                    "$ref": "#/$defs/constrains~1route=null"
-                  }
-                },
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1server+server=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1redis-ha.enabled:t~1then~1redis-ha.fullnameOverride:t+redis-ha.sentinel.auth:t+1more~1else~1redis-ha+redis-ha.enabled+redis-ha.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "additionalProperties": {},
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "properties": {
-              "fullnameOverride": {
-                "description": "Full name of the Redis HA Resources",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1server+server=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1server.route.enabled:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override `\"argo-cd.fullname\"`",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "redis-ha": {
-          "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Globally shared configuration",
-                "properties": {
-                  "image": {
-                    "description": "Default image used by all components",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "description": "Globally shared configuration",
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1redis-ha.enabled:t~1then~1redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t~1else~1redis-ha+redis-ha.enabled+redis-ha.enabled=null@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "additionalProperties": {},
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "properties": {
-              "sentinel": {
-                "additionalProperties": {},
-                "description": "Sentinel specific configuration options",
-                "properties": {
-                  "existingSecret": {
-                    "description": "An existing secret containing a key defined by `sentinel.authKey` that configures `requirepass`\nin the conf parameters (Requires `sentinel.auth: enabled`, cannot be used in conjunction with `.Values.sentinel.password`)\nSupports templates like \"{{ .Release.Name }}-sentinel-creds\"",
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1redis-ha.enabled:t~1then~1redis-ha.nameOverride:t+redis-ha.sentinel.auth:t+1more~1else~1redis-ha+redis-ha.enabled+redis-ha.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "additionalProperties": {},
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "properties": {
-              "nameOverride": {
-                "description": "Name override for Redis HA resources",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1nameOverride:t+server.name:t+server.route.enabled:t~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "Provide a name in place of `argocd`",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1server.route.enabled:t@5"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1redis-ha+redis-ha.enabled+redis-ha.enabled:t+redis-ha.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "additionalProperties": {},
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "properties": {
-              "sentinel": {
-                "description": "Sentinel specific configuration options",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more@2"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1redis-ha.enabled:t~1then~1redis-ha.sentinel.auth:t+redis-ha.sentinel.existingSecret:t~1else~1redis-ha+redis-ha.enabled+redis-ha.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "additionalProperties": {},
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "properties": {
-              "extraLabels": {
-                "description": "Labels added here are applied to all created resources",
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1namespaceOverride:t~1then~1server.route.enabled:t~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "Override the namespace",
-            "type": "string"
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "apiVersionOverrides": {
       "description": "Override APIVersions\nIf you want to template helm charts but cannot access k8s API server\nyou can set api versions here"
@@ -1565,45 +1409,45 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1sentinel.existingSecret"
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled:t"
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret"
               },
               {
-                "$ref": "#/$defs/constrains~1sentinel.auth:t"
+                "$ref": "#/definitions/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1sentinel.existingSecret:t"
+                "$ref": "#/definitions/constrains~1sentinel.auth:t"
               }
             ]
           },
           "then": {
-            "$ref": "#/$defs/when~1sentinel.auth!=null+sentinel.existingSecret!=null~1then~1fail"
+            "$ref": "#/definitions/when~1sentinel.auth!=null+sentinel.existingSecret!=null~1then~1fail"
           }
         },
         {
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1sentinel.existingSecret"
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
               },
               {
-                "$ref": "#/$defs/constrains~1enabled+enabled=null"
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled=null"
               },
               {
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/constrains~1sentinel.auth:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1sentinel.existingSecret:t"
+                "$ref": "#/definitions/constrains~1sentinel.auth:t"
               }
             ]
           },
           "then": {
-            "$ref": "#/$defs/when~1sentinel.auth!=null+sentinel.existingSecret!=null~1then~1fail"
+            "$ref": "#/definitions/when~1sentinel.auth!=null+sentinel.existingSecret!=null~1then~1fail"
           }
         }
       ],
@@ -1651,11 +1495,27 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1route"
+                  "properties": {
+                    "route": {}
+                  },
+                  "required": [
+                    "route"
+                  ],
+                  "type": "object"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1route=null"
+                "properties": {
+                  "route": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "route"
+                ],
+                "type": "object"
               }
             ]
           },

@@ -197,7 +197,7 @@ fn write_generated_schema(
     Ok(())
 }
 
-/// `helm-schema shorten`: the explicit rename of a readable schema's `$defs`
+/// `helm-schema shorten`: the explicit rename of a readable schema's `definitions`
 /// to short keys, and the map back.
 fn shorten(args: &cli::ShortenArgs, diag_format: cli::DiagFormat) -> EngineResult<()> {
     let bytes = std::fs::read(&args.input).map_err(|source| CliError::ReadSchema {
@@ -250,7 +250,7 @@ fn write_schema_bytes(path: Option<&Path>, bytes: &[u8]) -> EngineResult<()> {
     Ok(())
 }
 
-/// Writes the map from each short `$defs` key to its readable name.
+/// Writes the map from each short `definitions` key to its readable name.
 fn write_definition_map(
     path: &Path,
     readable_names: &BTreeMap<String, String>,

@@ -1,227 +1,35 @@
 {
-  "$defs": {
-    "constrains/global.enabled:t": {
-      "properties": {
-        "global": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/syncWorkspace.enabled=-": {
-      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-    },
-    "constrains/syncWorkspace.enabled=-@2": {
-      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-    },
-    "constrains/syncWorkspace.enabled=-@3": {
-      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-    },
-    "constrains/syncWorkspace.enabled=-@4": {
-      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-    },
-    "constrains/syncWorkspace.enabled=-@5": {
-      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-    },
-    "constrains/syncWorkspace.enabled=-@6": {
-      "$ref": "#/$defs/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "when/CACerts:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "CACerts": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "CACerts"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/fullnameOverride:t/then/global.enabled:t+syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail@3"
-      }
-    },
-    "when/global.enabled:t/then/nameOverride:t+syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/when~1nameOverride:t~1then~1syncWorkspace.enabled=-~1else~1fail"
-      }
-    },
-    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@3"
-      }
-    },
-    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@4"
-      }
-    },
-    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail@3": {
-      "else": false,
-      "if": {
-        "$ref": "#/$defs/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@5"
-      }
-    },
-    "when/nameOverride:t/then/syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@6"
-      }
-    },
-    "when/syncWorkspace.enabled=-/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "syncWorkspace": {
-            "properties": {
-              "enabled": {
-                "enum": [
-                  "-"
-                ]
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "syncWorkspace"
-        ],
-        "type": "object"
-      },
-      "then": true
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-@2"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1global.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "properties": {
+              "nameOverride": {
+                "$ref": "#/definitions/t"
               }
-            ]
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
           }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1fullnameOverride:t~1then~1global.enabled:t+syncWorkspace.enabled=-~1else~1fail"
+        }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
+          "nameOverride": {
             "type": "string"
           }
         }
@@ -229,21 +37,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1CACerts:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "CACerts": {
-            "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1syncWorkspace.enabled=-"
+        "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
       },
       "then": {
         "additionalProperties": {},
@@ -258,9 +52,6 @@
     {
       "if": {
         "allOf": [
-          {
-            "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
-          },
           {
             "anyOf": [
               {
@@ -304,10 +95,84 @@
                 }
               }
             ]
+          },
+          {
+            "$ref": "#/definitions/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "properties": {
+            "CACerts": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "CACerts"
+          ],
+          "type": "object"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "CACerts": {
+            "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1global.enabled:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "sensitiveVariables": {
+                    "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -344,7 +209,45 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
           },
           {
             "anyOf": [
@@ -396,57 +299,118 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1nameOverride:t+syncWorkspace.enabled=-~1else~1fail"
+        "else": false,
+        "if": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1global.enabled:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+          }
+        }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
+          "fullnameOverride": {
             "type": "string"
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail@2"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "syncWorkspace": {
-                "additionalProperties": {},
-                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
-                "properties": {
-                  "terraformRC": {
-                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "syncWorkspace": {
-                "additionalProperties": {},
-                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
-                "properties": {
-                  "sensitiveVariables": {
-                    "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
     }
   ],
+  "definitions": {
+    "constrains/global.enabled:t": {
+      "properties": {
+        "global": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1global.enabled:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+      }
+    },
+    "when/syncWorkspace.enabled=-/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "properties": {
+          "syncWorkspace": {
+            "properties": {
+              "enabled": {
+                "enum": [
+                  "-"
+                ]
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "syncWorkspace"
+        ],
+        "type": "object"
+      },
+      "then": true
+    }
+  },
   "properties": {
     "CACerts": {
       "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem"

@@ -206,7 +206,7 @@ fn raw_lint_does_not_inherit_a_deleted_dependency_abort() -> eyre::Result<()> {
         &values,
         &values,
     )?;
-    want["$defs"]["helm-condition-0"] = json!({"not": {
+    want["definitions"]["helm-condition-0"] = json!({"not": {
         "properties": {"redis": {"type": "object"}},
         "required": ["redis"], "type": "object"
     }});
@@ -214,7 +214,7 @@ fn raw_lint_does_not_inherit_a_deleted_dependency_abort() -> eyre::Result<()> {
         .as_array_mut()
         .ok_or_eyre("expected dependency table assertion")?
         .push(json!({
-            "if": {"$ref": "#/$defs/helm-condition-0"},
+            "if": {"$ref": "#/definitions/helm-condition-0"},
             "then": {
                 "if": {
                     "properties": {"redis": {"not": {"enum": [null]}}},

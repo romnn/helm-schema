@@ -30,7 +30,7 @@ fn negative_literal_output_does_not_trim_the_preceding_text() {
     sim_assert_eq!(
         have: schema,
         want: serde_json::json!({
-            "$defs": {
+            "definitions": {
                 "t": {
                     "anyOf": [
                         { "const": true },
@@ -46,7 +46,7 @@ fn negative_literal_output_does_not_trim_the_preceding_text() {
             "allOf": [
                 {
                     "if": {
-                        "properties": { "flag": { "$ref": "#/$defs/t" } },
+                        "properties": { "flag": { "$ref": "#/definitions/t" } },
                         "required": ["flag"],
                         "type": "object",
                     },

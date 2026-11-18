@@ -34,14 +34,14 @@ use std::rc::Rc;
 use ahash::{AHashMap, AHashSet};
 
 use helm_schema_json_schema_walk::{
-    DefinitionReference, ReferenceSiblings, SchemaTraversalContext, canonical_json_string,
-    definition_reference, local_reference_fragment, parse_definition_reference,
+    DefinitionReference, DefinitionsKeyword, ReferenceSiblings, SchemaTraversalContext,
+    canonical_json_string, local_reference_fragment, parse_definition_reference,
     schema_child_context_for_keyword, unescape_json_pointer_segment, visit_subschemas,
     visit_subschemas_mut,
 };
 use serde_json::{Map, Value};
 
-use crate::{DEFINITIONS_KEY, base62, is_nested_resource};
+use crate::{base62, is_nested_resource};
 
 /// Keywords whose identifiers or dynamic resolution the short rename does
 /// not model; a document using any of them keeps its names.
@@ -55,7 +55,7 @@ const UNMODELLED_REFERENCE_KEYWORDS: [&str; 7] = [
     "$recursiveRef",
 ];
 
-/// Source document of every position outside the root `$defs`: the values
+/// Source document of every position outside the root definitions: the values
 /// schema itself.
 const ROOT_DOCUMENT: &str = "values";
 
@@ -103,12 +103,12 @@ pub fn name_definitions(
     anonymous: &BTreeMap<String, Vec<DefinitionOrigin>>,
     policy: DefinitionNames,
 ) {
-    let Some(definitions) = schema.get(DEFINITIONS_KEY).and_then(Value::as_object) else {
+    let Some(definitions) = RootDefinitions::read(schema) else {
         return;
     };
     let mut present = BTreeMap::new();
     for (handle, origins) in anonymous {
-        if definitions.contains_key(handle) {
+        if definitions.bodies.contains_key(handle) {
             present.insert(handle.clone(), origins.as_slice());
         }
     }
@@ -125,10 +125,10 @@ pub fn name_definitions(
             renames.insert(handle, name);
         }
     }
-    rename_definitions(schema, &renames);
+    rename_in_container(schema, definitions.keyword, &renames);
 }
 
-/// Renames every root definition to a short base-62 key.
+/// Renames root definitions to short base-62 keys.
 ///
 /// The most referenced definition receives the shortest key.
 /// Nothing is renamed, and the map is empty, unless every reference is a plain
@@ -153,30 +153,38 @@ pub fn shorten_definition_names(schema: &Value) -> ShortenedSchema {
     }
 }
 
-/// Replaces every short definition key in a root definition reference
-/// `#/$defs/<key>` in `text` with its readable name, spelled as in a `$ref`
-/// (see [`definition_reference`]).
+/// Expands short keys in diagnostic pointers into the renamed container.
 ///
-/// Error messages from Helm and JSON Schema validators locate schema
-/// positions as pointers, such as `file:///values.schema.json#/$defs/2b`.
-/// The key is the complete reference token after `#/$defs/`, which ends at
-/// `/`, a quote, whitespace, a control byte or the end of `text`; it is
-/// translated only when the whole token is a key of `readable_names`, so key
-/// `1` leaves `#/$defs/1+x` or `#/$defs/1~0x` alone. A pointer below a
-/// definition, such as `#/$defs/1/properties/a`, keeps its suffix. Every
-/// other byte, including invalid UTF-8, is kept as is.
+/// Helm reports both URI fragments and quoted JSON Pointer locations.
+/// A key must end at a slash, quote, whitespace, control byte or the end of
+/// the text. The pointer suffix and all other bytes are preserved.
 #[must_use]
 pub fn expand_short_definition_names(
     text: &[u8],
+    keyword: DefinitionsKeyword,
     readable_names: &BTreeMap<String, String>,
 ) -> Vec<u8> {
-    let marker = format!("#/{DEFINITIONS_KEY}/");
-    let marker = marker.as_bytes();
+    let prefix = keyword.reference("");
+    let marker = prefix.trim_start_matches('#').as_bytes();
     let mut expanded = Vec::with_capacity(text.len());
     let mut rest = text;
-    while let Some(start) = rest
-        .windows(marker.len())
-        .position(|window| window == marker)
+    let mut consumed = 0;
+    while let Some((start, fragment)) =
+        rest.windows(marker.len())
+            .enumerate()
+            .find_map(|(start, window)| {
+                if window != marker {
+                    return None;
+                }
+                match (consumed + start)
+                    .checked_sub(1)
+                    .and_then(|previous| text.get(previous))
+                {
+                    Some(b'#') => Some((start, true)),
+                    None | Some(b'\'' | b'"' | b'`') => Some((start, false)),
+                    _ => None,
+                }
+            })
     {
         let (before, after) = rest.split_at(start + marker.len());
         expanded.extend_from_slice(before);
@@ -192,21 +200,27 @@ pub fn expand_short_definition_names(
             .and_then(|key| readable_names.get(key));
         match readable {
             Some(readable) => {
-                expanded.extend_from_slice(definition_pointer_token(readable).as_bytes());
+                let token = if fragment {
+                    definition_pointer_token(keyword, readable)
+                } else {
+                    helm_schema_json_schema_walk::escape_json_pointer_segment(readable)
+                };
+                expanded.extend_from_slice(token.as_bytes());
             }
             None => expanded.extend_from_slice(key),
         }
+        consumed += before.len() + key_len;
         rest = remainder;
     }
     expanded.extend_from_slice(rest);
     expanded
 }
 
-/// `name` as the token after `#/$defs/` in its `$ref`.
-fn definition_pointer_token(name: &str) -> String {
-    let reference = definition_reference(name);
+/// `name` escaped as a definition pointer token.
+fn definition_pointer_token(keyword: DefinitionsKeyword, name: &str) -> String {
+    let reference = keyword.reference(name);
     reference
-        .get(definition_reference("").len()..)
+        .get(keyword.reference("").len()..)
         .unwrap_or_default()
         .to_string()
 }
@@ -219,10 +233,20 @@ fn definition_pointer_token(name: &str) -> String {
 /// A reference keeps its pointer suffix below the renamed definition.
 #[tracing::instrument(skip_all, fields(renames = renames.len()))]
 pub fn rename_definitions(schema: &mut Value, renames: &BTreeMap<String, String>) {
+    if let Some(keyword) = DefinitionsKeyword::existing_in(schema) {
+        rename_in_container(schema, keyword, renames);
+    }
+}
+
+fn rename_in_container(
+    schema: &mut Value,
+    keyword: DefinitionsKeyword,
+    renames: &BTreeMap<String, String>,
+) {
     if renames.is_empty() {
         return;
     }
-    if let Some(Value::Object(definitions)) = schema.get_mut(DEFINITIONS_KEY) {
+    if let Some(Value::Object(definitions)) = schema.get_mut(keyword.as_str()) {
         let mut rekeyed = Map::new();
         for (name, body) in std::mem::take(definitions) {
             let name = renames.get(&name).cloned().unwrap_or(name);
@@ -230,7 +254,7 @@ pub fn rename_definitions(schema: &mut Value, renames: &BTreeMap<String, String>
         }
         *definitions = rekeyed;
     }
-    rewrite_definition_references(schema, renames);
+    rewrite_definition_references(schema, keyword, renames);
 }
 
 /// Source names: a recorded origin; else the smallest stable source path of
@@ -250,12 +274,12 @@ pub fn rename_definitions(schema: &mut Value, renames: &BTreeMap<String, String>
 #[tracing::instrument(skip_all)]
 fn source_names(
     schema: &Value,
-    definitions: &Map<String, Value>,
+    definitions: RootDefinitions<'_>,
     anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
 ) -> BTreeMap<String, String> {
     let mut taken = TakenNames::default();
     let mut names = BTreeMap::new();
-    for name in definitions.keys() {
+    for name in definitions.bodies.keys() {
         if !anonymous.contains_key(name) {
             taken.insert(name.clone());
             names.insert(name.clone(), name.clone());
@@ -308,7 +332,7 @@ fn source_names(
         let (stable, ancestor) = position_names(sites, &names, &by_meaning);
         if let Some(name) = stable {
             names.insert(handle.to_string(), taken.unique(name));
-        } else if let Some(body) = definitions.get(handle) {
+        } else if let Some(body) = definitions.bodies.get(handle) {
             let (meaning, ancestor) =
                 if let Some(meaning) = meaning_name(handle, body, &mut program) {
                     (meaning.clone(), meaning)
@@ -335,7 +359,7 @@ fn source_names(
     for (meaning, mut handles) in meanings {
         if handles.len() > 1 {
             handles.sort_by_cached_key(|handle| {
-                let mut body = definitions.get(*handle).cloned().unwrap_or_default();
+                let mut body = definitions.bodies.get(*handle).cloned().unwrap_or_default();
                 erase_anonymous_references(&mut body, &index);
                 (canonical_json_string(&body), *handle)
             });
@@ -358,11 +382,11 @@ fn source_names(
 #[tracing::instrument(skip_all)]
 fn references_by_target<'a>(
     schema: &'a Value,
-    definitions: &'a Map<String, Value>,
+    definitions: RootDefinitions<'a>,
 ) -> BTreeMap<&'a str, Vec<(Option<&'a str>, Site<'a>)>> {
     let mut references = BTreeMap::<&str, Vec<(Option<&str>, Site<'_>)>>::new();
     let mut containers = vec![(None, schema)];
-    for (name, body) in definitions {
+    for (name, body) in definitions.bodies {
         containers.push((Some(name.as_str()), body));
     }
     for (container, body) in containers {
@@ -445,9 +469,10 @@ fn position_names(
 fn erase_anonymous_references(schema: &mut Value, index: &DefinitionIndex<'_>) {
     if let Some(Value::String(reference)) = schema.get_mut("$ref")
         && let Some(parsed) = parse_definition_reference(reference)
+        && parsed.keyword == index.keyword
         && index.anonymous.contains(parsed.name.as_str())
     {
-        *reference = definition_reference("");
+        *reference = parsed.keyword.reference("");
     }
     visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |child| {
         erase_anonymous_references(child, index);
@@ -520,6 +545,7 @@ fn leaf_name(schema: &Value, index: &DefinitionIndex<'_>, depth: usize) -> Strin
     };
     if let Some(reference) = object.get("$ref").and_then(Value::as_str)
         && let Some(parsed) = parse_definition_reference(reference)
+        && parsed.keyword == index.keyword
         && parsed.suffix.is_empty()
         && let Some(&(_, body)) = index.bodies.get(parsed.name.as_str())
     {
@@ -616,9 +642,24 @@ fn cut_name(name: &str) -> String {
     format!("{cut}...")
 }
 
+#[derive(Clone, Copy)]
+struct RootDefinitions<'a> {
+    keyword: DefinitionsKeyword,
+    bodies: &'a Map<String, Value>,
+}
+
+impl<'a> RootDefinitions<'a> {
+    fn read(schema: &'a Value) -> Option<Self> {
+        let keyword = DefinitionsKeyword::existing_in(schema)?;
+        let bodies = schema.get(keyword.as_str())?.as_object()?;
+        Some(Self { keyword, bodies })
+    }
+}
+
 /// Root definitions by name, and the anonymous ones among them, for the
 /// lookups every naming walk repeats.
 struct DefinitionIndex<'a> {
+    keyword: DefinitionsKeyword,
     bodies: AHashMap<&'a str, (&'a str, &'a Value)>,
     anonymous: AHashSet<&'a str>,
     /// The root definition each distinct `$ref` text names, if any.
@@ -627,11 +668,13 @@ struct DefinitionIndex<'a> {
 
 impl<'a> DefinitionIndex<'a> {
     fn new(
-        definitions: &'a Map<String, Value>,
+        definitions: RootDefinitions<'a>,
         anonymous: &'a BTreeMap<String, &[DefinitionOrigin]>,
     ) -> Self {
         Self {
+            keyword: definitions.keyword,
             bodies: definitions
+                .bodies
                 .iter()
                 .map(|(name, body)| (name.as_str(), (name.as_str(), body)))
                 .collect(),
@@ -646,7 +689,7 @@ impl<'a> DefinitionIndex<'a> {
             return *target;
         }
         let target = parse_definition_reference(reference)
-            .filter(|parsed| parsed.suffix.is_empty())
+            .filter(|parsed| parsed.keyword == self.keyword && parsed.suffix.is_empty())
             .and_then(|parsed| self.bodies.get(parsed.name.as_str()).copied());
         self.references.borrow_mut().insert(reference, target);
         target
@@ -1227,11 +1270,11 @@ fn render_values(values: &[Value]) -> String {
 /// definition once, in the order it is first reached.
 fn destination_names(
     schema: &Value,
-    definitions: &Map<String, Value>,
+    definitions: RootDefinitions<'_>,
     anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
 ) -> BTreeMap<String, String> {
     let mut taken = TakenNames::default();
-    for name in definitions.keys() {
+    for name in definitions.bodies.keys() {
         if !anonymous.contains_key(name) {
             taken.insert(name.clone());
         }
@@ -1241,7 +1284,7 @@ fn destination_names(
     let mut queue = VecDeque::new();
     let mut roots = vec![(None, schema)];
     // Unreached definitions are traversed afterwards, as roots of their own.
-    for (name, body) in definitions {
+    for (name, body) in definitions.bodies {
         roots.push((Some(name.as_str()), body));
     }
     for (root, body) in roots {
@@ -1285,7 +1328,7 @@ fn destination_names(
                     target.to_string()
                 };
                 names.insert(target.to_string(), name);
-                if let Some(target_body) = definitions.get(target) {
+                if let Some(target_body) = definitions.bodies.get(target) {
                     queue.push_back((Some(target), target_body));
                 }
             }
@@ -1310,10 +1353,10 @@ struct Site<'a> {
 /// Collects every plain reference to a root definition below `schema`, in
 /// canonical order: object keys sorted, array items in order.
 ///
-/// The root `$defs` of the document is skipped when `is_document_root`.
+/// The root definitions container being named is skipped when `is_document_root`.
 fn collect_references<'a>(
     schema: &Value,
-    definitions: &'a Map<String, Value>,
+    definitions: RootDefinitions<'a>,
     is_document_root: bool,
     steps: &mut String,
     first_index: Option<usize>,
@@ -1324,8 +1367,9 @@ fn collect_references<'a>(
     };
     if let Some(reference) = object.get("$ref").and_then(Value::as_str)
         && let Some(parsed) = parse_definition_reference(reference)
+        && parsed.keyword == definitions.keyword
         && parsed.suffix.is_empty()
-        && let Some((target, _)) = definitions.get_key_value(&parsed.name)
+        && let Some((target, _)) = definitions.bodies.get_key_value(&parsed.name)
     {
         sites.push(Site {
             steps: steps.clone(),
@@ -1336,7 +1380,7 @@ fn collect_references<'a>(
     let mut keys = object.keys().collect::<Vec<_>>();
     keys.sort_unstable();
     for key in keys {
-        if is_document_root && key == DEFINITIONS_KEY {
+        if is_document_root && key == definitions.keyword.as_str() {
             continue;
         }
         let Some(value) = object.get(key) else {
@@ -1384,7 +1428,7 @@ fn collect_references<'a>(
 
 fn collect_child<'a>(
     schema: &Value,
-    definitions: &'a Map<String, Value>,
+    definitions: RootDefinitions<'a>,
     steps: &mut String,
     first_index: Option<usize>,
     sites: &mut Vec<Site<'a>>,
@@ -1433,9 +1477,11 @@ fn origin_name(origin: &DefinitionOrigin) -> String {
         encode_document(&origin.document)
     );
     if segments.len() >= 2
-        && segments
-            .front()
-            .is_some_and(|keyword| keyword == "definitions" || keyword == DEFINITIONS_KEY)
+        && segments.front().is_some_and(|keyword| {
+            DefinitionsKeyword::ALL
+                .iter()
+                .any(|container| keyword == container.as_str())
+        })
     {
         segments.pop_front();
         if let Some(type_name) = segments.pop_front() {
@@ -1574,7 +1620,7 @@ impl TakenNames {
 /// Short base-62 names for every root definition, most referenced first;
 /// empty when a reference cannot be rewritten faithfully.
 fn short_definition_names(schema: &Value) -> BTreeMap<String, String> {
-    let Some(definitions) = schema.get(DEFINITIONS_KEY).and_then(Value::as_object) else {
+    let Some(definitions) = RootDefinitions::read(schema) else {
         return BTreeMap::new();
     };
     if crate::protected_reference_targets(schema).is_none()
@@ -1583,10 +1629,11 @@ fn short_definition_names(schema: &Value) -> BTreeMap<String, String> {
         return BTreeMap::new();
     }
     let mut counts = definitions
+        .bodies
         .keys()
         .map(|name| (name.clone(), 0usize))
         .collect::<BTreeMap<_, _>>();
-    if !count_definition_references(schema, &mut counts) {
+    if !count_definition_references(schema, definitions.keyword, &mut counts) {
         return BTreeMap::new();
     }
     let mut ranked = counts.into_iter().collect::<Vec<_>>();
@@ -1602,12 +1649,18 @@ fn short_definition_names(schema: &Value) -> BTreeMap<String, String> {
     names
 }
 
-fn rewrite_definition_references(schema: &mut Value, renames: &BTreeMap<String, String>) {
+fn rewrite_definition_references(
+    schema: &mut Value,
+    keyword: DefinitionsKeyword,
+    renames: &BTreeMap<String, String>,
+) {
     if let Some(Value::String(reference)) = schema.get_mut("$ref")
         && let Some(parsed) = parse_definition_reference(reference)
+        && parsed.keyword == keyword
         && let Some(renamed) = renames.get(&parsed.name)
     {
         *reference = DefinitionReference {
+            keyword,
             name: renamed.clone(),
             suffix: parsed.suffix,
         }
@@ -1615,7 +1668,7 @@ fn rewrite_definition_references(schema: &mut Value, renames: &BTreeMap<String, 
     }
     visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |child| {
         if !is_nested_resource(child) {
-            rewrite_definition_references(child, renames);
+            rewrite_definition_references(child, keyword, renames);
         }
     });
 }
@@ -1637,7 +1690,11 @@ fn uses_unmodelled_references(schema: &Value, is_root: bool) -> bool {
 
 /// Counts references per root definition; `false` when one is not a
 /// same-document JSON Pointer.
-fn count_definition_references(schema: &Value, counts: &mut BTreeMap<String, usize>) -> bool {
+fn count_definition_references(
+    schema: &Value,
+    keyword: DefinitionsKeyword,
+    counts: &mut BTreeMap<String, usize>,
+) -> bool {
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str) {
         let Some(fragment) = local_reference_fragment(reference) else {
             return false;
@@ -1646,6 +1703,7 @@ fn count_definition_references(schema: &Value, counts: &mut BTreeMap<String, usi
             return false;
         }
         if let Some(parsed) = parse_definition_reference(reference)
+            && parsed.keyword == keyword
             && let Some(count) = counts.get_mut(&parsed.name)
         {
             *count += 1;
@@ -1654,7 +1712,7 @@ fn count_definition_references(schema: &Value, counts: &mut BTreeMap<String, usi
     let mut faithful = true;
     visit_subschemas(schema, ReferenceSiblings::Visit, &mut |child| {
         if faithful && !is_nested_resource(child) {
-            faithful = count_definition_references(child, counts);
+            faithful = count_definition_references(child, keyword, counts);
         }
     });
     faithful

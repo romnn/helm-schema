@@ -25,10 +25,7 @@ fn unrelated_local_reference_does_not_block_root_logical_normalization() -> eyre
         "allOf": [{"allOf": [reference.clone()]}, reference.clone()]
     });
     let minimized = minimize(schema.clone());
-    let expected = json!({
-        "$defs": {"payload": payload()},
-        "allOf": [reference]
-    });
+    let expected = json!({"allOf": [payload()]});
     sim_assert_eq!(have: &minimized, want: &expected);
     equivalent_validation(&schema, &minimized, &[json!("abc"), json!("a"), json!(4)])
 }
@@ -81,7 +78,8 @@ fn existing_definition_children_are_shared() -> eyre::Result<()> {
             "left": {"title": "Left", "properties": {"item": repeated}},
             "right": {"title": "Right", "properties": {"item": repeated}}
         },
-        "allOf": [{"$ref": "#/$defs/left"}, {"$ref": "#/$defs/right"}]
+        "allOf": [{"$ref": "#/$defs/left"}, {"$ref": "#/$defs/right"}],
+        "properties": {"keepLeft": {"$ref": "#/$defs/left"}, "keepRight": {"$ref": "#/$defs/right"}}
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
@@ -90,7 +88,8 @@ fn existing_definition_children_are_shared() -> eyre::Result<()> {
             "left": {"title": "Left", "properties": {"item": {"$ref": "#/$defs/left.item"}}},
             "right": {"title": "Right", "properties": {"item": {"$ref": "#/$defs/left.item"}}}
         },
-        "allOf": [{"$ref": "#/$defs/left"}, {"$ref": "#/$defs/right"}]
+        "allOf": [{"$ref": "#/$defs/left"}, {"$ref": "#/$defs/right"}],
+        "properties": {"keepLeft": {"$ref": "#/$defs/left"}, "keepRight": {"$ref": "#/$defs/right"}}
     });
     sim_assert_eq!(have: &minimized, want: &expected);
     equivalent_validation(
@@ -259,12 +258,22 @@ fn complete_definition_bodies_share_while_original_names_remain() -> eyre::Resul
     let repeated = payload();
     let schema = json!({
         "$defs": {"left": repeated, "right": repeated},
-        "properties": {"left": {"$ref": "#/$defs/left"}, "right": {"$ref": "#/$defs/right"}}
+        "properties": {
+            "left": {"$ref": "#/$defs/left"},
+            "right": {"$ref": "#/$defs/right"},
+            "leftAgain": {"$ref": "#/$defs/left"},
+            "rightAgain": {"$ref": "#/$defs/right"}
+        }
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
         "$defs": {"left@ref": repeated, "left": {"$ref": "#/$defs/left@ref"}, "right": {"$ref": "#/$defs/left@ref"}},
-        "properties": {"left": {"$ref": "#/$defs/left"}, "right": {"$ref": "#/$defs/right"}}
+        "properties": {
+            "left": {"$ref": "#/$defs/left"},
+            "right": {"$ref": "#/$defs/right"},
+            "leftAgain": {"$ref": "#/$defs/left"},
+            "rightAgain": {"$ref": "#/$defs/right"}
+        }
     });
     sim_assert_eq!(have: &minimized, want: &expected);
     sim_assert_eq!(have: minimize(minimized.clone()), want: minimized.clone());

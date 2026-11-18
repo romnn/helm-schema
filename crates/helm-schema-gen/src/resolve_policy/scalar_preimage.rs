@@ -450,7 +450,7 @@ pub(super) fn scalar_string_preimage(
 
 pub(super) fn helm_falsy_schema() -> Value {
     SchemaNode::not(SchemaNode::reference(
-        helm_schema_json_schema_walk::definition_reference(HELM_TRUTHY_DEFINITION_NAME),
+        helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(HELM_TRUTHY_DEFINITION_NAME),
     ))
     .into_value()
 }
@@ -469,7 +469,7 @@ pub(crate) fn serialized_yaml_provider_preimage(schema: Value, templated: bool) 
     Value::Object(serde_json::Map::from_iter([(
         "anyOf".to_owned(),
         Value::Array(vec![
-            serde_json::json!({"not": {"$ref": helm_schema_json_schema_walk::definition_reference(name)}}),
+            serde_json::json!({"not": {"$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(name)}}),
             schema,
         ]),
     )]))
@@ -496,7 +496,7 @@ fn recursive_serialized_strings(
     name: &str,
     mut constraint: serde_json::Map<String, Value>,
 ) -> Value {
-    let reference = helm_schema_json_schema_walk::definition_reference(name);
+    let reference = helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(name);
     let property_names = Value::Object(constraint.clone());
     constraint.insert("type".to_owned(), serde_json::json!("string"));
     let string = Value::Object(constraint);
@@ -513,7 +513,7 @@ pub(crate) fn references_serialized_schema(schema: &Value, name: &str) -> bool {
         .get("$ref")
         .and_then(Value::as_str)
         .is_some_and(|reference| {
-            reference == helm_schema_json_schema_walk::definition_reference(name)
+            reference == helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(name)
         })
     {
         return true;

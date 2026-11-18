@@ -1,3 +1,4 @@
+use color_eyre::eyre;
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
@@ -5,6 +6,7 @@ use super::*;
 
 mod complete_deduplication;
 mod naming;
+mod single_use;
 
 /// Minimizes a schema that has no private definition handles.
 fn minimize(schema: Value) -> Value {
@@ -29,7 +31,7 @@ fn generated_reference_inlining_is_one_step_and_preserves_other_scopes() {
         ("2".to_string(), json!({"type": "string"})),
     ]);
 
-    inline_generated_references(&mut schema, &replacements);
+    inline_generated_references(&mut schema, &replacements, DefinitionsKeyword::Defs);
 
     // An inserted reference is not recursively substituted, and neither data
     // payloads nor a nested resource belong to the outer definition namespace.
@@ -84,7 +86,7 @@ fn repeated_property_schemas_move_to_defs() {
     sim_assert_eq!(
         have: result,
         want: json!({
-            "$defs": {
+            "definitions": {
                 "values/left": {
                     "type": "object",
                     "additionalProperties": false,
@@ -97,8 +99,8 @@ fn repeated_property_schemas_move_to_defs() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "type": "object",
             "properties": {
-                "left": { "$ref": "#/$defs/values~1left" },
-                "right": { "$ref": "#/$defs/values~1left" }
+                "left": { "$ref": "#/definitions/values~1left" },
+                "right": { "$ref": "#/definitions/values~1left" }
             }
         })
     );
@@ -143,10 +145,10 @@ fn non_schema_keyword_payloads_are_not_replaced() {
 }
 
 #[test]
-fn schemas_containing_refs_are_not_extracted() {
+fn references_outside_definition_containers_abstain_from_extraction() {
     let repeated = json!({
         "allOf": [
-            { "$ref": "#/definitions/base" },
+            { "$ref": "#/properties/base" },
             {
                 "type": "object",
                 "properties": {
@@ -157,10 +159,8 @@ fn schemas_containing_refs_are_not_extracted() {
     });
     let schema = json!({
         "type": "object",
-        "definitions": {
-            "base": { "type": "object" }
-        },
         "properties": {
+            "base": { "type": "object" },
             "left": repeated,
             "right": repeated
         }
@@ -171,30 +171,28 @@ fn schemas_containing_refs_are_not_extracted() {
         have: result,
         want: json!({
             "type": "object",
-            "definitions": {
-                "base": { "type": "object" }
-            },
             "properties": {
+                "base": { "type": "object" },
                 "left": {
                     "allOf": [
-                        { "$ref": "#/definitions/base" },
                         {
                             "type": "object",
                             "properties": {
                                 "name": { "type": "string" }
                             }
-                        }
+                        },
+                        { "$ref": "#/properties/base" }
                     ]
                 },
                 "right": {
                     "allOf": [
-                        { "$ref": "#/definitions/base" },
                         {
                             "type": "object",
                             "properties": {
                                 "name": { "type": "string" }
                             }
-                        }
+                        },
+                        { "$ref": "#/properties/base" }
                     ]
                 }
             }
@@ -203,7 +201,7 @@ fn schemas_containing_refs_are_not_extracted() {
 }
 
 #[test]
-fn repeated_schemas_may_reference_unchanged_root_definitions() {
+fn extraction_can_leave_a_single_reference_to_inline() {
     let repeated = json!({
         "allOf": [
             { "$ref": "#/$defs/base" },
@@ -247,14 +245,13 @@ fn repeated_schemas_may_reference_unchanged_root_definitions() {
                             },
                             "type": "object"
                         },
-                        { "$ref": "#/$defs/base" }
+                        {
+                            "properties": {
+                                "namespace": { "type": "string" }
+                            },
+                            "type": "object"
+                        }
                     ]
-                },
-                "base": {
-                    "properties": {
-                        "namespace": { "type": "string" }
-                    },
-                    "type": "object"
                 }
             },
             "properties": {
@@ -523,10 +520,48 @@ fn digest_collisions_still_require_exact_canonical_identity() {
         ],
     )]);
 
-    let planned = plan_definitions(BTreeSet::new(), candidates);
+    let planned = plan_definitions(BTreeSet::new(), candidates, DefinitionsKeyword::Defs);
     let first_id = planned.definition_id(fingerprint, &first);
     let second_id = planned.definition_id(fingerprint, &second);
     sim_assert_eq!(have: first_id.is_some(), want: true);
     sim_assert_eq!(have: second_id.is_some(), want: true);
     sim_assert_eq!(have: first_id == second_id, want: false);
+}
+
+#[test]
+fn extraction_and_shortening_follow_the_declared_dialect() -> eyre::Result<()> {
+    let payload = json!({"type": "string", "minLength": 2, "description": "example ".repeat(32)});
+    for (uri, keyword) in [
+        ("http://json-schema.org/draft-07/schema#", "definitions"),
+        ("https://json-schema.org/draft/2019-09/schema", "$defs"),
+        ("https://json-schema.org/draft/2020-12/schema", "$defs"),
+    ] {
+        let schema = json!({
+            "$schema": uri,
+            "properties": {"a": payload, "b": payload}
+        });
+        let readable = minimize(schema);
+        let expected = json!({
+            "$schema": uri,
+            (keyword): {"values/a": payload},
+            "properties": {
+                "a": {"$ref": format!("#/{keyword}/values~1a")},
+                "b": {"$ref": format!("#/{keyword}/values~1a")}
+            }
+        });
+        sim_assert_eq!(have: &readable, want: &expected);
+        let shortened = shorten_definition_names(&readable);
+        sim_assert_eq!(have: shortened.schema, want: json!({
+            "$schema": uri,
+            (keyword): {"1": payload},
+            "properties": {
+                "a": {"$ref": format!("#/{keyword}/1")},
+                "b": {"$ref": format!("#/{keyword}/1")}
+            }
+        }));
+        let validator = jsonschema::validator_for(&shortened.schema)?;
+        sim_assert_eq!(have: validator.is_valid(&json!({"a": "ab"})), want: true);
+        sim_assert_eq!(have: validator.is_valid(&json!({"a": "a"})), want: false);
+    }
+    Ok(())
 }

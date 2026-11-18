@@ -2,7 +2,7 @@
 //! generation.
 //!
 //! A constraint `if condition then then_value` is judged against the
-//! document `{$defs: D, allOf: [{if: condition, then: then_value}]}`,
+//! document `{definitions: D, allOf: [{if: condition, then: then_value}]}`,
 //! where `D` holds the provider and condition definitions the constraint
 //! reaches and Helm truthiness when either references it. Its verdict is
 //! a boolean expression over parts: draft-07 `if`/`then` holds unless the
@@ -10,8 +10,8 @@
 //! keyword is the conjunction, disjunction or negation of its members; a
 //! sole `$ref` (draft-07 ignores its siblings anyway) is its target in `D`
 //! when that body is a valid draft-07 schema, since meta-validation never
-//! looks inside `$defs`.
-//! Every other schema is a part, compiled as `{$defs: D', allOf: [part]}`
+//! looks inside `definitions`.
+//! Every other schema is a part, compiled as `{definitions: D', allOf: [part]}`
 //! with `D'` the definitions of `D` it reaches. A part therefore depends
 //! only on its text and on the names and sources of those definitions,
 //! whose bodies never change once named, and is shared by every constraint
@@ -19,7 +19,7 @@
 //!
 //! The constraint fails to compile exactly when one of its parts does:
 //! draft-07 meta-validation checks the members of `allOf`, `anyOf` and
-//! `not` as independent schemas and never looks inside `$defs`, every
+//! `not` as independent schemas and never looks inside `definitions`, every
 //! reference a part resolves resolves to the same body, and every
 //! definition of `D` is reached from some part. A constraint whose text or
 //! definitions hold another reference or an identifier resolves it against
@@ -489,9 +489,14 @@ fn compile_part(
     let document = Value::Object(serde_json::Map::from_iter([
         (
             "$schema".to_string(),
-            Value::String("http://json-schema.org/draft-07/schema#".to_string()),
+            Value::String(helm_schema_json_schema_walk::GENERATED_SCHEMA_URI.to_string()),
         ),
-        ("$defs".to_string(), Value::Object(definitions)),
+        (
+            helm_schema_json_schema_walk::GENERATED_DEFINITIONS
+                .as_str()
+                .to_string(),
+            Value::Object(definitions),
+        ),
         ("allOf".to_string(), Value::Array(vec![schema.clone()])),
     ]));
     jsonschema::validator_for(&document).ok()

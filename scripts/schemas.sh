@@ -13,7 +13,7 @@
 # Readability: the docs show the FULLY INLINED schema (--no-minimize --inline-refs)
 # so every constraint is visible in place, with no `$ref` indirection to opaque
 # interned definitions to chase. A fully-inlined schema can leave an unreferenced
-# `$defs` block behind (a building block that is now inlined everywhere it is
+# definitions block behind (a building block that is now inlined everywhere it is
 # used); strip_orphan_defs drops it so the snippet is self-contained. This is a
 # cosmetic, meaning-preserving cleanup of doc snippets only — the tool's real
 # default output is minimized (see docs/.../reference/output.md).
@@ -24,7 +24,7 @@
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-bin="$repo/target/release/helm-schema"
+bin="${CARGO_TARGET_DIR:-$repo/target}/release/helm-schema"
 examples="$repo/docs/examples"
 out="$repo/docs/assets/schemas"
 
@@ -34,30 +34,35 @@ K8S_VERSION="v1.35.0"
 [[ -x "$bin" ]] || cargo build --release --package helm-schema-cli --manifest-path "$repo/Cargo.toml"
 mkdir -p "$out"
 
-# Drop any `$defs` entry no `$ref` points at, and remove `$defs` if it empties.
+# Drop definitions that no local pointer addresses.
 strip_orphan_defs() {
   python3 - "$1" <<'PY'
 import json, sys
+from urllib.parse import unquote
 p = sys.argv[1]
 doc = json.load(open(p))
 refs = set()
 def walk(n):
     if isinstance(n, dict):
         r = n.get("$ref")
-        if isinstance(r, str) and r.startswith("#/$defs/"):
-            refs.add(r.rsplit("/", 1)[1])
+        if isinstance(r, str) and r.startswith("#"):
+            parts = unquote(r[1:]).split("/")
+            if len(parts) >= 3 and parts[0] == "":
+                refs.add((parts[1], parts[2].replace("~1", "/").replace("~0", "~")))
         for v in n.values():
             walk(v)
     elif isinstance(n, list):
         for v in n:
             walk(v)
 walk(doc)
-defs = doc.get("$defs")
-if isinstance(defs, dict):
-    for k in [k for k in defs if k not in refs]:
-        del defs[k]
-    if not defs:
-        del doc["$defs"]
+for keyword in ("definitions", "$defs"):
+    definitions = doc.get(keyword)
+    if isinstance(definitions, dict):
+        for name in list(definitions):
+            if (keyword, name) not in refs:
+                del definitions[name]
+        if not definitions:
+            del doc[keyword]
 json.dump(doc, open(p, "w"), indent=2, sort_keys=True)
 open(p, "a").write("\n")
 PY

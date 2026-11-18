@@ -2413,7 +2413,7 @@ fn overlay_wildcard_conjunct_keeps_the_root_switch_rejection() {
     sim_assert_eq!(
         have: schema.clone(),
         want: serde_json::json!({
-            "$defs": {
+            "definitions": {
                 "t": {
                     "anyOf": [
                         {
@@ -2448,7 +2448,7 @@ fn overlay_wildcard_conjunct_keeps_the_root_switch_rejection() {
                         "not": {
                             "properties": {
                                 "bypass": {
-                                    "$ref": "#/$defs/t"
+                                    "$ref": "#/definitions/t"
                                 }
                             },
                             "required": [
@@ -2527,7 +2527,7 @@ fn overlay_wildcard_conjunct_keeps_the_root_switch_rejection() {
                     "if": {
                         "properties": {
                             "bypass": {
-                                "$ref": "#/$defs/t"
+                                "$ref": "#/definitions/t"
                             }
                         },
                         "required": [

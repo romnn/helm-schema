@@ -646,7 +646,7 @@ fn foreign_render_guard_does_not_inherit_the_rendered_paths_default_type() {
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let expected = serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     { "const": true },
@@ -662,7 +662,7 @@ fn foreign_render_guard_does_not_inherit_the_rendered_paths_default_type() {
         "allOf": [{
             "if": {
                 "properties": {
-                    "enabled": { "$ref": "#/$defs/t" },
+                    "enabled": { "$ref": "#/definitions/t" },
                 },
                 "required": ["enabled"],
                 "type": "object",

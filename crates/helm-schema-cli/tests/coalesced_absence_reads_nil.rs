@@ -125,7 +125,7 @@ const PLAIN_ROOT_CHART_YAML: &str = indoc! {"
 /// deleted flag reads nil, which is Helm-falsy.
 fn flag_truthy_fragment() -> serde_json::Value {
     serde_json::json!({
-        "properties": { "flag": { "$ref": "#/$defs/t" } },
+        "properties": { "flag": { "$ref": "#/definitions/t" } },
         "required": ["flag"],
         "type": "object",
     })
@@ -156,7 +156,7 @@ fn key_deleted_fragment(key: &str) -> serde_json::Value {
 /// shape is pinned rather than sampled.
 fn expected_minimal_umbrella_schema() -> serde_json::Value {
     serde_json::json!({
-        "$defs": {
+        "definitions": {
             "t": {
                 "anyOf": [
                     { "const": true },

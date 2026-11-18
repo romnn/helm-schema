@@ -76,12 +76,12 @@ strategies live in their surviving decisions.
 | [0042](0042-closed-values-root-by-default.md) | The values root is closed by default; `--open-root` opts out | Accepted | 2026-09-26 |
 | [0043](0043-declared-defaults-assert-their-types-by-default.md) | Declared defaults assert their types by default; `--declared-types=annotate` opts out | Accepted | 2026-09-26 |
 | [0044](0044-range-domain-takes-the-renderable-transport.md) | Integer `range` operands follow the renderable transport (the F5 transport union) | Accepted | 2026-09-26 |
-| [0045](0045-defs-names-are-readable-source-paths.md) | `$defs` entries are named by readable source paths | Accepted | 2026-09-27 |
+| [0045](0045-defs-names-are-readable-source-paths.md) | `definitions` entries are named by readable source paths | Accepted | 2026-09-27 |
 | [0046](0046-helm-wrappers-run-helm-on-a-shortened-copy.md) | `helm-schema lint` / `template` run Helm on a shortened chart copy and translate diagnostics | Accepted | 2026-09-28 |
 | [0047](0047-size-aware-output-layout.md) | Size-aware output layout; never fail on size | Accepted | 2026-10-19 |
 | [0048](0048-emit-json-schema-draft-07.md) | Emit JSON Schema Draft-07, the dialect Helm validates against | Accepted | 2026-01-03 |
 | [0049](0049-runtime-tpl-programs-stay-open.md) | Runtime `tpl` programs stay open; no allowlists or regex template parsers | Accepted | 2026-08-02 |
-| [0050](0050-self-contained-output-by-default.md) | Output is self-contained by default; external `$ref`s move into `$defs` | Accepted | 2026-06-11 |
+| [0050](0050-self-contained-output-by-default.md) | Output is self-contained by default; external `$ref`s move into `definitions` | Accepted | 2026-06-11 |
 | [0051](0051-real-helm-is-the-correctness-oracle.md) | Real Helm is the correctness oracle; a tightening is a direction, not a verdict | Accepted | 2026-07-17 |
 | [0052](0052-pinned-adjudication-environment.md) | Adjudicate in a pinned Helm and Kubernetes environment | Accepted | 2026-08-25 |
 | [0053](0053-kubernetes-invalidity-needs-a-found-offline-schema.md) | Kubernetes invalidity is proven by a found offline schema, never by cache absence | Accepted | 2026-09-05 |

@@ -95,7 +95,7 @@ pub struct Cli {
     /// the order given. Repeatable: pass multiple `--override-schema`
     /// flags to layer (e.g. a shared cross-chart top-level schema followed by
     /// a chart-specific override). Overrides must carry their own definitions
-    /// rather than reference helm-schema's private `$defs` names.
+    /// rather than reference helm-schema's private `definitions` names.
     #[arg(long)]
     pub override_schema: Vec<PathBuf>,
 }
@@ -103,7 +103,7 @@ pub struct Cli {
 /// Commands other than schema generation.
 #[derive(Subcommand, Debug, Clone)]
 pub enum Command {
-    /// Rename the `$defs` entries of a generated schema to short keys, for a
+    /// Rename the `definitions` entries of a generated schema to short keys, for a
     /// copy handed to Helm.
     ///
     /// Helm refuses chart files over 5 MiB. The readable schema stays the
@@ -111,13 +111,13 @@ pub enum Command {
     /// short key back to readable names.
     Shorten(ShortenArgs),
     /// Run `helm lint` on a copy of the chart whose `values.schema.json` has
-    /// short `$defs` keys, and exit with Helm's status.
+    /// short `definitions` keys, and exit with Helm's status.
     ///
     /// Helm's output names readable definitions again. Paths in Helm
     /// arguments stay relative to the current directory.
     Lint(HelmArgs),
     /// Run `helm template` on a copy of the chart whose `values.schema.json`
-    /// has short `$defs` keys, and exit with Helm's status.
+    /// has short `definitions` keys, and exit with Helm's status.
     ///
     /// The chart comes first, so Helm's one-chart form applies: name the
     /// release with `--name-template`, not with a positional `NAME`.

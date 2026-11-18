@@ -21,13 +21,13 @@ fn conditional_schema_acceptance_memo_uses_complete_document_keys() {
 
     // A Helm-truthy reference stores the complete injected definition document as its key.
     let truthy_schema = serde_json::json!({
-        "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
+        "$ref": format!("#/definitions/{HELM_TRUTHY_DEFINITION_NAME}")
     });
     sim_assert_eq!(have: memo.accepts(&truthy_schema, &serde_json::json!(true)), want: true);
     sim_assert_eq!(have: memo.validators.len(), want: 2);
     let wrapped_key_exists = memo.validators.keys().any(|document| {
         document
-            .get("$defs")
+            .get("definitions")
             .and_then(Value::as_object)
             .is_some_and(|definitions| definitions.contains_key(HELM_TRUTHY_DEFINITION_NAME))
     });
@@ -87,10 +87,10 @@ fn conditional_schema_acceptance_memo_bypasses_external_resources() -> eyre::Res
 #[test]
 fn conditional_schema_acceptance_memo_matches_fresh_compilation() {
     let truthy_reference = serde_json::json!({
-        "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
+        "$ref": format!("#/definitions/{HELM_TRUTHY_DEFINITION_NAME}")
     });
     let truthy_document = serde_json::json!({
-        "$defs": {
+        "definitions": {
             HELM_TRUTHY_DEFINITION_NAME: crate::condition_encoding::helm_truthy_definition_schema()
         },
         "allOf": [truthy_reference]

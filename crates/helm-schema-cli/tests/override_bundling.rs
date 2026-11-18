@@ -37,7 +37,7 @@ fn multiple_override_external_refs_use_distinct_bundled_definitions() -> eyre::R
     )?;
 
     let output = Command::new(HELM_SCHEMA_BIN)
-        .args(["--offline", "--no-k8s-schemas"])
+        .args(["--offline", "--no-k8s-schemas", "--no-minimize"])
         .arg("--override-schema")
         .arg(&alpha_override)
         .arg("--override-schema")
@@ -53,15 +53,15 @@ fn multiple_override_external_refs_use_distinct_bundled_definitions() -> eyre::R
     }
     let actual: serde_json::Value = serde_json::from_slice(&output.stdout)?;
     let expected = serde_json::json!({
-        "$defs": {
+        "definitions": {
             "schema1": { "const": "alpha" },
             "schema2": { "const": 7 },
         },
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
-            "alpha": { "$ref": "#/$defs/schema1" },
-            "beta": { "$ref": "#/$defs/schema2" },
+            "alpha": { "$ref": "#/definitions/schema1" },
+            "beta": { "$ref": "#/definitions/schema2" },
             "global": {},
         },
         "type": "object",
@@ -75,12 +75,12 @@ fn multiple_override_external_refs_use_distinct_bundled_definitions() -> eyre::R
             "modifiers": {
                 "overrides": {
                     "count": 2,
-                    "digest": "dbf0b44743927824e4eda08f8e568c5673ae33af232ad5dd4f52023874abf99a",
+                    "digest": "f24fb1058ccece3d2b2dfe7bbb1fd9dfe844c4dc24a9401c29739dbc45c70587",
                 },
                 "reference-mode": "bundled",
             },
             "narrowing": [],
-            "policy-fingerprint": "4dbd0682820514b61456fab9a96349dd23c295fb1a9525a1cc2f8d6e6d4b9fd7",
+            "policy-fingerprint": "0f61f5bbfdba295403c17984ae18b9582391972123c9fe172edfdb1852b949fa",
             "policy-vocabulary-version": 2,
             "requested-profile": "full",
             "resolved": {

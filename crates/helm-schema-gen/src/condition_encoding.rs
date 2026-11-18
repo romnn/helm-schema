@@ -72,8 +72,10 @@ impl ConditionFragmentCache {
             if object.contains_key("$id") || object.contains_key("id") {
                 self.shared = false;
             }
-            if let Some(definitions) = object.get("$defs").and_then(Value::as_object) {
-                self.reserved.extend(definitions.keys().cloned());
+            for keyword in helm_schema_json_schema_walk::DefinitionsKeyword::ALL {
+                if let Some(definitions) = object.get(keyword.as_str()).and_then(Value::as_object) {
+                    self.reserved.extend(definitions.keys().cloned());
+                }
             }
             for keyword in ["$ref", "$dynamicRef", "$recursiveRef"] {
                 if let Some(reference) = object.get(keyword).and_then(Value::as_str) {
@@ -181,7 +183,7 @@ impl ConditionFragmentCache {
             };
             self.definitions.insert(name.clone(), body.into_value());
             fragment = Some(SchemaNode::foreign(
-                serde_json::json!({ "$ref": helm_schema_json_schema_walk::definition_reference(&name) }),
+                serde_json::json!({ "$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(&name) }),
             ));
         }
         self.fragments.insert(key, fragment.clone());
@@ -643,7 +645,7 @@ fn build_single_condition_fragment(
                     ordinal += 1;
                 };
                 cache.definitions.insert(name.clone(), body);
-                nodes.push(SchemaNode::foreign(serde_json::json!({ "$ref": helm_schema_json_schema_walk::definition_reference(&name) })));
+                nodes.push(SchemaNode::foreign(serde_json::json!({ "$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(&name) })));
             }
             nodes.get(graph.root()).cloned()
         }
@@ -1075,7 +1077,7 @@ fn build_default_aware_leaf_condition_fragment(
 
 pub(crate) fn value_references_helm_truthy(value: &Value) -> bool {
     SchemaNode::from_value(value.clone()).references(
-        &helm_schema_json_schema_walk::definition_reference(HELM_TRUTHY_DEFINITION_NAME),
+        &helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(HELM_TRUTHY_DEFINITION_NAME),
     )
 }
 
@@ -1085,9 +1087,9 @@ pub(crate) fn value_references_helm_truthy(value: &Value) -> bool {
 pub(crate) const HELM_TRUTHY_DEFINITION_NAME: &str = "t";
 
 pub(crate) fn helm_truthy_condition_schema() -> SchemaNode {
-    SchemaNode::reference(helm_schema_json_schema_walk::definition_reference(
-        HELM_TRUTHY_DEFINITION_NAME,
-    ))
+    SchemaNode::reference(
+        helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(HELM_TRUTHY_DEFINITION_NAME),
+    )
 }
 
 pub(crate) fn helm_truthy_definition_schema() -> Value {
@@ -1211,16 +1213,18 @@ fn value_pattern_schema(pattern: &ValuePattern) -> Option<Value> {
         ValuePattern::Any => Value::Bool(true),
         ValuePattern::Scalar => serde_json::json!({"type": ["null", "boolean", "number"]}),
         ValuePattern::TemplateFree => serde_json::json!({
-            "$ref": helm_schema_json_schema_walk::definition_reference(
+            "$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(
                 crate::resolve_policy::scalar_preimage::TEMPLATED_MARKER_FREE_DEFINITION_NAME,
             )
         }),
         ValuePattern::TemplateActionFree => {
-            serde_json::json!({"$ref": helm_schema_json_schema_walk::definition_reference(crate::resolve_policy::scalar_preimage::NO_TEMPLATE_ACTIONS_DEFINITION_NAME)})
+            serde_json::json!({"$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(crate::resolve_policy::scalar_preimage::NO_TEMPLATE_ACTIONS_DEFINITION_NAME)})
         }
-        ValuePattern::MarkerFree => serde_json::json!({"$ref": "#/$defs/helm-marker-free"}),
+        ValuePattern::MarkerFree => {
+            serde_json::json!({"$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference("helm-marker-free")})
+        }
         ValuePattern::YamlFlowStable => {
-            serde_json::json!({"$ref": helm_schema_json_schema_walk::definition_reference(crate::resolve_policy::scalar_preimage::YAML_FLOW_STABLE_DEFINITION_NAME)})
+            serde_json::json!({"$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(crate::resolve_policy::scalar_preimage::YAML_FLOW_STABLE_DEFINITION_NAME)})
         }
         ValuePattern::StringMap => crate::path_resolver::serialized_string_map_schema(),
         ValuePattern::String { pattern } => {

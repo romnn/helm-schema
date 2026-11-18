@@ -1,128 +1,10 @@
 {
-  "$defs": {
-    "constrains/enabled:t": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/metrics+metrics=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "metrics": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "metrics": {}
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "constrains/metrics.enabled:t": {
-      "properties": {
-        "metrics": {
-          "$ref": "#/$defs/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "constrains/metrics.serviceMonitor.enabled:t": {
-      "properties": {
-        "metrics": {
-          "properties": {
-            "serviceMonitor": {
-              "$ref": "#/$defs/constrains~1enabled:t"
-            }
-          },
-          "required": [
-            "serviceMonitor"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceMonitor": {
-      "properties": {
-        "serviceMonitor": {}
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceMonitor=null": {
-      "properties": {
-        "serviceMonitor": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    }
-  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/constrains~1metrics+metrics=null"
+        "$ref": "#/definitions/constrains~1metrics+metrics=null"
       },
       "then": false
     },
@@ -130,10 +12,31 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1metrics.enabled:t"
+            "$ref": "#/definitions/constrains~1metrics.enabled!=0+metrics.enabled=true"
           },
           {
-            "$ref": "#/$defs/constrains~1metrics.serviceMonitor.enabled:t"
+            "$ref": "#/definitions/constrains~1metrics.serviceMonitor.enabled!=0+metrics.serviceMonitor.enabled=true"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "description": "Configure a service resource (optional, only needed if using the deprecated\nServiceMonitor instead of the recommended PodMonitor)",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1metrics.enabled!=0+metrics.enabled=true"
+          },
+          {
+            "$ref": "#/definitions/constrains~1metrics.serviceMonitor.enabled!=0+metrics.serviceMonitor.enabled=true"
           },
           {
             "anyOf": [
@@ -175,7 +78,7 @@
               {
                 "properties": {
                   "metrics": {
-                    "$ref": "#/$defs/constrains~1serviceMonitor=null"
+                    "$ref": "#/definitions/constrains~1serviceMonitor=null"
                   }
                 },
                 "required": [
@@ -187,7 +90,7 @@
                 "not": {
                   "properties": {
                     "metrics": {
-                      "$ref": "#/$defs/constrains~1serviceMonitor"
+                      "$ref": "#/definitions/constrains~1serviceMonitor"
                     }
                   },
                   "required": [
@@ -199,34 +102,128 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1metrics+metrics=null"
+            "$ref": "#/definitions/constrains~1metrics+metrics=null"
           }
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1metrics.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1metrics.serviceMonitor.enabled:t"
-          }
-        ]
+    }
+  ],
+  "definitions": {
+    "constrains/enabled!=0+enabled=true": {
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "minProperties": 1,
+              "type": "object"
+            },
+            {
+              "not": {
+                "const": 0
+              },
+              "type": "number"
+            },
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "const": true
+            }
+          ]
+        }
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "description": "Configure a service resource (optional, only needed if using the deprecated\nServiceMonitor instead of the recommended PodMonitor)",
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/metrics+metrics=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "metrics": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "metrics": {}
+            },
+            "required": [
+              "metrics"
+            ],
             "type": "object"
           }
         }
-      }
+      ]
+    },
+    "constrains/metrics.enabled!=0+metrics.enabled=true": {
+      "properties": {
+        "metrics": {
+          "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "constrains/metrics.serviceMonitor.enabled!=0+metrics.serviceMonitor.enabled=true": {
+      "properties": {
+        "metrics": {
+          "properties": {
+            "serviceMonitor": {
+              "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
+            }
+          },
+          "required": [
+            "serviceMonitor"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceMonitor": {
+      "properties": {
+        "serviceMonitor": {}
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceMonitor=null": {
+      "properties": {
+        "serviceMonitor": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
     }
-  ],
+  },
   "properties": {
     "affinity": {
       "description": "Affinity for pod assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
@@ -292,11 +289,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1serviceMonitor"
+                  "$ref": "#/definitions/constrains~1serviceMonitor"
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1serviceMonitor=null"
+                "$ref": "#/definitions/constrains~1serviceMonitor=null"
               }
             ]
           },

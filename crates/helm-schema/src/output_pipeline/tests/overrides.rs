@@ -82,8 +82,6 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
     )
     .expect("write override schema");
 
-    let prepared =
-        prepare(&[override_path], ReferencePolicy::SelfContained).expect("load overrides");
     let schema = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
@@ -94,6 +92,8 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
         "type": "object"
     });
 
+    let prepared = prepare_for_schema(&[override_path], ReferencePolicy::SelfContained, &schema)
+        .expect("load overrides");
     let output = apply_schema_output_pipeline(
         schema,
         &BTreeMap::new(),
@@ -107,16 +107,16 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
     sim_assert_eq!(
         have: cloud,
         want: &serde_json::json!({
-            "$ref": "#/$defs/schema1"
+            "$ref": "#/definitions/schema1"
         }),
         "prepared override refs should replace inferred constraints with bundled refs"
     );
     sim_assert_eq!(
-        have: output.pointer("/$defs/schema1"),
+        have: output.pointer("/definitions/schema1"),
         want: Some(&serde_json::json!({
             "enum": [null, "azure", "minikube"]
         })),
-        "prepared override refs should carry resolved content under $defs"
+        "prepared override refs should carry resolved content under definitions"
     );
 }
 
@@ -134,15 +134,15 @@ fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre
     let beta_override = temp_dir.join("beta-override.json");
     fs::write(
         &beta_override,
-        r#"{"$defs":{"schema2":{"const":"caller"}},"properties":{"beta":{"$ref":"./beta.json"}}}"#,
+        r#"{"definitions":{"schema2":{"const":"caller"}},"properties":{"beta":{"$ref":"./beta.json"}}}"#,
     )?;
     let base = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": {
+        "definitions": {
             "schema1": { "type": "boolean" },
         },
         "properties": {
-            "base": { "$ref": "#/$defs/schema1" },
+            "base": { "$ref": "#/definitions/schema1" },
             "alpha": { "type": "string" },
             "beta": { "type": "string" },
         },
@@ -165,18 +165,18 @@ fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre
 
     sim_assert_eq!(
         have: output.pointer("/properties/alpha/$ref"),
-        want: Some(&serde_json::json!("#/$defs/schema3"))
+        want: Some(&serde_json::json!("#/definitions/schema3"))
     );
     sim_assert_eq!(
         have: output.pointer("/properties/beta/$ref"),
-        want: Some(&serde_json::json!("#/$defs/schema4"))
+        want: Some(&serde_json::json!("#/definitions/schema4"))
     );
     sim_assert_eq!(
-        have: output.pointer("/$defs/schema3"),
+        have: output.pointer("/definitions/schema3"),
         want: Some(&serde_json::json!({ "const": "alpha" }))
     );
     sim_assert_eq!(
-        have: output.pointer("/$defs/schema4"),
+        have: output.pointer("/definitions/schema4"),
         want: Some(&serde_json::json!({ "const": 7 }))
     );
     let validator = jsonschema::validator_for(&output)?;
@@ -234,14 +234,14 @@ fn bundled_overrides_share_one_definition_for_the_same_external_target() -> eyre
 
     sim_assert_eq!(
         have: output.pointer("/properties/alpha/$ref"),
-        want: Some(&serde_json::json!("#/$defs/schema1"))
+        want: Some(&serde_json::json!("#/definitions/schema1"))
     );
     sim_assert_eq!(
         have: output.pointer("/properties/beta/$ref"),
-        want: Some(&serde_json::json!("#/$defs/schema1"))
+        want: Some(&serde_json::json!("#/definitions/schema1"))
     );
     sim_assert_eq!(
-        have: output.get("$defs"),
+        have: output.get("definitions"),
         want: Some(&serde_json::json!({
             "schema1": { "const": "shared" },
         }))
@@ -493,11 +493,11 @@ fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre
     let prepared = prepare(&[override_path], ReferencePolicy::SelfContained)?;
     let schema = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "$defs": {
+        "definitions": {
             "generated": { "type": "string" },
         },
         "properties": {
-            "value": { "$ref": "#/$defs/generated" },
+            "value": { "$ref": "#/definitions/generated" },
         },
         "type": "object",
     });
@@ -510,10 +510,61 @@ fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre
         output_policy(),
     )?;
 
-    sim_assert_eq!(have: output.get("$defs"), want: None);
+    sim_assert_eq!(have: output.get("definitions"), want: None);
     sim_assert_eq!(
         have: output.pointer("/properties/value"),
         want: Some(&serde_json::json!({ "anyOf": [{ "type": "integer" }] }))
     );
+    Ok(())
+}
+
+#[test]
+fn a_replacing_override_bundles_under_its_declared_dialect() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("modern-override")?;
+    let shared = scratch.path().join("shared.json");
+    fs::write(shared, r#"{"type":"string"}"#)?;
+    let override_path = scratch.path().join("override.json");
+    fs::write(
+        &override_path,
+        indoc! {r#"
+            {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "anyOf": [{"$ref": "./shared.json"}]
+            }
+        "#},
+    )?;
+
+    let schema = serde_json::json!({"$schema": "http://json-schema.org/draft-07/schema#"});
+    let prepared = prepare_for_schema(&[override_path], ReferencePolicy::SelfContained, &schema)?;
+    let output = apply_schema_output_pipeline(
+        schema,
+        &BTreeMap::new(),
+        prepared,
+        scratch.path(),
+        output_policy(),
+    )?;
+
+    let mut expected = output.clone();
+    let object = expected
+        .as_object_mut()
+        .ok_or_else(|| eyre::eyre!("expected an object schema"))?;
+    object.remove("$defs");
+    object.remove("definitions");
+    object.insert(
+        "$schema".to_owned(),
+        serde_json::json!("https://json-schema.org/draft/2020-12/schema"),
+    );
+    object.insert(
+        "$defs".to_owned(),
+        serde_json::json!({"schema1": {"type": "string"}}),
+    );
+    object.insert(
+        "anyOf".to_owned(),
+        serde_json::json!([{"$ref": "#/$defs/schema1"}]),
+    );
+    sim_assert_eq!(have: &output, want: &expected);
+    let validator = jsonschema::validator_for(&output)?;
+    sim_assert_eq!(have: validator.is_valid(&serde_json::json!("hello")), want: true);
+    sim_assert_eq!(have: validator.is_valid(&serde_json::json!(23)), want: false);
     Ok(())
 }

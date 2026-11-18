@@ -19,6 +19,19 @@ impl UnpreparedOverride {
         &self.schema
     }
 
+    pub(crate) fn root_after_merge<'a>(&'a self, base: &'a Value) -> &'a Value {
+        if base.is_object()
+            && self
+                .schema
+                .as_object()
+                .is_some_and(|object| merges_object_override(object, self.replace_at.contains("")))
+        {
+            base
+        } else {
+            &self.schema
+        }
+    }
+
     pub(crate) fn into_prepared(self, schema: Value) -> PreparedOverride {
         PreparedOverride {
             schema,
@@ -80,21 +93,14 @@ fn apply_schema_override_at(
     pointer: &str,
     replace_at: &BTreeSet<String>,
 ) -> Value {
-    if replace_at.contains(pointer) {
-        return override_schema;
-    }
-
     let (mut base_obj, override_obj) = match (base, override_schema) {
-        (Value::Object(base_obj), Value::Object(override_obj)) => (base_obj, override_obj),
+        (Value::Object(base_obj), Value::Object(override_obj))
+            if merges_object_override(&override_obj, replace_at.contains(pointer)) =>
+        {
+            (base_obj, override_obj)
+        }
         (_, override_schema) => return override_schema,
     };
-
-    if override_obj.contains_key("anyOf")
-        || override_obj.contains_key("oneOf")
-        || override_obj.contains_key("allOf")
-    {
-        return Value::Object(override_obj);
-    }
 
     for (k, ov) in override_obj {
         if k == "$schema" {
@@ -125,6 +131,13 @@ fn apply_schema_override_at(
     }
 
     Value::Object(base_obj)
+}
+
+fn merges_object_override(object: &serde_json::Map<String, Value>, replace: bool) -> bool {
+    !replace
+        && ["anyOf", "oneOf", "allOf"]
+            .into_iter()
+            .all(|keyword| !object.contains_key(keyword))
 }
 
 fn collect_replacement_pointers(value: &Value, pointer: &str, replace_at: &mut BTreeSet<String>) {

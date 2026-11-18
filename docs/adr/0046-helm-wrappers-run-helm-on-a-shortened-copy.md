@@ -15,7 +15,7 @@ text-translation subcommand, `helm-schema expand-defs`, for Helm error text.
 `helm-schema lint|template [--helm PATH] <chart> [helm args...]` copies the
 whole chart tree under TMPDIR, writes a freshly shortened root
 `values.schema.json`, runs the pinned Helm, and translates every
-`#/$defs/<token>` in Helm's diagnostics back to the readable name byte for
+`#/definitions/<token>` in Helm's diagnostics back to the readable name byte for
 byte. `template` stdout passes through unchanged; signals are forwarded to
 the Helm child. `expand-defs` is deleted.
 
