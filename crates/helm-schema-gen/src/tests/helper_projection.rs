@@ -102,22 +102,33 @@ fn helper_range_break_scopes_later_provider_candidates() {
         ),
         "an absent securityContexts host is skipped by its hasKey test: {schema}"
     );
-    // The present host must be an object: `hasKey` aborts on a list or a number, while a null
-    // host is accepted (transfer/probes/t1-helper-range-break.txt `hrb-*-host`).
-    for (host, want) in [
-        (serde_json::json!(["x"]), false),
-        (serde_json::json!(7), false),
-        (serde_json::Value::Null, true),
-    ] {
+    // The present host must be an object: `hasKey` aborts on a list or a number
+    // (transfer/probes/t1-helper-range-break.txt `hrb-*-host`).
+    for host in [serde_json::json!(["x"]), serde_json::json!(7)] {
         sim_assert_eq!(
             have: schema_accepts_instance(
                 &schema,
                 &serde_json::json!({ "worker": { "securityContexts": host } })
             ),
-            want: want,
+            want: false,
             "securityContexts host {host}: {schema}"
         );
     }
+    // A user null deletes the declared host, so Helm judges and renders the host-free coalesced
+    // document below. A literal null host never reaches this chart's template or lint
+    // (transfer/receipts/helper_range_break_scopes_later_provider_candidates `host-null-overlay`).
+    sim_assert_eq!(
+        have: schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "securityContext": {},
+                "securityContexts": { "pod": {} },
+                "worker": { "securityContext": {} }
+            })
+        ),
+        want: true,
+        "the Helm-coalesced document of a null securityContexts host: {schema}"
+    );
 }
 
 #[test]

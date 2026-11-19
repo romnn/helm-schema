@@ -22,6 +22,14 @@ The two records cover the pinned roster baseline and the lint-required change's
 main baseline. Updating chart files, providers, or generation options requires
 re-deriving these baselines from their recorded source commits.
 
+Both records' input digest was re-bound once without re-derivation, from
+`1ebf5a3d…` to `c1115904…` (the producer manifest's value for `chart/daskhub`). The
+only input change since that digest was pinned is f61320f2, which adds 12 CRD
+schemas and 2 provenance files to the provider bundle and edits nothing else. DaskHub
+renders none of those kinds. The current generator's output is byte-identical with
+and without them. The recorded generators were not available to re-derive. Receipts
+are in `transfer/receipts/acceptance_intake/`.
+
 The DaskHub fixture's recipe selects the vendored 1.35 provider so its
 non-nullable dependency fields expose the lint-required regression. The older
 default corpus provider permits null for those fields and hides the failure.
