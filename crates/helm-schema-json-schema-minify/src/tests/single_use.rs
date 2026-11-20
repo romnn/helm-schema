@@ -1,9 +1,118 @@
+use std::collections::BTreeMap;
+
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_json_schema_walk::DefinitionsKeyword;
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 
 use crate::single_use::inline_single_use_definitions;
+use crate::{DefinitionNames, minimize_schema};
+
+#[test]
+fn long_single_use_chain_respects_serialized_depth_at_a_nested_use_site() -> eyre::Result<()> {
+    let schema = single_use_chain(75);
+    let original = jsonschema::validator_for(&schema)?;
+    let minimized = minimize_schema(schema.clone(), &BTreeMap::new(), DefinitionNames::Source);
+    let rewritten = jsonschema::validator_for(&minimized)?;
+    for (document, expected) in [
+        (json!({"value": 75}), true),
+        (json!({"value": 74}), false),
+        (json!({"value": 100}), true),
+        (json!({"value": 101}), false),
+        (json!({"value": "75"}), false),
+        (json!({}), false),
+    ] {
+        sim_assert_eq!(have: original.is_valid(&document), want: expected);
+        sim_assert_eq!(have: rewritten.is_valid(&document), want: expected);
+    }
+    let before = container_depth(&schema);
+    let after = container_depth(&minimized);
+    assert!(
+        after <= before.max(64),
+        "container depth grew from {before} to {after}"
+    );
+    let parsed: Value = serde_json::from_slice(&serde_json::to_vec(&minimized)?)?;
+    sim_assert_eq!(have: &parsed, want: &minimized);
+    let minimized_again = minimize_schema(parsed, &BTreeMap::new(), DefinitionNames::Source);
+    sim_assert_eq!(have: minimized_again, want: minimized);
+    Ok(())
+}
+
+#[test]
+fn shallow_single_use_chain_is_fully_inlined() {
+    let mut schema = single_use_chain(2);
+    inline_single_use_definitions(&mut schema);
+    sim_assert_eq!(have: schema, want: json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["value"],
+        "properties": {"value": {"allOf": [{
+            "minimum": 1,
+            "allOf": [{"minimum": 2, "allOf": [{"type": "integer", "maximum": 100}]}]
+        }]}}
+    }));
+}
+
+#[test]
+fn moving_a_parent_shallower_inlines_the_newly_fitting_child() -> eyre::Result<()> {
+    let child = (0..61).fold(json!({"type": "integer"}), |body, _| json!({"not": body}));
+    sim_assert_eq!(have: container_depth(&child), want: 62);
+    let direct = json!({
+        "not": {"$ref": "#/definitions/parent"},
+        "definitions": {
+            "parent": {"not": {"$ref": "#/definitions/child"}},
+            "child": child
+        }
+    });
+    let mut through_alias = direct.clone();
+    through_alias["not"]["$ref"] = json!("#/definitions/alias");
+    through_alias["definitions"]["alias"] = json!({"$ref": "#/definitions/parent"});
+    let expected = json!({"not": {"not": child}});
+
+    for mut schema in [direct, through_alias] {
+        let original = jsonschema::validator_for(&schema)?;
+        inline_single_use_definitions(&mut schema);
+        let first = schema.clone();
+        let inlined = jsonschema::validator_for(&first)?;
+        for (document, verdict) in [(json!(3), false), (json!("text"), true)] {
+            sim_assert_eq!(have: original.is_valid(&document), want: verdict);
+            sim_assert_eq!(have: inlined.is_valid(&document), want: verdict);
+        }
+        inline_single_use_definitions(&mut schema);
+        sim_assert_eq!(have: &schema, want: &first);
+        sim_assert_eq!(have: &first, want: &expected);
+        sim_assert_eq!(have: container_depth(&first), want: 64);
+    }
+    Ok(())
+}
+
+fn single_use_chain(length: usize) -> Value {
+    let link = |index| json!({"$ref": format!("#/definitions/link-{index}")});
+    let mut definitions = serde_json::Map::new();
+    for index in 1..=length {
+        definitions.insert(
+            format!("link-{index}"),
+            json!({"minimum": index, "allOf": [link(index + 1)]}),
+        );
+    }
+    definitions.insert(
+        format!("link-{}", length + 1),
+        json!({"type": "integer", "maximum": 100}),
+    );
+    json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": ["value"],
+        "properties": {"value": {"allOf": [link(1)]}},
+        "definitions": definitions
+    })
+}
+
+fn container_depth(value: &Value) -> usize {
+    match value {
+        Value::Object(members) => 1 + members.values().map(container_depth).max().unwrap_or(0),
+        Value::Array(items) => 1 + items.iter().map(container_depth).max().unwrap_or(0),
+        _ => 0,
+    }
+}
 
 #[test]
 fn single_use_inlining_preserves_verdicts_and_reaches_a_deterministic_fixpoint() -> eyre::Result<()>
