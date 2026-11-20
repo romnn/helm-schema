@@ -99,7 +99,6 @@ fn pinned_custom_kinds_decide_valid_and_invalid_resources() -> eyre::Result<()> 
     for (api, kind) in [
         ("unknown.example/v1", "Unknown"),
         ("nats.io/v999", "NatsCluster"),
-        ("apiregistration.k8s.io/v1beta1", "APIService"),
     ] {
         let verdict = validator.validate_documents(&[json!({
             "apiVersion": api, "kind": kind,
@@ -110,6 +109,34 @@ fn pinned_custom_kinds_decide_valid_and_invalid_resources() -> eyre::Result<()> 
             "{api}/{kind}: {verdict:?}"
         );
     }
+    // Removed in v1.22, so v1.29 defines no schema for it; v1.15.0, the newest bundled release
+    // whose catalog declares it, decides it (ADR 0032). Its spec requires these three members.
+    let (verdict, fallback) = validator.validate_documents_with_fallback(&[json!({
+        "apiVersion": "apiregistration.k8s.io/v1beta1", "kind": "APIService",
+        "metadata": {"name": "coverage"}, "spec": {}
+    })]);
+    let KubernetesVerdict::Invalid(violations) = verdict else {
+        eyre::bail!("the fallback release did not decide the v1beta1 APIService: {verdict:?}");
+    };
+    sim_assert_eq!(
+        have: violations
+            .iter()
+            .map(|violation| (
+                violation.instance_path.as_str(),
+                violation.key.keyword.as_str(),
+                violation.key.detail.as_str(),
+            ))
+            .collect::<Vec<_>>(),
+        want: vec![
+            ("/spec", "required", r#""service""#),
+            ("/spec", "required", r#""groupPriorityMinimum""#),
+            ("/spec", "required", r#""versionPriority""#),
+        ],
+    );
+    sim_assert_eq!(
+        have: fallback.iter().map(|judgment| judgment.release.as_str()).collect::<Vec<_>>(),
+        want: vec!["v1.15.0"],
+    );
     validator.verify_bundles_unchanged()?;
     Ok(())
 }

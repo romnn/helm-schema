@@ -23,7 +23,7 @@ use crate::source_cache::{
 };
 
 use super::capability_probe::{
-    RELEASE_CATALOG, build_capability_probe, catalog_declares, catalog_release,
+    RELEASE_CATALOG, build_capability_probe, catalog_declarations, catalog_release,
 };
 use super::resolve_ctx::{ResolveCtx, descend_schema_path_expanding_leaf_with_location};
 use super::version_chain::K8sVersionChain;
@@ -72,6 +72,31 @@ struct LoadedK8sSchemaDoc {
     version: String,
     filename: String,
     doc: SchemaDoc,
+}
+
+/// The release of the version chain that defines a resource, and what defines it there
+/// ([`KubernetesJsonSchemaProvider::release_definition`]).
+#[derive(Debug)]
+pub struct ReleaseDefinition {
+    /// The version-chain entry that answered: the primary or a fallback release.
+    pub release: String,
+    /// What defines the resource at that release.
+    pub source: ReleaseSchemaSource,
+}
+
+/// What defines a resource at one release.
+#[derive(Debug)]
+pub enum ReleaseSchemaSource {
+    /// The release's schema document, resolved at the resource root.
+    Document(Box<ProviderSchemaFragment>),
+    /// The release API catalog, whose named definitions declare the resource as their single
+    /// root; the bundle holds no document for it.
+    Catalog {
+        /// The parsed `_definitions.json`.
+        catalog: Arc<Value>,
+        /// The declaring definitions, in catalog order; never empty.
+        definitions: Vec<String>,
+    },
 }
 
 impl KubernetesJsonSchemaProvider {
@@ -158,6 +183,16 @@ impl KubernetesJsonSchemaProvider {
     /// return the first source that owns the resource.
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
     fn load_resource_doc(&self, resource: &ResourceRef) -> Option<LoadedK8sSchemaDoc> {
+        let candidates = self.resource_doc_candidates(resource)?;
+        self.versions
+            .ordered()
+            .iter()
+            .find_map(|version| self.load_resource_doc_at(version, &candidates))
+    }
+
+    /// The upstream filenames that may hold `resource`'s document, or `None` when it names no
+    /// upstream file or the cache layout cannot be read.
+    fn resource_doc_candidates(&self, resource: &ResourceRef) -> Option<Vec<String>> {
         // Empty exactly when the apiVersion is missing or malformed: such a
         // resource names no upstream file.
         let candidates = candidate_filenames_for_resource(resource);
@@ -169,19 +204,101 @@ impl KubernetesJsonSchemaProvider {
         if layout == LayoutCheckOutcome::ForwardIncompatible {
             return None;
         }
+        Some(candidates)
+    }
 
-        for version in self.versions.ordered() {
-            for filename in &candidates {
-                for source in &self.mirrors.sources {
-                    if let Some(doc) = self.try_load_from_source(source, version, filename) {
-                        return Some(LoadedK8sSchemaDoc {
-                            source: source.clone(),
-                            version: version.clone(),
-                            filename: filename.clone(),
-                            doc,
-                        });
-                    }
+    /// The first `(filename, mirror)` of release `version` holding one of `candidates`.
+    fn load_resource_doc_at(
+        &self,
+        version: &str,
+        candidates: &[String],
+    ) -> Option<LoadedK8sSchemaDoc> {
+        for filename in candidates {
+            for source in &self.mirrors.sources {
+                if let Some(doc) = self.try_load_from_source(source, version, filename) {
+                    return Some(LoadedK8sSchemaDoc {
+                        source: source.clone(),
+                        version: version.to_string(),
+                        filename: filename.clone(),
+                        doc,
+                    });
                 }
+            }
+        }
+        None
+    }
+
+    /// Resolves `resource` in a fixed offline bundle, in version-chain order.
+    ///
+    /// At each release the resource's schema document answers first. When the bundle omits it,
+    /// the release API catalog answers if it declares the resource as the single root of a
+    /// definition (standalone bundles drop served kinds, the self-referencing
+    /// `CustomResourceDefinition` above all, and a release kept only as its catalog drops them
+    /// all). A provider with downloads enabled always returns `None`. A transient fetch failure
+    /// could otherwise select an older release than a fully populated bundle would.
+    ///
+    /// Fallback releases answer schema lookup only (ADR 0032): this never feeds apiVersion
+    /// inference or capability queries, which stay at the primary release.
+    #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
+    #[must_use]
+    pub fn release_definition(&self, resource: &ResourceRef) -> Option<ReleaseDefinition> {
+        if self.allow_download {
+            return None;
+        }
+        let candidates = self.resource_doc_candidates(resource)?;
+        for version in self.versions.ordered() {
+            if let Some(loaded) = self.load_resource_doc_at(version, &candidates) {
+                // The first document answers, as in `lookup`; one whose root does not resolve
+                // defines nothing.
+                let (release, document) =
+                    self.resolve_loaded_doc_path(loaded, &YamlPath::default())?;
+                return Some(ReleaseDefinition {
+                    release,
+                    source: ReleaseSchemaSource::Document(Box::new(document?)),
+                });
+            }
+            if let Some(declaration) = self.release_catalog_declaration(version, resource) {
+                return Some(ReleaseDefinition {
+                    release: version.clone(),
+                    source: declaration,
+                });
+            }
+        }
+        None
+    }
+
+    /// The API catalog of the release `version` belongs to, from the first source that has it.
+    #[must_use]
+    pub fn release_catalog(&self, version: &str) -> Option<Arc<Value>> {
+        let release = catalog_release(version);
+        self.mirrors.sources.iter().find_map(|source| {
+            match self.probe_at(source, release, RELEASE_CATALOG) {
+                SourceDocOutcome::Found(catalog) => Some(catalog.shared()),
+                SourceDocOutcome::AuthoritativelyAbsent | SourceDocOutcome::Uncertain => None,
+            }
+        })
+    }
+
+    /// The first source's API catalog of `version`'s release that declares `resource` as the
+    /// single root of a definition.
+    fn release_catalog_declaration(
+        &self,
+        version: &str,
+        resource: &ResourceRef,
+    ) -> Option<ReleaseSchemaSource> {
+        let release = catalog_release(version);
+        for source in &self.mirrors.sources {
+            let SourceDocOutcome::Found(catalog) = self.probe_at(source, release, RELEASE_CATALOG)
+            else {
+                continue;
+            };
+            if let Some(definitions) = catalog_declarations(catalog.root(), resource)
+                && !definitions.is_empty()
+            {
+                return Some(ReleaseSchemaSource::Catalog {
+                    catalog: catalog.shared(),
+                    definitions: definitions.into_iter().map(str::to_string).collect(),
+                });
             }
         }
         None
@@ -236,12 +353,22 @@ impl KubernetesJsonSchemaProvider {
         resource: &ResourceRef,
         path: &YamlPath,
     ) -> Option<(String, Option<ProviderSchemaFragment>)> {
+        let loaded = self.load_resource_doc(resource)?;
+        self.resolve_loaded_doc_path(loaded, path)
+    }
+
+    /// The fragment at `path` of a loaded resource document, with the release it came from.
+    fn resolve_loaded_doc_path(
+        &self,
+        loaded: LoadedK8sSchemaDoc,
+        path: &YamlPath,
+    ) -> Option<(String, Option<ProviderSchemaFragment>)> {
         let LoadedK8sSchemaDoc {
             source,
             version,
             filename,
             doc,
-        } = self.load_resource_doc(resource)?;
+        } = loaded;
         let mut ctx = ResolveCtx::new(
             |next_filename| self.try_load_from_source(&source, &version, next_filename),
             filename.clone(),
@@ -292,7 +419,7 @@ impl KubernetesJsonSchemaProvider {
         for source in &self.mirrors.sources {
             match self.probe_at(source, release, RELEASE_CATALOG) {
                 SourceDocOutcome::Found(catalog) => {
-                    if catalog_declares(catalog.root(), probe) {
+                    if !catalog_declarations(catalog.root(), probe)?.is_empty() {
                         return None;
                     }
                     omitted = true;

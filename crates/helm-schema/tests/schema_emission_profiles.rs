@@ -825,6 +825,8 @@ fn helm_adjudication_records_each_outcome_once() {
         "loosenings_with_uncertain_kubernetes": [{ "case": "case", "uncertain": ["reason"] }],
         "charts_adjudicated": [],
         "unreachable_cases": [],
+        // Recording a verdict alone names no fallback release; the fold counts those.
+        "verdicts_decided_at_fallback_releases": 0, "fallback_release_verdicts": [],
         "false_acceptances": [
             {
                 "case": "case", "rejection": "HelmAborts",
@@ -2644,13 +2646,16 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     eprintln!(
         "charts_checked={charts_checked} probes_checked={probes_checked} flips={} \
          listed_false_acceptances={} listed_undecided_acceptances={} listed_inherited_failures={listed_inherited_failures} \
-         deferred_live_audits={deferred_live_audits}",
+         deferred_live_audits={deferred_live_audits} fallback_release_verdicts={}",
         flips.len(),
         report.helm_adjudication.false_acceptances.len() - inherited_oracle_false_acceptances,
         report
             .helm_adjudication
             .loosenings_with_uncertain_kubernetes
-            .len()
+            .len(),
+        report
+            .helm_adjudication
+            .verdicts_decided_at_fallback_releases
     );
     Ok(())
 }

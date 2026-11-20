@@ -23,6 +23,11 @@ impl SchemaDoc {
     pub(crate) fn root(&self) -> &Value {
         self.root.as_ref()
     }
+
+    /// The parsed document, shared without copying it.
+    pub(crate) fn shared(&self) -> Arc<Value> {
+        Arc::clone(&self.root)
+    }
 }
 
 /// Clone `schema` without its `$ref` key, keeping sibling keys.

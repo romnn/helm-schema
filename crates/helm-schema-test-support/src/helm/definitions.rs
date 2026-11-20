@@ -1,8 +1,9 @@
 //! Strict resource schemas derived from a release's `OpenAPI` definitions.
 //!
 //! The standalone-strict bundle omits served kinds whose definitions recurse, the API extension
-//! server's `CustomResourceDefinition` above all. The same release's `_definitions.json` declares
-//! them. Deriving the bundle's strict, nullable shape from those definitions validates such a
+//! server's `CustomResourceDefinition` above all, and a fallback release kept only as its catalog
+//! omits every kind. The release's `_definitions.json` declares them; the product's resolver names
+//! the declaring definition. Deriving the bundle's strict, nullable shape from it validates such a
 //! resource as a real installation's strict field validation would, instead of skipping it.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -11,45 +12,16 @@ use serde_json::{Map, Value, json};
 
 const DEFINITIONS_PREFIX: &str = "#/definitions/";
 
-/// The single definition declaring `apiVersion`/`kind`, as a strict standalone schema.
-///
-/// `Ok(None)` means the release declares no such kind; an ambiguous or malformed declaration is
-/// an error.
-pub(crate) fn resource_schema(
-    definitions: &Value,
-    api_version: &str,
-    kind: &str,
-) -> Result<Option<Value>, String> {
-    let definitions = definitions
+/// The release catalog's definition `name`, the root of a resource, as a strict standalone schema.
+pub(crate) fn resource_schema(catalog: &Value, name: &str) -> Result<Value, String> {
+    let definitions = catalog
         .get("definitions")
         .and_then(Value::as_object)
         .ok_or("release definitions lack a definitions object")?;
-    let (group, version) = api_version.split_once('/').unwrap_or(("", api_version));
-    let mut declaring = Vec::new();
-    for (name, definition) in definitions {
-        let Some(identities) = definition.get("x-kubernetes-group-version-kind") else {
-            continue;
-        };
-        let identities = identities
-            .as_array()
-            .ok_or_else(|| format!("{name} has a malformed group-version-kind"))?;
-        // A definition shared by many kinds (options, watch events) is no resource root.
-        if let [identity] = identities.as_slice()
-            && identity.get("group").and_then(Value::as_str) == Some(group)
-            && identity.get("version").and_then(Value::as_str) == Some(version)
-            && identity.get("kind").and_then(Value::as_str) == Some(kind)
-        {
-            declaring.push(name.as_str());
-        }
-    }
-    match declaring.as_slice() {
-        [] => Ok(None),
-        [name] => {
-            let root = json!({"$ref": format!("{DEFINITIONS_PREFIX}{name}")});
-            derive(definitions, &root).map(Some)
-        }
-        names => Err(format!("{api_version}/{kind} is declared by {names:?}")),
-    }
+    derive(
+        definitions,
+        &json!({"$ref": format!("{DEFINITIONS_PREFIX}{name}")}),
+    )
 }
 
 /// `root` with every reference to `definitions` expanded in the standalone-strict shape.

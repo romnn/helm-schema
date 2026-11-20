@@ -10,6 +10,12 @@ use crate::acceptance::adjudicate::{
 };
 use crate::helm::adjudication::{RENDER_NAMESPACE, SECOND_RENDER_NAMESPACE, is_oracle_namespace};
 
+fn observation_directory(label: &str) -> eyre::Result<test_util::scratch::ScratchDir> {
+    let directory = test_util::scratch::ScratchDir::new(label)?;
+    std::fs::write(directory.path().join("schema-verdicts.json"), b"{}")?;
+    Ok(directory)
+}
+
 #[test]
 fn namespace_language_covers_exactly_rfc1123_labels() {
     sim_assert_eq!(have: SECOND_RENDER_NAMESPACE.len(), want: 63);
@@ -36,7 +42,7 @@ fn namespace_language_covers_exactly_rfc1123_labels() {
 
 #[test]
 fn equal_namespace_verdicts_keep_the_ordinary_classification() -> eyre::Result<()> {
-    let scratch = test_util::scratch::ScratchDir::new("namespace-equal")?;
+    let scratch = observation_directory("namespace-equal")?;
     for verdict in [
         HelmFlipVerdict::CandidateAcceptsHelmAborts,
         HelmFlipVerdict::TighteningMatchedHelmAbort,
@@ -61,7 +67,7 @@ fn equal_namespace_verdicts_keep_the_ordinary_classification() -> eyre::Result<(
 
 #[test]
 fn different_namespace_verdicts_are_exact_undecided_acceptances() -> eyre::Result<()> {
-    let scratch = test_util::scratch::ScratchDir::new("namespace-split")?;
+    let scratch = observation_directory("namespace-split")?;
     for reverse in [false, true] {
         let rejected = Ok((
             HelmFlipVerdict::CandidateAcceptsHelmAborts,
@@ -92,7 +98,7 @@ fn different_namespace_verdicts_are_exact_undecided_acceptances() -> eyre::Resul
 #[test]
 fn environment_dependent_tightenings_fail_and_infrastructure_is_never_uncertainty()
 -> eyre::Result<()> {
-    let scratch = test_util::scratch::ScratchDir::new("namespace-rejection")?;
+    let scratch = observation_directory("namespace-rejection")?;
     let accepted = || {
         Err(eyre::Report::new(OracleFinding {
             kind: FailureKind::UnattributedRejection,

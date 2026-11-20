@@ -4,7 +4,7 @@
 
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
@@ -609,6 +609,8 @@ fn judge_kubernetes_contexts(
         "new_kubernetes_errors": comparison.new_violations.iter().map(ToString::to_string).collect::<Vec<_>>(),
         "inherited_kubernetes_errors": comparison.inherited_violations.iter().map(ToString::to_string).collect::<Vec<_>>(),
         "kubernetes_uncertainty": comparison.uncertain,
+        FALLBACK_EVIDENCE: fallback_evidence(comparison),
+        DECISIVE_FALLBACK_EVIDENCE: decisive_fallback_evidence(comparison, after),
     })).collect::<Vec<_>>());
     // Every origin must justify a tightening; one rejecting context disproves an acceptance.
     let unattributed = comparisons
@@ -638,6 +640,17 @@ fn judge_kubernetes_contexts(
         "missing applicable Kubernetes comparison"
     );
     let comparison = comparisons.remove(index);
+    let mut decisive = decisive_fallback_evidence(&comparison, after);
+    if !comparison.new_violations.is_empty() {
+        decisive.extend(
+            comparisons
+                .iter()
+                .flat_map(|comparison| decisive_fallback_evidence(comparison, false)),
+        );
+        decisive.sort_unstable();
+        decisive.dedup();
+    }
+    evidence[DECISIVE_FALLBACK_EVIDENCE] = json!(decisive);
     if inherited_lint && comparison.new_violations.is_empty() {
         return Err(finding(
             FailureKind::Undecided,
@@ -652,6 +665,58 @@ fn judge_kubernetes_contexts(
         ));
     }
     judge_kubernetes(comparison, after, uninformative, evidence)
+}
+
+/// The verdict evidence naming the probe render's resources a fallback release's schema judged
+/// (ADR 0032), as [`FallbackJudgment`](crate::helm::adjudication::FallbackJudgment) displays them.
+pub const FALLBACK_EVIDENCE: &str = "kubernetes_fallback_releases";
+
+const DECISIVE_FALLBACK_EVIDENCE: &str = "kubernetes_decisive_fallback_releases";
+
+fn fallback_evidence(comparison: &DefaultsComparison) -> Vec<String> {
+    comparison
+        .fallback
+        .iter()
+        .map(ToString::to_string)
+        .collect()
+}
+
+fn decisive_fallback_evidence(comparison: &DefaultsComparison, after: bool) -> Vec<String> {
+    let accepts = after && comparison.new_violations.is_empty() && comparison.uncertain.is_empty();
+    comparison
+        .fallback
+        .iter()
+        .filter(|judgment| {
+            accepts
+                || comparison
+                    .new_violations
+                    .iter()
+                    .any(|violation| violation.location == judgment.location)
+        })
+        .map(ToString::to_string)
+        .collect()
+}
+
+fn recorded_fallback(verdict: &HelmFlipVerdict, evidence: &Path) -> eyre::Result<Vec<String>> {
+    if oracle_accepts(verdict).is_none() {
+        return Ok(Vec::new());
+    }
+    let recorded: Value =
+        serde_json::from_slice(&std::fs::read(evidence.join("namespace-verdicts.json"))?)?;
+    let observations: BTreeMap<String, Vec<String>> = serde_json::from_value(
+        recorded
+            .get(DECISIVE_FALLBACK_EVIDENCE)
+            .ok_or_eyre("namespace verdicts lack fallback evidence")?
+            .clone(),
+    )?;
+    Ok(observations
+        .into_iter()
+        .flat_map(|(namespace, resources)| {
+            resources
+                .into_iter()
+                .map(move |resource| format!("{namespace}: {resource}"))
+        })
+        .collect())
 }
 
 fn rejection_verdict(after: bool, uninformative: bool, rejection: Rejection) -> HelmFlipVerdict {
@@ -712,6 +777,10 @@ fn judge_kubernetes(
         ),
     );
     object.insert("kubernetes_uncertainty".into(), json!(comparison.uncertain));
+    object.insert(
+        FALLBACK_EVIDENCE.into(),
+        json!(fallback_evidence(&comparison)),
+    );
     if !comparison.new_violations.is_empty() {
         Ok(rejection_verdict(
             after,
@@ -815,6 +884,7 @@ pub fn adjudicate_probe(
                 "{}: no screened flip {flip}",
                 live.label
             ))),
+            decisive_kubernetes_fallback: Vec::new(),
             adjudication_ms: 0,
         };
     };
@@ -868,6 +938,19 @@ pub fn adjudicate_probe(
             })
         }
     };
+    let (outcome, decisive_kubernetes_fallback) = match outcome {
+        Ok((verdict, evidence)) => match recorded_fallback(&verdict, &evidence) {
+            Ok(fallback) => (Ok((verdict, evidence)), fallback),
+            Err(error) => (
+                Err(AdjudicationFailure::infrastructure(format!(
+                    "{case}: read the verdict evidence in {}: {error}",
+                    evidence.display()
+                ))),
+                Vec::new(),
+            ),
+        },
+        Err(failure) => (Err(failure), Vec::new()),
+    };
     AdjudicatedProbe {
         flip,
         key: super::probe_key(&live.label, probe),
@@ -876,6 +959,7 @@ pub fn adjudicate_probe(
         kubernetes_version,
         input: input.ok(),
         outcome,
+        decisive_kubernetes_fallback,
         adjudication_ms: elapsed_ms(started),
     }
 }
@@ -1326,6 +1410,14 @@ fn adjudicate_flip_in_namespace(
             "kubernetes_uncertainty".to_string(),
             json!(comparison.uncertain),
         );
+        object.insert(
+            FALLBACK_EVIDENCE.into(),
+            json!(fallback_evidence(&comparison)),
+        );
+        object.insert(
+            DECISIVE_FALLBACK_EVIDENCE.into(),
+            json!(decisive_fallback_evidence(&comparison, after)),
+        );
         // A new violation is decisive; otherwise every resource must be decided.
         if !comparison.new_violations.is_empty() {
             if after && uninformative {
@@ -1422,6 +1514,44 @@ fn observed_accepts(result: &eyre::Result<(HelmFlipVerdict, PathBuf)>) -> Option
     }
 }
 
+fn local_verdict_evidence(
+    observation: &eyre::Result<(HelmFlipVerdict, PathBuf)>,
+) -> eyre::Result<Value> {
+    match observation {
+        Ok((_, path)) => Ok(serde_json::from_slice(&std::fs::read(
+            path.join("schema-verdicts.json"),
+        )?)?),
+        Err(_) => Ok(Value::Null),
+    }
+}
+
+fn record_namespace_verdicts(
+    first: &eyre::Result<(HelmFlipVerdict, PathBuf)>,
+    second: &eyre::Result<(HelmFlipVerdict, PathBuf)>,
+) -> eyre::Result<()> {
+    let first_record = local_verdict_evidence(first)?;
+    let second_record = local_verdict_evidence(second)?;
+    let fallback = |key| {
+        json!({
+            (RENDER_NAMESPACE): first_record.get(key).cloned().unwrap_or_else(|| json!([])),
+            (SECOND_RENDER_NAMESPACE): second_record.get(key).cloned().unwrap_or_else(|| json!([])),
+        })
+    };
+    let evidence = serde_json::to_vec_pretty(&json!({
+        "namespaces": [RENDER_NAMESPACE, SECOND_RENDER_NAMESPACE],
+        "first": format!("{first:?}"), "second": format!("{second:?}"),
+        FALLBACK_EVIDENCE: fallback(FALLBACK_EVIDENCE),
+        DECISIVE_FALLBACK_EVIDENCE: fallback(DECISIVE_FALLBACK_EVIDENCE),
+    }))?;
+    for (_, path) in [first, second]
+        .into_iter()
+        .filter_map(|result| result.as_ref().ok())
+    {
+        std::fs::write(path.join("namespace-verdicts.json"), &evidence)?;
+    }
+    Ok(())
+}
+
 pub(crate) fn combine_namespace_verdicts(
     first: eyre::Result<(HelmFlipVerdict, PathBuf)>,
     second: eyre::Result<(HelmFlipVerdict, PathBuf)>,
@@ -1445,15 +1575,7 @@ pub(crate) fn combine_namespace_verdicts(
         .ok()
         .or_else(|| second.as_ref().ok())
         .map(|(_, path)| path);
-    if let Some(directory) = directory {
-        std::fs::write(
-            directory.join("namespace-verdicts.json"),
-            serde_json::to_vec_pretty(&json!({
-                "namespaces": [RENDER_NAMESPACE, SECOND_RENDER_NAMESPACE],
-                "first": format!("{first:?}"), "second": format!("{second:?}"),
-            }))?,
-        )?;
-    }
+    record_namespace_verdicts(&first, &second)?;
     let disagreement = match (observed_accepts(&first), observed_accepts(&second)) {
         (Some(first), Some(second)) => {
             namespace_disagreement(RENDER_NAMESPACE, first, SECOND_RENDER_NAMESPACE, second)?

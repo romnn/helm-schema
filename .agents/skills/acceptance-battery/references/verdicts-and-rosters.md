@@ -97,7 +97,11 @@ caps never silently certify a prefix as complete.
    then renders the chart. Both profiles re-judge Helm's **exact** coalesced
    document. The render is compared with the chart's defaults render under
    the offline Kubernetes validator (v1.29 strict bundle plus the CRD
-   catalog). Flip strings are `<chart>: <probe>: candidate accepts=<bool>`.
+   catalog). A built-in kind v1.29 neither defines nor proves unserved is
+   judged by the newest older release of ADR 0032's auto-fallback window the
+   bundle defines it in (by document, else by its release catalog); a kind v1.29
+   proves unserved stays a "not served" violation, and CRDs are never
+   substituted. Flip strings are `<chart>: <probe>: candidate accepts=<bool>`.
 
 ### Document-specific live adjudication
 
@@ -320,7 +324,15 @@ fails, every adjudicated flip. The copied `prepared.json` names the charts by bu
   and `schema-verdicts.json`. The last file contains both profiles'
   accept/reject and errors, `baseline_rejects_it_as_its_defaults`,
   `candidate_rejects_for_a_new_reason`, the Helm exit, new, inherited and
-  uncertain Kubernetes errors, and per-acceptance-document verdicts.
+  uncertain Kubernetes errors, `kubernetes_fallback_releases` (every render
+  resource a fallback release's schema judged, with that release),
+  `kubernetes_decisive_fallback_releases` (the subset that contributed a new
+  violation or the deciding acceptance), and per-acceptance-document verdicts.
+  The coverage report counts a verdict once in
+  `helm_adjudication.verdicts_decided_at_fallback_releases`, and lists it in
+  `fallback_release_verdicts`, only when `kubernetes_decisive_fallback_releases`
+  records a contribution in either namespace; a fallback release used only
+  incidentally is not counted. The summary line prints `fallback_release_verdicts=<n>`.
 
 Lint evidence also retains the three lint executions and invocation records,
 rule-qualified diagnostics, exact document JSON, overlay origins, schema hashes,

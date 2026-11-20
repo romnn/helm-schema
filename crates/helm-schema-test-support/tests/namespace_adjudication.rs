@@ -156,3 +156,101 @@ fn resident_namespace_processes_do_not_leak_between_requests() -> eyre::Result<(
     }
     Ok(())
 }
+
+#[test]
+#[ignore = "requires the pinned Helm 4.2.3 engine"]
+fn fallback_coverage_uses_decisive_resources_in_each_namespace() -> eyre::Result<()> {
+    use std::fs;
+
+    use indoc::indoc;
+    use serde_json::Value;
+
+    let source = test_util::scratch::ScratchDir::new("namespace-fallback")?;
+    fs::write(
+        source.path().join("Chart.yaml"),
+        indoc! {"
+            apiVersion: v2
+            name: namespace-fallback
+            version: 0.1.0
+        "},
+    )?;
+    fs::write(
+        source.path().join("values.yaml"),
+        indoc! {"
+            primary: 100
+            fallback: 100
+        "},
+    )?;
+    let templates = source.path().join("templates");
+    fs::create_dir(&templates)?;
+    fs::write(
+        templates.join("services.yaml"),
+        indoc! {r#"
+            {{- define "service" }}
+            kind: APIService
+            metadata:
+              name: v1.example.org
+            spec:
+              service: {name: adapter, namespace: default}
+              group: example.org
+              version: v1
+              groupPriorityMinimum: {{ . | toJson }}
+              versionPriority: 100
+            {{- end }}
+            apiVersion: apiregistration.k8s.io/v1
+            {{ include "service" .Values.primary }}
+            {{- if ne .Release.Namespace "default" }}
+            ---
+            apiVersion: apiregistration.k8s.io/v1beta1
+            {{ include "service" .Values.fallback }}
+            {{- end }}
+        "#},
+    )?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, source.path())?;
+    let kubernetes = OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        KUBERNETES_RELEASE,
+    )?;
+    let baseline = json!({"properties": {
+        "primary": {"const": 100},
+        "fallback": {"const": 100},
+    }});
+    let profiles = ProfileSchemas::compile(
+        &baseline,
+        &json!({}),
+        json!({"primary": 100, "fallback": 100}),
+    )?;
+    let fallback = "document 1: apiregistration.k8s.io/v1beta1/APIService v1.example.org: judged by fallback release v1.15.0";
+    for (overlay, expected, decisive) in [
+        (
+            json!({"primary": "invalid"}),
+            HelmFlipVerdict::CandidateAcceptsKubernetesRejects,
+            json!([]),
+        ),
+        (
+            json!({"primary": "invalid", "fallback": "invalid"}),
+            HelmFlipVerdict::CandidateAcceptsKubernetesRejects,
+            json!([fallback]),
+        ),
+        (
+            json!({"fallback": 101}),
+            HelmFlipVerdict::LooseningMatchedKubernetesValidation,
+            json!([fallback]),
+        ),
+    ] {
+        let (verdict, directory) = adjudicate_flip(&chart, &overlay, &profiles, &kubernetes, None)?;
+        sim_assert_eq!(have: verdict, want: expected);
+        let evidence: Value =
+            serde_json::from_slice(&fs::read(directory.join("namespace-verdicts.json"))?)?;
+        sim_assert_eq!(
+            have: json!([
+                evidence["kubernetes_fallback_releases"][RENDER_NAMESPACE],
+                evidence["kubernetes_fallback_releases"][SECOND_RENDER_NAMESPACE],
+                evidence["kubernetes_decisive_fallback_releases"][RENDER_NAMESPACE],
+                evidence["kubernetes_decisive_fallback_releases"][SECOND_RENDER_NAMESPACE],
+            ]),
+            want: json!([[], [fallback], [], decisive]),
+        );
+    }
+    Ok(())
+}

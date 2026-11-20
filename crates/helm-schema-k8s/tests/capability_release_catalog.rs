@@ -141,3 +141,33 @@ fn a_bundle_miss_is_absence_only_when_no_single_root_declares_the_kind() -> eyre
     );
     Ok(())
 }
+
+#[test]
+fn a_malformed_catalog_cannot_confirm_a_document_miss() -> eyre::Result<()> {
+    for (catalog, expected) in [
+        (json!({}), None),
+        (json!({"definitions": []}), None),
+        (
+            json!({"definitions": {"broken": {"x-kubernetes-group-version-kind": {}}}}),
+            None,
+        ),
+        (json!({"definitions": {}}), Some(false)),
+    ] {
+        let cache = ScratchDir::new("capability-catalog-shape")?;
+        let transport = Arc::new(MockFetcher::new().with_body(
+            format!("{UPSTREAM}/v1.29.0/_definitions.json"),
+            serde_json::to_vec(&catalog)?,
+        ));
+        let provider = |allow, transport| {
+            KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
+                .with_cache_dir(cache.path())
+                .with_allow_download(allow)
+                .with_fetcher(transport)
+        };
+        let api = "batch/v1beta1/CronJob";
+        let online = has(&provider(true, transport), api)?;
+        let offline = has(&provider(false, Arc::new(MockFetcher::new())), api)?;
+        sim_assert_eq!(have: [online, offline], want: [expected, expected]);
+    }
+    Ok(())
+}

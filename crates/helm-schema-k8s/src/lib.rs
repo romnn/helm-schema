@@ -53,7 +53,9 @@ pub use diagnostic::{
 pub use fetch::{FetchError, HttpFetcher};
 pub use filename::ordered_api_versions_for_resource;
 pub use inference::{ApiVersionCandidate, ApiVersionInferenceOutcome, InferenceSource};
-pub use kubernetes_openapi::{K8sVersionChain, KubernetesJsonSchemaProvider};
+pub use kubernetes_openapi::{
+    K8sVersionChain, KubernetesJsonSchemaProvider, ReleaseDefinition, ReleaseSchemaSource,
+};
 pub use local_override::LocalSchemaProvider;
 pub use local_schema_universe::{
     ChartLocalCrdSchemaProvider, LocalResourceSchema, LocalSchemaUniverse,

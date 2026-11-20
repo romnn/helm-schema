@@ -3,6 +3,8 @@
 use std::fs;
 
 use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_core::ResourceRef;
+use helm_schema_k8s::{KubernetesJsonSchemaProvider, ReleaseDefinition, ReleaseSchemaSource};
 use jsonschema::Draft;
 use serde_json::{Map, Value, json};
 use test_util::prelude::sim_assert_eq;
@@ -13,10 +15,37 @@ use crate::helm::definitions::resource_schema;
 
 const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
 
-fn release_definitions() -> eyre::Result<Value> {
-    let path = test_util::workspace_testdata()
-        .join("provider-bundle/kubernetes-json-schema-cache/default/v1.29.0/_definitions.json");
-    Ok(serde_json::from_slice(&fs::read(path)?)?)
+/// The vendored v1.29.0 release, which the bundle keeps only as its API catalog.
+fn release_catalog() -> KubernetesJsonSchemaProvider {
+    KubernetesJsonSchemaProvider::new("v1.29.0")
+        .with_cache_dir(
+            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        )
+        .with_allow_download(false)
+}
+
+/// The derivation of the catalog definition the product's resolver finds declaring the kind.
+fn derived(
+    catalog: &KubernetesJsonSchemaProvider,
+    api_version: &str,
+    kind: &str,
+) -> eyre::Result<Value> {
+    let resource = ResourceRef::concrete(api_version.to_string(), kind.to_string());
+    let Some(ReleaseDefinition {
+        source:
+            ReleaseSchemaSource::Catalog {
+                catalog,
+                definitions,
+            },
+        ..
+    }) = catalog.release_definition(&resource)
+    else {
+        eyre::bail!("the release catalog does not declare {api_version}/{kind}");
+    };
+    let [definition] = definitions.as_slice() else {
+        eyre::bail!("{api_version}/{kind} is declared by {definitions:?}");
+    };
+    resource_schema(&catalog, definition).map_err(|error| eyre::eyre!(error))
 }
 
 /// `schema` without annotation keywords, which never change what a schema accepts.
@@ -53,7 +82,7 @@ fn validating(schema: &Value) -> Value {
 /// the same release's definitions, so a kind the bundle omits is judged by the same rules.
 #[test]
 fn derived_schemas_equal_every_pinned_standalone_strict_schema() -> eyre::Result<()> {
-    let definitions = release_definitions()?;
+    let catalog = release_catalog();
     let directory = test_util::workspace_testdata()
         .join("provider-bundle/kubernetes-json-schema-cache/default")
         .join(KUBERNETES_RELEASE);
@@ -79,9 +108,7 @@ fn derived_schemas_equal_every_pinned_standalone_strict_schema() -> eyre::Result
             "" => field("version").to_string(),
             group => format!("{group}/{}", field("version")),
         };
-        let derived = resource_schema(&definitions, &api_version, field("kind"))
-            .map_err(|error| eyre::eyre!(error))?
-            .ok_or_eyre("the release does not declare a pinned kind")?;
+        let derived = derived(&catalog, &api_version, field("kind"))?;
         sim_assert_eq!(have: validating(&derived), want: validating(&pinned));
         compared += 1;
     }
@@ -93,14 +120,11 @@ fn derived_schemas_equal_every_pinned_standalone_strict_schema() -> eyre::Result
 /// compiles, and types annotations as strings.
 #[test]
 fn the_custom_resource_definition_kind_derives_a_recursive_strict_schema() -> eyre::Result<()> {
-    let definitions = release_definitions()?;
-    let schema = resource_schema(
-        &definitions,
+    let schema = derived(
+        &release_catalog(),
         "apiextensions.k8s.io/v1",
         "CustomResourceDefinition",
-    )
-    .map_err(|error| eyre::eyre!(error))?
-    .ok_or_eyre("the release does not declare CustomResourceDefinition")?;
+    )?;
     let local: Vec<&str> = schema
         .get("definitions")
         .and_then(Value::as_object)

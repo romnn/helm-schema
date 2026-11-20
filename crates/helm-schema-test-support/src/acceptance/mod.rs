@@ -118,6 +118,10 @@ pub struct HelmAdjudicationCoverage {
     pub charts_adjudicated: std::collections::BTreeSet<String>,
     /// Accepted cells Helm or Kubernetes reject.
     pub false_acceptances: Vec<ObservedFalseAcceptance>,
+    /// Verdicts supported by a new violation or decisive acceptance at a fallback release (ADR 0032).
+    pub verdicts_decided_at_fallback_releases: usize,
+    /// Each such verdict and the resources that contributed to it, identified by namespace.
+    pub fallback_release_verdicts: Vec<FallbackReleaseVerdict>,
     /// `chart: probe` of every composed probe no values file reaches. A
     /// roster row naming one cannot be observed and is kept, not "fixed".
     pub unreachable_cases: Vec<String>,
@@ -125,6 +129,17 @@ pub struct HelmAdjudicationCoverage {
     /// final gate fails.
     #[serde(skip)]
     pub flip_evidence: Vec<PathBuf>,
+}
+
+/// A verdict decided with a fallback release's schema (ADR 0032).
+#[derive(Debug, Serialize)]
+pub struct FallbackReleaseVerdict {
+    /// `chart: probe` of the flip.
+    pub case: String,
+    /// The verdict.
+    pub verdict: String,
+    /// The resources fallback releases judged, as the verdict's evidence records them.
+    pub resources: Vec<String>,
 }
 
 /// A false acceptance the battery observed, to be matched by the roster.
@@ -678,6 +693,8 @@ pub struct AdjudicatedProbe {
     pub input: Option<FailureInput>,
     /// The verdict and its evidence directory, or why there is none.
     pub outcome: Result<(HelmFlipVerdict, PathBuf), AdjudicationFailure>,
+    /// Resources whose fallback schemas contributed to the verdict in either namespace (ADR 0032).
+    pub decisive_kubernetes_fallback: Vec<String>,
     /// Time spent adjudicating it.
     pub adjudication_ms: u64,
 }
@@ -823,72 +840,98 @@ pub fn fold_results(
                 comparison.costs.push(screened.cost);
                 helm_charts.push(screened.helm);
             }
-            AcceptanceResult::Probe(probe) => {
-                if probe.document_kind.is_some() {
-                    comparison
-                        .helm_adjudication
-                        .examined_contexts
-                        .insert(probe.case.clone());
-                }
-                if let Some(kind) = probe.document_kind
-                    && let Some(lint) = comparison
-                        .coverage
-                        .last_mut()
-                        .and_then(|chart| chart.lint.as_mut())
-                    && let Some(counts) = lint.documents.get_mut(&format!("{kind:?}"))
-                {
-                    if probe.outcome.is_ok() {
-                        counts.adjudicated += 1;
-                    } else {
-                        counts.adjudication_failures += 1;
-                    }
-                }
-                if let Some(cost) = comparison.costs.last_mut() {
-                    cost.adjudication_ms += probe.adjudication_ms;
-                }
-                match probe.outcome {
-                    Err(failure) => {
-                        let observed = ObservedFailure::from_adjudication(
-                            probe.case.clone(),
-                            probe.kubernetes_version,
-                            &failure.message,
-                            probe.input,
-                        );
-                        comparison.adjudications.push(AdjudicationRecord {
-                            key: probe.key,
-                            case: probe.case,
-                            outcome: Err(failure),
-                            evidence: observed.evidence.clone(),
-                        });
-                        comparison
-                            .helm_adjudication
-                            .adjudication_failures
-                            .push(observed);
-                    }
-                    Ok((verdict, evidence)) => {
-                        eprintln!("HELM_FLIP {verdict:?}: evidence={}", evidence.display());
-                        comparison.adjudications.push(AdjudicationRecord {
-                            key: probe.key,
-                            case: probe.case.clone(),
-                            outcome: Ok((verdict.clone(), evidence.clone())),
-                            evidence: Some(evidence.clone()),
-                        });
-                        if let Some(candidate_accepts) = comparison
-                            .helm_adjudication
-                            .record_verdict(verdict, probe.case.clone(), Some(evidence))
-                        {
-                            comparison.flips.push(format!(
-                                "{}: candidate accepts={candidate_accepts}",
-                                probe.case
-                            ));
-                        }
-                    }
-                }
-            }
+            AcceptanceResult::Probe(probe) => fold_probe(&mut comparison, *probe),
         }
     }
     record_helm_costs(&helm_charts, &mut comparison.costs);
     Ok(comparison)
+}
+
+/// Folds one adjudicated flip into `comparison`: its lint document accounting, cost, record and
+/// verdict, and whether a fallback release's schema decided it (ADR 0032).
+fn fold_probe(comparison: &mut AcceptanceComparison, probe: AdjudicatedProbe) {
+    let AdjudicatedProbe {
+        flip: _,
+        key,
+        case,
+        document_kind,
+        kubernetes_version,
+        input,
+        outcome,
+        decisive_kubernetes_fallback,
+        adjudication_ms,
+    } = probe;
+    if document_kind.is_some() {
+        comparison
+            .helm_adjudication
+            .examined_contexts
+            .insert(case.clone());
+    }
+    if let Some(kind) = document_kind
+        && let Some(lint) = comparison
+            .coverage
+            .last_mut()
+            .and_then(|chart| chart.lint.as_mut())
+        && let Some(counts) = lint.documents.get_mut(&format!("{kind:?}"))
+    {
+        if outcome.is_ok() {
+            counts.adjudicated += 1;
+        } else {
+            counts.adjudication_failures += 1;
+        }
+    }
+    if let Some(cost) = comparison.costs.last_mut() {
+        cost.adjudication_ms += adjudication_ms;
+    }
+    match outcome {
+        Err(failure) => {
+            let observed = ObservedFailure::from_adjudication(
+                case.clone(),
+                kubernetes_version,
+                &failure.message,
+                input,
+            );
+            comparison.adjudications.push(AdjudicationRecord {
+                key,
+                case,
+                outcome: Err(failure),
+                evidence: observed.evidence.clone(),
+            });
+            comparison
+                .helm_adjudication
+                .adjudication_failures
+                .push(observed);
+        }
+        Ok((verdict, evidence)) => {
+            eprintln!("HELM_FLIP {verdict:?}: evidence={}", evidence.display());
+            if verdict != HelmFlipVerdict::Collapsed && !decisive_kubernetes_fallback.is_empty() {
+                let coverage = &mut comparison.helm_adjudication;
+                coverage.verdicts_decided_at_fallback_releases += 1;
+                coverage
+                    .fallback_release_verdicts
+                    .push(FallbackReleaseVerdict {
+                        case: case.clone(),
+                        verdict: format!("{verdict:?}"),
+                        resources: decisive_kubernetes_fallback,
+                    });
+            }
+            comparison.adjudications.push(AdjudicationRecord {
+                key,
+                case: case.clone(),
+                outcome: Ok((verdict.clone(), evidence.clone())),
+                evidence: Some(evidence.clone()),
+            });
+            if let Some(candidate_accepts) =
+                comparison
+                    .helm_adjudication
+                    .record_verdict(verdict, case.clone(), Some(evidence))
+            {
+                comparison
+                    .flips
+                    .push(format!("{case}: candidate accepts={candidate_accepts}"));
+            }
+        }
+    }
 }
 
 /// Records each chart's prepared copies and Helm costs in its cost entry.

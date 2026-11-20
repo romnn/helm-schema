@@ -5,6 +5,15 @@ pub struct K8sVersionChain {
 }
 
 impl K8sVersionChain {
+    /// The auto-fallback window: how many older minors `--k8s-version-fallback=auto` appends
+    /// below a single explicit version (ADR 0032).
+    ///
+    /// Sized to the realistic deprecation horizon: charts in the wild still ship
+    /// `policy/v1beta1` (PSP / PDB) and `networking.k8s.io/v1beta1` (Ingress), both removed in
+    /// v1.25, so the default primary (`v1.35.0`) must reach at least `v1.24.0`. 15 leaves
+    /// headroom for the next few Kubernetes releases.
+    pub const AUTO_FALLBACK_WINDOW: u32 = 15;
+
     /// Build a chain from explicit user-ordered versions and an
     /// optional auto-fallback window. The two are combined as:
     ///   `[explicit..., auto_fallback...]`

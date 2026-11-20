@@ -537,6 +537,7 @@ fn live_grouped_outcomes_fold_in_original_probe_order() -> eyre::Result<()> {
                     kubernetes_version: "1.29.0".into(),
                     input: None,
                     outcome: Err(super::AdjudicationFailure::infrastructure(case)),
+                    decisive_kubernetes_fallback: Vec::new(),
                     adjudication_ms: 0,
                 })),
             )

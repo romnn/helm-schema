@@ -1013,36 +1013,54 @@ fn k8s_column(
         }
         // No resource document: nothing but whitespace, separators or comments.
         Ok(documents) if documents.iter().all(Value::is_null) => "empty",
-        Ok(documents) => match kubernetes.validate_documents(&documents) {
-            KubernetesVerdict::Valid => "valid",
-            KubernetesVerdict::Invalid(violations) => {
-                for violation in violations {
-                    diagnostics.push([
-                        "k8s".to_string(),
-                        format!(
-                            "{}/{} {}",
-                            violation.key.api_version, violation.key.kind, violation.instance_path
-                        ),
-                        violation.key.keyword.clone(),
-                        violation.message,
-                        violation.key.schema_location.clone(),
-                    ]);
-                }
-                "invalid"
+        Ok(documents) => {
+            let (verdict, fallback) = kubernetes.validate_documents_with_fallback(&documents);
+            // A verdict a fallback release's schema decided says so (ADR 0032).
+            for judgment in fallback {
+                diagnostics.push([
+                    "k8s".to_string(),
+                    format!(
+                        "{}/{} {}",
+                        judgment.api_version, judgment.kind, judgment.location
+                    ),
+                    "fallback-release".to_string(),
+                    judgment.to_string(),
+                    String::new(),
+                ]);
             }
-            KubernetesVerdict::Uncertain(reasons) => {
-                for reason in reasons {
-                    diagnostics.push([
-                        "k8s".to_string(),
-                        String::new(),
-                        "uncertain".to_string(),
-                        reason,
-                        String::new(),
-                    ]);
+            match verdict {
+                KubernetesVerdict::Valid => "valid",
+                KubernetesVerdict::Invalid(violations) => {
+                    for violation in violations {
+                        diagnostics.push([
+                            "k8s".to_string(),
+                            format!(
+                                "{}/{} {}",
+                                violation.key.api_version,
+                                violation.key.kind,
+                                violation.instance_path
+                            ),
+                            violation.key.keyword.clone(),
+                            violation.message,
+                            violation.key.schema_location.clone(),
+                        ]);
+                    }
+                    "invalid"
                 }
-                "uncertain"
+                KubernetesVerdict::Uncertain(reasons) => {
+                    for reason in reasons {
+                        diagnostics.push([
+                            "k8s".to_string(),
+                            String::new(),
+                            "uncertain".to_string(),
+                            reason,
+                            String::new(),
+                        ]);
+                    }
+                    "uncertain"
+                }
             }
-        },
+        }
     })
 }
 

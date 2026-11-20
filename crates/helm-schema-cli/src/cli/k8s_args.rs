@@ -101,12 +101,6 @@ impl K8sArgs {
     }
 }
 
-/// Default auto-fallback reach when `--k8s-version-fallback=auto` is set.
-///
-/// Sized to cover the realistic K8s deprecation horizon: charts in the
-/// wild still ship `policy/v1beta1` (PSP / PDB) and
-/// `networking.k8s.io/v1beta1` (Ingress) — both removed in v1.25 — so
-/// a primary of the current default (`v1.35.0`) must be able to fall
-/// back at least to `v1.24.0` to find a schema. 15 leaves headroom for
-/// the next few K8s releases without churning this constant.
-pub const DEFAULT_AUTO_WINDOW: u32 = 15;
+/// Default auto-fallback reach when `--k8s-version-fallback=auto` is set: the provider's
+/// [`K8sVersionChain::AUTO_FALLBACK_WINDOW`](helm_schema::provider::K8sVersionChain::AUTO_FALLBACK_WINDOW).
+pub const DEFAULT_AUTO_WINDOW: u32 = helm_schema::provider::K8sVersionChain::AUTO_FALLBACK_WINDOW;

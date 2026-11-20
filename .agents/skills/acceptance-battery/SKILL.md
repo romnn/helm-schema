@@ -21,7 +21,12 @@ schema accept differently from the baseline schema, and is each change
 right?** It builds a probe battery per chart over the chart's coalesced
 defaults. Rust screening finds the probes the two schemas judge differently.
 In live mode, each screened flip is then judged by pinned Helm v4.2.3 and an
-offline Kubernetes v1.29 strict bundle plus the CRD catalog. Fixture equality
+offline Kubernetes validator: the product's resolver (`helm-schema-k8s`) over the
+vendored bundle, primary `v1.29.0-standalone-strict` plus ADR 0032's lookup-only
+fallback releases, and the CRD catalog at the pinned version only (ADR 0033). When a
+resource judged at a fallback release contributed to a verdict, the evidence names
+that release and the coverage report's `verdicts_decided_at_fallback_releases`
+counts the verdict once. Fixture equality
 tests only pin bytes. This battery is the evidence that changed bytes are
 correct.
 

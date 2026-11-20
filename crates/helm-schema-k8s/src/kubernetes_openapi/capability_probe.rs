@@ -43,31 +43,39 @@ pub(super) fn catalog_release(version_dir: &str) -> &str {
         .unwrap_or(version_dir)
 }
 
-/// Whether the release API catalog declares `probe`'s exact group, version and kind as the
-/// single root of a definition.
+/// The definitions that declare `probe`'s exact group, version and kind as their single root.
 ///
-/// Generic meta types (`DeleteOptions`, `WatchEvent`) list every group/version, retired ones
-/// included, so only single-entry definitions count as declaring a kind.
-pub(super) fn catalog_declares(catalog: &Value, probe: &ResourceRef) -> bool {
-    let Some(target) = GroupVersion::parse(&probe.api_version) else {
-        return false;
-    };
-    let Some(definitions) = catalog.get("definitions").and_then(Value::as_object) else {
-        return false;
-    };
-    definitions
-        .values()
-        .filter_map(|definition| definition.get("x-kubernetes-group-version-kind"))
-        .filter_map(Value::as_array)
-        .filter_map(|entries| match entries.as_slice() {
-            [entry] => Some(entry),
-            _ => None,
-        })
-        .any(|entry| {
-            entry.get("group").and_then(Value::as_str) == Some(target.group)
-                && entry.get("version").and_then(Value::as_str) == Some(target.version)
-                && entry.get("kind").and_then(Value::as_str) == Some(probe.kind.as_str())
-        })
+/// An empty result records a valid omission. A malformed catalog gives no evidence of absence.
+pub(super) fn catalog_declarations<'a>(
+    catalog: &'a Value,
+    probe: &ResourceRef,
+) -> Option<Vec<&'a str>> {
+    let target = GroupVersion::parse(&probe.api_version)?;
+    let definitions = catalog.get("definitions")?.as_object()?;
+    let mut declarations = Vec::new();
+    for (name, definition) in definitions {
+        let Some(entries) = definition
+            .as_object()?
+            .get("x-kubernetes-group-version-kind")
+        else {
+            continue;
+        };
+        let entries = entries.as_array()?;
+        for entry in entries {
+            let group = entry.get("group")?.as_str()?;
+            let version = entry.get("version")?.as_str()?;
+            let kind = entry.get("kind")?.as_str()?;
+            // Generic meta types list multiple group/versions, including retired ones.
+            if entries.len() == 1
+                && group == target.group
+                && version == target.version
+                && kind == probe.kind
+            {
+                declarations.push(name.as_str());
+            }
+        }
+    }
+    Some(declarations)
 }
 
 fn canonical_kind(api_version: &str) -> Option<&'static str> {
