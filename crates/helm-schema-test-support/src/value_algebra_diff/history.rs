@@ -162,6 +162,8 @@ pub enum WitnessMode {
     /// A structural probe of the exact-template lane, composed over the
     /// chart's coalesced defaults.
     TemplateProbe,
+    /// A template probe composed by processing chart dependencies and coalescing its values file.
+    TemplateComposed,
     /// `helm lint`'s raw values document.
     LintRaw,
     /// `helm lint`'s twice-coalesced document.
@@ -226,6 +228,8 @@ pub enum InstanceRecord {
     SparseOverride(Value),
     /// A complete coalesced document.
     Coalesced(Value),
+    /// The expected Helm document, reproduced from the recorded values file at replay.
+    Composed(Value),
 }
 
 /// One persistent witness, version 1.
@@ -342,7 +346,17 @@ impl WitnessRecord {
                     self.id
                 )));
             }
-            (Some(_), None, Some(defaults)) => {
+            (Some(InstanceRecord::Composed(_)), None, None)
+                if self.identity.mode == WitnessMode::TemplateComposed => {}
+            (
+                Some(
+                    InstanceRecord::Defaults
+                    | InstanceRecord::SparseOverride(_)
+                    | InstanceRecord::Coalesced(_),
+                ),
+                None,
+                Some(defaults),
+            ) => {
                 blobs.get(defaults)?;
             }
             (None, Some(document), None) => {

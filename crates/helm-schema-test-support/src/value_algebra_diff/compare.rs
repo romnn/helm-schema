@@ -689,20 +689,44 @@ pub fn witness_record(
     };
     let (mode, values_file, contexts, instance, document, defaults_blob) =
         match (&witness.instance, &witness.probe.document) {
-            (Some(instance), None) => (
-                WitnessMode::TemplateProbe,
-                serialize(&witness.probe.overlay)?,
-                vec![json!({})],
-                Some(match instance {
-                    ProbeInstance::Defaults => InstanceRecord::Defaults,
-                    ProbeInstance::SparseOverride(value) => {
-                        InstanceRecord::SparseOverride(value.clone())
+            (Some(instance), None) => {
+                let (mode, instance) = match instance {
+                    ProbeInstance::Defaults => {
+                        (WitnessMode::TemplateProbe, InstanceRecord::Defaults)
                     }
-                    ProbeInstance::Coalesced(value) => InstanceRecord::Coalesced(value.clone()),
-                }),
-                None,
-                Some(blobs.put(&canonical_json(&chart.defaults))?),
-            ),
+                    ProbeInstance::SparseOverride(value) => (
+                        WitnessMode::TemplateProbe,
+                        InstanceRecord::SparseOverride(value.clone()),
+                    ),
+                    ProbeInstance::Coalesced(value) => (
+                        WitnessMode::TemplateProbe,
+                        InstanceRecord::Coalesced(value.clone()),
+                    ),
+                    ProbeInstance::Composed { values, document } => {
+                        if *values != witness.probe.overlay || *document != witness.composed {
+                            return Err(DiffError::Identity(format!(
+                                "witness {} has inconsistent composition inputs",
+                                witness.case()
+                            )));
+                        }
+                        (
+                            WitnessMode::TemplateComposed,
+                            InstanceRecord::Composed(document.clone()),
+                        )
+                    }
+                };
+                let defaults_blob = (mode == WitnessMode::TemplateProbe)
+                    .then(|| blobs.put(&canonical_json(&chart.defaults)))
+                    .transpose()?;
+                (
+                    mode,
+                    serialize(&witness.probe.overlay)?,
+                    vec![json!({})],
+                    Some(instance),
+                    None,
+                    defaults_blob,
+                )
+            }
             (None, Some(document)) => (
                 match document.kind {
                     AcceptanceDocument::LintRaw => WitnessMode::LintRaw,
@@ -769,14 +793,29 @@ pub fn replay_witness(
     record: &WitnessRecord,
     blobs: &BlobStore,
 ) -> Result<ScreenedWitness, DiffError> {
-    let parse = |bytes: &[u8]| {
-        serde_json::from_slice::<Value>(bytes)
-            .map_err(|error| DiffError::Identity(format!("witness {}: {error}", record.id)))
-    };
     let (instance, document, composed) =
         match (&record.instance, &record.document, &record.defaults_blob) {
+            (Some(InstanceRecord::Composed(document)), None, None)
+                if record.identity.mode == WitnessMode::TemplateComposed =>
+            {
+                let values = parse_witness_value(record, &blobs.get(&record.values_blob)?)?;
+                if values != record.overlay {
+                    return Err(DiffError::Identity(format!(
+                        "witness {} overlay differs from its values file",
+                        record.id
+                    )));
+                }
+                (
+                    Some(ProbeInstance::Composed {
+                        values,
+                        document: document.clone(),
+                    }),
+                    None,
+                    document.clone(),
+                )
+            }
             (Some(instance), None, Some(defaults)) => {
-                let defaults = parse(&blobs.get(defaults)?)?;
+                let defaults = parse_witness_value(record, &blobs.get(defaults)?)?;
                 let (instance, composed) = match instance {
                     InstanceRecord::Defaults => (ProbeInstance::Defaults, defaults),
                     InstanceRecord::SparseOverride(value) => (
@@ -786,37 +825,18 @@ pub fn replay_witness(
                     InstanceRecord::Coalesced(value) => {
                         (ProbeInstance::Coalesced(value.clone()), value.clone())
                     }
-                };
-                (Some(instance), None, composed)
-            }
-            (None, Some(document), None) => {
-                let composed = parse(&blobs.get(&document.composed_blob)?)?;
-                let kind = match record.identity.mode {
-                    WitnessMode::LintRaw => AcceptanceDocument::LintRaw,
-                    WitnessMode::LintCoalescedTwice => AcceptanceDocument::LintCoalescedTwice,
-                    WitnessMode::Template => AcceptanceDocument::Template,
-                    WitnessMode::TemplateProbe | WitnessMode::Observation => {
+                    InstanceRecord::Composed(_) => {
                         return Err(DiffError::Identity(format!(
-                            "witness {} is no document-lane witness",
+                            "witness {} carries coalesced defaults for a composed probe",
                             record.id
                         )));
                     }
                 };
-                let document = ScreenedDocument {
-                    kind,
-                    lint_control: document.lint_control,
-                    values: composed.clone(),
-                    defaults: None,
-                    kubernetes_version: record.identity.kubernetes_version.clone(),
-                    origins: record
-                        .origins
-                        .iter()
-                        .filter(|origin| !origin.starts_with("attempt:"))
-                        .cloned()
-                        .collect(),
-                    values_file: blobs.get(&record.values_blob)?,
-                    control_overlays: document.control_overlays.clone(),
-                };
+                (Some(instance), None, composed)
+            }
+            (None, Some(document), None) => {
+                let document = replay_document(record, document, blobs)?;
+                let composed = document.values.clone();
                 (None, Some(document), composed)
             }
             _ => {
@@ -847,5 +867,44 @@ pub fn replay_witness(
         screened: false,
         transition: false,
         candidate_violations: Vec::new(),
+    })
+}
+
+fn parse_witness_value(record: &WitnessRecord, bytes: &[u8]) -> Result<Value, DiffError> {
+    serde_json::from_slice(bytes)
+        .map_err(|error| DiffError::Identity(format!("witness {}: {error}", record.id)))
+}
+
+fn replay_document(
+    record: &WitnessRecord,
+    document: &DocumentRecord,
+    blobs: &BlobStore,
+) -> Result<ScreenedDocument, DiffError> {
+    let values = parse_witness_value(record, &blobs.get(&document.composed_blob)?)?;
+    let kind = match record.identity.mode {
+        WitnessMode::LintRaw => AcceptanceDocument::LintRaw,
+        WitnessMode::LintCoalescedTwice => AcceptanceDocument::LintCoalescedTwice,
+        WitnessMode::Template => AcceptanceDocument::Template,
+        WitnessMode::TemplateProbe | WitnessMode::TemplateComposed | WitnessMode::Observation => {
+            return Err(DiffError::Identity(format!(
+                "witness {} is no document-lane witness",
+                record.id
+            )));
+        }
+    };
+    Ok(ScreenedDocument {
+        kind,
+        lint_control: document.lint_control,
+        values,
+        defaults: None,
+        kubernetes_version: record.identity.kubernetes_version.clone(),
+        origins: record
+            .origins
+            .iter()
+            .filter(|origin| !origin.starts_with("attempt:"))
+            .cloned()
+            .collect(),
+        values_file: blobs.get(&record.values_blob)?,
+        control_overlays: document.control_overlays.clone(),
     })
 }

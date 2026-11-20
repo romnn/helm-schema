@@ -1641,7 +1641,10 @@ fn structural_battery_preserves_helm_v4_dependency_roots() -> eyre::Result<()> {
     let retained = probes
         .iter()
         .find_map(|(name, probe)| (name == "all declared keys deleted").then_some(probe));
-    let Some(ProbeInstance::Coalesced(retained)) = retained else {
+    let Some(ProbeInstance::Composed {
+        document: retained, ..
+    }) = retained
+    else {
         return Err(eyre::eyre!("all-declared-keys probe missing"));
     };
     assert!(
@@ -1651,8 +1654,8 @@ fn structural_battery_preserves_helm_v4_dependency_roots() -> eyre::Result<()> {
     assert!(probes.iter().all(|(_, probe)| {
         !matches!(
             probe,
-            ProbeInstance::SparseOverride(value)
-                if value.get("temporal").is_some_and(serde_json::Value::is_null)
+            ProbeInstance::Composed { values, document: _ }
+                if values.get("temporal").is_some_and(serde_json::Value::is_null)
         )
     }));
     Ok(())
@@ -1667,18 +1670,23 @@ fn structural_battery_preserves_unlisted_vendored_dependency_roots() -> eyre::Re
     let retained = probes
         .iter()
         .find_map(|(name, probe)| (name == "all declared keys deleted").then_some(probe));
-    let Some(ProbeInstance::Coalesced(retained)) = retained else {
+    let Some(ProbeInstance::Composed {
+        document: retained, ..
+    }) = retained
+    else {
         return Err(eyre::eyre!("all-declared-keys probe missing"));
     };
+    // Receipt, Helm v4.2.3 dumping `.Values` for `{}`:
+    // `{"vendored":{"enabled":true,"global":{}}}`.
     sim_assert_eq!(
         have: retained.get("vendored"),
-        want: Some(&json!({ "enabled": true }))
+        want: Some(&json!({ "enabled": true, "global": {} }))
     );
     sim_assert_eq!(
         have: probes.iter().any(|(_, probe)| matches!(
             probe,
-            ProbeInstance::SparseOverride(value)
-                if value.get("vendored").is_some_and(serde_json::Value::is_null)
+            ProbeInstance::Composed { values, document: _ }
+                if values.get("vendored").is_some_and(serde_json::Value::is_null)
         )),
         want: false
     );
@@ -1724,7 +1732,23 @@ fn structural_battery_samples_depth_three_and_guard_states() -> eyre::Result<()>
 
 #[test]
 fn guard_battery_synthesizes_composite_guard_and_payload_states() -> eyre::Result<()> {
-    let defaults = json!({ "enabled": false, "payload": "valid" });
+    let chart = ScratchDir::new("composite-guard-states")?;
+    std::fs::write(
+        chart.path().join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: composite
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(
+        chart.path().join("values.yaml"),
+        indoc::indoc! {"
+            enabled: false
+            payload: valid
+        "},
+    )?;
+    let inputs = test_util::helm_values::AcceptanceInputs::load(chart.path())?;
     let schema = json!({
         "allOf": [{
             "if": {
@@ -1741,7 +1765,7 @@ fn guard_battery_synthesizes_composite_guard_and_payload_states() -> eyre::Resul
     });
     let mut coverage = harness::ProbeCoverage::default();
 
-    let probes = harness::guard_state_probes(&defaults, &[&schema], &mut coverage)?;
+    let probes = harness::guard_state_probes(&inputs, &[&schema], &mut coverage)?;
 
     sim_assert_eq!(have: coverage.guard_pairs_emitted, want: 1);
     sim_assert_eq!(have: coverage.composite_pairs_emitted, want: 1);
@@ -1753,6 +1777,351 @@ fn guard_battery_synthesizes_composite_guard_and_payload_states() -> eyre::Resul
             == 2,
         "composite witnesses were not emitted as a guard-state pair: {probes:?}"
     );
+    Ok(())
+}
+
+/// A parent chart whose dependency `collector` is gated by the condition
+/// `collectors.collector.enabled`, off by default, outside the dependency's values.
+fn write_condition_gated_chart(root: &std::path::Path) -> eyre::Result<()> {
+    std::fs::create_dir_all(root.join("charts/collector"))?;
+    std::fs::write(
+        root.join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: parent
+            version: 0.1.0
+            dependencies:
+              - name: collector
+                version: 0.1.0
+                condition: collectors.collector.enabled
+        "},
+    )?;
+    std::fs::write(
+        root.join("values.yaml"),
+        indoc::indoc! {"
+            collectors:
+              collector:
+                enabled: false
+        "},
+    )?;
+    std::fs::write(
+        root.join("charts/collector/Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: collector
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(root.join("charts/collector/values.yaml"), "replicas: 1\n")?;
+    Ok(())
+}
+
+/// Helm enables a dependency whose condition lives outside the dependency's
+/// own values (falco's `collectors.kubernetes.enabled` gates
+/// `k8s-metacollector`) and coalesces its defaults in, and a deleted
+/// condition keeps it enabled. Receipt, Helm v4.2.3 dumping `.Values` for
+/// this chart: `{}` gives `{"collectors":{"collector":{"enabled":false}}}`,
+/// `{"collectors":{"collector":{"enabled":true}}}` gives
+/// `{"collector":{"global":{},"replicas":1},"collectors":{"collector":{"enabled":true}}}`
+/// and `{"collectors":null}` gives `{"collector":{"global":{},"replicas":1}}`.
+/// Every composed probe is a document Helm composes from a values file, so
+/// none is unreachable.
+#[test]
+fn composed_probes_are_the_documents_helm_composes_through_dependency_conditions()
+-> eyre::Result<()> {
+    let chart = ScratchDir::new("composed-probe-conditions")?;
+    let root = chart.path();
+    write_condition_gated_chart(root)?;
+    let schema = json!({
+        "allOf": [{
+            "if": {
+                "properties": {
+                    "collectors": {
+                        "properties": {
+                            "collector": {
+                                "properties": { "enabled": { "const": true } },
+                                "required": ["enabled"],
+                                "type": "object",
+                            },
+                        },
+                        "required": ["collector"],
+                        "type": "object",
+                    },
+                },
+                "required": ["collectors"],
+                "type": "object",
+            },
+            "then": {
+                "properties": {
+                    "collector": {
+                        "properties": { "replicas": { "type": "integer" } },
+                        "required": ["replicas"],
+                        "type": "object",
+                    },
+                },
+                "required": ["collector"],
+                "type": "object",
+            },
+        }],
+    });
+    let chart_dir = root.to_str().ok_or_eyre("scratch chart path is UTF-8")?;
+    let defaults = read_coalesced_defaults(chart_dir)?;
+    sim_assert_eq!(
+        have: defaults.clone(),
+        want: json!({"collectors": {"collector": {"enabled": false}}})
+    );
+    let profiles = ProfileSchemas::compile(&schema, &schema, defaults.clone())?;
+    let (probes, mut coverage) =
+        structural_probe_battery_with_coverage(chart_dir, &defaults, &[&schema])?;
+    let document = |name: &str| {
+        probes
+            .iter()
+            .find(|(probe, _)| probe == name)
+            .map(|(_, probe)| profiles.composed(probe))
+    };
+    let satisfied =
+        document("root guard 0 satisfied [targeted: collectors.collector.enabled <- true]");
+    let all_deleted = document("all declared keys deleted");
+    let screened = lint_probes::screen_template_probes(
+        root,
+        &profiles,
+        &defaults,
+        probes,
+        &mut coverage,
+        false,
+        None,
+    )?;
+    sim_assert_eq!(have: coverage.unreachable_probes, want: Vec::<UnreachableProbe>::new());
+    sim_assert_eq!(have: screened.failures, want: Vec::<String>::new());
+    sim_assert_eq!(
+        have: satisfied,
+        want: Some(json!({
+            "collector": {"global": {}, "replicas": 1},
+            "collectors": {"collector": {"enabled": true}},
+        }))
+    );
+    sim_assert_eq!(
+        have: all_deleted,
+        want: Some(json!({"collector": {"global": {}, "replicas": 1}}))
+    );
+    Ok(())
+}
+
+#[test]
+fn falcofloor_one_verdict_per_values_file() -> eyre::Result<()> {
+    let chart = ScratchDir::new("probe-one-verdict")?;
+    let root = chart.path();
+    write_condition_gated_chart(root)?;
+    let chart_dir = root.to_str().ok_or_eyre("scratch chart path is UTF-8")?;
+    let defaults = read_coalesced_defaults(chart_dir)?;
+    let baseline = json!({"if": {"required": ["collectors"]}, "then": true});
+    let candidate = json!({"not": {"required": ["collector"]}});
+    let profiles = ProfileSchemas::compile(&baseline, &candidate, defaults.clone())?;
+    let (probes, mut coverage) =
+        structural_probe_battery_with_coverage(chart_dir, &defaults, &[&baseline, &candidate])?;
+    let mut verdicts = Vec::new();
+    let mut record = |witness: helm_schema_test_support::acceptance::ScreenedWitness| {
+        if witness.probe.overlay == json!({"collectors": null}) {
+            verdicts.push((
+                witness.composed,
+                witness.baseline_accepts,
+                witness.candidate_accepts,
+            ));
+        }
+        Ok(())
+    };
+    lint_probes::screen_template_probes(
+        root,
+        &profiles,
+        &defaults,
+        probes,
+        &mut coverage,
+        false,
+        Some(("1.29.0", &mut record)),
+    )?;
+    sim_assert_eq!(
+        have: verdicts,
+        want: vec![(json!({"collector": {"global": {}, "replicas": 1}}), true, false)]
+    );
+    Ok(())
+}
+
+fn write_nested_alias(root: &std::path::Path) -> eyre::Result<()> {
+    let collector = root.join("charts/collector");
+    std::fs::write(
+        collector.join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: collector
+            version: 0.1.0
+            dependencies:
+              - name: worker
+                version: 0.1.0
+                alias: slot
+        "},
+    )?;
+    let worker = collector.join("charts/worker");
+    std::fs::create_dir_all(&worker)?;
+    std::fs::write(
+        worker.join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: worker
+            version: 0.1.0
+        "},
+    )?;
+    Ok(())
+}
+
+#[test]
+fn falcofloor_screens_reachable_side_of_composite_abort() -> eyre::Result<()> {
+    let chart = ScratchDir::new("probe-composite-abort")?;
+    let root = chart.path();
+    write_condition_gated_chart(root)?;
+    write_nested_alias(root)?;
+    let inputs = test_util::helm_values::AcceptanceInputs::load(root)?;
+    let schema = json!({
+        "if": {"properties": {"collectors": {"properties": {
+            "collector": {"properties": {"enabled": {"const": true}}, "required": ["enabled"]}
+        }, "required": ["collector"]}}, "required": ["collectors"]},
+        "then": {"properties": {"collector": {"properties": {"slot": {"type": "object"}}}}}
+    });
+    let mut coverage = ProbeCoverage::default();
+    let probes = harness::guard_state_probes(&inputs, &[&schema], &mut coverage)?;
+    let chart_dir = root.to_str().ok_or_eyre("scratch chart path is UTF-8")?;
+    let defaults = read_coalesced_defaults(chart_dir)?;
+    let candidate =
+        json!({"properties": {"collector": {"properties": {"slot": {"type": "object"}}}}});
+    let profiles = ProfileSchemas::compile(&schema, &candidate, defaults.clone())?;
+    let screened = lint_probes::screen_template_probes(
+        root,
+        &profiles,
+        &defaults,
+        probes,
+        &mut coverage,
+        true,
+        None,
+    )?;
+    sim_assert_eq!(
+        have: screened.screened.into_iter().map(|probe| probe.overlay).collect::<Vec<_>>(),
+        want: vec![json!({"collector": {"slot": false}})]
+    );
+    sim_assert_eq!(have: coverage.inapplicable_probes.len(), want: 1);
+    assert!(coverage.composite_search_aborts > 0);
+    sim_assert_eq!(have: screened.probes_checked, want: 4);
+    sim_assert_eq!(have: coverage.composed_probes, want: 3);
+    sim_assert_eq!(have: screened.failures, want: Vec::<String>::new());
+    sim_assert_eq!(have: coverage.unreachable_probes, want: Vec::<UnreachableProbe>::new());
+    Ok(())
+}
+
+#[test]
+fn falcofloor_counts_guard_search_aborts() -> eyre::Result<()> {
+    let chart = ScratchDir::new("probe-guard-search-abort")?;
+    write_condition_gated_chart(chart.path())?;
+    let inputs = test_util::helm_values::AcceptanceInputs::load(chart.path())?;
+    let schema = json!({"if": {"required": ["collector"]}, "then": true});
+    let mut coverage = ProbeCoverage::default();
+    harness::guard_state_probes(&inputs, &[&schema], &mut coverage)?;
+    sim_assert_eq!(have: coverage.guard_pairs_emitted, want: 1);
+    assert!(coverage.guard_witness_aborts > 0);
+    Ok(())
+}
+
+#[test]
+fn falcofloor_counts_all_declared_keys_deleted_abort() -> eyre::Result<()> {
+    let chart = ScratchDir::new("probe-all-deleted-abort")?;
+    let root = chart.path();
+    write_condition_gated_chart(root)?;
+    write_nested_alias(root)?;
+    std::fs::write(
+        root.join("values.yaml"),
+        indoc::indoc! {"
+            collectors:
+              collector:
+                enabled: false
+            collector:
+              slot: false
+        "},
+    )?;
+    let chart_dir = root.to_str().ok_or_eyre("scratch chart path is UTF-8")?;
+    let defaults = read_coalesced_defaults(chart_dir)?;
+    let (probes, mut coverage) = structural_probe_battery_with_coverage(chart_dir, &defaults, &[])?;
+    let schema = json!(true);
+    let profiles = ProfileSchemas::compile(&schema, &schema, defaults.clone())?;
+    let screened = lint_probes::screen_template_probes(
+        root,
+        &profiles,
+        &defaults,
+        probes,
+        &mut coverage,
+        false,
+        None,
+    )?;
+    sim_assert_eq!(have: screened.probes_checked, want: 26);
+    sim_assert_eq!(have: coverage.base_emitted + coverage.third_level_emitted, want: screened.probes_checked);
+    sim_assert_eq!(have: coverage.duplicate_probes, want: 1);
+    sim_assert_eq!(have: coverage.total_emitted, want: screened.probes_checked);
+    let abort = coverage
+        .inapplicable_probes
+        .first()
+        .ok_or_eyre("missing all-keys-deleted abort")?;
+    sim_assert_eq!(have: abort.probe.as_str(), want: "all declared keys deleted");
+    sim_assert_eq!(have: &abort.values, want: &json!({"collectors": null}));
+    assert!(abort.reason.contains("type mismatch on slot"));
+    Ok(())
+}
+
+#[test]
+fn falcofloor_replay_recomposes_the_saved_overlay() -> eyre::Result<()> {
+    use helm_schema_test_support::acceptance::ScreenedWitness;
+    use helm_schema_test_support::value_algebra_diff::{
+        compare::{ChartIdentity, replay_witness, witness_record},
+        history::BlobStore,
+    };
+    let chart = ScratchDir::new("probe-replay-composition")?;
+    let root = chart.path();
+    write_condition_gated_chart(root)?;
+    let overlay = json!({"collectors": null});
+    let document = json!({"collector": {"global": {}, "replicas": 1}});
+    let witness = ScreenedWitness {
+        chart: "parent".into(),
+        probe: ScreenedProbe {
+            name: "collectors <- null deletion".into(),
+            overlay: overlay.clone(),
+            document: None,
+        },
+        instance: Some(ProbeInstance::Composed {
+            values: overlay,
+            document: document.clone(),
+        }),
+        composed: document,
+        kubernetes_version: "1.29.0".into(),
+        baseline_accepts: true,
+        candidate_accepts: true,
+        screened: false,
+        transition: false,
+        candidate_violations: Vec::new(),
+    };
+    let identity = ChartIdentity {
+        chart_input_sha256: "a".repeat(64),
+        recipe_sha256: "b".repeat(64),
+        defaults: json!({"collectors": {"collector": {"enabled": false}}}),
+    };
+    let blobs = BlobStore::new(root.join("blobs"));
+    let record = witness_record(&witness, &identity, &blobs, "attempt:test")?;
+    record.verify(&blobs)?;
+    let schema = json!(true);
+    let profiles = ProfileSchemas::compile(&schema, &schema, identity.defaults)?;
+    let lint = LintSchemas::compile(&schema, &schema, None)?;
+    let rebuilt = replay_witness(&record, &blobs)?;
+    lint_probes::rejudge(root, &profiles, &lint, &mut None, rebuilt.clone())?;
+
+    std::fs::write(root.join("charts/collector/values.yaml"), "replicas: 2\n")?;
+    let error = lint_probes::rejudge(root, &profiles, &lint, &mut None, rebuilt)
+        .err()
+        .ok_or_eyre("a change in the composed document must invalidate replay")?;
+    assert!(error.to_string().contains("composes to another document"));
     Ok(())
 }
 

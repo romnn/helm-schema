@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::io::Read as _;
 use std::path::{Component, Path};
 
@@ -66,6 +66,9 @@ pub struct ProbeCoverage {
     pub guards_without_witness_pair: usize,
     /// Guard witness candidates.
     pub guard_witness_candidates: usize,
+    /// Guard witness attempts that stopped before schema validation.
+    #[serde(default)]
+    pub guard_witness_aborts: usize,
     /// Guard witness candidates dropped by the cap.
     pub guard_witness_candidates_dropped: usize,
     /// Composite guard targets.
@@ -74,17 +77,27 @@ pub struct ProbeCoverage {
     pub composite_pairs_emitted: usize,
     /// Composite targets with no payload.
     pub composite_targets_without_payload: usize,
+    /// Composite payload sides that stopped before schema validation during search.
+    #[serde(default)]
+    pub composite_search_aborts: usize,
     /// Composite pairs dropped by the cap.
     pub composite_pairs_dropped_by_cap: usize,
-    /// Probes emitted.
+    /// Duplicate values files shared by probe lanes.
+    #[serde(default)]
+    pub duplicate_probes: usize,
+    /// Distinct probes emitted, including inputs Helm did not validate.
     pub total_emitted: usize,
     /// Probes dropped.
     pub total_dropped: usize,
-    /// Probes given as a composed document (`ProbeInstance::Coalesced`).
+    /// Probes given as a composed document (`ProbeInstance::Coalesced` or
+    /// `ProbeInstance::Composed`).
     pub composed_probes: usize,
     /// Composed probes no values file reaches; they are excluded from
     /// screening and adjudication.
     pub unreachable_probes: Vec<UnreachableProbe>,
+    /// Emitted values files Helm did not validate.
+    #[serde(default)]
+    pub inapplicable_probes: Vec<InapplicableProbe>,
 }
 
 /// A composed probe no values file reaches.
@@ -93,6 +106,17 @@ pub struct UnreachableProbe {
     /// The probe's name.
     pub probe: String,
     /// Why no values file reaches it.
+    pub reason: String,
+}
+
+/// An emitted probe whose values file Helm never validates.
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub struct InapplicableProbe {
+    /// The probe's name.
+    pub probe: String,
+    /// The values file.
+    pub values: Value,
+    /// Why Helm did not validate the values file.
     pub reason: String,
 }
 
@@ -136,6 +160,13 @@ pub enum ProbeInstance {
     SparseOverride(Value),
     /// A complete coalesced document.
     Coalesced(Value),
+    /// A values file and the document Helm composes from it.
+    Composed {
+        /// The values file.
+        values: Value,
+        /// The document `helm template` composes from `values`.
+        document: Value,
+    },
 }
 
 /// Whether a values file makes Helm compose a probe's document.
@@ -159,12 +190,12 @@ pub enum ProbeValuesFile {
 impl ProbeInstance {
     /// The values file Helm composes into this probe's document.
     ///
-    /// A composed document is reached through the sparse override that
-    /// separates it from `defaults`, checked by composing that override
-    /// forward over the chart. When Helm composes it into the probe plus the
-    /// null defaults it keeps, the probe reaches Helm as that document; into
-    /// any other document, or when Helm aborts on it, the probe is
-    /// unreachable.
+    /// A composed probe is reached through its own values file; a bare
+    /// coalesced document through the sparse override that separates it from
+    /// `defaults`. Either is checked by composing it forward over the chart.
+    /// When Helm composes it into the probe plus the null defaults it keeps,
+    /// the probe reaches Helm as that document; into any other document, or
+    /// when Helm aborts on it, the probe is unreachable.
     ///
     /// # Errors
     ///
@@ -186,13 +217,16 @@ impl ProbeInstance {
         defaults: &Value,
         inputs: &mut Option<AcceptanceInputs>,
     ) -> eyre::Result<ProbeValuesFile> {
-        let composed = match self {
+        let (overlay, composed) = match self {
             Self::Defaults => return Ok(ProbeValuesFile::Reachable(Value::Object(Map::new()))),
             Self::SparseOverride(value) => return Ok(ProbeValuesFile::Reachable(value.clone())),
-            Self::Coalesced(composed) => composed,
+            Self::Coalesced(composed) => (
+                sparse_override_for_composed(defaults, composed)
+                    .unwrap_or_else(|| Value::Object(Map::new())),
+                composed,
+            ),
+            Self::Composed { values, document } => (values.clone(), document),
         };
-        let overlay = sparse_override_for_composed(defaults, composed)
-            .unwrap_or_else(|| Value::Object(Map::new()));
         let reached = match inputs {
             Some(inputs) => inputs.compose(overlay.clone(), AcceptanceDocument::Template),
             None => match AcceptanceInputs::load(chart_dir) {
@@ -307,6 +341,7 @@ pub struct ProfileSchemas {
     lean: Validator,
     lean_schema: Value,
     defaults: Value,
+    identical: bool,
 }
 
 impl ProfileSchemas {
@@ -330,7 +365,12 @@ impl ProfileSchemas {
             lean,
             lean_schema: lean_schema.clone(),
             defaults,
+            identical: full_schema == lean_schema,
         })
+    }
+
+    pub(super) fn identical(&self) -> bool {
+        self.identical
     }
 
     /// The candidate schema as compiled.
@@ -536,6 +576,10 @@ impl ProfileSchemas {
             // A literal `{}` is an explicitly empty coalesced document. It
             // must not be confused with the no-override/defaults case.
             ProbeInstance::Coalesced(value) => value.clone(),
+            ProbeInstance::Composed {
+                values: _,
+                document,
+            } => document.clone(),
         }
     }
 }
@@ -670,8 +714,22 @@ pub fn structural_probe_battery(
     defaults: &Value,
     schemas: &[&Value],
 ) -> eyre::Result<Vec<(String, ProbeInstance)>> {
-    structural_probe_battery_with_coverage(chart_relative_path, defaults, schemas)
-        .map(|(probes, _)| probes)
+    let (probes, _) =
+        structural_probe_battery_with_coverage(chart_relative_path, defaults, schemas)?;
+    let chart = HelmChartDir::stage(chart_relative_path)?;
+    let inputs = AcceptanceInputs::load(chart.path())?;
+    let mut reachable = Vec::with_capacity(probes.len());
+    for (name, probe) in probes {
+        let probe = match probe {
+            ProbeInstance::SparseOverride(values) => match helm_document(&inputs, &values)? {
+                Ok(document) => ProbeInstance::Composed { values, document },
+                Err(_) => continue,
+            },
+            probe => probe,
+        };
+        reachable.push((name, probe));
+    }
+    Ok(reachable)
 }
 
 #[tracing::instrument(
@@ -690,71 +748,53 @@ pub fn structural_probe_battery_with_coverage(
     schemas: &[&Value],
 ) -> eyre::Result<(Vec<(String, ProbeInstance)>, ProbeCoverage)> {
     let dependency_roots = chart_dependency_roots(chart_relative_path)?;
-    let retained_dependency_defaults = defaults
-        .as_object()
-        .map(|defaults| {
-            // Helm refills a deleted dependency root from the subchart. The
-            // battery preserves the supplied coalesced root, but cannot
-            // synthesize child defaults missing from that input document.
-            defaults
-                .iter()
-                .filter(|(key, _)| dependency_roots.contains(*key))
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect()
-        })
-        .unwrap_or_default();
-    let base_probes = base_probes(defaults, &dependency_roots, retained_dependency_defaults);
-
-    let mut third_level_paths = Vec::new();
-    collect_paths_at_depth(
-        defaults,
-        &mut Vec::new(),
-        3,
-        &dependency_roots,
-        &mut third_level_paths,
-    );
-    let third_level_candidates = third_level_paths.len();
-    let dropped_third_level =
-        third_level_candidates.saturating_sub(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
-    third_level_paths.truncate(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
-    let mut third_level_probes = Vec::new();
-    for path in third_level_paths {
-        let mut patch = Value::Object(Map::new());
-        set_path(&mut patch, &path, Value::Null);
-        third_level_probes.push((
-            format!("{} <- null deletion [depth 3]", path.join(".")),
-            ProbeInstance::SparseOverride(patch),
-        ));
-    }
-
+    let chart = HelmChartDir::stage(chart_relative_path)?;
+    let inputs = AcceptanceInputs::load(chart.path())?;
     let mut coverage = ProbeCoverage {
         label: chart_relative_path.to_string(),
-        base_candidates: base_probes.len(),
-        third_level_candidates,
-        third_level_dropped: dropped_third_level,
         ..ProbeCoverage::default()
     };
-    let targeted_probes = guard_state_probes(defaults, schemas, &mut coverage)?;
-    let non_target_capacity = MAX_PROBES_PER_CHART.saturating_sub(targeted_probes.len());
-    coverage.base_emitted = base_probes.len().min(non_target_capacity);
-    coverage.base_dropped = base_probes.len().saturating_sub(coverage.base_emitted);
-    let remaining = non_target_capacity.saturating_sub(coverage.base_emitted);
-    coverage.third_level_emitted = third_level_probes.len().min(remaining);
-    coverage.third_level_dropped += third_level_probes
-        .len()
-        .saturating_sub(coverage.third_level_emitted);
+    let anchors = base_anchors(&inputs, defaults, &dependency_roots, &mut coverage)?;
+    let base_aborts = coverage.inapplicable_probes.len();
+    let targeted = guard_state_probes(&inputs, schemas, &mut coverage)?;
+    let mut seen = HashSet::new();
+    let inapplicable_before = coverage.inapplicable_probes.len();
+    coverage
+        .inapplicable_probes
+        .retain(|probe| seen.insert(probe.values.clone()));
+    let targeted_aborts = coverage.inapplicable_probes.len() - base_aborts;
+    coverage.duplicate_probes = inapplicable_before - coverage.inapplicable_probes.len();
 
-    let mut probes = Vec::with_capacity(
-        coverage.base_emitted + coverage.third_level_emitted + targeted_probes.len(),
+    // Prefer the named controls and then the guard witnesses when lanes share a values file.
+    let mut base = distinct_overlays(anchors, &mut seen, &mut coverage.duplicate_probes);
+    let targeted = distinct_overlays(targeted, &mut seen, &mut coverage.duplicate_probes);
+    base.extend(distinct_overlays(
+        base_probes(defaults, &dependency_roots),
+        &mut seen,
+        &mut coverage.duplicate_probes,
+    ));
+    coverage.base_candidates = base.len() + base_aborts;
+    let third_level = distinct_overlays(
+        third_level_probes(defaults, &dependency_roots),
+        &mut seen,
+        &mut coverage.duplicate_probes,
     );
-    probes.extend(base_probes.into_iter().take(coverage.base_emitted));
-    probes.extend(
-        third_level_probes
-            .into_iter()
-            .take(coverage.third_level_emitted),
-    );
-    probes.extend(targeted_probes);
-    coverage.total_emitted = probes.len();
+    coverage.third_level_candidates = third_level.len();
+
+    let non_target_capacity = MAX_PROBES_PER_CHART - targeted.len() - targeted_aborts;
+    coverage.base_emitted = coverage.base_candidates.min(non_target_capacity);
+    coverage.base_dropped = coverage.base_candidates - coverage.base_emitted;
+    let remaining = non_target_capacity - coverage.base_emitted;
+    coverage.third_level_emitted = third_level
+        .len()
+        .min(remaining)
+        .min(MAX_THIRD_LEVEL_DELETIONS_PER_CHART);
+    coverage.third_level_dropped = third_level.len() - coverage.third_level_emitted;
+    let mut probes = base;
+    probes.truncate(coverage.base_emitted - base_aborts);
+    probes.extend(third_level.into_iter().take(coverage.third_level_emitted));
+    probes.extend(targeted);
+    coverage.total_emitted = probes.len() + coverage.inapplicable_probes.len();
     coverage.total_dropped = coverage.base_dropped
         + coverage.third_level_dropped
         + 2 * coverage.guards_skipped_by_cap
@@ -764,18 +804,80 @@ pub fn structural_probe_battery_with_coverage(
     Ok((probes, coverage))
 }
 
+fn distinct_overlays(
+    mut probes: Vec<(String, ProbeInstance)>,
+    seen: &mut HashSet<Value>,
+    duplicates: &mut usize,
+) -> Vec<(String, ProbeInstance)> {
+    let before = probes.len();
+    probes.retain(|(_, probe)| {
+        let key = match probe {
+            ProbeInstance::Defaults => Value::Object(Map::new()),
+            ProbeInstance::SparseOverride(values)
+            | ProbeInstance::Composed {
+                values,
+                document: _,
+            } => values.clone(),
+            ProbeInstance::Coalesced(_) => return true,
+        };
+        seen.insert(key)
+    });
+    *duplicates += before - probes.len();
+    probes
+}
+
+fn third_level_probes(
+    defaults: &Value,
+    protected_roots: &BTreeSet<String>,
+) -> Vec<(String, ProbeInstance)> {
+    let mut paths = Vec::new();
+    collect_paths_at_depth(defaults, &mut Vec::new(), 3, protected_roots, &mut paths);
+    paths
+        .into_iter()
+        .map(|path| {
+            let mut patch = Value::Object(Map::new());
+            set_path(&mut patch, &path, Value::Null);
+            (
+                format!("{} <- null deletion [depth 3]", path.join(".")),
+                ProbeInstance::SparseOverride(patch),
+            )
+        })
+        .collect()
+}
+
+fn base_anchors(
+    inputs: &AcceptanceInputs,
+    defaults: &Value,
+    protected_roots: &BTreeSet<String>,
+    coverage: &mut ProbeCoverage,
+) -> eyre::Result<Vec<(String, ProbeInstance)>> {
+    // Deleted conditions leave their dependencies enabled; Helm fills their scopes.
+    let values = Value::Object(
+        defaults
+            .as_object()
+            .into_iter()
+            .flat_map(Map::keys)
+            .filter(|key| !protected_roots.contains(*key))
+            .map(|key| (key.clone(), Value::Null))
+            .collect(),
+    );
+    let outcome = helm_document(inputs, &values)?;
+    let mut anchors = Vec::new();
+    emit_composed(
+        &mut anchors,
+        coverage,
+        "all declared keys deleted".to_string(),
+        values,
+        outcome,
+    );
+    anchors.push(("defaults".to_string(), ProbeInstance::Defaults));
+    Ok(anchors)
+}
+
 fn base_probes(
     defaults: &Value,
     protected_roots: &BTreeSet<String>,
-    retained_dependency_defaults: Map<String, Value>,
 ) -> Vec<(String, ProbeInstance)> {
-    let base_probes = vec![
-        ("defaults".to_string(), ProbeInstance::Defaults),
-        (
-            "all declared keys deleted".to_string(),
-            ProbeInstance::Coalesced(Value::Object(retained_dependency_defaults)),
-        ),
-    ];
     let mut paths = Vec::new();
     collect_paths(defaults, &mut Vec::new(), 2, protected_roots, &mut paths);
     let replacements = [
@@ -808,7 +910,53 @@ fn base_probes(
                 ));
         }
     }
-    round_robin_base_probes(base_probes, base_probe_buckets)
+    round_robin_base_probes(Vec::new(), base_probe_buckets)
+}
+
+/// The document `helm template` composes from `values`, or why Helm
+/// validates none.
+///
+/// # Errors
+///
+/// Returns an input the Helm port does not model or cannot read.
+#[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
+pub(super) fn helm_document(
+    inputs: &AcceptanceInputs,
+    values: &Value,
+) -> eyre::Result<Result<Value, String>> {
+    match inputs.compose(values.clone(), AcceptanceDocument::Template) {
+        Ok(composed) => Ok(Ok(composed.root)),
+        Err(ValuesError::NotValidated(reason)) => Ok(Err(reason)),
+        Err(error) => Err(error).wrap_err_with(|| format!("compose the values file {values}")),
+    }
+}
+
+/// The documents `helm template` composes over one chart from the values
+/// files a guard search tries, each composed once: guards share witness
+/// candidates, and the chart and document kind are fixed.
+struct HelmDocuments<'a> {
+    inputs: &'a AcceptanceInputs,
+    composed: BTreeMap<String, Result<Value, String>>,
+}
+
+impl<'a> HelmDocuments<'a> {
+    fn new(inputs: &'a AcceptanceInputs) -> Self {
+        Self {
+            inputs,
+            composed: BTreeMap::new(),
+        }
+    }
+
+    /// [`helm_document`] of `values`, keyed by its exact JSON.
+    fn document(&mut self, values: &Value) -> eyre::Result<Result<&Value, &str>> {
+        let composed = match self.composed.entry(serde_json::to_string(values)?) {
+            std::collections::btree_map::Entry::Occupied(entry) => entry.into_mut(),
+            std::collections::btree_map::Entry::Vacant(entry) => {
+                entry.insert(helm_document(self.inputs, values)?)
+            }
+        };
+        Ok(composed.as_ref().map_err(String::as_str))
+    }
 }
 
 /// Interleaves base probes across their buckets so a cap visits every
@@ -835,13 +983,16 @@ pub fn round_robin_base_probes(
     }
 }
 
-/// Guard state probes over `schemas`, with their coverage counts.
+/// Guard state probes over `schemas`, with their coverage counts. Each
+/// witness is a values file and the document Helm composes from it over the
+/// chart `inputs` hold; the guard is judged on that document.
 ///
 /// # Errors
 ///
-/// Returns an error when a guard cannot be compiled.
+/// Returns an error when a guard cannot be compiled or a witness candidate
+/// needs a Helm behaviour the port does not model.
 pub fn guard_state_probes(
-    defaults: &Value,
+    inputs: &AcceptanceInputs,
     schemas: &[&Value],
     coverage: &mut ProbeCoverage,
 ) -> eyre::Result<Vec<(String, ProbeInstance)>> {
@@ -858,6 +1009,7 @@ pub fn guard_state_probes(
     }
 
     coverage.guards_discovered = guards.len();
+    let mut documents = HelmDocuments::new(inputs);
     let mut probes = Vec::new();
     for (index, (schema, condition, then_schema)) in guards
         .into_iter()
@@ -870,41 +1022,57 @@ pub fn guard_state_probes(
         coverage.guards_attempted += 1;
         let guard_validator = compile_root_guard(schema, condition)?;
         let (witness_candidates, omitted_candidates) =
-            synthesized_guard_witness_candidates(defaults, schema, condition);
+            synthesized_guard_witness_candidates(schema, condition);
         coverage.guard_witness_candidates += witness_candidates.len() + omitted_candidates;
         coverage.guard_witness_candidates_dropped += omitted_candidates;
         let mut satisfied = None;
         let mut violated = None;
-        for (name, instance) in witness_candidates {
-            if guard_validator.is_valid(&instance) {
-                satisfied.get_or_insert((name, instance));
+        for (name, values) in witness_candidates {
+            let Ok(document) = documents.document(&values)? else {
+                coverage.guard_witness_aborts += 1;
+                continue;
+            };
+            let witness = if guard_validator.is_valid(document) {
+                &mut satisfied
             } else {
-                violated.get_or_insert((name, instance));
+                &mut violated
+            };
+            if witness.is_none() {
+                *witness = Some((name, values, document.clone()));
             }
             if satisfied.is_some() && violated.is_some() {
                 break;
             }
         }
-        let (Some((satisfied_name, satisfied_probe)), Some((violated_name, violated_probe))) =
-            (satisfied, violated)
+        let (
+            Some((satisfied_name, satisfied_values, satisfied_document)),
+            Some((violated_name, violated_values, violated_document)),
+        ) = (satisfied, violated)
         else {
             coverage.guards_without_witness_pair += 1;
             continue;
         };
         probes.push((
             format!("root guard {index} satisfied [targeted: {satisfied_name}]"),
-            ProbeInstance::Coalesced(satisfied_probe.clone()),
+            ProbeInstance::Composed {
+                values: satisfied_values.clone(),
+                document: satisfied_document,
+            },
         ));
         probes.push((
             format!("root guard {index} violated [targeted: {violated_name}]"),
-            ProbeInstance::Coalesced(violated_probe.clone()),
+            ProbeInstance::Composed {
+                values: violated_values.clone(),
+                document: violated_document,
+            },
         ));
         coverage.guard_pairs_emitted += 1;
         append_composite_state_probes(
+            &mut documents,
             index,
             (schema, condition, then_schema),
             &guard_validator,
-            (&satisfied_probe, &violated_probe),
+            (&satisfied_values, &violated_values),
             coverage,
             &mut probes,
         )?;
@@ -917,6 +1085,7 @@ pub fn guard_state_probes(
 }
 
 fn append_composite_state_probes(
+    documents: &mut HelmDocuments<'_>,
     guard_index: usize,
     (schema, condition, then_schema): (&Value, &Value, &Value),
     guard_validator: &Validator,
@@ -940,40 +1109,43 @@ fn append_composite_state_probes(
             coverage.composite_pairs_dropped_by_cap += 1;
             continue;
         }
-        let Some((payload, satisfied_composite, violated_composite)) =
-            nonconforming_composite_payload(
-                guard_validator,
-                &then_validator,
-                satisfied,
-                violated,
-                &path,
-            )
+        let Some(composite) = nonconforming_composite_payload(
+            documents,
+            (guard_validator, &then_validator),
+            (satisfied, violated),
+            &path,
+            &mut coverage.composite_search_aborts,
+        )?
         else {
             coverage.composite_targets_without_payload += 1;
             continue;
         };
+        let CompositePair {
+            payload,
+            satisfied,
+            violated,
+        } = composite;
         let path_display = path.join(".");
-        probes.push((
-            format!(
-                "root guard {guard_index} satisfied + {path_display} <- {} [composite {target_index}]",
-                value_shape(&payload)
-            ),
-            ProbeInstance::Coalesced(satisfied_composite),
-        ));
-        probes.push((
-            format!(
-                "root guard {guard_index} violated + {path_display} <- {} [composite {target_index}]",
-                value_shape(&payload)
-            ),
-            ProbeInstance::Coalesced(violated_composite),
-        ));
+        for (state, (values, outcome)) in [("satisfied", satisfied), ("violated", violated)] {
+            emit_composed(
+                probes,
+                coverage,
+                format!(
+                    "root guard {guard_index} {state} + {path_display} <- {} [composite {target_index}]",
+                    value_shape(&payload)
+                ),
+                values,
+                outcome,
+            );
+        }
         coverage.composite_pairs_emitted += 1;
     }
     Ok(())
 }
 
+/// Named witness values files for the guard `condition`, and how many the
+/// candidate cap omitted.
 fn synthesized_guard_witness_candidates(
-    defaults: &Value,
     schema: &Value,
     condition: &Value,
 ) -> (Vec<(String, Value)>, usize) {
@@ -988,7 +1160,7 @@ fn synthesized_guard_witness_candidates(
         Value::Array(Vec::new()),
         Value::Object(Map::new()),
     ];
-    let mut candidates = vec![("defaults".to_string(), defaults.clone())];
+    let mut candidates = vec![("defaults".to_string(), Value::Object(Map::new()))];
     let mut total = 1_usize;
     for path in &paths {
         for replacement in &replacements {
@@ -996,7 +1168,7 @@ fn synthesized_guard_witness_candidates(
             if candidates.len() < MAX_GUARD_WITNESS_CANDIDATES_PER_CHART {
                 candidates.push((
                     format!("{} <- {}", path.join("."), value_shape(replacement)),
-                    compose_assignments(defaults, &[(path, replacement)]),
+                    values_file(&[(path, replacement)]),
                 ));
             }
         }
@@ -1010,10 +1182,7 @@ fn synthesized_guard_witness_candidates(
                     if candidates.len() < MAX_GUARD_WITNESS_CANDIDATES_PER_CHART {
                         candidates.push((
                             format!("{} + {}", left.join("."), right.join(".")),
-                            compose_assignments(
-                                defaults,
-                                &[(left, &left_value), (right, &right_value)],
-                            ),
+                            values_file(&[(left, &left_value), (right, &right_value)]),
                         ));
                     }
                 }
@@ -1063,12 +1232,12 @@ pub fn rejects_for_a_new_reason(
     })
 }
 
-fn compose_assignments(defaults: &Value, assignments: &[(&Vec<String>, &Value)]) -> Value {
-    let mut patch = Value::Object(Map::new());
+fn values_file(assignments: &[(&Vec<String>, &Value)]) -> Value {
+    let mut values = Value::Object(Map::new());
     for (path, value) in assignments {
-        set_path(&mut patch, path, (*value).clone());
+        set_path(&mut values, path, (*value).clone());
     }
-    test_util::helm_values::coalesce_tables(&patch, defaults)
+    values
 }
 
 fn root_if_arms(schema: &Value) -> Vec<(&Value, &Value)> {
@@ -1151,13 +1320,20 @@ fn paths_overlap(left: &[String], right: &[String]) -> bool {
     left.starts_with(right) || right.starts_with(left)
 }
 
+struct CompositePair {
+    payload: Value,
+    satisfied: (Value, Result<Value, String>),
+    violated: (Value, Result<Value, String>),
+}
+
+/// Finds a nonconforming payload while retaining the reachable side of a composition abort.
 fn nonconforming_composite_payload(
-    guard: &Validator,
-    then_schema: &Validator,
-    satisfied: &Value,
-    violated: &Value,
+    documents: &mut HelmDocuments<'_>,
+    (guard, then_schema): (&Validator, &Validator),
+    (satisfied, violated): (&Value, &Value),
     path: &[String],
-) -> Option<(Value, Value, Value)> {
+    aborts: &mut usize,
+) -> eyre::Result<Option<CompositePair>> {
     for payload in [
         Value::Bool(false),
         Value::Bool(true),
@@ -1168,18 +1344,52 @@ fn nonconforming_composite_payload(
         Value::Array(Vec::new()),
         Value::Object(Map::new()),
     ] {
-        let mut satisfied_composite = satisfied.clone();
-        set_path(&mut satisfied_composite, path, payload.clone());
-        let mut violated_composite = violated.clone();
-        set_path(&mut violated_composite, path, payload.clone());
-        if guard.is_valid(&satisfied_composite)
-            && !guard.is_valid(&violated_composite)
-            && !then_schema.is_valid(&satisfied_composite)
+        let mut satisfied_values = satisfied.clone();
+        set_path(&mut satisfied_values, path, payload.clone());
+        let satisfied_document = documents.document(&satisfied_values)?;
+        *aborts += usize::from(satisfied_document.is_err());
+        if satisfied_document
+            .is_ok_and(|document| !guard.is_valid(document) || then_schema.is_valid(document))
         {
-            return Some((payload, satisfied_composite, violated_composite));
+            continue;
         }
+        let satisfied_document = satisfied_document.cloned().map_err(str::to_owned);
+        let mut violated_values = violated.clone();
+        set_path(&mut violated_values, path, payload.clone());
+        let violated_document = documents.document(&violated_values)?;
+        *aborts += usize::from(violated_document.is_err());
+        if violated_document.is_ok_and(|document| guard.is_valid(document))
+            || (satisfied_document.is_err() && violated_document.is_err())
+        {
+            continue;
+        }
+        return Ok(Some(CompositePair {
+            payload,
+            satisfied: (satisfied_values, satisfied_document),
+            violated: (
+                violated_values,
+                violated_document.cloned().map_err(str::to_owned),
+            ),
+        }));
     }
-    None
+    Ok(None)
+}
+
+fn emit_composed(
+    probes: &mut Vec<(String, ProbeInstance)>,
+    coverage: &mut ProbeCoverage,
+    probe: String,
+    values: Value,
+    outcome: Result<Value, String>,
+) {
+    match outcome {
+        Ok(document) => probes.push((probe, ProbeInstance::Composed { values, document })),
+        Err(reason) => coverage.inapplicable_probes.push(InapplicableProbe {
+            probe,
+            values,
+            reason,
+        }),
+    }
 }
 
 fn compile_root_guard(schema: &Value, condition: &Value) -> eyre::Result<Validator> {
@@ -1556,9 +1766,10 @@ pub fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
     );
     eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
     // Reachable coverage floor: at least half of a chart's composed probes
-    // (rounded down) must be documents Helm composes. The known
-    // unreachable case is the single "all declared keys deleted" probe of a
-    // chart whose parent `global` reaches its dependencies.
+    // (rounded down) must be documents Helm composes. The battery composes
+    // every probe it generates from that probe's values file through Helm's
+    // dependency processing and coalescence, so only a values file Helm
+    // validates no document for, or a bare coalesced document, is unreachable.
     let reachable = chart
         .composed_probes
         .saturating_sub(chart.unreachable_probes.len());

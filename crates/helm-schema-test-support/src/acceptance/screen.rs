@@ -13,8 +13,9 @@ use test_util::helm_values::{
 use test_util::scratch::ScratchDir;
 
 use super::discovery::{
-    HelmChartDir, MAX_PROBES_PER_CHART, ProbeCoverage, ProbeInstance, ProbeValuesFile,
-    ProfileSchemas, UnreachableProbe, structural_probe_battery_with_coverage,
+    HelmChartDir, InapplicableProbe, MAX_PROBES_PER_CHART, ProbeCoverage, ProbeInstance,
+    ProbeValuesFile, ProfileSchemas, UnreachableProbe, helm_document,
+    structural_probe_battery_with_coverage,
 };
 use super::{
     ChartCost, ChartHelm, ComparedChart, LiveChart, LoadedInputs, ScreenedChart, ScreenedWitness,
@@ -928,32 +929,33 @@ pub fn screen_template_probes(
     adjudicate_live: bool,
     mut witnesses: Option<(&str, Recorder<'_>)>,
 ) -> eyre::Result<ScreenedProbes> {
-    let label = &coverage.label;
-    let probes_checked = probes.len();
+    let probes_checked = probes.len() + coverage.inapplicable_probes.len();
     let mut flips = Vec::new();
     let mut failures = Vec::new();
     let mut screened = Vec::new();
     // The staged chart stays immutable throughout this screen; each composition gets fresh tables.
     let mut inputs = None;
     for (probe_name, probe) in probes {
-        if matches!(probe, ProbeInstance::Coalesced(_)) {
-            coverage.composed_probes += 1;
-        }
-        let (overlay, probe) = match probe.helm_values_file_cached(chart_dir, defaults, &mut inputs)
+        // Equal schemas give no transition for any sparse file, and no recorder needs its document.
+        if profiles.identical()
+            && witnesses.is_none()
+            && matches!(probe, ProbeInstance::SparseOverride(_))
         {
-            Ok(ProbeValuesFile::Reachable(overlay)) => (overlay, probe),
-            Ok(ProbeValuesFile::ReachableAs { values, document }) => {
-                (values, ProbeInstance::Coalesced(document))
-            }
-            Ok(ProbeValuesFile::Unreachable(reason)) => {
-                coverage.unreachable_probes.push(UnreachableProbe {
-                    probe: probe_name,
-                    reason,
-                });
-                continue;
-            }
+            continue;
+        }
+        let prepared = prepare_template_probe(
+            chart_dir,
+            defaults,
+            &probe_name,
+            probe,
+            coverage,
+            &mut inputs,
+        );
+        let (overlay, probe) = match prepared {
+            Ok(Some(prepared)) => prepared,
+            Ok(None) => continue,
             Err(error) => {
-                failures.push(format!("{label}: {probe_name}: {error}"));
+                failures.push(format!("{}: {probe_name}: {error}", coverage.label));
                 continue;
             }
         };
@@ -961,7 +963,7 @@ pub fn screen_template_probes(
         if let Some((kubernetes_version, record)) = witnesses.as_mut() {
             let (baseline_accepts, candidate_accepts) = profiles.verdicts(&probe);
             record(ScreenedWitness {
-                chart: label.clone(),
+                chart: coverage.label.clone(),
                 probe: ScreenedProbe {
                     name: probe_name.clone(),
                     overlay: overlay.clone(),
@@ -991,7 +993,8 @@ pub fn screen_template_probes(
         } else {
             let (before, after) = profiles.verdicts(&probe);
             flips.push(format!(
-                "{label}: {probe_name}: before={before}, after={after}"
+                "{}: {probe_name}: before={before}, after={after}",
+                coverage.label
             ));
         }
     }
@@ -1001,6 +1004,62 @@ pub fn screen_template_probes(
         failures,
         screened,
     })
+}
+
+fn prepare_template_probe(
+    chart_dir: &Path,
+    defaults: &Value,
+    name: &str,
+    probe: ProbeInstance,
+    coverage: &mut ProbeCoverage,
+    inputs: &mut Option<AcceptanceInputs>,
+) -> eyre::Result<Option<(Value, ProbeInstance)>> {
+    if let ProbeInstance::SparseOverride(values) = probe {
+        let chart = match inputs {
+            Some(chart) => chart,
+            None => inputs.insert(AcceptanceInputs::load(chart_dir)?),
+        };
+        return match helm_document(chart, &values)? {
+            Ok(document) => Ok(Some((
+                values.clone(),
+                ProbeInstance::Composed { values, document },
+            ))),
+            Err(reason) => {
+                coverage.inapplicable_probes.push(InapplicableProbe {
+                    probe: name.to_string(),
+                    values,
+                    reason,
+                });
+                Ok(None)
+            }
+        };
+    }
+
+    if matches!(
+        probe,
+        ProbeInstance::Coalesced(_)
+            | ProbeInstance::Composed {
+                values: _,
+                document: _
+            }
+    ) {
+        coverage.composed_probes += 1;
+    }
+    Ok(
+        match probe.helm_values_file_cached(chart_dir, defaults, inputs)? {
+            ProbeValuesFile::Reachable(overlay) => Some((overlay, probe)),
+            ProbeValuesFile::ReachableAs { values, document } => {
+                Some((values.clone(), ProbeInstance::Composed { values, document }))
+            }
+            ProbeValuesFile::Unreachable(reason) => {
+                coverage.unreachable_probes.push(UnreachableProbe {
+                    probe: name.to_string(),
+                    reason,
+                });
+                None
+            }
+        },
+    )
 }
 
 /// Compiles both profiles, generates the chart's probe battery and screens
@@ -1213,8 +1272,27 @@ pub fn rejudge(
     let case = witness.case();
     let (verdicts, transition, screened) = match (&witness.instance, &mut witness.probe.document) {
         (Some(instance), None) => {
+            let composed = match instance {
+                ProbeInstance::Composed { values, document } => {
+                    eyre::ensure!(
+                        *values == witness.probe.overlay && *document == witness.composed,
+                        "replayed witness {case} has inconsistent composition inputs"
+                    );
+                    let inputs = match inputs {
+                        Some(inputs) => inputs,
+                        None => inputs.insert(AcceptanceInputs::load(chart_dir)?),
+                    };
+                    inputs
+                        .compose(values.clone(), AcceptanceDocument::Template)
+                        .map_err(|error| eyre::eyre!("replayed witness {case}: {error}"))?
+                        .root
+                }
+                ProbeInstance::Defaults
+                | ProbeInstance::SparseOverride(_)
+                | ProbeInstance::Coalesced(_) => profiles.composed(instance),
+            };
             eyre::ensure!(
-                profiles.composed(instance) == witness.composed,
+                composed == witness.composed,
                 "replayed witness {case} composes to another document"
             );
             let transition = profiles.screens_a_flip(instance);
