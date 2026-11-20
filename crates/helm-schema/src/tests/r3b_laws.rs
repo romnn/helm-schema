@@ -16,7 +16,7 @@
 
 use std::fmt::Write as _;
 
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use serde_json::{Value, json};
 use vfs::VfsPath;
@@ -1650,4 +1650,158 @@ fn bounded_destination_keeps_its_source_aliases() -> eyre::Result<()> {
         ],
         true,
     )
+}
+
+/// Eight cross-path nil-receiver aborts whose union is exponential under the path order, then a
+/// guarded `fail` that only the executed fold carries: the inexact `has` decision before it keeps
+/// its capture approximate. A demand's coverage only marks it redundant, so when the union of the
+/// earlier clauses exhausts the group's cone the abort is still folded (ADR 0072 §10; receipts
+/// `transfer/frfix-receipts/law-coverage`, Helm 4.2.3 through helmsweep).
+fn exhausted_coverage_schema() -> eyre::Result<Value> {
+    let mut hosts = String::new();
+    for index in 1..=8 {
+        writeln!(
+            hosts,
+            "{{{{- if .Values.a{index:02} }}}}{{{{ $_ := .Values.h{index:02}.field }}}}{{{{ end }}}}"
+        )?;
+    }
+    law_schema(&[
+        ("Chart.yaml", CHART),
+        (
+            "values.yaml",
+            indoc! {"
+                flag: true
+                soft: false
+                namespaces: []
+                hook:
+                  enabled: false
+            "},
+        ),
+        ("templates/hosts.yaml", &hosts),
+        (
+            "templates/validate.yaml",
+            indoc! {r#"
+                {{- if .Values.soft }}
+                {{- if has .Release.Namespace .Values.namespaces }}
+                {{- fail "release namespace is managed" }}
+                {{- end }}
+                {{- end }}
+                {{- if not .Values.flag }}
+                {{- if .Values.hook.enabled }}
+                {{- fail "hook needs flag" }}
+                {{- end }}
+                {{- end }}
+            "#},
+        ),
+    ])
+}
+
+#[test]
+fn exhausted_failure_coverage_accepts_the_documents_helm_renders() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &exhausted_coverage_schema()?,
+        &[
+            (
+                "defaults",
+                json!({ "flag": true, "soft": false, "namespaces": [], "hook": { "enabled": false } }),
+            ),
+            (
+                "hook with flag",
+                json!({ "flag": true, "soft": false, "namespaces": [], "hook": { "enabled": true } }),
+            ),
+            (
+                "no hook without flag",
+                json!({ "flag": false, "soft": false, "namespaces": [], "hook": { "enabled": false } }),
+            ),
+        ],
+        true,
+    )
+}
+
+#[test]
+fn exhausted_failure_coverage_still_rejects_the_abort() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &exhausted_coverage_schema()?,
+        &[(
+            "hook without flag",
+            json!({ "flag": false, "soft": false, "namespaces": [], "hook": { "enabled": true } }),
+        )],
+        false,
+    )
+}
+
+#[test]
+#[ignore = "target: ADR 0073 step 4 effects (call reached => write-free); see designs/reviews/activation2-kyverno-direction-astra-2026-11-20.md"]
+fn kyverno_readiness_requires_a_string_image_tag() -> eyre::Result<()> {
+    let testdata = test_util::workspace_testdata();
+    let chart_dir = testdata.join("charts/kyverno");
+    let bundle = testdata.join("provider-bundle");
+    let crds = bundle.join("crds-catalog-cache");
+    let session = crate::AnalysisSession::new(crate::GenerateOptions {
+        chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy::default(),
+        provider: crate::provider::ProviderOptions {
+            k8s_versions: vec!["v1.29.0-standalone-strict".to_owned()],
+            k8s_schema_cache_dir: Some(bundle.join("kubernetes-json-schema-cache")),
+            crd_catalog_cache_dir: Some(crds.clone()),
+            crd_override_dir: Some(crds),
+            allow_net: false,
+            ..Default::default()
+        },
+    });
+    let mut schema = session.emit(crate::output::EmitRequest {
+        reference_policy: crate::output::ReferencePolicy::SelfContained,
+        output: crate::output::OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: true,
+            definition_names: crate::output::DefinitionNames::Source,
+        },
+    })?;
+    // Isolate the render demand from the compatibility hint, which rejects the controls too.
+    let enabled = schema
+        .pointer_mut("/properties/reportsServer/properties/enabled")
+        .and_then(Value::as_object_mut)
+        .ok_or_eyre("missing reportsServer.enabled schema")?;
+    if enabled.get("type") == Some(&json!("boolean")) {
+        enabled.remove("type");
+    }
+
+    let validator = jsonschema::validator_for(&schema)?;
+    let cases = [
+        ("number", json!(1.5)),
+        ("coercible string", json!("3")),
+        ("other string", json!("not-a-value")),
+        ("nonempty list", json!([{}])),
+        ("nonempty map", json!({"unknown": true})),
+    ];
+    let mut have = Vec::new();
+    let mut want = Vec::new();
+    for (label, enabled) in cases {
+        let missing_tag = test_util::helm_values::coalesce_chart_values(
+            &chart_dir,
+            json!({"reportsServer": {"enabled": enabled}}),
+        )?;
+        let valid_tag = test_util::helm_values::coalesce_chart_values(
+            &chart_dir,
+            json!({"reportsServer": {"enabled": enabled}, "test": {"image": {"tag": "ok"}}}),
+        )?;
+        have.push((
+            label,
+            validator.is_valid(&missing_tag),
+            validator.is_valid(&valid_tag),
+        ));
+        want.push((label, false, true));
+    }
+    sim_assert_eq!(have: have, want: want);
+    let skip_readiness = test_util::helm_values::coalesce_chart_values(
+        &chart_dir,
+        json!({"reportsServer": {"enabled": "3", "waitForReady": false}}),
+    )?;
+    sim_assert_eq!(have: validator.is_valid(&skip_readiness), want: true);
+    Ok(())
 }

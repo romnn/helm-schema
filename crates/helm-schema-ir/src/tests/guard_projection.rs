@@ -1,11 +1,84 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{ConditionalGuard, Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
+use tracing_subscriber::prelude::*;
 
 use super::predicate_to_guard;
+
+#[derive(Default)]
+struct RequirementBounds {
+    coverage: AtomicUsize,
+    demand: AtomicUsize,
+}
+
+struct RequirementBoundLayer(Arc<RequirementBounds>);
+
+impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for RequirementBoundLayer {
+    fn on_new_span(
+        &self,
+        attributes: &tracing::span::Attributes<'_>,
+        _id: &tracing::span::Id,
+        _context: tracing_subscriber::layer::Context<'_, S>,
+    ) {
+        let counter = match attributes.metadata().name() {
+            "requirement_coverage_bound" => &self.0.coverage,
+            "requirement_bound" => &self.0.demand,
+            _ => return,
+        };
+        counter.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+#[test]
+fn failure_requirement_counts_exhaustion_after_retrying_without_coverage() -> eyre::Result<()> {
+    use crate::analysis_db::IrAnalysisDb;
+    use crate::value::ConsumptionDomain;
+
+    let db = IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    let mut consumption = None;
+    crate::tests::support::with_execution(
+        "{{ eq .Values.enabled true }}",
+        None,
+        &db,
+        |execution| {
+            consumption = execution
+                .observed_facts()
+                .consumptions
+                .iter()
+                .find(|consumption| consumption.domain == ConsumptionDomain::KnownFailure)
+                .cloned();
+        },
+    );
+    let mut consumption = consumption.ok_or_eyre("comparison did not record a failure")?;
+    // Even with a small coverage clause, charging the guard inventory exhausts the demand.
+    let guards = vec![
+        crate::Guard::Truthy {
+            path: ValuesPath::parse("activation"),
+        };
+        8192
+    ];
+    consumption.append_activation(&guards);
+    let mut terminal = vec![vec![ConditionalGuard::Truthy {
+        path: ValuesPath::parse("already_rejected"),
+    }]];
+    let bounds = Arc::new(RequirementBounds::default());
+    let subscriber =
+        tracing_subscriber::registry().with(RequirementBoundLayer(Arc::clone(&bounds)));
+    tracing::subscriber::with_default(subscriber, || {
+        super::executed_requirements::record_executed_requirements(
+            &mut std::collections::BTreeMap::new(),
+            &mut terminal,
+            &[consumption],
+        );
+    });
+    sim_assert_eq!(have: bounds.coverage.load(Ordering::Relaxed), want: 1);
+    sim_assert_eq!(have: bounds.demand.load(Ordering::Relaxed), want: 1);
+    Ok(())
+}
 
 fn compound_payloads(guard: &ConditionalGuard) -> BTreeSet<usize> {
     let mut payloads = BTreeSet::new();

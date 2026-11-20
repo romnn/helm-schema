@@ -85,18 +85,18 @@ pub(super) fn record_executed_requirements(
             emit_requirement(paths, terminal_clauses, key, folded, &dependency_roots);
             continue;
         }
-        // The group's union exhausted its allowance. Each occurrence still proves a value
-        // requirement under its own guard, so only the union is lost (ADR 0072 §10). A failure
-        // clause also covers every later failure group, so a partial set of them is not kept.
-        if !matches!(key.domain, ConsumptionDomain::Known { .. }) {
-            continue;
-        }
         let _bound = tracing::debug_span!(
             target: "helm_schema_ir::counters",
             "requirement_bound",
             occurrences = occurrences.len()
         )
         .entered();
+        // The group's union exhausted its allowance. Each occurrence still proves a value
+        // requirement under its own guard, so only the union is lost (ADR 0072 §10). A failure
+        // clause also covers every later failure group, so a partial set of them is not kept.
+        if !matches!(key.domain, ConsumptionDomain::Known { .. }) {
+            continue;
+        }
         for occurrence in occurrences {
             if let Some(folded) = fold(
                 &[occurrence],
@@ -395,7 +395,8 @@ fn nullable_preimage(old: &super::FailValueRequirement, new: &super::FailValueRe
 }
 
 /// Folds one group on an allowance of its own: whether a group completes never depends on how
-/// much the groups before it spent (ADR 0072 §10).
+/// much the groups before it spent (ADR 0072 §10). Coverage only marks the demand redundant, so
+/// a cone that exhausts with it proves no coverage and the demand is folded alone.
 fn fold(
     occurrences: &[&FrozenConsumption],
     covers: &ExistingCoverage,
@@ -403,7 +404,25 @@ fn fold(
     identities: &mut crate::value::RequirementIdentities,
 ) -> Option<FoldedRequirement> {
     let mut local = helm_schema_core::RequirementBdd::WORK_BUDGET;
-    fold_with_budget(occurrences, covers, presence, &mut local, identities)
+    if let Some(folded) = fold_with_budget(occurrences, covers, presence, &mut local, identities) {
+        return Some(folded);
+    }
+    if covers.body.is_empty() && covers.absence.is_empty() {
+        return None;
+    }
+    let _bound = tracing::debug_span!(
+        target: "helm_schema_ir::counters",
+        "requirement_coverage_bound"
+    )
+    .entered();
+    let mut local = helm_schema_core::RequirementBdd::WORK_BUDGET;
+    fold_with_budget(
+        occurrences,
+        &ExistingCoverage::default(),
+        presence,
+        &mut local,
+        identities,
+    )
 }
 
 fn fold_with_budget(
