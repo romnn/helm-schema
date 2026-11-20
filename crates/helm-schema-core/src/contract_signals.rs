@@ -908,23 +908,6 @@ pub struct ContractPathSchemaEvidence {
     pub opaque_consumption_guards: Option<Vec<Vec<ConditionalGuard>>>,
 }
 
-/// A chart-authored values-program wrapper convention: within `scope_path`
-/// (empty for the whole values tree), any node may be a singleton
-/// `{key: PROGRAM}` map that the chart's engine replaces with the
-/// `tpl`-rendered, YAML-reparsed program result before consumers read it.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ValuesProgramWrapper {
-    /// Values subtree the engine rewrites; empty means the whole tree.
-    pub scope_path: crate::ValuesPath,
-    /// The wrapper's sentinel member key (`$tplYaml`).
-    pub key: String,
-    /// Whether the engine SPREADS the program result into the parent
-    /// collection instead of replacing the node (`$tplYamlSpread`): the
-    /// result's kind must match the parent's kind (a null result is a
-    /// no-op removal), and the values root itself rejects the wrapper.
-    pub spread: bool,
-}
-
 /// A chart-wide default subtree merged into an effective `.Values` subtree.
 ///
 /// The target remains user-overridable; the source supplies only keys absent
@@ -1125,11 +1108,6 @@ pub enum FailValueRequirement {
         /// Literal excluded at the field path.
         value: GuardValue,
     },
-    /// The value must be of this JSON Schema type IF present and non-null:
-    /// Go's `eq`/`ne` compare `nil` against anything, so a missing or null
-    /// comparison operand renders while a present value of a different
-    /// basic kind aborts.
-    ComparableKind(String),
     /// The value must NOT be of this JSON Schema type.
     NotSchemaType(String),
     /// The value must be an object containing this member.
@@ -1184,43 +1162,6 @@ pub enum FailValueRequirement {
         /// Whether Helm's integer-count range form remains accepted.
         allow_integer: bool,
     },
-    /// A zero-based position must exist before `index` can project it.
-    /// Arrays lower exactly; strings remain conservative because Go indexes
-    /// bytes while JSON Schema `minLength` counts Unicode code points.
-    IndexableAt(usize),
-    /// Splitting the textual form must produce at least `segments` entries.
-    /// When the input was first passed through a total text conversion,
-    /// non-string inputs remain conservatively accepted.
-    SplitSegmentsAtLeast {
-        /// Literal delimiter used by the split operation.
-        separator: String,
-        /// Minimum number of produced segments.
-        segments: usize,
-        /// Whether a preceding total conversion admits non-string inputs.
-        allow_non_string: bool,
-    },
-    /// A value substituted by fmt's `%s` may be a string or a mapping whose
-    /// recursive textual form remains structurally safe. Other JSON kinds
-    /// emit a leading fmt diagnostic or collection indicator.
-    PrintfStringOperand,
-    /// The value's own text renders into an UNQUOTED YAML slot, so text that
-    /// closes the plain token there corrupts the document: a `: ` (or
-    /// trailing `:`) turns the slot into a nested mapping, a ` #` truncates
-    /// it as a comment, and a line break ends it. Non-string scalars format
-    /// as plain digits/words and are always safe.
-    ///
-    /// This is a STRUCTURAL claim only — the resolver-token exclusions that
-    /// keep a plain token from reparsing as a number/bool/null belong to the
-    /// provider-slot preimage, which knows the sink's declared type.
-    PlainScalarSafe {
-        /// The text OPENS the token, so leading YAML indicators break it too.
-        /// False for a splice with literal text ahead of it.
-        token_initial: bool,
-        /// The rendered text is a `tpl` render of the value, which is the
-        /// identity only on template-ACTION-free input: a value carrying
-        /// `{{` renders to something else entirely and escapes the claim.
-        templated: bool,
-    },
 }
 
 impl ContractPathSchemaEvidence {
@@ -1261,11 +1202,6 @@ pub struct ContractSchemaSignals {
     opaque_values_root_paths: BTreeSet<crate::ValuesPath>,
     values_default_sources: BTreeSet<ValuesDefaultSource>,
     guarded_values_default_sources: BTreeSet<GuardedValuesDefaultSource>,
-    values_program_wrappers: BTreeSet<ValuesProgramWrapper>,
-    /// Values paths whose nodes must not gain a wrapper alternative: a
-    /// strict string consumer reads them before the engine's values-root
-    /// rewrite, so a wrapper map there aborts rendering.
-    values_program_wrapper_exclusions: BTreeSet<crate::ValuesPath>,
     /// Terminating validator formulas: rendering aborts whenever ALL guards
     /// of one clause hold, so no valid values document may satisfy them
     /// (`fail`/`required` under fully lowerable conditions). An empty clause
@@ -1344,8 +1280,6 @@ impl ContractSchemaSignals {
             opaque_values_root_paths: BTreeSet::new(),
             values_default_sources: BTreeSet::new(),
             guarded_values_default_sources: BTreeSet::new(),
-            values_program_wrappers: BTreeSet::new(),
-            values_program_wrapper_exclusions: BTreeSet::new(),
             terminal_clauses,
         }
     }
@@ -1542,39 +1476,6 @@ impl ContractSchemaSignals {
                 }
             }
         }
-    }
-
-    /// Attaches chart-authored program-wrapper conventions.
-    #[must_use]
-    pub fn with_values_program_wrappers(
-        mut self,
-        wrappers: impl IntoIterator<Item = ValuesProgramWrapper>,
-    ) -> Self {
-        self.values_program_wrappers.extend(wrappers);
-        self
-    }
-
-    /// Program-wrapper conventions the chart's engine applies to its values.
-    #[must_use]
-    pub fn values_program_wrappers(&self) -> &BTreeSet<ValuesProgramWrapper> {
-        &self.values_program_wrappers
-    }
-
-    /// Attaches paths excluded from wrapper alternatives (pre-rewrite
-    /// strict consumers).
-    #[must_use]
-    pub fn with_values_program_wrapper_exclusions(
-        mut self,
-        paths: impl IntoIterator<Item = crate::ValuesPath>,
-    ) -> Self {
-        self.values_program_wrapper_exclusions.extend(paths);
-        self
-    }
-
-    /// Values paths whose nodes must not gain a wrapper alternative.
-    #[must_use]
-    pub fn values_program_wrapper_exclusions(&self) -> &BTreeSet<crate::ValuesPath> {
-        &self.values_program_wrapper_exclusions
     }
 
     /// Paths the chart ranges DIRECTLY: their runtime iterable domain is

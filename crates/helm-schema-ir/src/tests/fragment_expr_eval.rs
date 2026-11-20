@@ -416,15 +416,7 @@ fn strict_consumer_does_not_retype_derived_helper_output() {
     "#});
 
     assert!(
-        !document
-            .observed_facts
-            .captures
-            .iter()
-            .any(|capture| matches!(
-                &capture.kind,
-                CaptureKind::StringRequirement { path, .. }
-                    if path == &conditional_path("operator.securityContext")
-            )),
+        !consumes_as_string(&document, "operator.securityContext"),
         "the strict consumer sees the helper's rendered string, not its structured input: {document:#?}"
     );
 }
@@ -441,18 +433,32 @@ fn total_conversion_inside_nested_range_precedes_tpl_contract() {
         {{- end -}}
     "});
     assert!(
-        !document
-            .observed_facts
-            .captures
-            .iter()
-            .any(|capture| matches!(
-                &capture.kind,
-                CaptureKind::StringRequirement { path, .. }
-                    | CaptureKind::AbsenceAborts { path }
-                    if path == &conditional_path("config.*.*")
-            )),
+        !consumes_as_string(&document, "config.*.*")
+            && !document
+                .observed_facts
+                .captures
+                .iter()
+                .any(|capture| matches!(
+                    &capture.kind,
+                    CaptureKind::AbsenceAborts { path } if path == &conditional_path("config.*.*")
+                )),
         "tpl consumes the text produced by toString, not the ranged input: {document:#?}"
     );
+}
+
+/// Whether execution records a strict string consumption of the raw input `path`.
+fn consumes_as_string(document: &crate::tests::support::EvaluatedDocument, path: &str) -> bool {
+    document.observed_facts.consumptions.iter().any(|consumption| {
+        consumption.path == conditional_path(path)
+            && matches!(
+                &consumption.domain,
+                crate::value::ConsumptionDomain::Known {
+                    preimage: helm_schema_core::FailValueRequirement::SchemaType(schema_type)
+                        | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(schema_type),
+                    requires_presence: _,
+                } if schema_type == "string"
+            )
+    })
 }
 
 #[test]
@@ -1658,8 +1664,13 @@ fn local_nil_fallback_reassignment_preserves_truthy_union() {
     );
 }
 
+/// Go's `eq` aborts on two valid operands of different basic kinds and never on a nil one
+/// (`text/template` `errBadComparison`). The helper converts a boolean `false` to `"off"`
+/// first, so only an incompatible value reaching `eq` unchanged aborts. The verdicts are
+/// Helm v4.2.3 `helm template` results on this helper pair; `.Values.feature` stays a map
+/// because a missing one aborts earlier, in `get`.
 #[test]
-fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
+fn helper_local_false_to_string_conversion_scopes_comparison_contract() -> eyre::Result<()> {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -1692,32 +1703,42 @@ fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
         &mut seen,
     );
 
-    let conditions = result
-        .execution
-        .observed_facts()
-        .captures
-        .iter()
-        .filter_map(|capture| match &capture.kind {
-            crate::observed_facts::CaptureKind::ComparableKind { path, schema_type }
-                if path == &conditional_path("feature.mode") && schema_type == "string" =>
-            {
-                Some(capture.conjunction.clone())
-            }
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-    sim_assert_eq!(
-        have: conditions,
-        want: vec![vec![Predicate::Or(vec![
-            Predicate::truthy_path("feature.mode"),
-            Predicate::from(Guard::TypeIs {
-                path: helm_schema_core::ValuesPath::parse("feature.mode"),
-                schema_type: "boolean".to_string(),
+    let comparison_fails = Predicate::Or(
+        result
+            .execution
+            .observed_facts()
+            .consumptions
+            .iter()
+            .filter(|consumption| {
+                matches!(
+                    consumption.domain,
+                    crate::value::ConsumptionDomain::KnownFailure
+                )
             })
-            .negated(),
-        ])]],
-        "the helper call must retain the raw-identity dispatch arm's comparison contract: {result:#?}"
-    );
+            .map(crate::value::FrozenConsumption::test_condition)
+            .collect(),
+    )
+    .normalize_boolean();
+    let mode = |mode: serde_json::Value| serde_json::json!({ "feature": { "mode": mode } });
+    crate::tests::guard_oracle::assert_helm_verdicts(
+        &comparison_fails,
+        &[
+            // Nil controls: a missing key reads as "" and a null as nil; neither aborts.
+            (serde_json::json!({ "feature": {} }), false),
+            (mode(serde_json::Value::Null), false),
+            // The converted arm compares "off".
+            (mode(serde_json::json!(false)), false),
+            (mode(serde_json::json!("")), false),
+            (mode(serde_json::json!("other")), false),
+            (mode(serde_json::json!("restricted")), false),
+            // Incompatible values reach `eq` unchanged.
+            (mode(serde_json::json!(true)), true),
+            (mode(serde_json::json!(0)), true),
+            (mode(serde_json::json!(1)), true),
+            (mode(serde_json::json!([1])), true),
+            (mode(serde_json::json!({ "k": 1 })), true),
+        ],
+    )
 }
 
 #[test]

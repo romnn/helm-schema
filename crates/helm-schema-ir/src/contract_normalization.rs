@@ -7,13 +7,12 @@ use helm_schema_core::Predicate;
 /// Finalizes primary and dependency claims through one normalization pipeline.
 ///
 /// Raw DNF rows expand once into single-conjunction rows. Subsumption,
-/// append, pathless-resource merging, and merge-source rebasing preserve that
-/// expanded form. The final pass compacts equal render sites back into DNF.
+/// append, and pathless-resource merging preserve that expanded form. The
+/// final pass compacts equal render sites back into DNF.
 #[tracing::instrument(skip_all)]
 pub(crate) fn normalize_contract_uses(
     mut uses: Vec<ContractUse>,
     mut dependency_uses: Vec<ContractUse>,
-    fail_conditions: &[crate::observed_facts::FailCapture],
 ) -> Vec<ContractUse> {
     canonicalize_contract_use_inputs(&mut uses);
     canonicalize_contract_use_inputs(&mut dependency_uses);
@@ -32,10 +31,6 @@ pub(crate) fn normalize_contract_uses(
 
     drop_default_guard_subsumed_duplicates(&mut uses);
     drop_self_truthy_subsumed_duplicates(&mut uses);
-    canonicalize_expanded_contract_uses(&mut uses);
-
-    lower_string_requirement_merge_sources(&mut uses, fail_conditions);
-    // Path rebasing can make formerly distinct rows equal.
     canonicalize_expanded_contract_uses(&mut uses);
     compact_contract_uses(&mut uses);
     uses
@@ -372,165 +367,6 @@ fn extra_predicates_are_truthy_parents(
                 )
             })
         })
-}
-
-fn string_requirements_by_ancestor(
-    fail_conditions: &[crate::observed_facts::FailCapture],
-) -> BTreeMap<String, BTreeSet<(String, helm_schema_core::Conjunction)>> {
-    let mut requirements: BTreeMap<String, BTreeSet<(String, helm_schema_core::Conjunction)>> =
-        BTreeMap::new();
-    for capture in fail_conditions {
-        let crate::observed_facts::CaptureKind::StringRequirement {
-            path,
-            route,
-            selection,
-        } = &capture.kind
-        else {
-            continue;
-        };
-        if *route == crate::observed_facts::StringRequirementRoute::Serialized {
-            continue;
-        }
-        let mut predicates = capture.conjunction.clone();
-        predicates.extend(selection.iter().cloned());
-        let segments = path
-            .segments()
-            .map(helm_schema_core::Segment::encode_component)
-            .collect::<Vec<_>>();
-        for end in 1..segments.len() {
-            requirements
-                .entry(helm_schema_core::join_encoded_value_path(
-                    segments.get(..end).unwrap_or_default().iter().cloned(),
-                ))
-                .or_default()
-                .insert((path.encode(), predicates.clone()));
-        }
-    }
-    requirements
-}
-
-fn lower_string_requirement_merge_sources(
-    uses: &mut [ContractUse],
-    fail_conditions: &[crate::observed_facts::FailCapture],
-) {
-    let requirements_by_ancestor = string_requirements_by_ancestor(fail_conditions);
-    let mut overlap_cache = BTreeMap::new();
-
-    for contract_use in uses {
-        let Some(merge) = &contract_use.merge_layers else {
-            continue;
-        };
-        let source_expr = contract_use.source_expr.encode();
-        let Some(requirements) = requirements_by_ancestor.get(&source_expr) else {
-            continue;
-        };
-        let source_segments = contract_use
-            .source_expr
-            .segments()
-            .map(helm_schema_core::Segment::encode_component)
-            .collect::<Vec<_>>();
-        let specific_layers = merge
-            .layers()
-            .iter()
-            .map(|layer| {
-                layer
-                    .path
-                    .segments()
-                    .map(helm_schema_core::Segment::encode_component)
-                    .collect::<Vec<_>>()
-            })
-            .filter(|layer| {
-                layer.len() > source_segments.len() && layer.starts_with(source_segments.as_slice())
-            })
-            .collect::<Vec<_>>();
-        let [first, second, rest @ ..] = specific_layers.as_slice() else {
-            continue;
-        };
-        let mut common_suffix_len = first
-            .iter()
-            .rev()
-            .zip(second.iter().rev())
-            .take_while(|(left, right)| left == right)
-            .count();
-        for layer in rest {
-            common_suffix_len = common_suffix_len.min(
-                first
-                    .iter()
-                    .rev()
-                    .zip(layer.iter().rev())
-                    .take_while(|(left, right)| left == right)
-                    .count(),
-            );
-        }
-        let suffix = first.get(first.len().saturating_sub(common_suffix_len)..);
-        let Some(suffix) = suffix.filter(|suffix| {
-            !suffix.is_empty() && suffix.iter().all(|segment| segment.as_str() != "*")
-        }) else {
-            continue;
-        };
-        let Some(requirements) =
-            merge_suffix_string_requirements(&source_expr, requirements, suffix)
-        else {
-            continue;
-        };
-        let cache_key = (
-            contract_use.source_expr.clone(),
-            suffix.to_vec(),
-            contract_use.condition.clone(),
-        );
-        let overlaps_requirement = overlap_cache.get(&cache_key).copied().unwrap_or_else(|| {
-            let overlaps = contract_use.condition.disjuncts().iter().any(|row| {
-                requirements.iter().any(|requirement| {
-                    !helm_schema_core::GuardDnf::from_conjunction(
-                        row.iter().cloned().chain(requirement.iter().cloned()),
-                    )
-                    .is_never()
-                })
-            });
-            overlap_cache.insert(cache_key, overlaps);
-            overlaps
-        });
-        if !overlaps_requirement {
-            continue;
-        }
-        let source = helm_schema_core::ValuesPath::parse(&source_expr);
-        let projected =
-            helm_schema_core::ValuesPath::parse(&helm_schema_core::join_encoded_value_path(
-                source_segments
-                    .iter()
-                    .cloned()
-                    .chain(suffix.iter().cloned()),
-            ));
-        contract_use.map_value_paths(&mut |path| {
-            if path == source {
-                projected.clone()
-            } else {
-                path
-            }
-        });
-    }
-}
-
-fn merge_suffix_string_requirements(
-    source: &str,
-    requirements: &BTreeSet<(String, helm_schema_core::Conjunction)>,
-    suffix: &[String],
-) -> Option<BTreeSet<helm_schema_core::Conjunction>> {
-    let source_segments = helm_schema_core::split_value_path(source);
-    let mut paths = BTreeSet::new();
-    let mut conjunctions = BTreeSet::new();
-    for (path, predicates) in requirements {
-        let segments = helm_schema_core::split_value_path(path);
-        if segments.len() <= source_segments.len()
-            || !segments.starts_with(source_segments.as_slice())
-            || !segments.ends_with(suffix)
-        {
-            continue;
-        }
-        paths.insert(segments);
-        conjunctions.insert(predicates.clone());
-    }
-    (paths.len() >= 2).then_some(conjunctions)
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]

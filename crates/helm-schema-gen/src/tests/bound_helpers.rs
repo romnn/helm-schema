@@ -520,7 +520,7 @@ fn template_call_stringifies_the_helper_value_before_provider_projection() {
                 "fullnameOverride".to_string(),
                 serde_json::json!({
                     "anyOf": [
-                        crate::resolve_policy::printf_string_formattable_mapping_schema(),
+                        crate::resolve_policy::scalar_preimage::printf_string_formattable_mapping_schema(),
                         {
                             "type": "string",
                             "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",

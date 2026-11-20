@@ -13,8 +13,7 @@ use tracing_subscriber::prelude::*;
 use crate::analysis_db::IrAnalysisDb;
 use crate::value::eval::Executor;
 use crate::value::{
-    ArgumentForm, Callee, CompletionInput, Coverage, Exit, Flow, FrozenTest, Invocation, Operand,
-    State, Value,
+    ArgumentForm, Callee, Coverage, Exit, Flow, FrozenTest, Invocation, Operand, State, Value,
 };
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -79,8 +78,8 @@ fn measure(run: impl FnOnce() -> Vec<Exit>) -> Measured {
 
 fn invoke(executor: &Executor<'_>, function: &str, values: Vec<Value>, state: State) -> Vec<Exit> {
     executor
-        .complete(CompletionInput::Invocation {
-            invocation: Invocation {
+        .complete(
+            Invocation {
                 callee: Callee::Function(function.to_owned()),
                 operands: values
                     .into_iter()
@@ -93,7 +92,7 @@ fn invoke(executor: &Executor<'_>, function: &str, values: Vec<Value>, state: St
                 site: 0,
             },
             state,
-        })
+        )
         .into_exits()
 }
 

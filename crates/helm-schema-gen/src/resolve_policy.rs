@@ -998,9 +998,8 @@ use scalar_preimage::{
     stringified_plain_scalar_provider_preimage, templated_yaml_provider_preimage,
 };
 pub(crate) use scalar_preimage::{
-    plain_scalar_structural_exclusions, printf_string_formattable_mapping_schema,
-    printf_string_formattable_string_schema, schema_covers_strict_plain_scalar_string,
-    split_segment_pattern, strict_plain_scalar_string_schema,
+    schema_covers_strict_plain_scalar_string, split_segment_pattern,
+    strict_plain_scalar_string_schema,
 };
 
 /// Carries generation-owned state through conditional target lowering.

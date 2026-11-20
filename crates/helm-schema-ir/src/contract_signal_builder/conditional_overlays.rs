@@ -1,7 +1,6 @@
 use super::{
-    BTreeMap, BTreeSet, ConditionalGuard, ContractPathAccumulator, ContractRequirementImplication,
-    ContractRequirementTarget, ContractUse, FailValueRequirement, Guard, Predicate,
-    ProviderSchemaUse, ValueKind, ValuesPath, path_accumulator,
+    BTreeMap, BTreeSet, ConditionalGuard, ContractUse, Guard, Predicate, ProviderSchemaUse,
+    ValueKind, ValuesPath,
 };
 
 /// Paths tested under a HARD negation of the predicate: every
@@ -605,54 +604,6 @@ pub(super) fn guard_to_conditional_guard(
     // Falsiness and disjunction from De Morgan flattening retain their direct
     // encodings, including mode dispatch such as vault's `ne .mode "external"`.
     ConditionalGuard::try_from(guard).ok()
-}
-
-/// A nested range over each member of `parent` (`p.*` ranged): members
-/// must be rangeable wherever the outer conditions hold.
-pub(super) fn record_member_range_requirement(
-    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    parent: &ValuesPath,
-    predicates: &[Predicate],
-    outer_allows_integer: bool,
-    inner_allows_integer: bool,
-) {
-    let mut member_path = parent.clone();
-    member_path.push_each_member();
-    let mut outer_guards = Vec::new();
-    for predicate in predicates {
-        if matches!(
-            predicate.kind(),
-            helm_schema_core::PredicateKind::Guard(Guard::Range { path })
-                if path == parent || path == &member_path
-        ) {
-            continue;
-        }
-        let Some(guard) = predicate_to_guard(predicate, None) else {
-            return;
-        };
-        if guard
-            .value_paths()
-            .iter()
-            .any(|path| path_contains_wildcard(&path.encode()))
-        {
-            return;
-        }
-        outer_guards.push(guard);
-    }
-    let implication = ContractRequirementImplication::new(
-        outer_guards,
-        ContractRequirementTarget::Members {
-            allow_integer: outer_allows_integer,
-        },
-        vec![FailValueRequirement::Iterable {
-            allow_integer: inner_allows_integer,
-        }],
-    );
-    let acc = path_accumulator(paths, parent);
-    acc.referenced = true;
-    if !acc.requirement_implications.contains(&implication) {
-        acc.requirement_implications.push(implication);
-    }
 }
 
 /// Whether a conjunct tests the TYPE of `source_expr`, positively or under

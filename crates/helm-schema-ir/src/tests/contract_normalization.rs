@@ -21,7 +21,7 @@ fn normalization_deduplicates_expanded_rows_before_subsumption() {
         }],
         None,
     );
-    let uses = normalize_contract_uses(vec![row.clone(), row], Vec::new(), &[]);
+    let uses = normalize_contract_uses(vec![row.clone(), row], Vec::new());
 
     sim_assert_eq!(have: uses.len(), want: 1);
 }
@@ -226,7 +226,7 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
         ),
     ];
 
-    uses = normalize_contract_uses(uses, Vec::new(), &[]);
+    uses = normalize_contract_uses(uses, Vec::new());
 
     sim_assert_eq!(have: uses.len(), want: 1);
     assert!(uses[0].single_guard_conjunction().iter().any(|guard| {
@@ -275,7 +275,7 @@ fn normalization_drops_subsumed_truthy_branch_across_provenance_sites() {
         ),
     ];
 
-    uses = normalize_contract_uses(uses, Vec::new(), &[]);
+    uses = normalize_contract_uses(uses, Vec::new());
 
     sim_assert_eq!(have: uses.len(), want: 1);
     sim_assert_eq!(
@@ -487,6 +487,6 @@ fn normalization_never_lends_a_block_placement_proof_to_an_unknown_context() {
     block.condition = helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
         path: helm_schema_core::ValuesPath::parse("enabled"),
     }]);
-    let rows = normalize_contract_uses(vec![block.clone(), unknown.clone()], Vec::new(), &[]);
+    let rows = normalize_contract_uses(vec![block.clone(), unknown.clone()], Vec::new());
     sim_assert_eq!(have: rows, want: vec![unknown, block]);
 }

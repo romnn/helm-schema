@@ -5,7 +5,7 @@ use super::{
     AbortReason, ArgumentForm, Callee, Coverage, Datum, Exit, Flow, Invocation, Leaf, Normal,
     Operand, State, Value, ValueNode,
 };
-use super::{CallOutcome, CompletedExecution, CompletionInput, Execution};
+use super::{CallOutcome, CompletedExecution, Execution, HelperReturn};
 use crate::function_semantics::{SuccessType, function_semantics};
 use helm_schema_ast::TemplateExpr;
 use helm_schema_core::{Guard, GuardValue, Predicate};
@@ -143,17 +143,16 @@ impl Executor<'_> {
         }
         if let Some(function @ ("and" | "or")) = function {
             let exits = self.short_circuit(function, arguments, pipe.as_ref(), state, site);
-            return self
-                .complete(CompletionInput::Executed {
-                    invocation: Invocation {
-                        callee,
-                        operands: Vec::new(),
-                        site: site as u64,
-                    },
-                    execution: Execution { exits },
-                    helper_return: None,
-                })
-                .into_exits();
+            return Self::complete_executed(
+                Invocation {
+                    callee,
+                    operands: Vec::new(),
+                    site: site as u64,
+                },
+                Execution { exits },
+                None,
+            )
+            .into_exits();
         }
         let mut pending = vec![Assembled {
             state,
@@ -203,14 +202,14 @@ impl Executor<'_> {
                             operand.value = exit.state.consumed(&operand.value);
                         }
                         exits.extend(
-                            self.complete(CompletionInput::Invocation {
-                                invocation: Invocation {
+                            self.complete(
+                                Invocation {
                                     callee: consumed_callee(&callee, &exit.state),
                                     operands,
                                     site: site as u64,
                                 },
-                                state: exit.state,
-                            })
+                                exit.state,
+                            )
                             .into_exits(),
                         );
                     }
@@ -342,68 +341,56 @@ impl Executor<'_> {
         result.finish()
     }
     #[tracing::instrument(skip_all)]
-    pub(super) fn complete(&self, input: CompletionInput) -> CallOutcome {
-        let completed = match input {
-            CompletionInput::Invocation { invocation, state } => {
-                let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
-                if matches!(
-                    invocation.callee.function_name(),
-                    Some("include" | "template" | "tpl")
-                ) {
-                    return CallOutcome {
-                        execution: Execution {
-                            exits: self.helper_alternatives(invocation, state, &mut remaining),
-                        },
-                    };
-                }
-                let values_fallback_source = values_fallback_source(&invocation, &state);
-                let exits = if transfers_values(&invocation) {
-                    let mut state = state;
-                    // Each operand has one truth query across mutually exclusive value cases.
-                    // Different operands and invocations retain independent fallback choices.
-                    let mut queries = std::collections::BTreeMap::new();
-                    let plan =
-                        transfer_values(&invocation, &mut state, &mut remaining, &mut queries);
-                    finish_value_plan(plan, state)
-                } else if matches!(
-                    invocation.callee.function_name(),
-                    Some("eq" | "ne" | "list" | "tuple")
-                ) {
-                    Self::transfer_invocation(&invocation, state, &mut remaining)
-                } else {
-                    Self::transfer_alternatives(&invocation, state, &mut remaining)
-                };
-                CompletedExecution {
-                    invocation,
-                    execution: Execution { exits },
-                    helper_return: None,
-                    values_fallback_source,
-                }
-            }
-            CompletionInput::Executed {
-                invocation,
-                execution,
-                helper_return,
-            } => CompletedExecution {
-                invocation,
-                execution,
-                helper_return,
-                values_fallback_source: None,
-            },
-            CompletionInput::Summarized {
-                plan,
-                invocation,
-                state,
-            } => {
-                let applicable = plan.applicable(invocation.operands.len());
-                tracing::trace!(
-                    applicable,
-                    "source plan declines until its transfer is certified"
-                );
-                return self.helper(invocation, state, false);
-            }
+    pub(super) fn complete(&self, invocation: Invocation, state: State) -> CallOutcome {
+        let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+        if matches!(
+            invocation.callee.function_name(),
+            Some("include" | "template" | "tpl")
+        ) {
+            return CallOutcome {
+                execution: Execution {
+                    exits: self.helper_alternatives(invocation, state, &mut remaining),
+                },
+            };
+        }
+        let values_fallback_source = values_fallback_source(&invocation, &state);
+        let exits = if transfers_values(&invocation) {
+            let mut state = state;
+            // Each operand has one truth query across mutually exclusive value cases.
+            // Different operands and invocations retain independent fallback choices.
+            let mut queries = std::collections::BTreeMap::new();
+            let plan = transfer_values(&invocation, &mut state, &mut remaining, &mut queries);
+            finish_value_plan(plan, state)
+        } else if matches!(
+            invocation.callee.function_name(),
+            Some("eq" | "ne" | "list" | "tuple")
+        ) {
+            Self::transfer_invocation(&invocation, state, &mut remaining)
+        } else {
+            Self::transfer_alternatives(&invocation, state, &mut remaining)
         };
-        completed.finish()
+        CompletedExecution {
+            invocation,
+            execution: Execution { exits },
+            helper_return: None,
+            values_fallback_source,
+        }
+        .finish()
+    }
+    /// Completes a call whose exits are already executed (a helper body, a short-circuit form).
+    #[tracing::instrument(skip_all, name = "complete")]
+    pub(super) fn complete_executed(
+        invocation: Invocation,
+        execution: Execution,
+        helper_return: Option<HelperReturn>,
+    ) -> CallOutcome {
+        CompletedExecution {
+            invocation,
+            execution,
+            helper_return,
+            values_fallback_source: None,
+        }
+        .finish()
     }
 
     fn helper_alternatives(
@@ -438,7 +425,7 @@ impl Executor<'_> {
                 }
             }
         }
-        self.helper(invocation, state, true).into_exits()
+        self.helper(invocation, state).into_exits()
     }
     fn transfer_alternatives(
         invocation: &Invocation,
@@ -2023,9 +2010,6 @@ impl super::ExecutedInvocationRecord {
     pub(crate) fn function(&self) -> &str {
         &self.function
     }
-    pub(crate) fn wrapper(&self) -> Option<&super::ProgramWrapperMetadata> {
-        self.wrapper.as_ref()
-    }
 }
 
 #[derive(Default)]
@@ -2231,7 +2215,6 @@ impl CompletedExecution {
         first.state.heap.arena.next_invocation.set(invocation + 1);
         let function = self.invocation.callee.name();
         for exit in &mut self.execution.exits {
-            let mut wrapper = None;
             if let Some(helper) = &self.helper_return {
                 exit.state.program = helper.program;
                 exit.state.namespace = Rc::clone(&helper.namespace);
@@ -2259,7 +2242,6 @@ impl CompletedExecution {
                 if let Flow::Normal(normal) = &mut exit.flow {
                     normal.value = returned;
                 }
-                wrapper = helper.wrapper.clone();
             }
             for slot in exit.state.reserve_invocation() {
                 exit.state
@@ -2271,7 +2253,6 @@ impl CompletedExecution {
                         program: exit.state.program,
                         site: self.invocation.site,
                         function: function.to_owned(),
-                        wrapper: wrapper.clone(),
                         values_fallback: self.values_fallback_source.as_ref().and_then(|source| {
                             let Flow::Normal(normal) = &exit.flow else {
                                 return None;

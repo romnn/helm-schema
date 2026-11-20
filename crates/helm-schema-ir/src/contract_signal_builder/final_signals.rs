@@ -300,9 +300,6 @@ impl ContractPathAccumulator {
             facts: mut path_facts,
             requiredness,
             type_hints,
-            guarded_type_hints,
-            fallback_type_hints,
-            guarded_fallback_type_hints,
             conditional_overlay_branches,
             mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
@@ -310,24 +307,6 @@ impl ContractPathAccumulator {
             opaque_consumption_guards,
             member_access_conditions: _,
         } = self;
-        let overlay_type_hints: BTreeSet<String> = type_hints
-            .iter()
-            .chain(guarded_type_hints.iter())
-            .chain(fallback_type_hints.iter())
-            .chain(guarded_fallback_type_hints.iter())
-            .cloned()
-            .collect();
-        // Fallback-grade hints are intent, not consumer contracts: a branch
-        // whose renders ALL totally format (an embedded partial-scalar
-        // splice like `--log-level={{ x | default "info" }}`) proves the
-        // chart tolerates any input kind there, so those hints must not
-        // close it (flux2's `--log-level=` arguments). Contract-grade hints
-        // keep typing it.
-        let contract_type_hints: BTreeSet<String> = type_hints
-            .iter()
-            .chain(guarded_type_hints.iter())
-            .cloned()
-            .collect();
         let mut evidence_groups: Vec<(PathSchemaFactsAccumulator, Vec<Vec<ConditionalGuard>>)> =
             Vec::new();
         for (guards, branch) in conditional_overlay_branches {
@@ -425,26 +404,11 @@ impl ContractPathAccumulator {
                 // `then` (and vice versa), or a live arm becomes
                 // internally contradictory.
                 //
-                // A branch whose renders ALL totally format (an embedded
-                // partial-scalar splice like `--log-level={{ x | default
-                // "info" }}`) proves the chart tolerates any input kind
-                // there, so branch-scoped hint-grade typing — a literal
-                // fallback's documented intent routed through the guarded
-                // channel — must not close it (flux2). Path-level
-                // hints keep typing the branch: they carry real consumer
-                // contracts (flux2's own `substr` tag check) that hold
-                // wherever the path renders.
-                let branch_hint_pool =
-                    if branch.facts.used_as_serialized && !branch.facts.has_string_contract {
-                        &contract_type_hints
-                    } else {
-                        &overlay_type_hints
-                    };
                 // Keep only the subset of observed hints compatible with the
                 // overlay branch's own type partition. A positive
                 // `TypeIs(T)` key keeps only `T`; a negated one drops `T`;
                 // foreign guards leave the hints untouched.
-                let mut branch_hints = branch_hint_pool.clone();
+                let mut branch_hints = type_hints.clone();
                 for guard in &guards {
                     match guard {
                         ConditionalGuard::TypeIs { path, schema_type } if path == value_path => {
@@ -488,16 +452,14 @@ impl ContractPathAccumulator {
                 || !unconditional_requirements
                     .contains(&(implication.target.clone(), implication.requirements.clone()))
         });
-        let mut guarded_type_hints = guarded_type_hints;
-        guarded_type_hints.extend(guarded_fallback_type_hints);
         ContractPathSchemaEvidence {
             is_referenced_value_path: referenced,
             facts,
             guard_predicates,
             metadata_field_kinds: path_facts.metadata_field_kinds,
             type_hints,
-            guarded_type_hints,
-            fallback_type_hints,
+            guarded_type_hints: BTreeSet::new(),
+            fallback_type_hints: BTreeSet::new(),
             provider_schema_uses: path_facts.provider_schema_uses,
             requiredness,
             conditional_overlays,

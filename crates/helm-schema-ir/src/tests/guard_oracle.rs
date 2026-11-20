@@ -124,6 +124,17 @@ pub(crate) fn guard_holds(guard: &Guard, document: &serde_json::Value) -> eyre::
             }
             Ok(false)
         }
+        // A present nil member is present; a non-mapping host has no keys.
+        Guard::HasKey { path, key } => Ok(value_at(document, path)?
+            .and_then(serde_json::Value::as_object)
+            .is_some_and(|object| object.contains_key(key))),
+        Guard::NotHasKey { path, key } => Ok(!guard_holds(
+            &Guard::HasKey {
+                path: path.clone(),
+                key: key.clone(),
+            },
+            document,
+        )?),
         Guard::MatchesValue { path, pattern } => match value_at(document, path)? {
             None => Ok(false),
             Some(value) => pattern
@@ -149,8 +160,6 @@ pub(crate) fn guard_holds(guard: &Guard, document: &serde_json::Value) -> eyre::
         | Guard::IntLt { path: _, bound: _ }
         | Guard::AtMostOneMember { path: _ }
         | Guard::MinMembers { path: _, bound: _ }
-        | Guard::HasKey { path: _, key: _ }
-        | Guard::NotHasKey { path: _, key: _ }
         | Guard::ContainsEquals { path: _, value: _ }
         | Guard::ContainsMemberEquals {
             path: _,

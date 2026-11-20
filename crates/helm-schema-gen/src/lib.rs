@@ -15,7 +15,6 @@ mod merge;
 mod overlay_lowering;
 mod path_resolver;
 mod path_schema;
-mod program_wrapper;
 mod provider_definitions;
 mod provider_requirement_synthesis;
 mod provider_resolution;

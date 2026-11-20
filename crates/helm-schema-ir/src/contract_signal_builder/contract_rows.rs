@@ -1,13 +1,12 @@
 use super::{
     ApproximationRole, BTreeMap, BTreeSet, ConditionalGuard, ConditionalOverlayEvidence,
-    ContractRequirednessEvidence, ContractRequirementImplication, ContractRequirementTarget,
-    ContractUse, ContractValuePathFacts, FailValueRequirement, Guard, GuardDnf, MetadataFieldKind,
-    Predicate, ProviderSchemaUse, RangeDomain, SourceUseFactSplit, ValueKind, ValuesPath,
-    collapse_layered_truthy_gates, extend_lowerable_predicate, hard_negation_paths,
-    lowerable_conditional_guard_set, lowerable_conditional_guard_subset, path_accumulator,
-    path_contains_wildcard, predicate_is_structural_ancestor_guard, predicate_tests_source_type,
-    predicate_to_guard, provider_schema_use, range_guard_is_iteration_ancestor,
-    ranged_member_parent, record_member_range_requirement,
+    ContractRequirednessEvidence, ContractRequirementImplication, ContractUse,
+    ContractValuePathFacts, Guard, GuardDnf, MetadataFieldKind, Predicate, ProviderSchemaUse,
+    RangeDomain, SourceUseFactSplit, ValueKind, ValuesPath, collapse_layered_truthy_gates,
+    extend_lowerable_predicate, hard_negation_paths, lowerable_conditional_guard_set,
+    lowerable_conditional_guard_subset, path_accumulator, path_contains_wildcard,
+    predicate_is_structural_ancestor_guard, predicate_tests_source_type, predicate_to_guard,
+    provider_schema_use, range_guard_is_iteration_ancestor, ranged_member_parent,
 };
 
 #[derive(Default)]
@@ -17,14 +16,6 @@ pub(super) struct ContractPathAccumulator {
     pub(super) facts: PathSchemaFactsAccumulator,
     pub(super) requiredness: ContractRequirednessEvidence,
     pub(super) type_hints: BTreeSet<String>,
-    /// Hints observed only under branch predicates: overlay typing only.
-    pub(super) guarded_type_hints: BTreeSet<String>,
-    /// Hints from literal `default`/`coalesce` fallbacks: they type only
-    /// the truthy arm, so base lowering keeps Helm-falsy inputs open.
-    pub(super) fallback_type_hints: BTreeSet<String>,
-    /// Branch-scoped fallback hints: fallback-grade overlay typing
-    /// that a totally-formatting branch must not bind.
-    pub(super) guarded_fallback_type_hints: BTreeSet<String>,
     pub(super) conditional_overlay_branches:
         BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
     pub(super) has_unconditional_overlay_peer: bool,
@@ -251,12 +242,6 @@ pub(super) fn record_contract_use(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
-    string_requirement_routes: &[(
-        crate::observed_facts::StringRequirementRoute,
-        helm_schema_core::Conjunction,
-    )],
-    has_yaml_serialized_use: bool,
-    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     let source_path = contract_use.source_expr.clone();
     if contract_use.range_key {
@@ -339,15 +324,7 @@ pub(super) fn record_contract_use(
                 _ => predicate,
             })
             .collect();
-        record_contract_use_conjunction(
-            paths,
-            contract_use,
-            &predicates,
-            range_modes,
-            string_requirement_routes,
-            has_yaml_serialized_use,
-            predicate_memo,
-        );
+        record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
     }
 }
 
@@ -359,24 +336,6 @@ pub(super) fn at_most_one_member_predicate(predicate: &Predicate) -> bool {
         }
         _ => false,
     }
-}
-
-pub(super) fn predicate_is_truthy_disjunction_over(
-    predicate: &Predicate,
-    paths: &[helm_schema_core::ValuesPath],
-) -> bool {
-    let helm_schema_core::PredicateKind::Or(alternatives) = predicate.kind() else {
-        return false;
-    };
-    let candidates = alternatives
-        .iter()
-        .filter_map(|alternative| match alternative.kind() {
-            helm_schema_core::PredicateKind::Guard(Guard::Truthy { path }) => Some(path.clone()),
-            _ => None,
-        })
-        .collect::<BTreeSet<_>>();
-    candidates.len() == alternatives.len()
-        && candidates == paths.iter().cloned().collect::<BTreeSet<_>>()
 }
 
 /// A row rendering the collection's RANGE KEY contributes exactly one fact:
@@ -536,12 +495,6 @@ pub(super) fn record_contract_use_conjunction(
     contract_use: &ContractUse,
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
-    string_requirement_routes: &[(
-        crate::observed_facts::StringRequirementRoute,
-        helm_schema_core::Conjunction,
-    )],
-    has_yaml_serialized_use: bool,
-    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     if record_default_dependency_metadata(paths, contract_use, predicates) {
         return;
@@ -915,22 +868,6 @@ pub(super) fn record_contract_use_conjunction(
             || predicates
                 .iter()
                 .any(|predicate| positive_source_guard_excludes_null(predicate, &source_path));
-        let row_predicate = Predicate::all(predicates.to_vec());
-        let matching_string_routes = string_requirement_routes
-            .iter()
-            .filter(|(_, route)| {
-                predicate_memo
-                    .exactly_implies(&row_predicate, &Predicate::all(route.clone().into_vec()))
-            })
-            .map(|(route, _)| *route)
-            .collect::<BTreeSet<_>>();
-        let provider_route_consumes_raw_string = matching_string_routes
-            .iter()
-            .any(|route| *route != crate::observed_facts::StringRequirementRoute::Serialized);
-        let serialized_sibling_owns_scalar_preimage =
-            provider_route_consumes_raw_string && has_yaml_serialized_use;
-        let scoped_consumer_owns_raw_domain =
-            matching_string_routes.contains(&crate::observed_facts::StringRequirementRoute::Scoped);
         let formatted_projection = matches!(
             contract_use.kind,
             ValueKind::GoFormattedMap | ValueKind::GoFormattedSequence
@@ -941,13 +878,6 @@ pub(super) fn record_contract_use_conjunction(
             || formatted_projection)
             .then(|| provider_schema_use(contract_use, self_range_guarded, source_null_tolerant))
             .flatten()
-            .filter(|provider_use| {
-                !(provider_use.kind == ValueKind::Scalar
-                    && provider_use.text_preimage.is_none()
-                    && provider_use.split_segment.is_none()
-                    && (provider_use.stringified && serialized_sibling_owns_scalar_preimage
-                        || scoped_consumer_owns_raw_domain))
-            })
             // A row whose layer facts stay UN-rerouted (binding-carried,
             // no structural transform involved) types through the ordinary
             // branch/base lanes; its use must not also seed synthesized
@@ -1096,7 +1026,7 @@ pub(super) fn record_contract_use_conjunction(
     }
 }
 
-pub(super) fn lowerable_range_outer_guards(
+fn lowerable_range_outer_guards(
     ranged_path: &str,
     predicates: &[Predicate],
 ) -> Option<Vec<ConditionalGuard>> {
@@ -1136,82 +1066,6 @@ pub(super) fn lowerable_range_outer_guards(
     }
     ConditionalGuard::canonicalize_conjunction(&mut guards);
     Some(guards)
-}
-
-pub(super) fn record_range_input_capture(
-    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
-    capture: &crate::observed_facts::FailCapture,
-    path: &str,
-    destructured: bool,
-    json_decoded: bool,
-) {
-    if path.trim().is_empty() || capture.contains_approximation() {
-        return;
-    }
-    let path = ValuesPath::parse(path);
-    let outer_guards = lowerable_range_outer_guards(&path.encode(), &capture.conjunction);
-    let unconditional = outer_guards.as_ref().is_some_and(Vec::is_empty);
-    let facts = ContractValuePathFacts {
-        is_ranged_source: unconditional,
-        is_direct_ranged_source: unconditional,
-        has_destructured_range_use: unconditional && destructured,
-        has_json_decoded_range_use: unconditional && json_decoded,
-        is_nullable: true,
-        ..ContractValuePathFacts::default()
-    };
-    path_accumulator(paths, &path).facts.record_facts(facts);
-
-    if let Some(parent) = path.item_parent()
-        && !parent
-            .segments()
-            .any(helm_schema_core::Segment::is_each_member)
-    {
-        let parent_mode = capture.ranged.mode(&parent);
-        if !parent_mode.member_identity {
-            return;
-        }
-        record_member_range_requirement(
-            paths,
-            &parent,
-            &capture.conjunction,
-            !parent_mode.destructured && !parent_mode.json_decoded,
-            !destructured && !json_decoded,
-        );
-    } else if let Some(outer_guards) = outer_guards {
-        // An unconditional row's range facts already live on the base
-        // accumulator; only a real guard set opens its own overlay branch.
-        if !outer_guards.is_empty() {
-            let branch = path_accumulator(paths, &path)
-                .conditional_overlay_branches
-                .entry(outer_guards.clone())
-                .or_default();
-            branch.facts.is_nullable = true;
-            branch.record_range_domain(if destructured || json_decoded {
-                RangeDomain::CollectionOnly
-            } else {
-                RangeDomain::CollectionOrIntegerCount
-            });
-            branch.record_facts(ContractValuePathFacts {
-                is_ranged_source: true,
-                has_destructured_range_use: destructured,
-                has_json_decoded_range_use: json_decoded,
-                is_nullable: true,
-                ..ContractValuePathFacts::default()
-            });
-        }
-        let implication = ContractRequirementImplication::new(
-            outer_guards,
-            ContractRequirementTarget::Value,
-            vec![FailValueRequirement::Iterable {
-                allow_integer: !destructured && !json_decoded,
-            }],
-        );
-        let acc = path_accumulator(paths, &path);
-        acc.referenced = true;
-        if !acc.requirement_implications.contains(&implication) {
-            acc.requirement_implications.push(implication);
-        }
-    }
 }
 
 pub(super) fn remove_redundant_approximate_conditions(conjunction: &[Predicate]) -> Vec<Predicate> {

@@ -673,27 +673,6 @@ pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
     Some(helm_schema_core::unicode_mode_escaped_pattern(&out).unwrap_or(out))
 }
 
-/// A value whose text must keep an unquoted YAML token intact. Only strings
-/// carry the risk — every other scalar formats as plain digits or words — and a
-/// `tpl` render escapes through any value carrying a template action, whose
-/// rendered text is not the raw value at all.
-fn plain_scalar_safe_schema(token_initial: bool, templated: bool) -> Value {
-    let mut safe = serde_json::json!({ "type": "string" });
-    if let Some(object) = safe.as_object_mut() {
-        object.insert(
-            "allOf".to_string(),
-            Value::Array(crate::resolve_policy::plain_scalar_structural_exclusions(
-                token_initial,
-            )),
-        );
-    }
-    let mut arms = vec![safe, serde_json::json!({ "not": { "type": "string" } })];
-    if templated {
-        arms.push(serde_json::json!({ "type": "string", "pattern": "\\{\\{" }));
-    }
-    serde_json::json!({ "anyOf": arms })
-}
-
 fn type_hint_schema(schema_types: &BTreeSet<String>) -> Value {
     if schema_types.is_empty() {
         return empty_schema();

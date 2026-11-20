@@ -50,8 +50,6 @@ impl FinalizedContract {
     pub(in crate::contract) fn new(
         normalized_uses: Vec<ContractUse>,
         observed_facts: &ObservedFacts,
-        values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
-        values_program_wrapper_exclusions: BTreeSet<helm_schema_core::ValuesPath>,
         dependency_values_roots: &BTreeSet<super::DependencyValuesRoot>,
         predicate_memo: &helm_schema_core::PredicateMemo,
     ) -> Self {
@@ -107,9 +105,7 @@ impl FinalizedContract {
         .with_opaque_values_root_paths(observed_facts.opaque_values_root_paths.clone())
         .with_values_default_sources(observed_facts.values_default_sources.clone())
         .with_guarded_values_default_sources(guarded_values_default_sources)
-        .with_scoped_guarded_root_overlay_requirement_implications(guarded_root_overlays)
-        .with_values_program_wrappers(values_program_wrappers)
-        .with_values_program_wrapper_exclusions(values_program_wrapper_exclusions);
+        .with_scoped_guarded_root_overlay_requirement_implications(guarded_root_overlays);
 
         Self {
             document,

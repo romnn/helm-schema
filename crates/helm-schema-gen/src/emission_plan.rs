@@ -470,7 +470,7 @@ impl LoweredEmissionPlan {
         let materialized = self.preserve_declared_defaults(projected);
         let materialized = Self::extract_repeated_payloads(materialized);
         let materialized = Self::insert_shared_definitions(materialized);
-        let materialized = self.apply_program_wrappers(materialized);
+        let materialized = Self::insert_condition_definitions(materialized);
         let materialized = self.apply_values_descriptions(materialized);
         finish_generated(
             materialized.schema,
@@ -601,19 +601,9 @@ impl LoweredEmissionPlan {
         materialized
     }
 
-    pub(crate) fn apply_program_wrappers(
-        &self,
+    pub(crate) fn insert_condition_definitions(
         mut materialized: MaterializedTree,
     ) -> MaterializedTree {
-        {
-            let _span = tracing::info_span!("apply_program_wrappers").entered();
-            crate::program_wrapper::apply_program_wrapper_alternatives(
-                &mut materialized.schema,
-                self.contract_schema_signals.values_program_wrappers(),
-                self.contract_schema_signals
-                    .values_program_wrapper_exclusions(),
-            );
-        }
         insert_definitions_into_root(
             &mut materialized.schema,
             std::mem::take(&mut materialized.condition_definitions),

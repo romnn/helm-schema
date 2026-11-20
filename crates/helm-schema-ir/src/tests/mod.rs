@@ -33,7 +33,6 @@ mod fragment_scope_eval;
 mod function_semantics;
 pub(crate) mod guard_oracle;
 mod ip_item_pattern;
-mod observed_facts;
 mod range_modes;
 mod resource_identity;
 mod runtime_heap_transfers;

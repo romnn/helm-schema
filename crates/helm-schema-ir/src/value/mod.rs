@@ -35,7 +35,6 @@ mod read_set;
 pub(crate) mod relationship;
 pub(crate) mod scalar_value;
 mod session;
-mod shape_summary;
 mod site_index;
 #[cfg(test)]
 #[path = "../tests/runtime_stage0_census.rs"]
@@ -788,35 +787,6 @@ enum TypeCoverage {
     Sequence,
 }
 
-#[derive(Clone, Debug)]
-struct CertifiedSourcePlan {
-    proof: ShapeProof,
-    plan: SourceSummaryPlan,
-}
-#[derive(Clone, Debug)]
-struct ShapeProof {
-    complete: bool,
-}
-#[derive(Clone, Debug)]
-enum SourceSummaryPlan {
-    NilScrub(NilScrubPlan),
-    ParsedMapListMerge(ParsedMapListMergePlan),
-}
-#[derive(Clone, Debug)]
-struct NilScrubPlan {
-    operand: usize,
-}
-#[derive(Clone, Debug)]
-struct ParsedMapListMergePlan {
-    operands: Vec<usize>,
-    renderer: TypedYamlMatchProof,
-    overwrite: bool,
-}
-#[derive(Clone, Debug)]
-struct TypedYamlMatchProof {
-    proof: ShapeProof,
-}
-
 /// Guarded scalar content projected by the executed-output bridge.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ScalarValueDispatch {
@@ -913,28 +883,11 @@ struct Execution {
 struct CallOutcome {
     execution: Execution,
 }
-enum CompletionInput {
-    Invocation {
-        invocation: Invocation,
-        state: State,
-    },
-    Executed {
-        invocation: Invocation,
-        execution: Execution,
-        helper_return: Option<HelperReturn>,
-    },
-    Summarized {
-        plan: CertifiedSourcePlan,
-        invocation: Invocation,
-        state: State,
-    },
-}
 struct HelperReturn {
     program: u64,
     namespace: Rc<namespace::Namespace>,
     output: TextBuffer,
     loops: Vec<LoopId>,
-    wrapper: Option<ProgramWrapperMetadata>,
 }
 struct CompletedExecution {
     invocation: Invocation,
@@ -949,7 +902,6 @@ pub(crate) struct ExecutedInvocationRecord {
     program: u64,
     site: u64,
     function: String,
-    wrapper: Option<ProgramWrapperMetadata>,
     values_fallback: Option<Rc<ExecutedValuesFallback>>,
     condition: output::RuntimeCondition,
 }
@@ -958,19 +910,6 @@ struct ExecutedValuesFallback {
     result: BTreeMap<ObjectId, SnapshotId>,
     source: crate::ValuesDefaultSource,
 }
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ProgramWrapperMetadata {
-    family: Vec<u64>,
-    sentinels: Vec<WrapperSentinelSite>,
-}
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct WrapperSentinelSite {
-    key: String,
-    lookup: u64,
-    tpl: u64,
-    guard: u64,
-}
-
 #[derive(Default)]
 struct StateBuffer {
     exits: ExitBuffer,

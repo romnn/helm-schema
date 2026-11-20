@@ -1618,9 +1618,7 @@ fn operand_and_invocation_fallback_scopes_remain_independent() {
 #[test]
 fn not_invocation_dispatch_keeps_one_unknown_atom_for_its_selected_operand() -> eyre::Result<()> {
     use super::{Coverage, DecisionEdge};
-    use crate::value::{
-        ArgumentForm, Callee, CompletionInput, Flow, Invocation, Operand, State, Value,
-    };
+    use crate::value::{ArgumentForm, Callee, Flow, Invocation, Operand, State, Value};
     use helm_schema_core::{Predicate, ValuesPath};
     use std::collections::BTreeSet;
     use std::rc::Rc;
@@ -1635,8 +1633,8 @@ fn not_invocation_dispatch_keeps_one_unknown_atom_for_its_selected_operand() -> 
     );
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let exits = crate::value::eval::Executor { db: &db }
-        .complete(CompletionInput::Invocation {
-            invocation: Invocation {
+        .complete(
+            Invocation {
                 callee: Callee::Function("not".to_owned()),
                 operands: vec![Operand {
                     value: operand,
@@ -1646,7 +1644,7 @@ fn not_invocation_dispatch_keeps_one_unknown_atom_for_its_selected_operand() -> 
                 site: 0,
             },
             state,
-        })
+        )
         .into_exits();
     sim_assert_eq!(have: exits.len(), want: 1);
     let exit = exits.first().ok_or_eyre("not invocation exit missing")?;

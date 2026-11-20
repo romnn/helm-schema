@@ -588,6 +588,18 @@ fn short_circuit_value_selection_scopes_downstream_contracts() {
             "ready": false,
             "payload": "payload"
         }),
+        // Missing and null controls: a truthy `ready` never executes `b64enc`, so a payload
+        // the user null-deletes, or a null one, renders (Helm v4.2.3).
+        composed_instance(
+            values_yaml,
+            serde_json::json!({ "ready": true, "payload": null }),
+        ),
+        serde_json::json!({
+            "primary": "",
+            "fallback": "fallback",
+            "ready": true,
+            "payload": null
+        }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
@@ -613,6 +625,18 @@ fn short_circuit_value_selection_scopes_downstream_contracts() {
             "fallback": "fallback",
             "ready": false,
             "payload": { "executed": true }
+        }),
+        // Missing and null controls: with `ready` falsy `b64enc` executes on a nil payload,
+        // which aborts with "invalid value; expected string" (Helm v4.2.3).
+        composed_instance(
+            values_yaml,
+            serde_json::json!({ "ready": false, "payload": null }),
+        ),
+        serde_json::json!({
+            "primary": "",
+            "fallback": "fallback",
+            "ready": false,
+            "payload": null
         }),
     ] {
         assert!(

@@ -3,7 +3,7 @@ use super::{
     ContractSchemaSignals, ContractUse, ContractValuePathFacts, FailValueRequirement,
     finish_schema_signals, path_accumulator, record_contract_use, record_fail_conjunction,
 };
-use crate::observed_facts::{HintIntent, HintScope, ObservedFacts};
+use crate::observed_facts::ObservedFacts;
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn derive_schema_signals_from_contract_parts(
@@ -14,21 +14,8 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
-    let string_requirement_routes = string_requirement_routes(&observed_facts.captures);
-    let yaml_serialized_paths = yaml_serialized_paths(uses);
     for contract_use in uses {
-        let routes = string_requirement_routes
-            .get(&contract_use.source_expr)
-            .map(Vec::as_slice)
-            .unwrap_or_default();
-        record_contract_use(
-            &mut paths,
-            contract_use,
-            &observed_facts.range_modes,
-            routes,
-            yaml_serialized_paths.contains(&contract_use.source_expr),
-            predicate_memo,
-        );
+        record_contract_use(&mut paths, contract_use, &observed_facts.range_modes);
     }
     for capture in &observed_facts.captures {
         record_fail_conjunction(
@@ -68,34 +55,18 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         acc.referenced = true;
         acc.facts.facts.used_as_serialized = true;
     }
-    for (grade, hints) in &observed_facts.type_hints {
-        for (value_path, schema_types) in hints {
-            let schema_types = schema_types
-                .iter()
-                .filter(|schema_type| !schema_type.trim().is_empty())
-                .cloned()
-                .collect::<BTreeSet<_>>();
-            if value_path.segments().next().is_none() || schema_types.is_empty() {
-                continue;
-            }
-            let acc = path_accumulator(&mut paths, value_path);
-            acc.referenced = true;
-            match (grade.scope, grade.intent) {
-                (HintScope::Unconditional, HintIntent::Declared) => {
-                    acc.type_hints.extend(schema_types);
-                }
-                (HintScope::Guarded, HintIntent::Declared) => {
-                    acc.guarded_type_hints.extend(schema_types);
-                }
-                (HintScope::Unconditional, HintIntent::Fallback) => {
-                    acc.fallback_type_hints.extend(schema_types);
-                }
-                (HintScope::Guarded, HintIntent::Fallback) => {
-                    acc.guarded_fallback_type_hints.extend(schema_types);
-                }
-                (_, HintIntent::Tested) => {}
-            }
+    for (value_path, schema_types) in &observed_facts.type_hints {
+        let schema_types = schema_types
+            .iter()
+            .filter(|schema_type| !schema_type.trim().is_empty())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        if value_path.segments().next().is_none() || schema_types.is_empty() {
+            continue;
         }
+        let acc = path_accumulator(&mut paths, value_path);
+        acc.referenced = true;
+        acc.type_hints.extend(schema_types);
     }
     finish_schema_signals(
         paths,
@@ -137,84 +108,6 @@ fn resource_observations<'a>(
             })
         },
     )
-}
-
-fn yaml_serialized_paths(uses: &[ContractUse]) -> BTreeSet<&helm_schema_core::ValuesPath> {
-    uses.iter()
-        .filter(|contract_use| {
-            matches!(
-                contract_use.kind,
-                crate::ValueKind::YamlSerialized | crate::ValueKind::TemplatedYamlSerialized
-            )
-        })
-        .map(|contract_use| &contract_use.source_expr)
-        .collect()
-}
-
-fn string_requirement_routes(
-    fail_conditions: &BTreeSet<crate::observed_facts::FailCapture>,
-) -> BTreeMap<
-    helm_schema_core::ValuesPath,
-    Vec<(
-        crate::observed_facts::StringRequirementRoute,
-        helm_schema_core::Conjunction,
-    )>,
-> {
-    let mut routes = BTreeMap::<
-        helm_schema_core::ValuesPath,
-        BTreeSet<(
-            crate::observed_facts::StringRequirementRoute,
-            helm_schema_core::Conjunction,
-        )>,
-    >::new();
-    for capture in fail_conditions {
-        let crate::observed_facts::CaptureKind::StringRequirement {
-            path,
-            route,
-            selection,
-        } = &capture.kind
-        else {
-            continue;
-        };
-        if *route == crate::observed_facts::StringRequirementRoute::Serialized {
-            continue;
-        }
-        let mut predicates = capture.conjunction.clone();
-        predicates.extend(selection.iter().cloned());
-        if predicates
-            .iter()
-            .any(helm_schema_core::Predicate::contains_approximation)
-        {
-            continue;
-        }
-        routes
-            .entry(path.clone())
-            .or_default()
-            .insert((*route, predicates));
-    }
-    routes
-        .into_iter()
-        .map(|(path, routes)| {
-            let mut routes = routes.into_iter().collect::<Vec<_>>();
-            routes.sort_by(|left, right| left.1.len().cmp(&right.1.len()).then(left.cmp(right)));
-            let mut minimal = Vec::<(
-                crate::observed_facts::StringRequirementRoute,
-                helm_schema_core::Conjunction,
-            )>::new();
-            for route in routes {
-                if !minimal.iter().any(|broader| {
-                    broader.0 == route.0
-                        && broader
-                            .1
-                            .iter()
-                            .all(|predicate| route.1.contains(predicate))
-                }) {
-                    minimal.push(route);
-                }
-            }
-            (path, minimal)
-        })
-        .collect()
 }
 
 /// Helm's assertions on a dependency values root, as they bind the final

@@ -4,7 +4,7 @@ use helm_schema_core::ValuesPath;
 
 mod captures;
 
-pub(crate) use captures::{CaptureKind, FailCapture, StringRequirementRoute};
+pub(crate) use captures::{CaptureKind, FailCapture};
 
 pub(crate) type TypeHints = BTreeMap<ValuesPath, BTreeSet<String>>;
 
@@ -66,41 +66,10 @@ pub(crate) struct ValuesRootOverlay {
     pub(crate) source_path: ValuesPath,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum HintScope {
-    Unconditional,
-    Guarded,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum HintIntent {
-    Declared,
-    Fallback,
-    Tested,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct HintGrade {
-    pub(crate) scope: HintScope,
-    pub(crate) intent: HintIntent,
-}
-
-impl HintGrade {
-    pub(crate) const DECLARED: Self = Self::new(HintScope::Unconditional, HintIntent::Declared);
-    pub(crate) const GUARDED_DECLARED: Self = Self::new(HintScope::Guarded, HintIntent::Declared);
-    pub(crate) const FALLBACK: Self = Self::new(HintScope::Unconditional, HintIntent::Fallback);
-    pub(crate) const GUARDED_FALLBACK: Self = Self::new(HintScope::Guarded, HintIntent::Fallback);
-    pub(crate) const TESTED: Self = Self::new(HintScope::Unconditional, HintIntent::Tested);
-
-    const fn new(scope: HintScope, intent: HintIntent) -> Self {
-        Self { scope, intent }
-    }
-}
-
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct ObservedFacts {
     pub(crate) resources: BTreeSet<ObservedResource>,
-    pub(crate) type_hints: BTreeMap<HintGrade, TypeHints>,
+    pub(crate) type_hints: TypeHints,
     pub(crate) shape_erased_paths: BTreeSet<ValuesPath>,
     pub(crate) range_modes: crate::range_modes::RangeModes,
     pub(crate) opaque_values_root_paths: BTreeSet<ValuesPath>,
@@ -114,50 +83,21 @@ pub(crate) struct ObservedFacts {
 }
 
 impl ObservedFacts {
-    pub(crate) fn insert_type_hint(
-        &mut self,
-        grade: HintGrade,
-        path: ValuesPath,
-        schema_type: &str,
-    ) {
+    pub(crate) fn insert_type_hint(&mut self, path: ValuesPath, schema_type: &str) {
         if path.segments().next().is_none() {
             return;
         }
         self.type_hints
-            .entry(grade)
-            .or_default()
             .entry(path)
             .or_default()
             .insert(schema_type.to_string());
     }
 
-    pub(crate) fn extend_type_hints(
-        &mut self,
-        grade: HintGrade,
-        path: &ValuesPath,
-        hints: &BTreeSet<String>,
-    ) {
+    pub(crate) fn extend_type_hints(&mut self, path: &ValuesPath, hints: &BTreeSet<String>) {
         self.type_hints
-            .entry(grade)
-            .or_default()
             .entry(path.clone())
             .or_default()
             .extend(hints.iter().cloned());
-    }
-
-    pub(crate) fn promote_tested_type_hints(&mut self) {
-        let tested = self
-            .type_hints
-            .remove(&HintGrade::TESTED)
-            .unwrap_or_default();
-        for (path, hints) in tested {
-            self.extend_type_hints(HintGrade::GUARDED_DECLARED, &path, &hints);
-        }
-    }
-
-    pub(crate) fn execution_only(mut self) -> Self {
-        self.type_hints.clear();
-        self
     }
 
     pub(crate) fn map_value_paths<F>(&mut self, map: &mut F, shared: bool)
@@ -186,13 +126,11 @@ impl ObservedFacts {
                 resource
             })
             .collect();
-        for paths in type_hints.values_mut() {
-            let mut mapped = TypeHints::new();
-            for (path, hints) in std::mem::take(paths) {
-                mapped.entry(map(path)).or_default().extend(hints);
-            }
-            *paths = mapped;
+        let mut mapped = TypeHints::new();
+        for (path, hints) in std::mem::take(type_hints) {
+            mapped.entry(map(path)).or_default().extend(hints);
         }
+        *type_hints = mapped;
         *shape_erased_paths = std::mem::take(shape_erased_paths)
             .into_iter()
             .map(&mut *map)
@@ -257,7 +195,7 @@ impl ObservedFacts {
                     })
                     .collect();
                 capture.ranged.map_value_paths(map);
-                capture.kind.map_paths(map, shared);
+                capture.kind.map_value_paths(map);
                 capture
             })
             .collect();
@@ -281,10 +219,8 @@ impl ObservedFacts {
         } = other;
         self.consumptions.extend(consumptions.iter().cloned());
         self.resources.extend(resources.iter().cloned());
-        for (grade, paths) in type_hints {
-            for (path, hints) in paths {
-                self.extend_type_hints(*grade, path, hints);
-            }
+        for (path, hints) in type_hints {
+            self.extend_type_hints(path, hints);
         }
         self.shape_erased_paths
             .extend(shape_erased_paths.iter().cloned());

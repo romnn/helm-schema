@@ -22,13 +22,11 @@ use conditional_overlays::{
     hard_negation_paths, lowerable_conditional_guard_set, lowerable_conditional_guard_subset,
     member_local_truthy_selector, path_contains_wildcard, predicate_is_structural_ancestor_guard,
     predicate_tests_source_type, predicate_to_guard, provider_schema_use,
-    range_guard_is_iteration_ancestor, ranged_member_parent, record_member_range_requirement,
-    terminal_clause_guard,
+    range_guard_is_iteration_ancestor, ranged_member_parent, terminal_clause_guard,
 };
 use contract_rows::{
     ContractPathAccumulator, MemberAccessConditions, PathSchemaFactsAccumulator,
-    lowerable_range_outer_guards, predicate_is_truthy_disjunction_over, record_contract_use,
-    record_range_input_capture, remove_redundant_approximate_conditions,
+    record_contract_use, remove_redundant_approximate_conditions,
 };
 use final_signals::{SourceUseFactSplit, finish_schema_signals, path_accumulator};
 pub(crate) use input_channels::derive_schema_signals_from_contract_parts;

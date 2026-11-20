@@ -209,22 +209,6 @@ pub(crate) fn plain_scalar_safe_comment_string_schema() -> Value {
     })
 }
 
-pub(crate) fn printf_string_formattable_string_schema() -> Value {
-    serde_json::json!({
-        "anyOf": [
-            {
-                "type": "string",
-                "allOf": plain_scalar_structural_exclusions(true),
-            },
-            plain_scalar_safe_comment_string_schema(),
-            {
-                "type": "string",
-                "pattern": "^&[A-Za-z0-9_-]+$",
-            },
-        ]
-    })
-}
-
 pub(crate) fn strict_plain_scalar_string_schema() -> Value {
     let mut exclusions = plain_scalar_structural_exclusions(true);
     exclusions.push(serde_json::json!({

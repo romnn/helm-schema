@@ -81,20 +81,12 @@ fn requirement_admits_kind(
         FailValueRequirement::SchemaTypeEvenNull(required) => {
             json_value_kinds_for_schema_type(required).contains(&kind)
         }
-        FailValueRequirement::ComparableKind(required) => {
-            kind == JsonValueKind::Null
-                || json_value_kinds_for_schema_type(required).contains(&kind)
-        }
         FailValueRequirement::TruthyImpliesSchemaType(_)
         | FailValueRequirement::HelmFalsy
         | FailValueRequirement::FieldHelmFalsy { .. }
         | FailValueRequirement::FieldNotEquals { .. }
-        | FailValueRequirement::NotEquals(_)
-        | FailValueRequirement::PlainScalarSafe { .. } => true,
+        | FailValueRequirement::NotEquals(_) => true,
         FailValueRequirement::HelmTruthy => kind != JsonValueKind::Null,
-        FailValueRequirement::PrintfStringOperand => {
-            matches!(kind, JsonValueKind::Object | JsonValueKind::String)
-        }
         FailValueRequirement::FieldEquals { .. }
         | FailValueRequirement::FieldPresentNotNull { .. }
         | FailValueRequirement::FieldHelmTruthy { .. }
@@ -118,12 +110,6 @@ fn requirement_admits_kind(
                 JsonValueKind::Array | JsonValueKind::Null | JsonValueKind::Object
             ) || *allow_integer && kind == JsonValueKind::Integer
         }
-        FailValueRequirement::IndexableAt(_) => {
-            matches!(kind, JsonValueKind::Array | JsonValueKind::String)
-        }
-        FailValueRequirement::SplitSegmentsAtLeast {
-            allow_non_string, ..
-        } => kind == JsonValueKind::String || *allow_non_string,
         FailValueRequirement::AnyOf(alternatives) => alternatives.iter().any(|alternative| {
             alternative
                 .iter()
@@ -137,8 +123,7 @@ fn requirement_integer_range_constraint(
 ) -> Option<IntegerRangeConstraint> {
     match requirement {
         FailValueRequirement::SchemaType(required)
-        | FailValueRequirement::SchemaTypeEvenNull(required)
-        | FailValueRequirement::ComparableKind(required) => Some(
+        | FailValueRequirement::SchemaTypeEvenNull(required) => Some(
             if json_value_kinds_for_schema_type(required).contains(&JsonValueKind::Integer) {
                 IntegerRangeConstraint::Any
             } else {
@@ -160,9 +145,9 @@ fn requirement_integer_range_constraint(
         | FailValueRequirement::HasMemberEvenDefaulted(_)
         | FailValueRequirement::MatchesPattern { .. }
         | FailValueRequirement::NotMatchesPattern { .. }
-        | FailValueRequirement::StringLengthBounds { .. }
-        | FailValueRequirement::PrintfStringOperand
-        | FailValueRequirement::IndexableAt(_) => Some(IntegerRangeConstraint::Maximum(0)),
+        | FailValueRequirement::StringLengthBounds { .. } => {
+            Some(IntegerRangeConstraint::Maximum(0))
+        }
         FailValueRequirement::HelmFalsy => Some(IntegerRangeConstraint::Maximum(1)),
         FailValueRequirement::NotEquals(GuardValue::Int(value)) => Some(if *value < 0 {
             IntegerRangeConstraint::Any
@@ -174,8 +159,7 @@ fn requirement_integer_range_constraint(
             GuardValue::String(_) | GuardValue::Bool(_) | GuardValue::Null,
         )
         | FailValueRequirement::FieldHelmFalsy { .. }
-        | FailValueRequirement::FieldNotEquals { .. }
-        | FailValueRequirement::PlainScalarSafe { .. } => Some(IntegerRangeConstraint::Any),
+        | FailValueRequirement::FieldNotEquals { .. } => Some(IntegerRangeConstraint::Any),
         FailValueRequirement::NotSchemaType(rejected) => Some(
             if json_value_kinds_for_schema_type(rejected).contains(&JsonValueKind::Integer) {
                 IntegerRangeConstraint::Maximum(0)
@@ -193,13 +177,6 @@ fn requirement_integer_range_constraint(
             },
         ),
         FailValueRequirement::Iterable { allow_integer } => Some(if *allow_integer {
-            IntegerRangeConstraint::Any
-        } else {
-            IntegerRangeConstraint::Maximum(0)
-        }),
-        FailValueRequirement::SplitSegmentsAtLeast {
-            allow_non_string, ..
-        } => Some(if *allow_non_string {
             IntegerRangeConstraint::Any
         } else {
             IntegerRangeConstraint::Maximum(0)

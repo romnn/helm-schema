@@ -1,7 +1,6 @@
 use super::{
     SchemaNode, Value, ecma_compatible_pattern, empty_schema, guard_value_to_json, is_empty_schema,
-    merge_schema_list, optional_leaf_object_path_schema, plain_scalar_safe_schema,
-    required_object_path_schema, type_schema,
+    merge_schema_list, optional_leaf_object_path_schema, required_object_path_schema, type_schema,
 };
 
 /// Schema for `fail`-branch requirements. Non-member requirements accept
@@ -93,9 +92,9 @@ pub(crate) fn fail_requirement_schema<'a>(
                 allow_integer,
                 ..
             } => {
-                // Nil-tolerant requirements (comparison operands, and
-                // truthy-scoped types whose absent leaf is falsy and escapes
-                // the consumer) hold only when the leaf is present, so the
+                // Nil-tolerant requirements (truthy-scoped types whose absent
+                // leaf is falsy and escapes the consumer) hold only when the
+                // leaf is present, so the
                 // wrapper must not demand the field itself. A
                 // `NotSchemaType` requirement is likewise satisfied by an
                 // absent leaf: the failing test it negates fired only on
@@ -104,8 +103,7 @@ pub(crate) fn fail_requirement_schema<'a>(
                 let tolerant_leaf = implication.requirements.iter().all(|requirement| {
                     matches!(
                         requirement,
-                        helm_schema_core::FailValueRequirement::ComparableKind(_)
-                            | helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(_)
+                        helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(_)
                             | helm_schema_core::FailValueRequirement::NotEquals(_)
                     )
                 }) || implication.requirements.iter().any(|requirement| {
@@ -220,18 +218,6 @@ pub(crate) fn fail_requirement_schema<'a>(
                                 bounds.insert("maxLength".to_string(), serde_json::json!(max));
                             }
                             key_schemas.push(Value::Object(bounds));
-                        }
-                        // Keys are always strings, so the exclusions apply
-                        // directly rather than through the non-string escape.
-                        helm_schema_core::FailValueRequirement::PlainScalarSafe {
-                            token_initial,
-                            ..
-                        } => {
-                            key_schemas.push(serde_json::json!({
-                                "allOf": crate::resolve_policy::plain_scalar_structural_exclusions(
-                                    *token_initial,
-                                )
-                            }));
                         }
                         _ => {}
                     }
@@ -369,13 +355,6 @@ fn fail_value_requirement_schema(
                 };
                 parts.push(serde_json::json!({ "not": { "const": value } }));
             }
-            // Nil compares, so a null member is as valid as an absent one.
-            FailValueRequirement::ComparableKind(schema_type) => {
-                parts.push(crate::schema_model::type_union_schema([
-                    schema_type.as_str(),
-                    "null",
-                ]));
-            }
             FailValueRequirement::NotSchemaType(schema_type) => {
                 parts.push(serde_json::json!({ "not": type_schema(schema_type) }));
             }
@@ -437,47 +416,6 @@ fn fail_value_requirement_schema(
             }
             FailValueRequirement::Iterable { allow_integer } => {
                 parts.push(crate::runtime_iterable_schema(*allow_integer));
-            }
-            FailValueRequirement::IndexableAt(index) => {
-                parts.push(serde_json::json!({
-                    "anyOf": [
-                        { "type": "array", "minItems": index + 1 },
-                        { "type": "string" },
-                    ]
-                }));
-            }
-            FailValueRequirement::SplitSegmentsAtLeast {
-                separator,
-                segments,
-                allow_non_string,
-            } => {
-                let occurrences = segments.saturating_sub(1);
-                let pattern = format!(
-                    "^(?:[\\s\\S]*{}){{{occurrences}}}",
-                    helm_schema_core::escape_regex_literal(separator)
-                );
-                let string = serde_json::json!({ "type": "string", "pattern": pattern });
-                if *allow_non_string {
-                    parts.push(serde_json::json!({
-                        "anyOf": [string, { "not": { "type": "string" } }]
-                    }));
-                } else {
-                    parts.push(string);
-                }
-            }
-            FailValueRequirement::PrintfStringOperand => {
-                parts.push(serde_json::json!({
-                    "anyOf": [
-                        crate::resolve_policy::printf_string_formattable_string_schema(),
-                        crate::resolve_policy::printf_string_formattable_mapping_schema(),
-                    ]
-                }));
-            }
-            FailValueRequirement::PlainScalarSafe {
-                token_initial,
-                templated,
-            } => {
-                parts.push(plain_scalar_safe_schema(*token_initial, *templated));
             }
             // Presence rides the equality (Go's `eq` aborts on nil), so
             // every wrapping level requires its segment and the host must

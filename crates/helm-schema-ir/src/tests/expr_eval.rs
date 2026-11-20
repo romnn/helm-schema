@@ -8,7 +8,7 @@ use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use crate::analysis_db::IrAnalysisDb;
-use crate::observed_facts::{CaptureKind, FailCapture, HintGrade, StringRequirementRoute};
+use crate::observed_facts::{CaptureKind, FailCapture};
 use crate::value::ConsumptionDomain;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -151,30 +151,6 @@ impl Observation {
             .collect()
     }
 
-    fn string_routes(&self) -> BTreeSet<(ValuesPath, StringRequirementRoute, Conjunction)> {
-        self.captures()
-            .into_iter()
-            .filter_map(|capture| match capture.kind {
-                CaptureKind::StringRequirement {
-                    path,
-                    route,
-                    selection,
-                } => Some((path, route, selection)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    fn string_conditions(&self) -> BTreeSet<(ValuesPath, Conjunction)> {
-        self.captures()
-            .into_iter()
-            .filter_map(|capture| match capture.kind {
-                CaptureKind::StringRequirement { path, .. } => Some((path, capture.conjunction)),
-                _ => None,
-            })
-            .collect()
-    }
-
     fn typed_conditions(
         &self,
         schema_type: &str,
@@ -206,10 +182,7 @@ impl Observation {
     }
 
     fn declared_types(&self, path: &str) -> Option<&BTreeSet<String>> {
-        self.facts
-            .type_hints
-            .get(&HintGrade::DECLARED)?
-            .get(&ValuesPath::parse(path))
+        self.facts.type_hints.get(&ValuesPath::parse(path))
     }
 
     fn consumed_types(&self) -> BTreeSet<ConsumedType> {
@@ -250,6 +223,60 @@ impl Observation {
                 if schema_type == "string")
             })
             .collect()
+    }
+
+    /// Whether the recorded string consumptions of `paths` reject `document`: one of them
+    /// executes there while its raw input is not a string, or is missing where the consumer
+    /// needs it present.
+    fn string_consumptions_reject(
+        &self,
+        paths: &[&str],
+        document: &serde_json::Value,
+    ) -> eyre::Result<bool> {
+        for consumption in self.string_consumptions() {
+            if !paths
+                .iter()
+                .any(|path| consumption.path == ValuesPath::parse(path))
+                || !crate::tests::guard_oracle::predicate_holds(&consumption.condition, document)?
+            {
+                continue;
+            }
+            let value = crate::tests::guard_oracle::value_at(document, &consumption.path)?;
+            let rejects = match (&consumption.requirement, value) {
+                (_, None) => consumption.requires_presence,
+                (helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(_), value) => {
+                    crate::tests::guard_oracle::truthy(value)
+                        && !value.is_some_and(serde_json::Value::is_string)
+                }
+                (
+                    helm_schema_core::FailValueRequirement::SchemaType(_),
+                    Some(serde_json::Value::Null),
+                ) => false,
+                (_, Some(value)) => !value.is_string(),
+            };
+            if rejects {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
+    /// The recorded string consumptions of `paths` decide each document as Helm v4.2.3's
+    /// `helm template` does: `true` where it aborts.
+    fn assert_string_consumption_verdicts(
+        &self,
+        paths: &[&str],
+        verdicts: &[(serde_json::Value, bool)],
+    ) -> eyre::Result<()> {
+        for (document, aborts) in verdicts {
+            let rejects = self.string_consumptions_reject(paths, document)?;
+            eyre::ensure!(
+                rejects == *aborts,
+                "Helm aborts={aborts} on {document}, the string consumptions of {paths:?} reject={rejects}: {:#?}",
+                self.string_consumptions()
+            );
+        }
+        Ok(())
     }
 
     fn has_boolean_contract(&self, path: &str) -> bool {
@@ -442,17 +469,32 @@ fn unknown_decision_keeps_both_leaves_and_proves_no_strict_operand() {
     sim_assert_eq!(have: strict.kinds(), want: BTreeSet::new());
 }
 
+/// `b64enc $value` consumes whichever binding leaf the decision selected: `a` while
+/// `useB` is falsy, `b` while it is truthy (Helm v4.2.3 verdicts). The schema-level twin is
+/// helm-schema-gen's `conditional_local_string_consumer_uses_only_the_selected_binding_leaf`.
 #[test]
-#[ignore = "R3b regression vs main, package A (consumed/comparison provenance): strict string consumer keeps each binding leaf under its decision; tracked in plan/value-algebra-r3b.md follow-ups"]
-fn strict_string_consumer_keeps_each_binding_leaf_under_its_decision() {
+fn strict_string_consumer_keeps_each_binding_leaf_under_its_decision() -> eyre::Result<()> {
     let result = observe(
         "{{ $value := .Values.a }}{{ if .Values.useB }}{{ $value = .Values.b }}{{ end }}",
         "b64enc $value",
     );
-    sim_assert_eq!(have: result.string_conditions(), want: BTreeSet::from([
-        (ValuesPath::parse("a"), vec![truthy("useB").negated()].into()),
-        (ValuesPath::parse("b"), vec![truthy("useB")].into()),
-    ]));
+    result.assert_string_consumption_verdicts(
+        &["a", "b"],
+        &[
+            (serde_json::json!({ "a": "x" }), false),
+            (serde_json::json!({}), true),
+            (serde_json::json!({ "a": null }), true),
+            (serde_json::json!({ "a": 1 }), true),
+            (serde_json::json!({ "a": { "k": 1 } }), true),
+            (serde_json::json!({ "a": "x", "b": { "k": 1 } }), false),
+            (
+                serde_json::json!({ "useB": true, "b": "y", "a": { "k": 1 } }),
+                false,
+            ),
+            (serde_json::json!({ "useB": true, "a": "x" }), true),
+            (serde_json::json!({ "useB": true, "b": 1, "a": "x" }), true),
+        ],
+    )
 }
 
 #[test]
@@ -1176,9 +1218,10 @@ fn formatter_default_chain_uses_rendered_truthiness_for_the_final_fallback() -> 
     Ok(())
 }
 
+/// A truthy `secret` reaches `b64enc` and must be a string; a falsy or absent one takes the
+/// helper and generated fallbacks (Helm v4.2.3 verdicts).
 #[test]
-#[ignore = "R3b regression vs main, package A (consumed/comparison provenance): generated default chain keeps truthy primary string consumption; tracked in plan/value-algebra-r3b.md follow-ups"]
-fn generated_default_chain_keeps_truthy_primary_string_consumption() {
+fn generated_default_chain_keeps_truthy_primary_string_consumption() -> eyre::Result<()> {
     let mut defines = DefineIndex::new();
     defines.add_file_source("helpers.tpl", r#"{{ define "existing" }}{{ end }}"#);
     let db = IrAnalysisDb::new(&defines);
@@ -1187,21 +1230,47 @@ fn generated_default_chain_keeps_truthy_primary_string_consumption() {
         r#".Values.secret | default (include "existing" .) | default (randAlphaNum 16) | b64enc"#,
         &db,
     );
-    assert!(result.string_routes().contains(&(
-        ValuesPath::parse("secret"),
-        StringRequirementRoute::Selected,
-        vec![truthy("secret")].into()
-    )));
+    result.assert_string_consumption_verdicts(
+        &["secret"],
+        &[
+            (serde_json::json!({ "secret": "s" }), false),
+            (serde_json::json!({}), false),
+            (serde_json::json!({ "secret": null }), false),
+            (serde_json::json!({ "secret": false }), false),
+            (serde_json::json!({ "secret": 0 }), false),
+            (serde_json::json!({ "secret": "" }), false),
+            (serde_json::json!({ "secret": {} }), false),
+            (serde_json::json!({ "secret": true }), true),
+            (serde_json::json!({ "secret": 1 }), true),
+            (serde_json::json!({ "secret": { "k": 1 } }), true),
+            (serde_json::json!({ "secret": [1] }), true),
+        ],
+    )
 }
 
+/// `replace`, `trunc` and `trimSuffix` take the truthy `image.tag` as string text; a falsy
+/// tag selects the literal default (Helm v4.2.3 verdicts).
 #[test]
-#[ignore = "R3b regression vs main, package A (consumed/comparison provenance): lexical transforms preserve selected string consumption; tracked in plan/value-algebra-r3b.md follow-ups"]
-fn lexical_transforms_preserve_selected_string_consumption() {
+fn lexical_transforms_preserve_selected_string_consumption() -> eyre::Result<()> {
     let result = observe(
         "",
         r#".Values.image.tag | default "1.13.1" | replace ":" "-" | replace "@" "_" | trunc 63 | trimSuffix "-""#,
     );
-    sim_assert_eq!(have: result.string_routes(), want: BTreeSet::from([(ValuesPath::parse("image.tag"), StringRequirementRoute::Selected, vec![truthy("image.tag")].into())]));
+    let tag = |tag: serde_json::Value| serde_json::json!({ "image": { "tag": tag } });
+    result.assert_string_consumption_verdicts(
+        &["image.tag"],
+        &[
+            (tag(serde_json::json!("v1:2@x")), false),
+            (serde_json::json!({ "image": {} }), false),
+            (tag(serde_json::Value::Null), false),
+            (tag(serde_json::json!(false)), false),
+            (tag(serde_json::json!(0)), false),
+            (tag(serde_json::json!("")), false),
+            (tag(serde_json::json!(true)), true),
+            (tag(serde_json::json!(1)), true),
+            (tag(serde_json::json!({ "k": 1 })), true),
+        ],
+    )
 }
 
 #[test]
@@ -1305,15 +1374,31 @@ fn short_circuit_calls_return_guarded_operand_values() {
     );
 }
 
+/// `or` skips `b64enc` while `ready` is truthy; otherwise `payload` must be present and a
+/// string (Helm v4.2.3 verdicts). The schema-level twin, with the same missing and null
+/// controls, is helm-schema-gen's `short_circuit_value_selection_scopes_downstream_contracts`.
 #[test]
-#[ignore = "R3b regression vs main, package A (consumed/comparison provenance): short circuit calls scope later runtime failures to execution; tracked in plan/value-algebra-r3b.md follow-ups"]
-fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
+fn short_circuit_calls_scope_later_runtime_failures_to_execution() -> eyre::Result<()> {
     let result = observe("", "or .Values.ready (b64enc .Values.payload)");
-    let outer = BTreeSet::from([truthy("ready").negated()]);
-    sim_assert_eq!(have: result.requirements(), want: BTreeSet::from([
-        (CaptureKind::StringRequirement { path: ValuesPath::parse("payload"), route: StringRequirementRoute::Direct, selection: Vec::new().into() }, outer.clone()),
-        (CaptureKind::AbsenceAborts { path: ValuesPath::parse("payload") }, outer),
-    ]));
+    result.assert_string_consumption_verdicts(
+        &["payload"],
+        &[
+            (serde_json::json!({ "ready": true }), false),
+            (serde_json::json!({ "ready": true, "payload": null }), false),
+            (
+                serde_json::json!({ "ready": true, "payload": { "k": 1 } }),
+                false,
+            ),
+            (serde_json::json!({ "payload": "p" }), false),
+            (serde_json::json!({}), true),
+            (serde_json::json!({ "ready": false, "payload": null }), true),
+            (serde_json::json!({ "ready": false, "payload": 1 }), true),
+            (
+                serde_json::json!({ "ready": false, "payload": { "k": 1 } }),
+                true,
+            ),
+        ],
+    )
 }
 
 #[test]
@@ -1439,17 +1524,39 @@ fn yaml_roundtrip_preserves_values_root_inside_constructed_container() {
     );
 }
 
+/// Standalone `fromJson` consumes `payload` as text: any string renders, even one that does not
+/// decode, while a missing, null or non-string payload aborts (Helm v4.2.3 verdicts). The
+/// decoded map and its contents constrain neither the raw input's shape nor its literals.
 #[test]
-#[ignore = "R3b regression vs main, package C (parser, collection and validation transfers): from json without matching serialization only contracts the input string; tracked in plan/value-algebra-r3b.md follow-ups"]
-fn from_json_without_matching_serialization_only_contracts_the_input_string() {
+fn from_json_without_matching_serialization_only_contracts_the_input_string() -> eyre::Result<()> {
     let result = observe("", ".Values.payload | fromJson");
     assert!(result.literals().is_empty());
+    let payload = ValuesPath::parse("payload");
+    let strings = result.string_consumptions();
     assert!(
-        result
-            .string_routes()
-            .iter()
-            .any(|(path, _, _)| path == &ValuesPath::parse("payload"))
+        result.consumed_types().iter().all(|consumption| {
+            !consumption.path.is_descendant_of(&payload)
+                && (consumption.path != payload || strings.contains(consumption))
+        }),
+        "the decoded map must not shape the raw input: {:#?}",
+        result.consumed_types()
     );
+    result.assert_string_consumption_verdicts(
+        &["payload"],
+        &[
+            (
+                serde_json::json!({ "payload": "{\"a\": {\"b\": [1, 2]}}" }),
+                false,
+            ),
+            (serde_json::json!({ "payload": "not json" }), false),
+            (serde_json::json!({ "payload": "[1, 2]" }), false),
+            (serde_json::json!({ "payload": "" }), false),
+            (serde_json::json!({}), true),
+            (serde_json::json!({ "payload": null }), true),
+            (serde_json::json!({ "payload": 1 }), true),
+            (serde_json::json!({ "payload": { "k": 1 } }), true),
+        ],
+    )
 }
 
 #[test]

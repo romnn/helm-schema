@@ -3260,9 +3260,7 @@ mod value_transfer_laws {
 
     use crate::analysis_db::IrAnalysisDb;
     use crate::value::eval::Executor;
-    use crate::value::{
-        ArgumentForm, Callee, CompletionInput, Coverage, Flow, Invocation, Operand, State, Value,
-    };
+    use crate::value::{ArgumentForm, Callee, Coverage, Flow, Invocation, Operand, State, Value};
 
     #[test]
     fn correlated_scalar_arguments_transfer_without_forking_the_heap() -> eyre::Result<()> {
@@ -3278,8 +3276,8 @@ mod value_transfer_laws {
         ];
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let exits = Executor { db: &db }
-            .complete(CompletionInput::Invocation {
-                invocation: Invocation {
+            .complete(
+                Invocation {
                     callee: Callee::Function("print".to_owned()),
                     operands: values
                         .into_iter()
@@ -3292,7 +3290,7 @@ mod value_transfer_laws {
                     site: 7,
                 },
                 state,
-            })
+            )
             .into_exits();
         sim_assert_eq!(have: exits.len(), want: 1);
         let exit = exits.first().ok_or_eyre("missing scalar transfer")?;
@@ -3381,8 +3379,8 @@ mod value_transfer_laws {
         let value = values.pop().ok_or_eyre("missing dispatch alternatives")?;
         let db = IrAnalysisDb::new(&DefineIndex::new());
         let exits = Executor { db: &db }
-            .complete(CompletionInput::Invocation {
-                invocation: Invocation {
+            .complete(
+                Invocation {
                     callee: Callee::Function("toYaml".to_owned()),
                     operands: vec![Operand {
                         value,
@@ -3392,7 +3390,7 @@ mod value_transfer_laws {
                     site: 9,
                 },
                 state,
-            })
+            )
             .into_exits();
         sim_assert_eq!(have: exits.len(), want: 1);
         let exit = exits

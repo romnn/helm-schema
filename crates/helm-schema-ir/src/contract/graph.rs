@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use crate::contract::FinalizedContract;
 use crate::contract_normalization::normalize_contract_uses;
 use crate::observed_facts::{
-    ActivatedValuesDefaultSource, ActivatedValuesRootOverlay, HintGrade, ObservedFacts,
+    ActivatedValuesDefaultSource, ActivatedValuesRootOverlay, ObservedFacts,
 };
 use crate::{ContractUse, Guard, ValueKind, YamlPath};
 
@@ -16,12 +16,6 @@ pub struct ContractIr {
     uses: Vec<ContractUse>,
     dependency_uses: Vec<ContractUse>,
     observed_facts: ObservedFacts,
-    values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
-    /// Values paths whose nodes must NOT gain a wrapper alternative: a
-    /// strict string consumer reads them BEFORE the engine's values-root
-    /// rewrite, so a wrapper map there aborts rendering (nats'
-    /// `nameOverride` through `fullname | trunc`).
-    values_program_wrapper_exclusions: BTreeSet<helm_schema_core::ValuesPath>,
     dependency_values_roots: BTreeSet<DependencyValuesRoot>,
 }
 
@@ -100,10 +94,6 @@ impl ContractIr {
         self.dependency_values_roots
             .append(&mut other.dependency_values_roots);
         self.observed_facts.absorb(&other.observed_facts);
-        self.values_program_wrappers
-            .append(&mut other.values_program_wrappers);
-        self.values_program_wrapper_exclusions
-            .append(&mut other.values_program_wrapper_exclusions);
     }
 
     /// Record that rendering FAILS whenever `condition` holds — an
@@ -268,8 +258,6 @@ impl ContractIr {
             uses,
             dependency_uses,
             observed_facts,
-            values_program_wrappers,
-            values_program_wrapper_exclusions,
             dependency_values_roots,
         } = self;
         for contract_use in uses.iter_mut().chain(dependency_uses) {
@@ -297,18 +285,6 @@ impl ContractIr {
             })
             .collect();
         observed_facts.map_value_paths(&mut *map, shared);
-        *values_program_wrappers = std::mem::take(values_program_wrappers)
-            .into_iter()
-            .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
-                scope_path: map(wrapper.scope_path),
-                key: wrapper.key,
-                spread: wrapper.spread,
-            })
-            .collect();
-        *values_program_wrapper_exclusions = std::mem::take(values_program_wrapper_exclusions)
-            .into_iter()
-            .map(&mut *map)
-            .collect();
     }
 
     /// Projects dependency `global.*` contracts through Helm's parent-first
@@ -368,82 +344,23 @@ impl ContractIr {
         if path.trim().is_empty() || schema_type.trim().is_empty() {
             return;
         }
-        self.observed_facts.insert_type_hint(
-            HintGrade::DECLARED,
-            helm_schema_core::ValuesPath::parse(&path),
-            &schema_type,
-        );
+        self.observed_facts
+            .insert_type_hint(helm_schema_core::ValuesPath::parse(&path), &schema_type);
     }
 
     pub(crate) fn absorb_observed_facts(&mut self, facts: &ObservedFacts) {
         self.observed_facts.absorb(facts);
     }
 
-    pub(crate) fn extend_values_program_wrappers(
-        &mut self,
-        wrappers: impl IntoIterator<Item = helm_schema_core::ValuesProgramWrapper>,
-    ) {
-        self.values_program_wrappers.extend(wrappers);
-    }
-
-    pub(crate) fn extend_values_program_wrapper_exclusions(
-        &mut self,
-        paths: impl IntoIterator<Item = helm_schema_core::ValuesPath>,
-    ) {
-        self.values_program_wrapper_exclusions.extend(paths);
-    }
-
-    /// Drop evidence recorded AT a program-wrapper sentinel key: within a
-    /// wrapper-engine chart a `$tplYaml`-keyed member is the engine's own
-    /// dispatch convention — probed by the recursive walker, replaced
-    /// before ordinary consumers read the tree — never an ordinary chart
-    /// value, so reads and fail predicates over such paths must not mint
-    /// values properties. The wrapper alternatives model those nodes.
-    pub(crate) fn scrub_program_wrapper_sentinel_evidence(&mut self) {
-        let keys: std::collections::BTreeSet<String> = self
-            .values_program_wrappers
-            .iter()
-            .map(|wrapper| wrapper.key.clone())
-            .collect();
-        if keys.is_empty() {
-            return;
-        }
-        let touches = |path: &helm_schema_core::ValuesPath| {
-            path.segments()
-                .filter_map(helm_schema_core::Segment::literal)
-                .any(|segment| keys.contains(segment))
-        };
-        self.uses
-            .retain(|contract_use| !touches(&contract_use.source_expr));
-        self.dependency_uses
-            .retain(|contract_use| !touches(&contract_use.source_expr));
-        self.observed_facts.captures.retain(|capture| {
-            let mut paths: Vec<helm_schema_core::ValuesPath> = capture
-                .conjunction
-                .iter()
-                .flat_map(helm_schema_core::Predicate::value_paths)
-                .collect();
-            let mut kind = capture.kind.clone();
-            kind.map_value_paths(&mut |path| {
-                paths.push(path.clone());
-                path
-            });
-            !paths.iter().any(touches)
-        });
-    }
-
     /// Finalize the contract once and derive downstream artifacts from that
     /// one normalized contract representation.
     #[must_use]
     #[tracing::instrument(skip_all)]
-    pub fn finalize(mut self) -> FinalizedContract {
-        self.scrub_program_wrapper_sentinel_evidence();
+    pub fn finalize(self) -> FinalizedContract {
         let Self {
             uses,
             mut dependency_uses,
             observed_facts,
-            values_program_wrappers,
-            values_program_wrapper_exclusions,
             dependency_values_roots,
         } = self;
         for root in &dependency_values_roots {
@@ -455,14 +372,11 @@ impl ContractIr {
                 None,
             ));
         }
-        let fail_conditions = observed_facts.captures.iter().cloned().collect::<Vec<_>>();
-        let uses = normalize_contract_uses(uses, dependency_uses, &fail_conditions);
+        let uses = normalize_contract_uses(uses, dependency_uses);
         let predicate_memo = helm_schema_core::PredicateMemo::new();
         FinalizedContract::new(
             uses,
             &observed_facts,
-            values_program_wrappers,
-            values_program_wrapper_exclusions,
             &dependency_values_roots,
             &predicate_memo,
         )
@@ -637,29 +551,7 @@ fn project_global_fail_captures(
             .map(helm_schema_core::Segment::encode_component)
             .collect::<Vec<_>>();
         if relative.is_empty() {
-            if matches!(
-                dependency_capture.kind,
-                crate::observed_facts::CaptureKind::RangeInput { .. }
-            ) {
-                for global_source in global_sources {
-                    let mut selected_capture = dependency_capture.clone();
-                    selected_capture.conjunction = selected_capture
-                        .conjunction
-                        .into_iter()
-                        .map(|predicate| {
-                            predicate.map_value_paths_shared(&mut |path| {
-                                replace_value_path_prefix(path, dependency_global, global_source)
-                            })
-                        })
-                        .collect();
-                    selected_capture.kind.map_value_paths(&mut |path| {
-                        replace_value_path_prefix(path, dependency_global, global_source)
-                    });
-                    projected.insert(selected_capture);
-                }
-            } else {
-                projected.insert(dependency_capture);
-            }
+            projected.insert(dependency_capture);
             continue;
         }
         let Some((selection_relative, key)) = global_selection_path(&relative) else {

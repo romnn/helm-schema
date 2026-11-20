@@ -368,9 +368,9 @@ fn completion_schemas(
         "shared-definitions",
         finish_materialized(materialized.clone()),
     ));
-    let materialized = plan.apply_program_wrappers(materialized);
+    let materialized = LoweredEmissionPlan::insert_condition_definitions(materialized);
     schemas.push((
-        "program-wrappers",
+        "condition-definitions",
         finish_materialized(materialized.clone()),
     ));
     let materialized = plan.apply_values_descriptions(materialized);
