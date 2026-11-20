@@ -343,6 +343,51 @@ fn an_override_created_table_decides_an_absence_guard() -> eyre::Result<()> {
     Ok(())
 }
 
+/// Root `kid: {webhook: {flag: true}}` declares the host and the dependency supplies
+/// `webhook.enableServiceLinks`; the clause "abort when `kid.webhook` is absent" (a nil
+/// dereference) anchors at the dependency root `kid`. An anchored clause is judged only on a
+/// supplied `kid` table, and lint coalescing deletes an override's null `kid`, so no lint
+/// document fails it: `helm lint --with-subcharts` passes the defaults, while `--set
+/// kid.webhook=null` aborts `helm template` (Helm 4.2.3, `transfer/abortfa-receipts/d2-minimal`).
+#[test]
+fn a_clause_anchored_at_its_dependency_root_needs_no_root_presence() -> eyre::Result<()> {
+    let coalesced = json!({ "kid": { "webhook": { "enableServiceLinks": false, "flag": true } } });
+    let (document, relaxed) = judge(
+        &json!({ "kid": { "webhook": { "flag": true } } }),
+        &coalesced,
+        &["kid"],
+        &[ConditionalGuard::Absent {
+            path: ValuesPath::parse("kid.webhook"),
+        }],
+        json!(false),
+        ConditionPolarity::Narrow,
+        &Dependencies {
+            roots: &BTreeSet::from([vec!["kid".to_string()]]),
+            refill: &coalesced,
+        },
+    )?;
+    let document = document.ok_or_eyre("the clause was withdrawn")?;
+    let validator = jsonschema::validator_for(&document)?;
+    assert!(
+        validator.is_valid(&json!({ "kid": { "webhook": { "flag": true } } })),
+        "`helm lint` passes the root values"
+    );
+    assert!(
+        validator.is_valid(&json!({})),
+        "an override's null `kid` is deleted"
+    );
+    assert!(
+        validator.is_valid(&coalesced),
+        "`helm template` renders the defaults"
+    );
+    assert!(
+        !validator.is_valid(&json!({ "kid": { "global": {} } })),
+        "`--set kid.webhook=null` aborts"
+    );
+    sim_assert_eq!(have: relaxed, want: vec![]);
+    Ok(())
+}
+
 /// An absence test on the deciding path contradicts its presence, so the
 /// clause is withdrawn rather than conditioned into one that never fires.
 #[test]

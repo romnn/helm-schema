@@ -178,7 +178,7 @@ impl<'a> UncoalescedRootGate<'a> {
             &mut coalesced_instances,
         );
         let mut deciding_paths = if then_value == Value::Bool(false) {
-            self.dependency_boundary_paths(guards, encoding.absence)
+            self.dependency_boundary_paths(&anchor, guards, encoding.absence)
         } else {
             BTreeSet::new()
         };
@@ -252,8 +252,15 @@ impl<'a> UncoalescedRootGate<'a> {
 
     /// The inputs whose absence can select a dependency refill or a default
     /// omitted from raw lint values, independently of the defaults' liveness.
+    ///
+    /// A dependency root at or above `anchor` is none of them. The anchored
+    /// clause is judged only on a supplied anchor table. Where the root values
+    /// declare that table, lint coalescing deletes an override's null for it
+    /// (Helm v4.2.3 `pkg/chart/common/util/coalesce.go:313-358`); where they do
+    /// not, the members only the dependency supplies stay deciding.
     fn dependency_boundary_paths(
         &self,
+        anchor: &ValuesPath,
         guards: &[ConditionalGuard],
         absence: AbsenceDefaults<'_>,
     ) -> BTreeSet<ValuesPath> {
@@ -275,7 +282,9 @@ impl<'a> UncoalescedRootGate<'a> {
                 }
                 // A supplied table is observed directly; a missing or null
                 // dependency root can be recreated before template execution.
-                boundaries.insert(root_path);
+                if anchor != &root_path && !anchor.is_descendant_of(&root_path) {
+                    boundaries.insert(root_path);
+                }
                 if presence_at(raw, &segments) != Presence::Value
                     && presence_at(self.coalesced_defaults, &segments) == Presence::Value
                 {

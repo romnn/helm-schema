@@ -634,6 +634,112 @@ fn expected_webhook_dependency_schema() -> eyre::Result<serde_json::Value> {
     Ok(expected)
 }
 
+/// The root declares the dependency's member host `kid.webhook`; only the dependency supplies
+/// the member the template dereferences. `--set kid.webhook=null` deletes the host and aborts
+/// with a nil pointer, while `helm lint --with-subcharts` passes the defaults and `kid: null`
+/// renders, because Helm recreates the dependency root (Helm 4.2.3,
+/// `transfer/abortfa-receipts/d2-minimal`). The clause is anchored at the dependency root,
+/// where it is judged only on a supplied table, so it needs no root-presence condition.
+#[test]
+fn a_root_declared_dependency_host_keeps_its_nil_host_abort() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    write_lint_root_chart(
+        &chart_dir,
+        indoc! {"
+            kid:
+              webhook:
+                flag: true
+        "},
+        indoc! {"
+            webhook:
+              flag: true
+              enableServiceLinks: false
+        "},
+        indoc! {"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: kid
+            data:
+              a: {{ .Values.webhook.enableServiceLinks | quote }}
+        "},
+    )?;
+    let (schema, withdrawals) = generate(chart_dir)?;
+    sim_assert_eq!(
+        have: schema.clone(),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "global": {},
+                "kid": {
+                    "additionalProperties": {},
+                    "allOf": [{"if": missing_webhook_condition(), "then": false}],
+                    "properties": {
+                        "global": {},
+                        "webhook": {
+                            "additionalProperties": {},
+                            "properties": {
+                                "enableServiceLinks": {},
+                                "flag": {"type": "boolean"}
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        })
+    );
+    // Only the root companion for a missing `kid` is withdrawn: Helm recreates a missing or
+    // null dependency root from its defaults, so `kid: null` renders.
+    sim_assert_eq!(have: withdrawals, want: vec![LintWithdrawal {
+        anchor: ValuesPath::parse(""),
+        document: LintDocument::Floor,
+        deciding_paths: vec![ValuesPath::parse("kid")],
+        outcome: LintOutcome::Withdrawn,
+    }]);
+    let validator = jsonschema::validator_for(&schema)?;
+    for (values, helm_accepts) in [
+        // `helm lint --with-subcharts` validates the root values as written.
+        (
+            serde_json::json!({"kid": {"webhook": {"flag": true}}}),
+            true,
+        ),
+        // The coalesced defaults, also what `kid: null` renders with.
+        (
+            serde_json::json!({"kid": {"global": {}, "webhook": {"enableServiceLinks": false, "flag": true}}}),
+            true,
+        ),
+        (
+            serde_json::json!({"kid": {"global": {}, "webhook": {}}}),
+            true,
+        ),
+        (
+            serde_json::json!({"kid": {"global": {}, "webhook": {"enableServiceLinks": "x", "flag": true}}}),
+            true,
+        ),
+        // `--set kid.webhook=null`: nil pointer evaluating interface {}.enableServiceLinks.
+        (serde_json::json!({"kid": {"global": {}}}), false),
+        (
+            serde_json::json!({"kid": {"global": {}, "webhook": "x"}}),
+            false,
+        ),
+        (
+            serde_json::json!({"kid": {"global": {}, "webhook": [1]}}),
+            false,
+        ),
+        (
+            serde_json::json!({"kid": {"global": {}, "webhook": true}}),
+            false,
+        ),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&values), want: helm_accepts, "{values}");
+    }
+    Ok(())
+}
+
 /// Independent main and webhook defaults must each survive a partial umbrella override.
 #[test]
 fn webhook_defaults_keep_independent_lint_presence_guards() -> eyre::Result<()> {

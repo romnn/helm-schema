@@ -455,6 +455,36 @@ fn ownership(skeleton: Skeleton, first_only: bool) -> Result<YamlOwnership, Layo
     })
 }
 
+/// Whether Helm refuses one split manifest chunk of exactly these bytes.
+///
+/// Helm 4.2.3 decodes each chunk `SplitManifests` yields into `SimpleHead` through
+/// sigs.k8s.io/yaml and the pinned go-yaml reader, and any failure aborts the render with
+/// `YAML parse error on <template>` (`pkg/release/v1/util/manifest_sorter.go:150-153`).
+#[must_use]
+pub fn manifest_chunk_rejected(chunk: &str) -> bool {
+    helm_schema_goyaml::unmarshal_json(chunk.as_bytes(), helm_schema_goyaml::Target::Head).is_err()
+}
+
+/// The pinned manifest-head rejection verdict, or `None` when distinct YAML keys can become
+/// the same JSON key and Go's map iteration order may choose a different head value.
+#[must_use]
+pub fn manifest_chunk_rejection(chunk: &str) -> Option<bool> {
+    let Ok(value) = helm_schema_goyaml::unmarshal(chunk.as_bytes()) else {
+        return Some(true);
+    };
+    if helm_schema_goyaml::has_json_key_collisions(&value) {
+        return None;
+    }
+    Some(helm_schema_goyaml::to_json(&value, helm_schema_goyaml::Target::Head).is_err())
+}
+
+/// The value sigs.k8s.io/yaml decodes from exactly these bytes, or `None` when the pinned
+/// reader refuses them or the value has no JSON form.
+#[must_use]
+pub fn decoded_yaml_value(text: &str) -> Option<serde_json::Value> {
+    helm_schema_goyaml::unmarshal_json(text.as_bytes(), helm_schema_goyaml::Target::Generic).ok()
+}
+
 /// The tokens and events of the first document of `text`, as the pinned reader delivers them.
 fn read_first_document(text: &str) -> Result<(Vec<Token>, Vec<Event>), LayoutUncertainty> {
     let mut reader = Reader::default();

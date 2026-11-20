@@ -1016,8 +1016,30 @@ struct LayoutVariant {
 
 struct CompletedLayout {
     context: LayoutContext,
-    documents: Option<Vec<DocumentLayout>>,
+    documents: Option<ManifestChunks>,
     removed: Vec<Span>,
+}
+
+/// The manifest chunks Helm splits one skeleton into.
+#[derive(Clone, Debug, Default)]
+struct ManifestChunks {
+    /// The chunks whose first document the pinned reader owns.
+    owned: Vec<DocumentLayout>,
+    /// The scopes of exact chunks Helm refuses to decode.
+    rejected: Vec<Span>,
+}
+
+impl ManifestChunks {
+    /// Whether a refused exact chunk aborts the render wherever its layout is selected.
+    /// Chunk boundaries also depend on earlier rendered bytes, so merged local alternatives
+    /// preceding a chunk leave its rejection undecided.
+    fn refusal(&self, selections: &[SelectedSpan], removed: &[Span]) -> Predicate {
+        decided(self.rejected.iter().any(|scope| {
+            !selections.iter().any(|selection| {
+                selection.local && (!removed.is_empty() || selection.range.start < scope.end)
+            })
+        }))
+    }
 }
 
 struct CompletionCandidate {
@@ -1661,7 +1683,11 @@ impl LayoutBuilder<'_> {
             text.push_str(&skeleton.text[start..]);
             skeleton.text = text;
             *removed = marker_ranges(&skeleton.text);
-            return self.syntax.documents(skeleton, removed).unwrap_or_default();
+            return self
+                .syntax
+                .documents(skeleton, removed)
+                .map(|chunks| chunks.owned)
+                .unwrap_or_default();
         }
         Vec::new()
     }
@@ -1705,7 +1731,9 @@ impl LayoutBuilder<'_> {
             seen.push(variant);
             let removed = marker_ranges(&context.skeleton.text);
             let documents = self.syntax.documents(&context.skeleton, &removed);
-            let owned = documents.as_deref().unwrap_or_default();
+            let owned = documents
+                .as_ref()
+                .map_or(&[][..], |chunks| chunks.owned.as_slice());
             let candidates = completion_candidates(&context, owned);
             if candidates.is_empty() {
                 let unowned = context.skeleton.segments.iter().any(|segment| {
@@ -1840,7 +1868,7 @@ impl LayoutBuilder<'_> {
             let removed = marker_ranges(&context.skeleton.text);
             self.seal_layout(CompletedLayout {
                 context,
-                documents: Some(Vec::new()),
+                documents: Some(ManifestChunks::default()),
                 removed,
             });
             return;
@@ -1868,8 +1896,8 @@ impl LayoutBuilder<'_> {
         } = context;
         let empty = skeleton.text.trim().is_empty();
         self.markers.record(&skeleton, &terms, &removed);
-        let mut owned_documents = match self.output {
-            FileOutput::Text => Vec::new(),
+        let chunks = match self.output {
+            FileOutput::Text => ManifestChunks::default(),
             FileOutput::Manifest => {
                 let Some(documents) = documents else {
                     self.unknown.push(condition);
@@ -1878,13 +1906,17 @@ impl LayoutBuilder<'_> {
                 documents
             }
         };
+        let mut failures = vec![chunks.refusal(&selections, &removed)];
+        if matches!(self.output, FileOutput::Manifest) {
+            failures.push(constant_arm_failure(&skeleton, &terms, &selections));
+        }
+        let mut owned_documents = chunks.owned;
         let recovered = owned_documents.is_empty();
         // Recover multiline frozen text for unindented quoted continuations Helm accepts.
         // Its hole retains the complete lexical transfer, including every structural byte.
         if matches!(self.output, FileOutput::Manifest) && !empty && owned_documents.is_empty() {
             owned_documents = self.recover_multiline(&mut skeleton, &terms, &mut removed);
         }
-        let mut failures = Vec::new();
         let mut documents = Vec::new();
         for mut document in owned_documents {
             document.condition = self.memo.normalize(Predicate::all(
@@ -2136,11 +2168,7 @@ impl LayoutContext {
         if start.saturating_add(expanded) > 64 * 1024 {
             return false;
         }
-        let text = if node.indentation == 0 {
-            Cow::Borrowed(bytes)
-        } else {
-            Cow::Owned(bytes.replace('\n', &format!("\n{}", " ".repeat(node.indentation))))
-        };
+        let text = indented_spelling(bytes, node.indentation);
         self.skeleton.text.push_str(&text);
         self.skeleton.segments.push(SkeletonSegment {
             range: Span::new(start, self.skeleton.text.len()),
@@ -2257,7 +2285,7 @@ struct CachedSpelling {
 }
 
 struct SyntaxContext {
-    documents: Option<Vec<DocumentLayout>>,
+    documents: Option<ManifestChunks>,
     hosts: Vec<ContributionHost>,
 }
 
@@ -2367,9 +2395,9 @@ impl SyntaxContexts {
         {
             return host.destination;
         }
-        let destination = self
-            .documents(skeleton, &[])
-            .and_then(|documents| contribution_host(&documents.last()?.ownership, contribution));
+        let destination = self.documents(skeleton, &[]).and_then(|documents| {
+            contribution_host(&documents.owned.last()?.ownership, contribution)
+        });
         if let Some(entry) = self.entries.get_mut(skeleton)
             && entry.hosts.len() < 32
         {
@@ -2382,7 +2410,7 @@ impl SyntaxContexts {
     }
 
     #[tracing::instrument(skip_all, name = "syntax_context", fields(cache_hit = tracing::field::Empty))]
-    fn documents(&mut self, skeleton: &Skeleton, removed: &[Span]) -> Option<Vec<DocumentLayout>> {
+    fn documents(&mut self, skeleton: &Skeleton, removed: &[Span]) -> Option<ManifestChunks> {
         let skeleton = if removed.is_empty() {
             Cow::Borrowed(skeleton)
         } else {
@@ -2407,8 +2435,14 @@ impl SyntaxContexts {
             .saturating_add(
                 documents
                     .as_ref()
+                    .map_or(0, |chunks| chunks.rejected.len())
+                    .saturating_mul(std::mem::size_of::<Span>()),
+            )
+            .saturating_add(
+                documents
+                    .as_ref()
                     .into_iter()
-                    .flatten()
+                    .flat_map(|chunks| &chunks.owned)
                     .map(|document| {
                         document.ownership.nodes.len().saturating_mul(
                             std::mem::size_of::<helm_schema_syntax::YamlNode>()
@@ -2433,7 +2467,7 @@ impl SyntaxContexts {
 }
 
 #[tracing::instrument(skip_all)]
-fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
+fn documents(skeleton: &Skeleton) -> Option<ManifestChunks> {
     let Ok(splitter) = &*SPLITTER else {
         return None;
     };
@@ -2446,7 +2480,7 @@ fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
         start = trim + separator.end();
     }
     ranges.push(Span::new(start, skeleton.text.len()));
-    let mut documents = Vec::new();
+    let mut chunks = ManifestChunks::default();
     for scope @ Span { start, end } in ranges {
         let text = skeleton
             .text
@@ -2477,10 +2511,19 @@ fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
                 })
                 .collect(),
         };
+        // A hole can change an earlier separator's greedy whitespace match and all later
+        // boundaries, even when this chunk contains only literal bytes.
+        let exact_prefix = skeleton
+            .segments
+            .iter()
+            .all(|segment| !segment.placeholder || segment.range.start >= end);
         let Ok(ownership) = helm_schema_syntax::first_document_ownership(document) else {
+            if exact_prefix && helm_schema_syntax::manifest_chunk_rejection(text) == Some(true) {
+                chunks.rejected.push(scope);
+            }
             continue;
         };
-        documents.push(DocumentLayout {
+        chunks.owned.push(DocumentLayout {
             ownership: Rc::new(ownership),
             node_index: Rc::default(),
             offset: start,
@@ -2491,7 +2534,7 @@ fn documents(skeleton: &Skeleton) -> Option<Vec<DocumentLayout>> {
             serializations: Vec::new(),
         });
     }
-    Some(documents)
+    Some(chunks)
 }
 
 const REMOVED_MARKER: &str = "<no value>";
@@ -3716,7 +3759,7 @@ fn block_contribution(text: &str) -> Option<BlockContribution> {
         text,
         segments: Vec::new(),
     })?;
-    let [document] = documents.as_slice() else {
+    let [document] = documents.owned.as_slice() else {
         return None;
     };
     if document.offset != 0
@@ -3881,45 +3924,23 @@ impl SerializedPosition {
         }
     }
 
-    fn invalid(self, path: &ValuesPath) -> Predicate {
+    fn invalid(self, payload: &impl PayloadFacts) -> Predicate {
         if let Some(decoding) = self.decoding {
             let accepted = match decoding {
-                SerializedDecoding::Annotations => Predicate::from(Guard::MatchesValue {
-                    path: path.clone(),
-                    pattern: helm_schema_core::ValuePattern::StringMap,
-                }),
-                SerializedDecoding::String => Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type: "string".to_owned(),
-                }),
-                SerializedDecoding::Document => Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type: "object".to_owned(),
-                }),
+                SerializedDecoding::Annotations => payload.string_map(),
+                SerializedDecoding::String => payload.type_is("string"),
+                SerializedDecoding::Document => payload.type_is("object"),
             };
-            return Predicate::Or(vec![
-                Predicate::from(Guard::Absent { path: path.clone() }),
-                Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type: "null".to_owned(),
-                }),
-                accepted,
-            ])
-            .negated();
+            return Predicate::Or(vec![payload.absent(), payload.type_is("null"), accepted])
+                .negated();
         }
         let nonempty = |schema_type: &str, bound| {
             Predicate::all(vec![
-                Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type: schema_type.to_owned(),
-                }),
+                payload.type_is(schema_type),
                 if schema_type == "array" {
-                    Predicate::truthy_path(path.encode())
+                    payload.truthy()
                 } else {
-                    Predicate::from(Guard::MinMembers {
-                        path: path.clone(),
-                        bound,
-                    })
+                    payload.min_members(bound)
                 },
             ])
         };
@@ -3938,13 +3959,303 @@ impl SerializedPosition {
             ),
         ];
         if self.flow.is_some() {
-            invalid.push(Predicate::from(Guard::MatchesPattern {
-                path: path.clone(),
-                pattern: "\n".to_owned(),
-                templated: false,
-            }));
+            invalid.push(payload.line_break());
         }
         Predicate::Or(invalid)
+    }
+}
+
+/// What a serialization site's rules ask of one payload arm: guards over the input region it
+/// serializes, or the decided facts of a constant arm's exact value.
+trait PayloadFacts {
+    fn type_is(&self, schema_type: &str) -> Predicate;
+    fn min_members(&self, bound: i64) -> Predicate;
+    fn truthy(&self) -> Predicate;
+    fn absent(&self) -> Predicate;
+    fn string_map(&self) -> Predicate;
+    fn line_break(&self) -> Predicate;
+    fn scalar(&self) -> Predicate;
+    fn flow_stable(&self) -> Predicate;
+    fn unchanged(&self) -> Predicate;
+    fn flow_node(&self) -> bool;
+    fn templated(&self) -> bool;
+}
+
+impl PayloadFacts for super::use_policy::RelationshipUse<'_> {
+    fn type_is(&self, schema_type: &str) -> Predicate {
+        Predicate::from(Guard::TypeIs {
+            path: self.source.as_ref().clone(),
+            schema_type: schema_type.to_owned(),
+        })
+    }
+    fn min_members(&self, bound: i64) -> Predicate {
+        Predicate::from(Guard::MinMembers {
+            path: self.source.as_ref().clone(),
+            bound,
+        })
+    }
+    fn truthy(&self) -> Predicate {
+        Predicate::truthy_path(self.source.encode())
+    }
+    fn absent(&self) -> Predicate {
+        Predicate::from(Guard::Absent {
+            path: self.source.as_ref().clone(),
+        })
+    }
+    fn string_map(&self) -> Predicate {
+        Predicate::from(Guard::MatchesValue {
+            path: self.source.as_ref().clone(),
+            pattern: helm_schema_core::ValuePattern::StringMap,
+        })
+    }
+    fn line_break(&self) -> Predicate {
+        Predicate::from(Guard::MatchesPattern {
+            path: self.source.as_ref().clone(),
+            pattern: "\n".to_owned(),
+            templated: false,
+        })
+    }
+    fn scalar(&self) -> Predicate {
+        self.scalar_condition()
+    }
+    fn flow_stable(&self) -> Predicate {
+        self.flow_condition()
+    }
+    fn unchanged(&self) -> Predicate {
+        self.unchanged_condition()
+    }
+    fn flow_node(&self) -> bool {
+        self.flow_node
+    }
+    fn templated(&self) -> bool {
+        self.kind == crate::ValueKind::TemplatedYamlSerialized
+    }
+}
+
+/// A payload arm whose exact text is known, judged by the value that text decodes to. It has no
+/// input region, so the guard selecting it is the only fact about inputs it carries.
+struct ConstantArm {
+    value: serde_json::Value,
+    flow_node: bool,
+}
+
+impl PayloadFacts for ConstantArm {
+    fn type_is(&self, schema_type: &str) -> Predicate {
+        decided(match schema_type {
+            "object" => self.value.is_object(),
+            "array" => self.value.is_array(),
+            "string" => self.value.is_string(),
+            "null" => self.value.is_null(),
+            "boolean" => self.value.is_boolean(),
+            "number" => self.value.is_number(),
+            "integer" => self.value.is_i64() || self.value.is_u64(),
+            // No JSON value has another schema type.
+            _ => false,
+        })
+    }
+    fn min_members(&self, bound: i64) -> Predicate {
+        decided(self.value.as_object().is_some_and(|fields| {
+            usize::try_from(bound).map_or(true, |bound| fields.len() >= bound)
+        }))
+    }
+    fn truthy(&self) -> Predicate {
+        decided(match &self.value {
+            serde_json::Value::Null => false,
+            serde_json::Value::Bool(value) => *value,
+            serde_json::Value::Number(number) => {
+                number.as_f64().is_some_and(|number| number.abs() > 0.0)
+            }
+            serde_json::Value::String(text) => !text.is_empty(),
+            serde_json::Value::Array(items) => !items.is_empty(),
+            serde_json::Value::Object(fields) => !fields.is_empty(),
+        })
+    }
+    fn absent(&self) -> Predicate {
+        Predicate::False
+    }
+    fn string_map(&self) -> Predicate {
+        decided(helm_schema_core::ValuePattern::StringMap.matches(&self.value) == Some(true))
+    }
+    fn line_break(&self) -> Predicate {
+        decided(self.value.as_str().is_some_and(|text| text.contains('\n')))
+    }
+    fn scalar(&self) -> Predicate {
+        decided(!self.value.is_object() && !self.value.is_array())
+    }
+    fn flow_stable(&self) -> Predicate {
+        decided(helm_schema_core::ValuePattern::YamlFlowStable.matches(&self.value) == Some(true))
+    }
+    fn unchanged(&self) -> Predicate {
+        Predicate::True
+    }
+    fn flow_node(&self) -> bool {
+        self.flow_node
+    }
+    fn templated(&self) -> bool {
+        false
+    }
+}
+
+fn decided(holds: bool) -> Predicate {
+    if holds {
+        Predicate::True
+    } else {
+        Predicate::False
+    }
+}
+
+/// The exact text of a resolved term, without resolving anything.
+fn resolved_literal(term: &super::text::TextTerm) -> Option<&str> {
+    match term {
+        super::text::TextTerm::Resolved {
+            term: _,
+            literal: helm_schema_core::GuardValue::String(exact),
+        }
+        | super::text::TextTerm::Json {
+            value: _,
+            pretty: _,
+            escape_html: _,
+            literal: Some(helm_schema_core::GuardValue::String(exact)),
+        } => Some(exact),
+        super::text::TextTerm::Resolved {
+            term: _,
+            literal: _,
+        }
+        | super::text::TextTerm::Json {
+            value: _,
+            pretty: _,
+            escape_html: _,
+            literal: _,
+        }
+        | super::text::TextTerm::Encoded {
+            value: _,
+            alphabet: _,
+        }
+        | super::text::TextTerm::Capture {
+            graph: _,
+            strip_marker: _,
+        }
+        | super::text::TextTerm::Quote { value: _ }
+        | super::text::TextTerm::Yaml {
+            value: _,
+            pretty: _,
+        }
+        | super::text::TextTerm::Tpl {
+            source: _,
+            result: _,
+        }
+        | super::text::TextTerm::Indent {
+            value: _,
+            width: _,
+            newline: _,
+        } => None,
+    }
+}
+
+/// Work for resolving the constant arms of one site's payload. An exhausted resolution judges
+/// no further constant arm of that site.
+const CONSTANT_ARM_WORK: usize = 256;
+
+/// The exact texts `value` renders, each under the guard that selects it. An arm whose text
+/// depends on an input's content stays with the payload relationships.
+fn exact_arms(
+    value: &FrozenValue,
+    budget: &mut super::work::WorkBudget,
+) -> Vec<(Predicate, String)> {
+    let mut arms = Vec::new();
+    collect_exact_arms(
+        &value.heap,
+        &value.value,
+        Predicate::True,
+        true,
+        budget,
+        &mut arms,
+    );
+    arms
+}
+
+fn collect_exact_arms(
+    heap: &Rc<super::HeapVersion>,
+    value: &super::Value,
+    guard: Predicate,
+    project: bool,
+    budget: &mut super::work::WorkBudget,
+    arms: &mut Vec<(Predicate, String)>,
+) {
+    if !budget.charge(1) {
+        return;
+    }
+    match value.node.as_ref() {
+        ValueNode::Select { decision, yes, no } => {
+            let FrozenTest {
+                id: _,
+                when_true,
+                when_false,
+                coverage,
+                runtime: _,
+            } = decision.as_ref();
+            if *coverage != Coverage::Exact
+                || when_true.contains_approximation()
+                || when_false.contains_approximation()
+            {
+                return;
+            }
+            for (branch, taken) in [(yes, when_true), (no, when_false)] {
+                collect_exact_arms(
+                    heap,
+                    branch,
+                    Predicate::all(vec![guard.clone(), taken.clone()]),
+                    project,
+                    budget,
+                    arms,
+                );
+            }
+        }
+        ValueNode::Leaf(Leaf {
+            datum: Datum::Text(text),
+            origin: _,
+        }) => {
+            // Each decision the text's resolution needs becomes a choice of resolved arms.
+            let projected = if project {
+                text.projected_with_budget(value, &|_| None, budget)
+            } else {
+                None
+            };
+            match projected {
+                Some(projected) if !Rc::ptr_eq(&projected.node, &value.node) => {
+                    collect_exact_arms(heap, &projected, guard, false, budget, arms);
+                }
+                Some(_) | None => {
+                    if let Some(exact) = resolved_literal(text.term()) {
+                        arms.push((guard, exact.to_owned()));
+                    }
+                }
+            }
+        }
+        ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Scalar {
+                    go_type: _,
+                    content: _,
+                }
+                | Datum::Map { view: _, target: _ }
+                | Datum::Sequence(_)
+                | Datum::Strings(_)
+                | Datum::Slot {
+                    backing: _,
+                    index: _,
+                }
+                | Datum::Unknown(_),
+            origin: _,
+        }) => {
+            let frozen = FrozenValue {
+                heap: Rc::clone(heap),
+                value: value.clone(),
+            };
+            if let Some(text) = frozen.exact_text() {
+                arms.push((guard, text));
+            }
+        }
     }
 }
 
@@ -4144,9 +4455,14 @@ fn serialization_transfer(
         node: terms.get(site.piece)?,
     };
     let alternatives = term.frozen_alternatives()?;
+    let flow_node = term
+        .node
+        .serializer
+        .is_some_and(|spelling| spelling.flow_node);
     let mut query = super::relationship::RelationshipQuery::new(inputs, *remaining);
-    let mut preserved = Vec::new();
-    let mut invalid = Vec::new();
+    // Constant arms resolve under their own bound, so their work never widens other facts.
+    let mut arms = super::work::WorkBudget::new(CONSTANT_ARM_WORK);
+    let mut judged = Judged::default();
     for (guard, value) in alternatives {
         for payload in query
             .value(value, &[])
@@ -4164,39 +4480,31 @@ fn serialization_transfer(
                 continue;
             }
             let coverage = Predicate::all(vec![guard.clone(), payload.condition.clone()]);
-            let unchanged = payload.unchanged_condition();
-            let boundary = site.preservation(&payload);
-            preserved.push(Predicate::all(vec![coverage.clone(), boundary]));
-            if !payload.omitted_members.is_empty() {
+            site.judge(
+                &payload,
+                coverage,
+                !payload.omitted_members.is_empty(),
+                &mut judged,
+            );
+        }
+        // Payload facts prove lexical preservation; aborts require the completed output
+        // stream, judged before its chunks are split and their syntax is recovered.
+        for (arm, text) in exact_arms(value, &mut arms) {
+            if text.contains(REMOVED_MARKER) {
                 continue;
             }
-            let bad_node = if site.position.decoding.is_some()
-                || !payload.flow_node && (site.position.inline || site.position.flow.is_some())
-            {
-                site.position.invalid(&payload.source)
-            } else {
-                Predicate::False
+            let Some(value) = helm_schema_syntax::decoded_yaml_value(&text) else {
+                continue;
             };
-            invalid.push(Predicate::all(vec![
-                coverage.clone(),
-                unchanged.clone(),
-                bad_node,
+            let coverage = Predicate::all(vec![guard.clone(), arm]);
+            judged.preserved.push(Predicate::all(vec![
+                coverage,
+                site.preservation(&ConstantArm { value, flow_node }),
             ]));
-            if site.member_splice {
-                invalid.push(Predicate::all(vec![
-                    coverage,
-                    unchanged,
-                    site.peers.clone(),
-                    if payload.flow_node {
-                        Predicate::True
-                    } else {
-                        site.structural(&payload).negated()
-                    },
-                ]));
-            }
         }
     }
     *remaining = remaining.saturating_sub(query.work());
+    let Judged { preserved, invalid } = judged;
     if preserved.is_empty() {
         return None;
     }
@@ -4207,42 +4515,156 @@ fn serialization_transfer(
     })
 }
 
+fn indented_spelling(bytes: &str, indentation: usize) -> Cow<'_, str> {
+    if indentation == 0 {
+        Cow::Borrowed(bytes)
+    } else {
+        Cow::Owned(bytes.replace('\n', &format!("\n{}", " ".repeat(indentation))))
+    }
+}
+
+/// A constant arm proves an abort only when it completes the entire output stream.
+/// Other holes and merged local alternatives can change chunk boundaries or replace fields.
+fn constant_arm_failure(
+    skeleton: &Skeleton,
+    terms: &[NodeRef],
+    selections: &[SelectedSpan],
+) -> Predicate {
+    if selections.iter().any(|selection| selection.local) {
+        return Predicate::False;
+    }
+    let mut holes = skeleton
+        .segments
+        .iter()
+        .filter(|segment| segment.placeholder);
+    let Some(segment) = holes.next() else {
+        return Predicate::False;
+    };
+    if holes.next().is_some() {
+        return Predicate::False;
+    }
+    let Some(node) = terms
+        .get(segment.piece)
+        .filter(|node| node.serializer.is_some())
+    else {
+        return Predicate::False;
+    };
+    let term = PlacedTerm {
+        range: segment.range,
+        placeholder: true,
+        node,
+    };
+    let Some(alternatives) = term.frozen_alternatives() else {
+        return Predicate::False;
+    };
+    let Some(prefix) = skeleton.text.get(..segment.range.start) else {
+        return Predicate::False;
+    };
+    let Some(suffix) = skeleton.text.get(segment.range.end..) else {
+        return Predicate::False;
+    };
+    let Ok(splitter) = &*SPLITTER else {
+        return Predicate::False;
+    };
+    let mut budget = super::work::WorkBudget::new(CONSTANT_ARM_WORK);
+    let mut failures = Vec::new();
+    for (guard, value) in alternatives {
+        for (arm, text) in exact_arms(value, &mut budget) {
+            let mut completed = prefix.to_owned();
+            completed.push_str(&indented_spelling(&text, node.indentation));
+            completed.push_str(suffix);
+            let rendered = completed.replace(REMOVED_MARKER, "");
+            if splitter
+                .split(rendered.trim_start_matches(char::is_whitespace))
+                .map(|chunk| chunk.trim_start_matches(char::is_whitespace))
+                .any(|chunk| {
+                    !chunk.is_empty()
+                        && helm_schema_syntax::manifest_chunk_rejection(chunk) == Some(true)
+                })
+            {
+                failures.push(Predicate::all(vec![guard.clone(), arm]));
+            }
+        }
+    }
+    Predicate::Or(failures)
+}
+
+/// Where a site's payload arms keep the lexical state, and where they break the document.
+#[derive(Default)]
+struct Judged {
+    preserved: Vec<Predicate>,
+    invalid: Vec<Predicate>,
+}
+
 impl SerializationSite {
-    fn structural(&self, payload: &super::use_policy::RelationshipUse<'_>) -> Predicate {
-        let typed = |schema_type: &str| {
-            Predicate::from(Guard::TypeIs {
-                path: payload.source.as_ref().clone(),
-                schema_type: schema_type.to_owned(),
-            })
+    /// Judges one payload arm placed under `coverage`.
+    fn judge(
+        &self,
+        payload: &impl PayloadFacts,
+        coverage: Predicate,
+        omitted_members: bool,
+        judged: &mut Judged,
+    ) {
+        let unchanged = payload.unchanged();
+        let boundary = self.preservation(payload);
+        judged
+            .preserved
+            .push(Predicate::all(vec![coverage.clone(), boundary]));
+        if omitted_members {
+            return;
+        }
+        let bad_node = if self.position.decoding.is_some()
+            || !payload.flow_node() && (self.position.inline || self.position.flow.is_some())
+        {
+            self.position.invalid(payload)
+        } else {
+            Predicate::False
         };
+        judged.invalid.push(Predicate::all(vec![
+            coverage.clone(),
+            unchanged.clone(),
+            bad_node,
+        ]));
+        if self.member_splice {
+            judged.invalid.push(Predicate::all(vec![
+                coverage,
+                unchanged,
+                self.peers.clone(),
+                if payload.flow_node() {
+                    Predicate::True
+                } else {
+                    self.structural(payload).negated()
+                },
+            ]));
+        }
+    }
+
+    fn structural(&self, payload: &impl PayloadFacts) -> Predicate {
         Predicate::all(vec![
-            typed(if self.position.sequence {
+            payload.type_is(if self.position.sequence {
                 "array"
             } else {
                 "object"
             }),
             if self.position.sequence {
-                Predicate::truthy_path(payload.source.encode())
+                payload.truthy()
             } else {
-                Predicate::from(Guard::MinMembers {
-                    path: payload.source.as_ref().clone(),
-                    bound: 1,
-                })
+                payload.min_members(1)
             },
         ])
     }
 
-    fn preservation(&self, payload: &super::use_policy::RelationshipUse<'_>) -> Predicate {
-        let unchanged = payload.unchanged_condition();
+    fn preservation(&self, payload: &impl PayloadFacts) -> Predicate {
+        let unchanged = payload.unchanged();
         let structural = self.structural(payload);
-        let whole = if payload.flow_node || self.block_node && !self.position.inline {
-            if payload.kind == crate::ValueKind::TemplatedYamlSerialized {
+        let whole = if payload.flow_node() || self.block_node && !self.position.inline {
+            if payload.templated() {
                 unchanged.clone()
             } else {
                 Predicate::True
             }
         } else {
-            Predicate::all(vec![payload.scalar_condition(), payload.flow_condition()])
+            Predicate::all(vec![payload.scalar(), payload.flow_stable()])
         };
         if self.member_splice {
             Predicate::Or(vec![

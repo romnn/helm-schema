@@ -67,7 +67,8 @@ pub use rendered::{
 pub use yaml::{
     ArmLayout, BlockHeader, BlockScalarOwnership, Chomping, MAX_SKELETON_BYTES, ScalarStyle,
     Skeleton, SkeletonSegment, YamlNode, YamlNodeKind, YamlOwnership, arm_layout, arm_skeleton,
-    first_document_ownership, parse_yaml, skeleton_ownership,
+    decoded_yaml_value, first_document_ownership, manifest_chunk_rejected,
+    manifest_chunk_rejection, parse_yaml, skeleton_ownership,
 };
 pub use yaml_dialect::{DialectDivergence, YAML_1_1_BOOLEANS, plain_scalar_divergence};
 pub use yaml_scan::{parse_yaml_key, structural_mapping_colon, unquote_yaml_scalar};

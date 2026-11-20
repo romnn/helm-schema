@@ -1058,3 +1058,198 @@ fn scalar_folding_remains_a_survivor_beside_a_sequence_spelling() -> eyre::Resul
     }
     Ok(())
 }
+
+/// An input-free constant that breaks its manifest still aborts under the guard that places it
+/// (Helm 4.2.3, `transfer/abortfa-receipts/d1-minimal`: `{flag: true}` aborts with
+/// `yaml: line 6: could not find expected ':'`; `{flag: false}` and `{}` render).
+#[test]
+fn a_constant_that_breaks_its_manifest_aborts_under_its_guard() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        {{ if .Values.flag }}{{ "d" | toYaml }}{{ end }}
+    "#};
+    for (values, aborts) in [
+        (json!({"flag": true}), true),
+        (json!({"flag": false}), false),
+        (json!({}), false),
+    ] {
+        sim_assert_eq!(have: rejection(source, &values)?, want: aborts, "{values}");
+    }
+    Ok(())
+}
+
+/// The constant arm of a serialized payload is judged in its completed manifest
+/// (Helm 4.2.3, `transfer/abortfa-receipts/d1-minimal/default.docs`): a falsy `other` selects
+/// the bare scalar `d` at the document root, which aborts; a non-empty map renders.
+#[test]
+fn a_serialized_constant_arm_that_breaks_its_manifest_aborts_under_its_guard() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        {{ if .Values.flag }}{{ default "d" .Values.other | toYaml }}{{ end }}
+    "#};
+    for (values, aborts) in [
+        (json!({"flag": true}), true),
+        (json!({"flag": true, "other": null}), true),
+        (json!({"flag": true, "other": {}}), true),
+        (json!({"flag": true, "other": "x"}), true),
+        (json!({"flag": true, "other": [1]}), true),
+        (json!({"flag": true, "other": {"c": "d"}}), false),
+        (json!({"flag": false}), false),
+    ] {
+        sim_assert_eq!(have: rejection(source, &values)?, want: aborts, "{values}");
+    }
+    Ok(())
+}
+
+/// Helm decodes the completed mapping, where a later duplicate metadata key replaces the list.
+#[test]
+fn a_serialized_constant_arm_uses_the_completed_manifest_head() -> eyre::Result<()> {
+    let source = indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ default (list 1) .Values.other | toYaml | nindent 4 }}
+        metadata: {name: probe}
+    "};
+    for source in [
+        source.to_owned(),
+        source.replace("(list 1)", "(dict \"x\" 1)"),
+        source.replace("metadata: {name: probe}", "  name: probe"),
+        source
+            .replace(
+                "name: {{ default (list 1)",
+                "annotations: {{ default \"scalar\"",
+            )
+            .replace(" | nindent 4", ""),
+    ] {
+        for values in [json!({}), json!({"other": null}), json!({"other": {}})] {
+            sim_assert_eq!(have: rejection(&source, &values)?, want: false, "{source}: {values}");
+        }
+    }
+    Ok(())
+}
+
+/// sigs.k8s.io/yaml coerces numbers to the string field in Helm's manifest head.
+#[test]
+fn a_serialized_numeric_constant_name_renders() -> eyre::Result<()> {
+    let source = indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ default 1 .Values.other | toYaml }}
+    "};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}
+
+/// sigs.k8s.io/yaml coerces booleans to the string field in Helm's manifest head.
+#[test]
+fn a_serialized_boolean_constant_kind_renders() -> eyre::Result<()> {
+    let source = indoc::indoc! {"
+        apiVersion: v1
+        kind: {{ default true .Values.other | toYaml }}
+        metadata:
+          name: probe
+    "};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}
+
+/// Helm's manifest head ignores labels, even when their value is a scalar.
+#[test]
+fn a_serialized_scalar_constant_labels_renders() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+          labels: {{ default "scalar" .Values.other | toYaml }}
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}
+
+#[test]
+fn a_serialized_constant_keeps_inherited_capture_indentation() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        {{ define "body" -}}
+        name: probe
+        extra: {{ default (list 1) .Values.other | toYaml | nindent 2 }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:{{ include "body" . | nindent 2 }}
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}
+
+/// Distinct YAML keys can become one JSON key in either Go map iteration order.
+#[test]
+fn a_serialized_constant_does_not_decide_colliding_json_keys() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+          annotations:
+            true: ok
+            "true": {{ default (list 1) .Values.other | toYaml | nindent 6 }}
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}
+
+/// Helm's preceding separator already consumed the newline before this ordinary YAML key.
+#[test]
+fn a_serialized_constant_keeps_the_original_split_context() -> eyre::Result<()> {
+    let source = indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata: {name: probe}
+        ---
+        ---kind:{{ default (list 1) .Values.other | toYaml | nindent 2 }}
+    "};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    let with_prefix = source.replace("---\n", "note: {{ .Values.prefix }}\n");
+    sim_assert_eq!(have: rejection(&with_prefix, &json!({"prefix": "ok\n---"}))?, want: false);
+    Ok(())
+}
+
+/// A missing prefix lets Helm's first separator consume the next separator's newline.
+#[test]
+fn refused_chunks_require_rendered_document_boundaries() -> eyre::Result<()> {
+    let source = indoc::indoc! {"
+        ---
+        {{ .Values.prefix }}
+        ---kind: [1]
+        metadata:
+          <<: {name: probe}
+    "};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+
+    // With a concrete nonempty prefix, Helm splits again and decodes the invalid kind.
+    let nonempty = source.replace("{{ .Values.prefix }}", "prefix: ok");
+    sim_assert_eq!(have: rejection(&nonempty, &json!({}))?, want: true);
+    Ok(())
+}
+
+/// A merge key sends this exact chunk through the fallback head decoder.
+#[test]
+fn refused_chunks_leave_colliding_json_keys_undecided() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          <<: {name: probe}
+          annotations: {true: ok, "true": [1]}
+    "#};
+    sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
+    Ok(())
+}

@@ -725,7 +725,11 @@ pub fn structural_probe_battery(
                 Ok(document) => ProbeInstance::Composed { values, document },
                 Err(_) => continue,
             },
-            probe => probe,
+            ProbeInstance::Defaults => ProbeInstance::Defaults,
+            ProbeInstance::Coalesced(document) => ProbeInstance::Coalesced(document),
+            ProbeInstance::Composed { values, document } => {
+                ProbeInstance::Composed { values, document }
+            }
         };
         reachable.push((name, probe));
     }

@@ -1,6 +1,6 @@
 //! Generic node decoding from go-yaml v2.4.3 `decode.go`.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::json;
 
@@ -487,6 +487,30 @@ fn json_key(key: &Value) -> Result<Vec<u8>, Error> {
         }
     };
     Ok(text.into_bytes())
+}
+
+/// Whether distinct decoded YAML keys can collapse to one JSON key anywhere in `value`.
+/// Such collisions can select different values under Go's unspecified map iteration order.
+/// Exact duplicate YAML keys have already been resolved by the YAML decoder.
+#[must_use]
+pub fn has_json_key_collisions(value: &Value) -> bool {
+    match value {
+        Value::Mapping(entries) => {
+            let mut keys = BTreeSet::new();
+            entries.iter().any(|Entry { key, value }| {
+                json_key(key).is_ok_and(|key| !keys.insert(go_json_string(&key)))
+                    || has_json_key_collisions(value)
+            })
+        }
+        Value::Sequence(items) => items.iter().any(has_json_key_collisions),
+        Value::Null
+        | Value::Bool(_)
+        | Value::Int(_)
+        | Value::Uint(_)
+        | Value::Float(_)
+        | Value::String(_)
+        | Value::RawString(_) => false,
+    }
 }
 
 /// Replaces each invalid byte separately, as `encoding/json/encode.go:1019-1048` does.

@@ -15,7 +15,9 @@ mod scanner;
 pub mod stages;
 mod types;
 
-pub use decode::{Document, Entry, Target, Value, decode_events, read_document, to_json};
+pub use decode::{
+    Document, Entry, Target, Value, decode_events, has_json_key_collisions, read_document, to_json,
+};
 pub use machine::{Reader, ReaderControl, Syntax};
 pub use types::{Error, ErrorKind, Event, EventKind, Mark, ScalarStyle, Token, TokenKind};
 
