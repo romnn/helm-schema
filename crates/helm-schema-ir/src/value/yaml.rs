@@ -1498,13 +1498,14 @@ impl LayoutBuilder<'_> {
         selections.push(SelectedSpan {
             range: Span::new(0, skeleton.text.len()),
             local: false,
+            // An inexact branch still certainly renders where its decision proves this outcome.
             condition: if exact {
                 guard.clone()
             } else {
-                Predicate::approximate_output_selection(
+                Predicate::approximate_with_sound_predicate(
                     format!("executed output {id} {taken}"),
                     BTreeSet::new(),
-                    Predicate::False,
+                    guard.clone(),
                 )
             },
         });

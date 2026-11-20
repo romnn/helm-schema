@@ -361,30 +361,49 @@ fn decodable_composite_truthiness_remains_faithful() {
     assert!(context.condition_lowering_is_faithful(&selected));
 }
 
+/// Sprig `quote` drops nil to the empty text and quotes every other value, so membership in
+/// `["", "\"\""]` holds exactly for a missing, null or empty value; `false`, `0` and `"<nil>"` quote
+/// to live spellings (Helm 4.2.3, transfer/helm-matrix-text.md `hasQuoteEmpty`,
+/// transfer/helm-matrix-consul.md). The decision is compared by its verdicts, not its normal form.
 #[test]
-fn quoted_empty_membership_preserves_false_and_zero_as_live_values() {
+fn quoted_empty_membership_preserves_false_and_zero_as_live_values() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{assert_equivalent, assert_helm_verdicts, representatives};
     let expr = parse_action_expressions(
         r#"{{ not (has (quote .Values.global.logLevel) (list "" (quote ""))) }}"#,
     )
     .into_iter()
     .next()
-    .expect("condition expression");
-    sim_assert_eq!(
-        have: condition_context(HashMap::new()).condition_predicate_expr(&expr),
-        want: Predicate::Not(Box::new(Predicate::Or(vec![
-            Predicate::from(Guard::Absent {
-                path: helm_schema_core::ValuesPath::parse("global.logLevel"),
-            }),
-            Predicate::from(Guard::Eq {
-                path: helm_schema_core::ValuesPath::parse("global.logLevel"),
-                value: GuardValue::Null,
-            }),
-            Predicate::from(Guard::Eq {
-                path: helm_schema_core::ValuesPath::parse("global.logLevel"),
-                value: GuardValue::string(""),
-            }),
-        ]))),
-    );
+    .ok_or_eyre("condition expression")?;
+    let want = Predicate::Not(Box::new(Predicate::Or(vec![
+        Predicate::from(Guard::Absent {
+            path: helm_schema_core::ValuesPath::parse("global.logLevel"),
+        }),
+        Predicate::from(Guard::Eq {
+            path: helm_schema_core::ValuesPath::parse("global.logLevel"),
+            value: GuardValue::Null,
+        }),
+        Predicate::from(Guard::Eq {
+            path: helm_schema_core::ValuesPath::parse("global.logLevel"),
+            value: GuardValue::string(""),
+        }),
+    ])));
+    let context = condition_context(HashMap::new());
+    sim_assert_eq!(have: context.condition_lowering_is_faithful(&expr), want: true);
+    let have = context.condition_predicate_expr(&expr);
+    assert_equivalent(&have, &want, &representatives(&["<nil>", "\"\""]))?;
+    assert_helm_verdicts(
+        &want,
+        &[
+            (serde_json::json!({}), false),
+            (serde_json::json!({"global": {"logLevel": null}}), false),
+            (serde_json::json!({"global": {"logLevel": ""}}), false),
+            (serde_json::json!({"global": {"logLevel": false}}), true),
+            (serde_json::json!({"global": {"logLevel": 0}}), true),
+            (serde_json::json!({"global": {"logLevel": "<nil>"}}), true),
+            (serde_json::json!({"global": {"logLevel": "debug"}}), true),
+        ],
+    )?;
+    Ok(())
 }
 
 #[test]

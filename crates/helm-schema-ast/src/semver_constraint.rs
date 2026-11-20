@@ -1,5 +1,8 @@
 //! Concrete Sprig semantic-version comparison through one parsed numeric transfer.
 
+use std::sync::LazyLock;
+
+use helm_schema_core::ValuePattern;
 use nom::Parser as _;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
@@ -7,7 +10,9 @@ use nom::character::complete::{char, digit1, space0};
 use nom::combinator::{all_consuming, map_res, opt, recognize, value};
 use nom::multi::{many0, separated_list1};
 use nom::sequence::{delimited, pair, preceded};
-use semver::{Version, VersionReq};
+use semver::{Op, Version, VersionReq};
+
+const MAX_VERSION_LEN: usize = 256;
 
 /// The comparison operator of a single bounded comparator constraint.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -22,46 +27,57 @@ enum ComparisonOp {
 
 #[derive(Clone)]
 struct NumericVersion<'a> {
-    core: [&'a str; 3],
+    core: [u64; 3],
     written: usize,
     prerelease: Option<&'a str>,
     build: Option<&'a str>,
 }
 
 impl NumericVersion<'_> {
+    /// Helm's fully written zero tilde (`~0.0.0`) accepts every stable version; a shorter zero
+    /// bound keeps its written series.
+    fn accepts_every_stable_version(&self) -> bool {
+        self.written == 3 && self.core == [0; 3]
+    }
+
     fn compare_core(&self, other: &Self, components: usize) -> std::cmp::Ordering {
         self.core
             .iter()
-            .zip(other.core)
             .take(components)
-            .map(|(left, right)| decimal_order(left, right))
-            .find(|order| !order.is_eq())
-            .unwrap_or(std::cmp::Ordering::Equal)
+            .cmp(other.core.iter().take(components))
     }
 }
 
-fn decimal_order(left: &str, right: &str) -> std::cmp::Ordering {
-    let left = left.trim_start_matches('0');
-    let right = right.trim_start_matches('0');
-    left.len().cmp(&right.len()).then_with(|| left.cmp(right))
-}
-
 fn numeric_version(input: &str) -> nom::IResult<&str, NumericVersion<'_>> {
+    if input.len() > MAX_VERSION_LEN {
+        return Err(nom::Err::Error(nom::error::Error::new(
+            input,
+            nom::error::ErrorKind::TooLarge,
+        )));
+    }
     let (input, (_, parts, prerelease, build)) = (
         opt(char('v')),
-        separated_list1(char('.'), digit1),
+        separated_list1(char('.'), map_res(digit1, str::parse::<u64>)),
         opt(preceded(char('-'), semver_identifiers)),
         opt(preceded(char('+'), semver_identifiers)),
     )
         .parse(input)?;
-    if parts.len() > 3 {
+    if parts.len() > 3
+        || prerelease.is_some_and(|pre| {
+            pre.split('.').any(|identifier| {
+                identifier.len() > 1
+                    && identifier.starts_with('0')
+                    && identifier.bytes().all(|byte| byte.is_ascii_digit())
+            })
+        })
+    {
         return Err(nom::Err::Error(nom::error::Error::new(
             input,
             nom::error::ErrorKind::Count,
         )));
     }
-    let mut core = ["0"; 3];
-    for (slot, part) in core.iter_mut().zip(&parts) {
+    let mut core = [0; 3];
+    for (slot, &part) in core.iter_mut().zip(&parts) {
         *slot = part;
     }
     Ok((
@@ -104,11 +120,11 @@ impl<'a> NumericConstraint<'a> {
         let bound = match &constraint {
             Self::Compare { op: _, bound } | Self::Tilde { bound } => bound,
         };
-        if bound.build.is_some() || bound.core.iter().any(|part| part.parse::<u64>().is_err()) {
+        if bound.build.is_some() {
             return None;
         }
         let supported = match &constraint {
-            Self::Tilde { bound } => bound.written == 3 && bound.prerelease.is_none(),
+            Self::Tilde { bound } => bound.prerelease.is_none(),
             Self::Compare { op, bound } => {
                 let floor = match bound.prerelease {
                     None => true,
@@ -120,10 +136,7 @@ impl<'a> NumericConstraint<'a> {
                 };
                 floor
                     && !(*op == ComparisonOp::Lt
-                        && bound
-                            .core
-                            .iter()
-                            .all(|part| part.bytes().all(|byte| byte == b'0'))
+                        && bound.core == [0; 3]
                         && bound.prerelease.is_none_or(|pre| pre == "0"))
             }
         };
@@ -135,16 +148,12 @@ impl<'a> NumericConstraint<'a> {
             Self::Tilde { bound } => {
                 let [major, minor, patch] = version.core;
                 let [bound_major, bound_minor, bound_patch] = bound.core;
-                // Helm's fully written zero tilde accepts every stable version.
-                let zero_bound = bound
-                    .core
-                    .iter()
-                    .all(|part| decimal_order(part, "0").is_eq());
+                // Masterminds keeps the major, and the minor when it is written; an unwritten
+                // patch is 0, so every patch of the series reaches the floor.
                 version.prerelease.is_none()
-                    && (zero_bound
-                        || decimal_order(major, bound_major).is_eq()
-                            && decimal_order(minor, bound_minor).is_eq()
-                            && !decimal_order(patch, bound_patch).is_lt())
+                    && (bound.accepts_every_stable_version()
+                        || major == bound_major
+                            && (bound.written < 2 || minor == bound_minor && patch >= bound_patch))
             }
             Self::Compare { op, bound } => {
                 // A missing suffix denotes a whole version series for > and <=.
@@ -189,18 +198,13 @@ impl<'a> NumericConstraint<'a> {
 /// values-file overrides. Parsing the complete range and version directly
 /// lets the control-flow evaluator decide forms such as `^1.6-0` without
 /// pretending that the same constraint has been encoded for arbitrary user
-/// strings. Unsupported constraint syntax returns `None`.
-/// Numeric version components beyond [`u64::MAX`] also return `None`.
+/// strings.
+/// Unsupported constraints and invalid version spellings return `None`.
 #[must_use]
 pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Option<bool> {
+    let (_, numeric) = all_consuming(numeric_version).parse(version).ok()?;
     if let Some(constraint) = NumericConstraint::parse(constraint) {
-        let Ok((_, version)) = all_consuming(numeric_version).parse(version) else {
-            return Some(false);
-        };
-        if version.core.iter().any(|part| part.parse::<u64>().is_err()) {
-            return None;
-        }
-        return Some(constraint.matches(&version));
+        return Some(constraint.matches(&numeric));
     }
     if let Ok((_, (op, bound))) =
         all_consuming(delimited(space0, concrete_comparator, space0)).parse(constraint)
@@ -236,7 +240,15 @@ pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Opt
             .ok()?;
         VersionReq::parse(&normalized).ok()
     })?;
-    let version = Version::parse(version.strip_prefix(['v', 'V']).unwrap_or(version)).ok()?;
+    // Masterminds includes prereleases on other cores in the tilde's series.
+    if requirement
+        .comparators
+        .iter()
+        .any(|comparator| comparator.op == Op::Tilde && !comparator.pre.is_empty())
+    {
+        return None;
+    }
+    let version = Version::parse(version.strip_prefix('v').unwrap_or(version)).ok()?;
     Some(requirement.matches(&version))
 }
 
@@ -303,44 +315,65 @@ pub struct SemverParts {
     pub metadata: String,
 }
 
-/// Parses a version spelling, or `None` where Masterminds' `NewVersion` fails: outside the grammar,
-/// a core component beyond [`u64::MAX`], or a numeric prerelease identifier with a leading zero.
+/// Parses a version spelling, returning `None` where Masterminds' `NewVersion` fails.
 #[must_use]
 pub fn parse_semver_version(text: &str) -> Option<SemverParts> {
-    let (_, version) = all_consuming(numeric_version).parse(text).ok()?;
-    let mut core = [0_u64; 3];
-    for (slot, part) in core.iter_mut().zip(version.core) {
-        *slot = part.parse().ok()?;
-    }
-    let prerelease = version.prerelease.unwrap_or_default();
-    if prerelease.split('.').any(|identifier| {
-        identifier.len() > 1
-            && identifier.starts_with('0')
-            && identifier.bytes().all(|byte| byte.is_ascii_digit())
-    }) {
-        return None;
-    }
+    let (
+        _,
+        NumericVersion {
+            core,
+            written: _,
+            prerelease,
+            build,
+        },
+    ) = all_consuming(numeric_version).parse(text).ok()?;
     Some(SemverParts {
         core,
-        prerelease: prerelease.to_owned(),
-        metadata: version.build.unwrap_or_default().to_owned(),
+        prerelease: prerelease.unwrap_or_default().to_owned(),
+        metadata: build.unwrap_or_default().to_owned(),
     })
 }
 
-/// The language of version spellings a supported constraint accepts, as an anchored regex.
+/// The pattern of version spellings accepted by Masterminds' coercing parser.
+#[must_use]
+pub fn semver_version_pattern() -> &'static ValuePattern {
+    static GRAMMAR: LazyLock<ValuePattern> = LazyLock::new(|| {
+        let core = less_digits(u64::MAX)
+            .into_iter()
+            .chain([equal_digits(u64::MAX)])
+            .collect::<Vec<_>>()
+            .join("|");
+        let prerelease = r"(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)";
+        ValuePattern::AllOf(vec![
+            ValuePattern::String {
+                pattern: format!(
+                    r"^v?(?:{core})(?:\.(?:{core})){{0,2}}(?:-{prerelease}(?:\.{prerelease})*)?(?:\+{IDENTIFIERS})?$"
+                ),
+            },
+            // The grammar is ASCII, so counting characters also counts bytes.
+            ValuePattern::String {
+                pattern: format!(r"^[0-9A-Za-z.+-]{{1,{MAX_VERSION_LEN}}}$"),
+            },
+        ])
+    });
+    &GRAMMAR
+}
+
+/// The language of valid version spellings that a supported constraint accepts.
 ///
 /// It is the same [`NumericConstraint`] that decides concrete versions, encoded over the version
-/// grammar: on every grammatical spelling whose core fits `u64`, the pattern matches exactly where
+/// grammar: the pattern matches exactly where
 /// [`semver_constraint_matches_version`] returns `Some(true)`. Unsupported constraints have no
 /// pattern.
 #[must_use]
-pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
+pub fn semver_constraint_match_pattern(constraint: &str) -> Option<ValuePattern> {
     let alternatives = NumericConstraint::parse(constraint)?.pattern_alternatives();
-    Some(if alternatives.is_empty() {
-        "^[^\\s\\S]$".to_owned()
-    } else {
-        format!("^(?:{})$", alternatives.join("|"))
-    })
+    Some(ValuePattern::AllOf(vec![
+        semver_version_pattern().clone(),
+        ValuePattern::String {
+            pattern: format!("^(?:{})$", alternatives.join("|")),
+        },
+    ]))
 }
 
 /// How one written version component relates to the bound's component.
@@ -360,12 +393,10 @@ impl NumericConstraint<'_> {
         let any_prerelease = format!(r"(?:-{IDENTIFIERS})?{build}");
         let (bound, mut cores) = match self {
             Self::Tilde { bound } => {
-                let zero = bound
-                    .core
-                    .iter()
-                    .all(|part| decimal_order(part, "0").is_eq());
-                let cores = if zero {
+                let cores = if bound.accepts_every_stable_version() {
                     vec![[Component::Any; 3]]
+                } else if bound.written == 1 {
+                    vec![[Component::Equal, Component::Any, Component::Any]]
                 } else {
                     [Component::Greater, Component::Equal]
                         .map(|patch| [Component::Equal, Component::Equal, patch])
@@ -476,8 +507,7 @@ fn written_core(
     bound: &NumericVersion<'_>,
 ) -> Option<String> {
     let mut parts = Vec::with_capacity(written);
-    for (index, (relation, part)) in core.iter().zip(bound.core).enumerate() {
-        let value: u64 = part.parse().ok()?;
+    for (index, (relation, value)) in core.iter().zip(bound.core).enumerate() {
         if index >= written {
             let holds = match relation {
                 Component::Any => true,
@@ -491,7 +521,7 @@ fn written_core(
             continue;
         }
         parts.push(match relation {
-            Component::Any => r"\d+".to_owned(),
+            Component::Any => "[0-9]+".to_owned(),
             Component::Equal => equal_digits(value),
             Component::Greater => greater_digits(value),
             Component::Less => less_digits(value)?,
@@ -504,8 +534,8 @@ fn written_core(
 fn any_digits(count: usize) -> String {
     match count {
         0 => String::new(),
-        1 => r"\d".to_owned(),
-        _ => format!(r"\d{{{count}}}"),
+        1 => "[0-9]".to_owned(),
+        _ => format!("[0-9]{{{count}}}"),
     }
 }
 
@@ -522,7 +552,7 @@ fn equal_digits(value: u64) -> String {
 fn greater_digits(value: u64) -> String {
     let digits = value.to_string();
     let width = digits.len();
-    let mut alternatives = vec![format!(r"[1-9]\d{{{width},}}")];
+    let mut alternatives = vec![format!("[1-9][0-9]{{{width},}}")];
     for (index, digit) in digits.bytes().enumerate() {
         if digit < b'9' {
             alternatives.push(format!(
@@ -547,7 +577,7 @@ fn less_digits(value: u64) -> Option<String> {
     match width {
         0 | 1 => {}
         2 => alternatives.push("[1-9]".to_owned()),
-        _ => alternatives.push(format!(r"[1-9]\d{{0,{}}}", width - 2)),
+        _ => alternatives.push(format!("[1-9][0-9]{{0,{}}}", width - 2)),
     }
     for (index, digit) in digits.bytes().enumerate() {
         let low = if index == 0 { b'1' } else { b'0' };

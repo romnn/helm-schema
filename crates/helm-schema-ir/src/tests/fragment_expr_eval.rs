@@ -1392,7 +1392,7 @@ fn print_literal_helper_arms_form_an_exact_scalar_dispatch() {
 }
 
 #[test]
-fn semver_selected_print_helper_keeps_policy_default_dispatch() {
+fn semver_selected_print_helper_keeps_policy_default_dispatch() -> eyre::Result<()> {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -1453,16 +1453,50 @@ fn semver_selected_print_helper_keeps_policy_default_dispatch() {
             }),
         ])
     };
-    let want = Some(Predicate::And(vec![
-        below('3').negated(),
-        below('8').negated(),
-    ]));
+    let want = Predicate::And(vec![below('3').negated(), below('8').negated()]);
 
-    sim_assert_eq!(
-        have: result.exact_truth(),
-        want: want,
-        "the policy fallback and truthy override must select the exact helper arm: {result:#?}"
-    );
+    // The decision is compared by its verdicts, not its normal form; the expected predicate
+    // reproduces Helm 4.2.3 with `--kube-version 1.29.0` (transfer/helm-matrix-semver.md
+    // "Semver-selected helper").
+    let have = result
+        .exact_truth()
+        .ok_or_eyre("the policy fallback and truthy override must select the exact helper arm")?;
+    crate::tests::guard_oracle::assert_equivalent(
+        &have,
+        &want,
+        &crate::tests::guard_oracle::representatives(&[
+            "1.13.9",
+            "1.14.0",
+            "1.18.9",
+            "1.19.0",
+            "v1.20.0",
+            "1.19.0-rc.1",
+            "1.18",
+            "1.19",
+            "1",
+            "2",
+            "0.9",
+        ]),
+    )?;
+    crate::tests::guard_oracle::assert_helm_verdicts(
+        &want,
+        &[
+            (serde_json::json!({}), true),
+            (serde_json::json!({"kubeVersion": ""}), true),
+            (serde_json::json!({"kubeVersion": "1.13.9"}), false),
+            (serde_json::json!({"kubeVersion": "1.14.0"}), false),
+            (serde_json::json!({"kubeVersion": "1.18.9"}), false),
+            (serde_json::json!({"kubeVersion": "1.19.0"}), true),
+            (serde_json::json!({"kubeVersion": "v1.20.0"}), true),
+            (serde_json::json!({"kubeVersion": "1.19.0-rc.1"}), true),
+            (serde_json::json!({"kubeVersion": "1.18"}), false),
+            (serde_json::json!({"kubeVersion": "1.19"}), true),
+            (serde_json::json!({"kubeVersion": "1"}), false),
+            (serde_json::json!({"kubeVersion": "2"}), true),
+            (serde_json::json!({"kubeVersion": "0.9"}), false),
+        ],
+    )?;
+    Ok(())
 }
 
 #[test]
@@ -2952,4 +2986,104 @@ fn unmodeled_prefix_trimming_retains_its_input_dependency() {
             .collect::<BTreeSet<_>>();
         sim_assert_eq!(have: inputs, want: BTreeSet::from([ValuesPath::parse("input")]));
     }
+}
+
+/// A branched helper whose live arm prints a value: equality with a literal and a pattern over
+/// its rendered text both lift through the branch to the printed input, exactly. The arm's text
+/// still holds the branch it was captured under, so each arm is decided under its own outcome
+/// (Helm 4.2.3, transfer/helm-matrix-text.md "Branched helper output").
+#[test]
+fn branched_helper_text_predicates_decide_the_printed_arm_exactly() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{assert_equivalent, assert_helm_verdicts, representatives};
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "branched" -}}
+            {{- if .Values.c -}}{{- .Values.x -}}{{- else -}}false{{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
+    let want = Predicate::all(vec![
+        Predicate::truthy_path("c"),
+        Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: ValuesPath::parse("x"),
+                value: GuardValue::Bool(true),
+            }),
+            Predicate::from(Guard::Eq {
+                path: ValuesPath::parse("x"),
+                value: GuardValue::string("true"),
+            }),
+        ]),
+    ]);
+    assert_helm_verdicts(
+        &want,
+        &[
+            (serde_json::json!({}), false),
+            (serde_json::json!({"c": true}), false),
+            (serde_json::json!({"c": true, "x": true}), true),
+            (serde_json::json!({"c": true, "x": "true"}), true),
+            (serde_json::json!({"c": true, "x": false}), false),
+            (serde_json::json!({"c": true, "x": "True"}), false),
+            (serde_json::json!({"c": true, "x": 1}), false),
+            (serde_json::json!({"c": false, "x": true}), false),
+            (serde_json::json!({"c": "", "x": "true"}), false),
+        ],
+    )?;
+    for expression in [
+        r#"eq (include "branched" .) "true""#,
+        r#"regexMatch "^true$" (include "branched" .)"#,
+    ] {
+        let result = helper_result_from_expr_with_fragment_locals(
+            &single_expr(expression),
+            &HashMap::new(),
+            Some(&root_bindings),
+            None,
+            &analysis_db,
+            &mut HashSet::new(),
+        );
+        let have = result
+            .exact_truth()
+            .ok_or_eyre("the branched helper text must decide exactly")?;
+        assert_equivalent(&have, &want, &representatives(&["true", "True"]))?;
+    }
+    Ok(())
+}
+
+#[test]
+fn branched_helper_zero_spelling_leaves_signed_numeric_zero_undecided() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::assert_helm_verdicts;
+
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "branched" -}}
+            {{- if .Values.c -}}{{- .Values.x -}}{{- else -}}other{{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
+    let result = helper_result_from_expr_with_fragment_locals(
+        &single_expr(r#"regexMatch "^0$" (include "branched" .)"#),
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        &analysis_db,
+        &mut HashSet::new(),
+    );
+    assert_helm_verdicts(
+        &result.when_true(),
+        &[
+            (serde_json::json!({"c": true, "x": -0.0}), false),
+            (serde_json::json!({"c": true, "x": "0"}), true),
+            (serde_json::json!({"c": false, "x": "0"}), false),
+        ],
+    )?;
+    sim_assert_eq!(have: result.exact_truth(), want: None);
+    Ok(())
 }

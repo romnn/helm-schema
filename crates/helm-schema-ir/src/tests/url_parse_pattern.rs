@@ -7,14 +7,15 @@
 //! false rejection; a rejected URL accepted here would let a render abort
 //! through the schema.
 
+use test_util::prelude::sim_assert_eq;
+
 use crate::function_semantics::{function_semantics, strict_parser_operand_pattern};
 
 #[test]
 fn url_parse_pattern_matches_the_go_verdicts() {
     let (index, pattern) = strict_parser_operand_pattern(function_semantics("urlParse"), 1)
         .expect("urlParse pattern catalogued");
-    assert!(index == 0, "urlParse subject is the first operand");
-    let regex = regex::Regex::new(pattern).expect("valid regex");
+    sim_assert_eq!(have: index, want: 0, "urlParse subject is the first operand");
 
     for (candidate, accepted) in [
         ("", true),
@@ -91,12 +92,10 @@ fn url_parse_pattern_matches_the_go_verdicts() {
         ("\u{1}#x", false),
         ("http://h/?q\u{1}", false),
     ] {
-        let matched = regex.is_match(candidate);
-        assert!(
-            matched == accepted,
-            "url.Parse {} {candidate:?} but the pattern {}",
-            if accepted { "accepts" } else { "rejects" },
-            if matched { "matches" } else { "does not match" },
+        sim_assert_eq!(
+            have: pattern.matches(&serde_json::json!(candidate)),
+            want: Some(accepted),
+            "url.Parse on {candidate:?}"
         );
     }
 }

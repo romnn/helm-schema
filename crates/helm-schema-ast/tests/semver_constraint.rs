@@ -17,7 +17,7 @@ enum Op {
 /// tolerated), build metadata is validated but ignored, and a bare
 /// comparator never matches a prerelease version. Unparsable versions
 /// error at render time, so they must not match either.
-fn reference_matches(op: Op, bound: (u64, u64, u64), version: &str) -> bool {
+fn reference_matches(op: Op, bound: (u64, u64, u64), version: &str) -> Option<bool> {
     let version = version.strip_prefix('v').unwrap_or(version);
     let core = match version.split_once('+') {
         Some((core, build)) => {
@@ -29,39 +29,37 @@ fn reference_matches(op: Op, bound: (u64, u64, u64), version: &str) -> bool {
                             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
                 });
             if !valid_build {
-                return false;
+                return None;
             }
             core
         }
         None => version,
     };
     if core.contains('-') {
-        return false;
+        return Some(false);
     }
     let parts: Vec<&str> = core.split('.').collect();
     if parts.len() > 3 {
-        return false;
+        return None;
     }
     let mut value = [0u64; 3];
     for (position, part) in parts.iter().enumerate() {
         if part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()) {
-            return false;
+            return None;
         }
-        let Ok(parsed) = part.parse() else {
-            return false;
-        };
+        let parsed = part.parse().ok()?;
         if let Some(slot) = value.get_mut(position) {
             *slot = parsed;
         }
     }
     let [major, minor, patch] = value;
     let value = (major, minor, patch);
-    match op {
+    Some(match op {
         Op::Lt => value < bound,
         Op::Le => value <= bound,
         Op::Gt => value > bound,
         Op::Ge => value >= bound,
-    }
+    })
 }
 
 fn candidate_versions() -> Vec<String> {
@@ -121,7 +119,7 @@ fn encoded_comparators_match_reference_semantics() {
         for version in candidate_versions() {
             sim_assert_eq!(
                 have: semver_constraint_matches_version(constraint, &version),
-                want: Some(reference_matches(op, bound, &version)),
+                want: reference_matches(op, bound, &version),
                 "constraint={constraint} version={version}"
             );
         }
@@ -140,13 +138,73 @@ fn exact_three_component_tilde_range_matches_patch_updates() {
         ("2.99.99", false),
         ("3.1.0", false),
         ("4.0.0", false),
-        ("junk", false),
     ] {
         sim_assert_eq!(
             have: semver_constraint_matches_version("~3.0.0", version),
             want: Some(want),
             "version={version}"
         );
+    }
+}
+
+/// Masterminds keeps a tilde's major, and its minor when written; only the fully written zero
+/// bound accepts every stable version. Every row is a `helm template` rendering of the same call
+/// (Helm 4.2.3, transfer/helm-matrix-semver.md).
+#[test]
+fn partial_tilde_ranges_keep_their_written_series() {
+    let versions = [
+        "0.0.0",
+        "0.0.5",
+        "0.1.0",
+        "0.9.9",
+        "1.0.0",
+        "1.1.9",
+        "1.2.0",
+        "1.2.7",
+        "1.3.0",
+        "2.0.0",
+        "1",
+        "1.2",
+        "v1.2.3",
+        "01.02.03",
+        "1.2.3-rc1",
+        "1.2.3+b",
+        "0.0.1-rc1",
+    ];
+    let accepted: [(&str, &[&str]); 6] = [
+        ("~0", &["0.0.0", "0.0.5", "0.1.0", "0.9.9"]),
+        ("~0.0", &["0.0.0", "0.0.5"]),
+        (
+            "~0.0.0",
+            &[
+                "0.0.0", "0.0.5", "0.1.0", "0.9.9", "1.0.0", "1.1.9", "1.2.0", "1.2.7", "1.3.0",
+                "2.0.0", "1", "1.2", "v1.2.3", "01.02.03", "1.2.3+b",
+            ],
+        ),
+        (
+            "~1",
+            &[
+                "1.0.0", "1.1.9", "1.2.0", "1.2.7", "1.3.0", "1", "1.2", "v1.2.3", "01.02.03",
+                "1.2.3+b",
+            ],
+        ),
+        (
+            "~1.2",
+            &["1.2.0", "1.2.7", "1.2", "v1.2.3", "01.02.03", "1.2.3+b"],
+        ),
+        (
+            "~v1.2",
+            &["1.2.0", "1.2.7", "1.2", "v1.2.3", "01.02.03", "1.2.3+b"],
+        ),
+    ];
+    for (constraint, accepted) in accepted {
+        for version in versions {
+            sim_assert_eq!(
+                have: semver_constraint_matches_version(constraint, version),
+                want: Some(accepted.contains(&version)),
+                "constraint={constraint} version={version}"
+            );
+        }
     }
 }
 
@@ -164,6 +222,8 @@ fn concrete_policy_versions_support_caret_constraints() {
         ("~1.35.0", "1.36.0", Some(false)),
         ("not a constraint", "1.35.0", None),
         ("^1.6-0", "not-a-version", None),
+        ("~3.0.0", "junk", None),
+        ("^1.2", "V1.2.3", None),
     ];
     for (constraint, version, want) in cases {
         sim_assert_eq!(
@@ -171,6 +231,32 @@ fn concrete_policy_versions_support_caret_constraints() {
             want: want,
             "constraint={constraint} version={version}"
         );
+    }
+}
+
+#[test]
+fn concrete_prerelease_tildes_abstain_across_patch_cores() {
+    for constraint in ["~1.2.3-0", "~1.2-0"] {
+        sim_assert_eq!(
+            have: semver_constraint_matches_version(constraint, "1.2.4-rc.1"),
+            want: None,
+            "{constraint}"
+        );
+    }
+}
+
+#[test]
+fn concrete_semver_abstains_on_overlong_versions() {
+    for constraint in ["~1.2", "^1.2"] {
+        for (digits, want) in [(250, Some(true)), (251, None)] {
+            let version = format!("1.2.3+{}", "b".repeat(digits));
+            sim_assert_eq!(
+                have: semver_constraint_matches_version(constraint, &version),
+                want: want,
+                "{constraint} with a {}-byte version",
+                version.len()
+            );
+        }
     }
 }
 
@@ -227,7 +313,7 @@ fn concrete_prerelease_comparators_abstain_outside_shared_version_ordering() {
     for (constraint, version, want) in [
         (">=1.0.0-rc.13", "V1.0.0", None),
         (">=1.0.0-rc.13", "v1.0.0", Some(true)),
-        (">=1.0.0-0", "V1.0.0", Some(false)),
+        (">=1.0.0-0", "V1.0.0", None),
         (">=1.0.0-0", "v1.0.0", Some(true)),
         (
             ">1.0.0-99999999999999999999",
@@ -279,7 +365,6 @@ fn prerelease_floor_constraints_match_the_semver_compare_language() {
                 ("1.13.9", false),
                 ("1.13.9-rc.1", false),
                 ("0.9", false),
-                ("junk", false),
             ],
         ),
         (

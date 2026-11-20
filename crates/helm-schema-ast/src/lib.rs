@@ -28,7 +28,7 @@ pub use range_structure::{
 pub use resource_span::{KindBranchSource, ResourceSpan};
 pub use semver_constraint::{
     SemverParts, parse_semver_version, semver_constraint_match_pattern,
-    semver_constraint_matches_version,
+    semver_constraint_matches_version, semver_version_pattern,
 };
 pub use template_action::contains_template_action;
 pub use tree_sitter_utils::{children_with_field, parse_expr_text, parse_go_template};

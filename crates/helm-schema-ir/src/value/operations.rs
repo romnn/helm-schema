@@ -282,15 +282,10 @@ fn record_parser_failures(function: &str, arguments: &[Value], state: &mut State
 
     let semantics = crate::function_semantics::function_semantics(function);
     let mut demands = Vec::new();
-    if let Some((index, grammar)) =
+    if let Some(demand) =
         crate::function_semantics::strict_parser_operand_pattern(semantics, arguments.len())
     {
-        demands.push((
-            index,
-            ValuePattern::String {
-                pattern: grammar.to_owned(),
-            },
-        ));
+        demands.push(demand);
     }
     for index in 0..arguments.len() {
         if let Some(grammar) =
@@ -330,8 +325,6 @@ pub(super) fn lexical_preimage(
 
 /// Compares through the constraint's exact version language, lifted to the version's inputs.
 fn transfer_semver_compare(input: TransferInput<'_>, state: &State) -> Value {
-    use helm_schema_core::ValuePattern;
-
     let TransferInput {
         function: _,
         arguments,
@@ -361,8 +354,7 @@ fn transfer_semver_compare(input: TransferInput<'_>, state: &State) -> Value {
     let Some(accepted) = helm_schema_ast::semver_constraint_match_pattern(constraint) else {
         return Value::with_influences(Value::scalar(super::ScalarType::Bool, None), influences);
     };
-    let satisfied = ValuePattern::String { pattern: accepted };
-    let Some(preimage) = lexical_preimage(state, version, &satisfied) else {
+    let Some(preimage) = lexical_preimage(state, version, &accepted) else {
         return Value::with_influences(Value::scalar(super::ScalarType::Bool, None), influences);
     };
     let super::relationship::LexicalPreimage {

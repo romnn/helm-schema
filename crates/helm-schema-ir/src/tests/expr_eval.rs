@@ -25,6 +25,8 @@ struct Observation {
     reads: Vec<crate::fragment_eval::ValueRead>,
     yes: Predicate,
     no: Predicate,
+    certain_yes: Predicate,
+    certain_no: Predicate,
     markers_complete: bool,
     abort: Predicate,
     value_span: Span,
@@ -90,6 +92,16 @@ impl Observation {
     }
     fn when_false(&self) -> Predicate {
         self.marker(self.false_span, "other")
+    }
+
+    /// Where the value is certainly truthy: main's sound `TruthCondition::when_true` subset.
+    fn certainly_true(&self) -> &Predicate {
+        &self.certain_yes
+    }
+
+    /// Where the value is certainly falsy: main's sound `TruthCondition::when_false` subset.
+    fn certainly_false(&self) -> &Predicate {
+        &self.certain_no
     }
 
     fn marker(&self, span: Span, _marker: &str) -> Predicate {
@@ -342,6 +354,8 @@ fn observe_with_db(prefix: &str, expression: &str, db: &IrAnalysisDb) -> Observa
         reads: Vec::new(),
         yes: Predicate::False,
         no: Predicate::False,
+        certain_yes: Predicate::False,
+        certain_no: Predicate::False,
         markers_complete: false,
         abort: Predicate::False,
         value_span,
@@ -356,6 +370,8 @@ fn observe_with_db(prefix: &str, expression: &str, db: &IrAnalysisDb) -> Observa
         observation.abort = execution.abort_predicate();
         observation.yes = execution.observed_marker_condition(true_span);
         observation.no = execution.observed_marker_condition(false_span);
+        observation.certain_yes = execution.observed_marker_sufficient_condition(true_span);
+        observation.certain_no = execution.observed_marker_sufficient_condition(false_span);
         observation.markers_complete = execution.observed_marker_complete(true_span)
             && execution.observed_marker_complete(false_span);
         observation.rows = crate::tests::support::project_execution(&source, None, db, execution)
@@ -963,19 +979,88 @@ fn values_numeric_type_spellings_remain_provenance_dependent() {
     sim_assert_eq!(have: float64.captured_boolean_subset(false), want: typed("value", "number").negated());
 }
 
+/// `toString` spells a raw string unchanged and every other kind with Go `%v`, so the pattern
+/// decides raw strings exactly while other kinds are decided by their spelling: `123` matches
+/// `^[0-9]+$`, `1.5` does not (Helm 4.2.3, transfer/helm-matrix-text.md `regexDigitsToString`).
+/// The truth stays undecided; each polarity keeps its certain raw-string subset (main's
+/// `TruthCondition` sound subsets, read from the markers' sufficient conditions), and the
+/// undecided remainder stays possible on both branches. Subsets are compared by their verdicts.
 #[test]
-fn stringified_pattern_truth_keeps_raw_string_subsets() {
+fn stringified_pattern_truth_keeps_raw_string_subsets() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{
+        assert_equivalent, assert_helm_verdicts, predicate_holds, representatives,
+    };
     let result = observe("", r#"regexMatch "^[0-9]+$" (toString .Values.value)"#);
+    let matches = Predicate::from(Guard::MatchesPattern {
+        path: ValuesPath::parse("value"),
+        pattern: "^[0-9]+$".to_owned(),
+        templated: false,
+    });
+    let mismatches = Predicate::from(Guard::NotMatchesPattern {
+        path: ValuesPath::parse("value"),
+        pattern: "^[0-9]+$".to_owned(),
+    });
     sim_assert_eq!(have: result.truth(), want: None);
-    sim_assert_eq!(have: result.when_true(), want: Predicate::from(Guard::MatchesPattern { path: ValuesPath::parse("value"), pattern: "^[0-9]+$".to_owned(), templated: false }));
-    sim_assert_eq!(have: result.when_false(), want: Predicate::from(Guard::NotMatchesPattern { path: ValuesPath::parse("value"), pattern: "^[0-9]+$".to_owned() }));
+    let leaves = representatives(&["123", "abc"]);
+    assert_equivalent(result.certainly_true(), &matches, &leaves)?;
+    assert_equivalent(result.certainly_false(), &mismatches, &leaves)?;
+    assert_helm_verdicts(
+        &matches,
+        &[
+            (serde_json::json!({"value": "123"}), true),
+            (serde_json::json!({"value": "abc"}), false),
+            (serde_json::json!({"value": ""}), false),
+            (serde_json::json!({"value": "<nil>"}), false),
+        ],
+    )?;
+    // Helm renders `true` for the number 123 and `false` for 1.5: both stay possible either way.
+    for document in [
+        serde_json::json!({"value": 123}),
+        serde_json::json!({"value": 1.5}),
+    ] {
+        sim_assert_eq!(have: predicate_holds(&result.when_true(), &document)?, want: true, "{document}");
+        sim_assert_eq!(have: predicate_holds(&result.when_false(), &document)?, want: true, "{document}");
+    }
+    Ok(())
 }
 
+/// `contains` searches the `%v` spelling with Go's literal syntax (`-` stays bare). A raw string is
+/// decided exactly; maps and slices spell their members (`map[foo-bar:1]` contains the needle), so
+/// non-strings stay undecided (Helm 4.2.3, transfer/helm-matrix-text.md `containsFooBarToString`).
 #[test]
-fn stringified_contains_uses_go_compatible_literal_pattern_syntax() {
+fn stringified_contains_uses_go_compatible_literal_pattern_syntax() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{
+        assert_equivalent, assert_helm_verdicts, predicate_holds, representatives,
+    };
     let result = observe("", r#"contains "foo-bar" (toString .Values.value)"#);
-    sim_assert_eq!(have: result.when_true(), want: Predicate::from(Guard::MatchesPattern { path: ValuesPath::parse("value"), pattern: "foo-bar".to_owned(), templated: false }));
-    sim_assert_eq!(have: result.when_false(), want: Predicate::from(Guard::NotMatchesPattern { path: ValuesPath::parse("value"), pattern: "foo-bar".to_owned() }));
+    let matches = Predicate::from(Guard::MatchesPattern {
+        path: ValuesPath::parse("value"),
+        pattern: "foo-bar".to_owned(),
+        templated: false,
+    });
+    let mismatches = Predicate::from(Guard::NotMatchesPattern {
+        path: ValuesPath::parse("value"),
+        pattern: "foo-bar".to_owned(),
+    });
+    let leaves = representatives(&["foo-bar", "xfoo-barx", "foo_bar"]);
+    assert_equivalent(result.certainly_true(), &matches, &leaves)?;
+    assert_equivalent(result.certainly_false(), &mismatches, &leaves)?;
+    assert_helm_verdicts(
+        &matches,
+        &[
+            (serde_json::json!({"value": "foo-bar"}), true),
+            (serde_json::json!({"value": "xfoo-barx"}), true),
+            (serde_json::json!({"value": "foo_bar"}), false),
+            (serde_json::json!({"value": "123"}), false),
+        ],
+    )?;
+    for document in [
+        serde_json::json!({"value": {"foo-bar": 1}}),
+        serde_json::json!({"value": ["foo-bar"]}),
+    ] {
+        sim_assert_eq!(have: predicate_holds(&result.when_true(), &document)?, want: true, "{document}");
+    }
+    Ok(())
 }
 
 #[test]
@@ -1568,59 +1653,108 @@ fn root_values_replacement_is_exported_and_used_by_later_values_reads() {
     assert_selected(&result, "extraResources", Predicate::True);
 }
 
+/// Consul's `"-"` inheritance idiom. `toString` spells `"true"` only for `true` and `"true"`, and
+/// `"-"` only for the string `"-"` (no number, Boolean or nil prints `-`), so each assigned root
+/// field is an exact decision. The decisions are compared by their verdicts over a discriminating
+/// document product, not by their normal form, and the expected predicates reproduce Helm 4.2.3
+/// (transfer/helm-matrix-text.md `eqToStringTrue`/`eqToStringDash`, transfer/helm-matrix-consul.md).
 #[test]
-fn root_set_truth_predicates_feed_later_root_field_assignments() {
+fn root_set_truth_predicates_feed_later_root_field_assignments() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{assert_equivalent, assert_helm_verdicts, representatives};
     let prefix = indoc! {r#"
     {{ $_ := set . "serverEnabled" (or
         (eq (.Values.server.enabled | toString) "true")
         (and (eq (.Values.server.enabled | toString) "-") (eq (.Values.global.enabled | toString) "true"))) }}
     {{ $_ := set . "serverServiceEnabled" (and .serverEnabled (eq (.Values.server.service.enabled | toString) "true")) }}
 "#};
+    let eq = |path: &str, value: GuardValue| {
+        Predicate::from(Guard::Eq {
+            path: ValuesPath::parse(path),
+            value,
+        })
+    };
+    let spelled_true = |path: &str| {
+        Predicate::Or(vec![
+            eq(path, GuardValue::string("true")),
+            eq(path, GuardValue::Bool(true)),
+        ])
+    };
     let server = Predicate::Or(vec![
-        Predicate::Or(vec![
-            Predicate::from(Guard::Eq {
-                path: ValuesPath::parse("server.enabled"),
-                value: GuardValue::string("true"),
-            }),
-            Predicate::from(Guard::Eq {
-                path: ValuesPath::parse("server.enabled"),
-                value: GuardValue::Bool(true),
-            }),
-        ]),
+        spelled_true("server.enabled"),
         Predicate::all(vec![
-            Predicate::from(Guard::Eq {
-                path: ValuesPath::parse("server.enabled"),
-                value: GuardValue::string("-"),
-            }),
-            Predicate::Or(vec![
-                Predicate::from(Guard::Eq {
-                    path: ValuesPath::parse("global.enabled"),
-                    value: GuardValue::string("true"),
-                }),
-                Predicate::from(Guard::Eq {
-                    path: ValuesPath::parse("global.enabled"),
-                    value: GuardValue::Bool(true),
-                }),
-            ]),
+            eq("server.enabled", GuardValue::string("-")),
+            spelled_true("global.enabled"),
         ]),
     ])
     .normalize_boolean();
-    sim_assert_eq!(have: observe(prefix, ".serverEnabled").truth(), want: Some(server.clone()));
-    let service = Predicate::all(vec![
-        server,
-        Predicate::Or(vec![
-            Predicate::from(Guard::Eq {
-                path: ValuesPath::parse("server.service.enabled"),
-                value: GuardValue::string("true"),
-            }),
-            Predicate::from(Guard::Eq {
-                path: ValuesPath::parse("server.service.enabled"),
-                value: GuardValue::Bool(true),
-            }),
-        ]),
-    ])
-    .normalize_boolean();
-    sim_assert_eq!(have: observe(prefix, ".serverServiceEnabled").truth(), want: Some(service));
+    let leaves = representatives(&["true", "-", "True"]);
+    let have = observe(prefix, ".serverEnabled")
+        .truth()
+        .ok_or_eyre("serverEnabled must be an exact decision")?;
+    assert_equivalent(&have, &server, &leaves)?;
+    assert_helm_verdicts(
+        &server,
+        &[
+            (serde_json::json!({}), false),
+            (serde_json::json!({"server": {"enabled": true}}), true),
+            (serde_json::json!({"server": {"enabled": "true"}}), true),
+            (serde_json::json!({"server": {"enabled": "True"}}), false),
+            (
+                serde_json::json!({"server": {"enabled": "-"}, "global": {"enabled": true}}),
+                true,
+            ),
+            (
+                serde_json::json!({"server": {"enabled": "-"}, "global": {"enabled": "true"}}),
+                true,
+            ),
+            (
+                serde_json::json!({"server": {"enabled": "-"}, "global": {"enabled": false}}),
+                false,
+            ),
+            (serde_json::json!({"server": {"enabled": "-"}}), false),
+            (
+                serde_json::json!({"server": {"enabled": false}, "global": {"enabled": true}}),
+                false,
+            ),
+            (
+                serde_json::json!({"server": {"enabled": -1}, "global": {"enabled": true}}),
+                false,
+            ),
+        ],
+    )?;
+    let service =
+        Predicate::all(vec![server, spelled_true("server.service.enabled")]).normalize_boolean();
+    let have = observe(prefix, ".serverServiceEnabled")
+        .truth()
+        .ok_or_eyre("serverServiceEnabled must be an exact decision")?;
+    assert_equivalent(&have, &service, &leaves)?;
+    assert_helm_verdicts(
+        &service,
+        &[
+            (serde_json::json!({"server": {"enabled": true}}), false),
+            (
+                serde_json::json!({"server": {"enabled": true, "service": {"enabled": true}}}),
+                true,
+            ),
+            (
+                serde_json::json!({"server": {"enabled": true, "service": {"enabled": "true"}}}),
+                true,
+            ),
+            (
+                serde_json::json!({"server": {"enabled": true, "service": {"enabled": false}}}),
+                false,
+            ),
+            (
+                serde_json::json!({"server": {"enabled": "-", "service": {"enabled": true}}, "global": {"enabled": "true"}}),
+                true,
+            ),
+            (
+                serde_json::json!({"server": {"enabled": false, "service": {"enabled": true}}}),
+                false,
+            ),
+        ],
+    )?;
+    Ok(())
 }
 
 #[test]

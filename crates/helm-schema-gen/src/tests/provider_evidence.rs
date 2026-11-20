@@ -2230,9 +2230,10 @@ fn negated_merged_layer_guard_scopes_provider_payloads() {
             "a truthy higher-priority guard layer keeps the payload dormant",
         ),
     ] {
-        assert!(
-            schema_accepts_instance(&schema, &instance) == want,
-            "{label}: instance={instance}; want={want}; schema={schema}"
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "{label}: instance={instance}; schema={schema}"
         );
     }
 }
@@ -2429,6 +2430,70 @@ fn int_cast_sound_subset_scopes_provider_payloads() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "{label}: instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A pattern over `toString` certainly holds on the matching raw strings, so that certificate
+/// types the provider payload of the branch it gates; strings outside the pattern keep it dormant,
+/// and non-strings stay an explicit unknown (Helm 4.2.3, transfer/helm-matrix-text.md
+/// "regexMatch-guarded provider payload").
+#[test]
+fn stringified_pattern_certificate_scopes_provider_payloads() {
+    let source = indoc! {r#"
+        {{- if regexMatch "^[0-9]+$" (toString .Values.count) }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: probe
+        spec:
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 4 }}
+          containers:
+            - name: probe
+              image: busybox
+        {{- end }}
+    "#};
+    let schema = schema_for(parse_ir(source));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "count": "3",
+                "securityContext": { "runAsUser": "oops" },
+            }),
+            false,
+            "a matching raw string renders the payload with its provider field type",
+        ),
+        (
+            serde_json::json!({
+                "count": "3",
+                "securityContext": { "runAsUser": 1000 },
+            }),
+            true,
+            "a valid live payload renders",
+        ),
+        (
+            serde_json::json!({
+                "count": "abc",
+                "securityContext": { "runAsUser": "oops" },
+            }),
+            true,
+            "a mismatching raw string keeps the payload dormant",
+        ),
+        (
+            serde_json::json!({
+                "count": 1.5,
+                "securityContext": { "runAsUser": "oops" },
+            }),
+            true,
+            "a number spelled outside the pattern keeps the payload dormant",
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "{label}: instance={instance}; schema={schema}"
         );
     }
 }

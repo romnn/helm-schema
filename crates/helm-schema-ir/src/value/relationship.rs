@@ -2111,14 +2111,13 @@ impl<'a> RelationshipQuery<'a, '_> {
             scalars: Vec::new(),
             complementary: true,
         };
-        let preimage = self.lexical_value(&frozen.value, &frozen.heap, &query, 0);
+        let preimage = self.lexical_value(&frozen.value, &query, 0);
         (self.remaining > 0).then_some(preimage)
     }
 
     fn lexical_value(
         &mut self,
         value: &'a Value,
-        current: &'a HeapVersion,
         query: &LexicalQuery,
         depth: usize,
     ) -> LexicalPreimage {
@@ -2127,34 +2126,14 @@ impl<'a> RelationshipQuery<'a, '_> {
         }
         let (datum, origin) = match value.node.as_ref() {
             ValueNode::Select { decision, yes, no } => {
-                return self.lexical_choice(decision, [yes, no], current, query, depth);
+                return self.lexical_choice(decision, &mut |this, taken| {
+                    this.lexical_value(if taken { yes } else { no }, query, depth + 1)
+                });
             }
             ValueNode::Leaf(Leaf { datum, origin }) => (datum, origin),
         };
         if let Some(constant) = constant_json(datum) {
-            let (Some(matched), Some(unmatched)) = (
-                query.matched.matches(&constant),
-                query.unmatched.matches(&constant),
-            ) else {
-                return LexicalPreimage::undecided();
-            };
-            let printed = printed_scalar(&constant, &query.scalars);
-            let (matched, unmatched) = (
-                matched || printed,
-                unmatched || query.complementary && !printed && !constant.is_string(),
-            );
-            let truth = |holds| {
-                if holds {
-                    Predicate::True
-                } else {
-                    Predicate::False
-                }
-            };
-            return LexicalPreimage {
-                matched: truth(matched),
-                unmatched: truth(unmatched),
-                exact: query.complementary,
-            };
+            return constant_preimage(&constant, query);
         }
         if let Datum::Scalar {
             go_type: _,
@@ -2229,22 +2208,19 @@ impl<'a> RelationshipQuery<'a, '_> {
     fn lexical_choice(
         &mut self,
         decision: &Rc<super::FrozenTest>,
-        [yes, no]: [&'a Value; 2],
-        current: &'a HeapVersion,
-        query: &LexicalQuery,
-        depth: usize,
+        arm: &mut dyn FnMut(&mut Self, bool) -> LexicalPreimage,
     ) -> LexicalPreimage {
         let approximate = decision.when_true.contains_approximation()
             || decision.when_false.contains_approximation();
         let mut arms = Vec::with_capacity(2);
-        for (taken, value) in [(true, yes), (false, no)] {
+        for taken in [true, false] {
             match self.decisions.get(&decision.id) {
                 Some(selected) if *selected != taken => continue,
-                Some(_) => return self.lexical_value(value, current, query, depth + 1),
+                Some(_) => return arm(self, taken),
                 None => {}
             }
             self.decisions.insert(decision.id, taken);
-            arms.push((taken, self.lexical_value(value, current, query, depth + 1)));
+            arms.push((taken, arm(self, taken)));
             self.decisions.remove(&decision.id);
         }
         let [(_, on_true), (_, on_false)] = match arms.as_slice() {
@@ -2273,7 +2249,8 @@ impl<'a> RelationshipQuery<'a, '_> {
         }
     }
 
-    /// Follows printed helper output whose only significant part is one value.
+    /// Follows printed helper output: literal text, one printed value, or an executed branch
+    /// between such outputs.
     fn lexical_text(
         &mut self,
         term: &'a super::text::TextTerm,
@@ -2288,15 +2265,58 @@ impl<'a> RelationshipQuery<'a, '_> {
             super::text::TextTerm::Quote { value } => {
                 return self.lexical_quote(query, value, depth);
             }
-            _ => return LexicalPreimage::undecided(),
+            super::text::TextTerm::Resolved {
+                term: _,
+                literal: _,
+            }
+            | super::text::TextTerm::Encoded {
+                value: _,
+                alphabet: _,
+            }
+            | super::text::TextTerm::Yaml {
+                value: _,
+                pretty: _,
+            }
+            | super::text::TextTerm::Json {
+                value: _,
+                pretty: _,
+                escape_html: _,
+                literal: _,
+            }
+            | super::text::TextTerm::Tpl {
+                source: _,
+                result: _,
+            }
+            | super::text::TextTerm::Indent {
+                value: _,
+                width: _,
+                newline: _,
+            } => return LexicalPreimage::undecided(),
         };
-        let mut printed = None;
+        self.lexical_output(graph, query, depth)
+    }
+
+    fn lexical_output(
+        &mut self,
+        graph: &'a super::TextBuffer,
+        query: &LexicalQuery,
+        depth: usize,
+    ) -> LexicalPreimage {
+        if depth >= 128 || !self.charge(1) {
+            return LexicalPreimage::undecided();
+        }
+        let mut literal = String::new();
+        let mut significant = None;
         for part in &graph.parts {
             match part.content() {
-                super::TextPart::Bytes(bytes) if bytes.is_empty() => {}
-                super::TextPart::Frozen(value) if printed.is_none() => printed = Some(value),
-                super::TextPart::Bytes(_)
-                | super::TextPart::Frozen(_)
+                super::TextPart::Bytes(bytes) => literal.push_str(bytes),
+                part @ (super::TextPart::Frozen(_)
+                | super::TextPart::Select {
+                    decision: _,
+                    yes: _,
+                    no: _,
+                }) if significant.is_none() => significant = Some(part),
+                super::TextPart::Frozen(_)
                 | super::TextPart::Select {
                     decision: _,
                     yes: _,
@@ -2305,11 +2325,23 @@ impl<'a> RelationshipQuery<'a, '_> {
                 | super::TextPart::Unknown(_) => return LexicalPreimage::undecided(),
             }
         }
-        let Some(value) = printed else {
-            return LexicalPreimage::undecided();
-        };
-        // A template action prints nil as `<no value>`; Helm erases that only in the final file.
-        self.lexical_printed(query, value, Some("<no value>"), depth)
+        match significant {
+            None => constant_preimage(&serde_json::Value::String(literal), query),
+            Some(_) if !literal.is_empty() => LexicalPreimage::undecided(),
+            // A template action prints nil as `<no value>`; Helm erases that only in the final
+            // file.
+            Some(super::TextPart::Frozen(value)) => {
+                self.lexical_printed(query, value, Some("<no value>"), depth)
+            }
+            Some(super::TextPart::Select { decision, yes, no }) => {
+                self.lexical_choice(decision, &mut |this, taken| {
+                    this.lexical_output(if taken { yes } else { no }, query, depth + 1)
+                })
+            }
+            Some(super::TextPart::Bytes(_) | super::TextPart::Unknown(_)) => {
+                LexicalPreimage::undecided()
+            }
+        }
     }
 
     /// Lifts through Go's `%v` printing: the identity on strings, and for a finite output
@@ -2402,7 +2434,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             scalars: vec![GuardValue::Null],
             complementary: true,
         };
-        let nil = self.lexical_value(&source.value, &source.heap, &query, depth + 1);
+        let nil = self.lexical_value(&source.value, &query, depth + 1);
         if nil.exact {
             nil.matched
         } else {
@@ -2433,7 +2465,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             unmatched: unmatched.pattern,
             scalars,
         };
-        self.lexical_value(&source.value, &source.heap, &lifted, depth + 1)
+        self.lexical_value(&source.value, &lifted, depth + 1)
     }
 }
 
@@ -2539,6 +2571,29 @@ fn pattern_predicate(path: &ValuesPath, pattern: &helm_schema_core::ValuePattern
         path: path.clone(),
         pattern: pattern.clone(),
     }))
+}
+
+/// A constant's membership, decided exactly.
+fn constant_preimage(constant: &serde_json::Value, query: &LexicalQuery) -> LexicalPreimage {
+    let (Some(matched), Some(unmatched)) = (
+        query.matched.matches(constant),
+        query.unmatched.matches(constant),
+    ) else {
+        return LexicalPreimage::undecided();
+    };
+    let printed = printed_scalar(constant, &query.scalars);
+    let truth = |holds| {
+        if holds {
+            Predicate::True
+        } else {
+            Predicate::False
+        }
+    };
+    LexicalPreimage {
+        matched: truth(matched || printed),
+        unmatched: truth(unmatched || query.complementary && !printed && !constant.is_string()),
+        exact: query.complementary,
+    }
 }
 
 /// Whether a non-string constant is one of the printed scalars.

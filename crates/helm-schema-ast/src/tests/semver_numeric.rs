@@ -1,5 +1,21 @@
 use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_core::ValuePattern;
 use test_util::prelude::sim_assert_eq;
+
+fn constraint_regexes(constraint: &str) -> eyre::Result<regex::RegexSet> {
+    let pattern = super::semver_constraint_match_pattern(constraint)
+        .ok_or_eyre("supported constraint has a pattern")?;
+    let mut pending = vec![&pattern];
+    let mut languages = Vec::new();
+    while let Some(pattern) = pending.pop() {
+        match pattern {
+            ValuePattern::String { pattern } => languages.push(pattern),
+            ValuePattern::AllOf(parts) => pending.extend(parts),
+            other => eyre::bail!("expected a conjunction of string patterns, got {other:?}"),
+        }
+    }
+    Ok(regex::RegexSet::new(languages)?)
+}
 
 #[test]
 fn unsupported_constraint_shapes_abstain() {
@@ -9,7 +25,7 @@ fn unsupported_constraint_shapes_abstain() {
         "1.2.3",
         "=1.2.3",
         "!=1.2.3",
-        "~1.2",
+        "~1.2-0",
         "^1.2",
         ">1.33-0",
         "<=1.33-0",
@@ -78,7 +94,6 @@ fn zero_tilde_accepts_every_stable_version() {
         ("1.0.0", true),
         ("v99.8.7+build.1", true),
         ("1.0.0-alpha", false),
-        ("junk", false),
     ] {
         sim_assert_eq!(
             have: super::semver_constraint_matches_version("~0.0.0", version),
@@ -145,13 +160,11 @@ fn constraint_language_follows_helm_partial_bounds_and_floors() -> eyre::Result<
             want: Some(helm),
             "{constraint} vs {version}"
         );
-        let pattern = super::semver_constraint_match_pattern(constraint)
-            .ok_or_eyre("supported constraint has a pattern")?;
-        let language = regex::Regex::new(&pattern)?;
+        let language = constraint_regexes(constraint)?;
         sim_assert_eq!(
-            have: language.is_match(version),
+            have: language.matches(version).iter().count() == language.len(),
             want: helm,
-            "{constraint} vs {version}: {pattern}"
+            "{constraint} vs {version}"
         );
     }
     Ok(())
@@ -182,6 +195,12 @@ fn constraint_pattern_agrees_with_the_concrete_transfer() -> eyre::Result<()> {
         "~3.0.0",
         "~0.0.0",
         "~1.20.9",
+        "~1.2",
+        "~v1.2",
+        "~1",
+        "~0",
+        "~0.0",
+        "~3.0",
         ">01.2",
         "<0.0.1",
         ">=99.0.0",
@@ -236,20 +255,40 @@ fn constraint_pattern_agrees_with_the_concrete_transfer() -> eyre::Result<()> {
         }
     }
     for constraint in constraints {
-        let pattern = super::semver_constraint_match_pattern(constraint)
-            .ok_or_eyre("supported constraint has a pattern")?;
-        let language = regex::Regex::new(&pattern)?;
+        let language = constraint_regexes(constraint)?;
         for version in &versions {
             let Some(concrete) = super::semver_constraint_matches_version(constraint, version)
             else {
                 continue;
             };
             sim_assert_eq!(
-                have: language.is_match(version),
+                have: language.matches(version).iter().count() == language.len(),
                 want: concrete,
-                "{constraint} vs {version}: {pattern}"
+                "{constraint} vs {version}"
             );
         }
+    }
+    Ok(())
+}
+
+#[test]
+fn constraint_pattern_excludes_invalid_helm_versions() -> eyre::Result<()> {
+    let pattern = super::semver_constraint_match_pattern(">=1.2-0")
+        .ok_or_eyre("supported constraint has a pattern")?;
+    for (version, want) in [
+        (format!("1.2.3+{}", "b".repeat(250)), true),
+        (format!("1.2.3+{}", "b".repeat(251)), false),
+        ("1.2.3-01".to_owned(), false),
+        ("18446744073709551616.0.0".to_owned(), false),
+        ("18446744073709551615.0.0".to_owned(), true),
+    ] {
+        let operand = serde_json::json!(version);
+        sim_assert_eq!(have: pattern.matches(&operand), want: Some(want), "{version}");
+        sim_assert_eq!(
+            have: super::semver_constraint_matches_version(">=1.2-0", &version),
+            want: want.then_some(true),
+            "{version}"
+        );
     }
     Ok(())
 }

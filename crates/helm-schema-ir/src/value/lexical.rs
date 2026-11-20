@@ -170,11 +170,11 @@ pub(super) fn printed_preimage(output: &ValuePattern) -> Option<Lexical> {
     ])))
 }
 
-/// The non-nil, non-string operands whose Go `%v` spelling is one of `words`, when every word's
-/// producers are enumerable (the caller owns nil's spelling): `true`/`false` are booleans, and a canonical integer
-/// below 10^6 in magnitude prints the same from a float64 values file and an int64 `--set`.
-/// Other numeric-looking words (fractions, exponents, wide integers whose spelling depends on the
-/// values transport) and map or slice spellings leave the set inexact.
+/// Enumerates non-nil, non-string operands whose Go `%v` spelling is in `words`.
+/// Nonzero canonical integers below 10^6 in magnitude print the same from values files and
+/// `--set`.
+/// JSON Schema equates both signs of numeric zero even though Go prints them differently.
+/// Ambiguous numeric, map and slice spellings leave the preimage inexact.
 pub(super) fn printed_scalars(words: &BTreeSet<String>) -> Option<Vec<GuardValue>> {
     let mut scalars = Vec::new();
     for word in words {
@@ -188,13 +188,10 @@ pub(super) fn printed_scalars(words: &BTreeSet<String>) -> Option<Vec<GuardValue
                     && digits.len() <= 6
                     && digits.bytes().all(|byte| byte.is_ascii_digit())
                     && !(digits.len() > 1 && digits.starts_with('0'))
-                    && word != "-0";
+                    && digits != "0";
                 if canonical {
                     scalars.push(GuardValue::Int(word.parse().ok()?));
-                } else if !word.is_empty()
-                    && word
-                        .bytes()
-                        .all(|byte| byte.is_ascii_digit() || b"+-.eE".contains(&byte))
+                } else if word.parse::<f64>().is_ok()
                     || matches!(word.as_str(), "NaN" | "+Inf" | "-Inf")
                 {
                     return None;

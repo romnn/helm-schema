@@ -1364,28 +1364,65 @@ fn comparison_preimage(
     negated: bool,
     budget: &mut ComparisonBudget,
 ) -> Value {
+    let left = state.consumed(left);
+    let right = state.consumed(right);
+    consumed_comparison_preimage(state, &left, &right, negated, budget)
+}
+
+/// Compares consumed operands arm by arm, each under its own outcome. Consumption is deep, so the
+/// arms are not consumed again: a captured text that still holds the branch it was captured under
+/// would re-expand into that whole branch under the unchanged path.
+fn consumed_comparison_preimage(
+    state: &State,
+    left: &Value,
+    right: &Value,
+    negated: bool,
+    budget: &mut ComparisonBudget,
+) -> Value {
     if budget.remaining == 0 {
         budget.truncated = true;
         return unknown_comparison(state, left, right);
     }
     budget.remaining -= 1;
-    let left = state.consumed(left);
-    let right = state.consumed(right);
     if let ValueNode::Select { decision, yes, no } = left.node.as_ref() {
         return Value::select(
             Rc::clone(decision),
-            comparison_preimage(state, yes, &right.under(decision, true), negated, budget),
-            comparison_preimage(state, no, &right.under(decision, false), negated, budget),
+            consumed_comparison_preimage(
+                state,
+                &yes.under(decision, true),
+                &right.under(decision, true),
+                negated,
+                budget,
+            ),
+            consumed_comparison_preimage(
+                state,
+                &no.under(decision, false),
+                &right.under(decision, false),
+                negated,
+                budget,
+            ),
         );
     }
     if let ValueNode::Select { decision, yes, no } = right.node.as_ref() {
         return Value::select(
             Rc::clone(decision),
-            comparison_preimage(state, &left.under(decision, true), yes, negated, budget),
-            comparison_preimage(state, &left.under(decision, false), no, negated, budget),
+            consumed_comparison_preimage(
+                state,
+                &left.under(decision, true),
+                &yes.under(decision, true),
+                negated,
+                budget,
+            ),
+            consumed_comparison_preimage(
+                state,
+                &left.under(decision, false),
+                &no.under(decision, false),
+                negated,
+                budget,
+            ),
         );
     }
-    comparison_value(state, &left, &right, negated)
+    comparison_value(state, left, right, negated)
 }
 
 fn unknown_comparison_arguments(state: &State, arguments: &[Value]) -> Value {

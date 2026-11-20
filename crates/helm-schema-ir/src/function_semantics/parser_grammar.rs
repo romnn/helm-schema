@@ -4,6 +4,7 @@
 //! miss an invalid input but never rejects an input the parser accepts.
 
 use super::{CollectionItemSemantics, FunctionSemantics, ParserSemantics};
+use helm_schema_core::ValuePattern;
 
 /// Returns the lexical language required by a strict string parser operand.
 ///
@@ -14,24 +15,13 @@ use super::{CollectionItemSemantics, FunctionSemantics, ParserSemantics};
 pub(crate) fn strict_parser_operand_pattern(
     semantics: FunctionSemantics,
     argument_count: usize,
-) -> Option<(usize, &'static str)> {
+) -> Option<(usize, ValuePattern)> {
     match semantics.parser {
         // `semverCompare` parses its last operand and `semver` its only one.
         ParserSemantics::Semver if matches!(argument_count, 1 | 2) => {
-            // Masterminds semver's coercing parser keeps the CORE segments
-            // loose (leading zeros parse through `ParseUint`), but its
-            // prerelease validation rejects a NUMERIC identifier with a
-            // leading zero (`3.1.0-01` aborts while `3.1.0-rc.1` renders),
-            // so the prerelease alternatives spell that rule out. Build
-            // metadata stays unvalidated. Core components parse through
-            // `ParseUint(…, 10, 64)`, which overflow-checks the VALUE, not
-            // the spelling: leading zeros never overflow, so the bound
-            // applies to the significant digits only — up to 20 may fit
-            // uint64, while 21+ certainly overflow and abort (still a
-            // superset of the accepted language).
             Some((
                 argument_count - 1,
-                r"^v?(0*[0-9]{1,20})(\.0*[0-9]{1,20})?(\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+                helm_schema_ast::semver_version_pattern().clone(),
             ))
         }
         // `time.ParseDuration` overflow-checks each term twice: the raw
@@ -45,7 +35,9 @@ pub(crate) fn strict_parser_operand_pattern(
         // superset of the accepted language.
         ParserSemantics::Duration if argument_count == 2 => Some((
             0,
-            r"^[+-]?(0|((0*[0-9]{1,19}(\.[0-9]*)?|\.[0-9]+)ns|(0*[0-9]{1,16}(\.[0-9]*)?|\.[0-9]+)(us|µs|μs)|(0*[0-9]{1,13}(\.[0-9]*)?|\.[0-9]+)ms|(0*[0-9]{1,10}(\.[0-9]*)?|\.[0-9]+)s|(0*[0-9]{1,9}(\.[0-9]*)?|\.[0-9]+)m|(0*[0-9]{1,7}(\.[0-9]*)?|\.[0-9]+)h)+)$",
+            ValuePattern::String {
+                pattern: r"^[+-]?(0|((0*[0-9]{1,19}(\.[0-9]*)?|\.[0-9]+)ns|(0*[0-9]{1,16}(\.[0-9]*)?|\.[0-9]+)(us|µs|μs)|(0*[0-9]{1,13}(\.[0-9]*)?|\.[0-9]+)ms|(0*[0-9]{1,10}(\.[0-9]*)?|\.[0-9]+)s|(0*[0-9]{1,9}(\.[0-9]*)?|\.[0-9]+)m|(0*[0-9]{1,7}(\.[0-9]*)?|\.[0-9]+)h)+)$".to_owned(),
+            },
         )),
         // Go `url.Parse`'s accepted language, differential-verified against
         // ~900k fuzz candidates plus a fixed battery (zero mismatches and
@@ -66,7 +58,12 @@ pub(crate) fn strict_parser_operand_pattern(
         // Non-authority forms: `scheme:` raw opaque text, rooted
         // single-slash paths, and relative references whose first segment
         // is colon-free.
-        ParserSemantics::Url if argument_count == 1 => Some((0, URL_PARSE_PATTERN)),
+        ParserSemantics::Url if argument_count == 1 => Some((
+            0,
+            ValuePattern::String {
+                pattern: URL_PARSE_PATTERN.to_owned(),
+            },
+        )),
         _ => None,
     }
 }
