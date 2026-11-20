@@ -5968,7 +5968,7 @@
         "else": {
           "else": false,
           "if": {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
           },
           "then": true
         },
@@ -6221,7 +6221,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride@3"
@@ -6237,7 +6237,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride@3"
@@ -6278,10 +6278,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                "$ref": "#/definitions/constrains~1fullnameOverride@6"
               },
               {
                 "$ref": "#/definitions/constrains~1externalEtcd.enabled:t"
@@ -6303,10 +6303,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                "$ref": "#/definitions/constrains~1fullnameOverride@6"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@3"
@@ -6349,11 +6349,70 @@
       ],
       "type": "object"
     },
+    "constrains/architecture": {
+      "properties": {
+        "architecture": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "architecture"
+      ],
+      "type": "object"
+    },
+    "constrains/architecture+architecture=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1architecture=null"
+        },
+        {
+          "not": {
+            "properties": {
+              "architecture": {}
+            },
+            "required": [
+              "architecture"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/architecture+architecture=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1architecture+architecture=null"
+      }
+    },
+    "constrains/architecture+architecture=null@3": {
+      "not": {
+        "allOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1architecture+architecture=null"
+          }
+        ]
+      }
+    },
     "constrains/architecture=null": {
       "properties": {
         "architecture": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "architecture"
+      ],
+      "type": "object"
+    },
+    "constrains/architecture=replication": {
+      "properties": {
+        "architecture": {
+          "enum": [
+            "replication"
           ]
         }
       },
@@ -6585,7 +6644,7 @@
     "constrains/auth.clientProtocol=mtls+auth.clientProtocol=sasl_tls+auth.clientProtocol=tls+15more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride@6"
         },
         {
           "allOf": [
@@ -6594,7 +6653,7 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                     },
                     {
                       "$ref": "#/definitions/constrains~1auth.clientProtocol=mtls+auth.clientProtocol=sasl_tls+auth.clientProtocol=tls+13more"
@@ -7675,7 +7734,7 @@
     "constrains/etcd.fullnameOverride": {
       "properties": {
         "etcd": {
-          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride@6"
         }
       },
       "required": [
@@ -7733,7 +7792,7 @@
     "constrains/etcd.fullnameOverride:t": {
       "properties": {
         "etcd": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
         }
       },
       "required": [
@@ -7764,7 +7823,7 @@
       "not": {
         "properties": {
           "etcd": {
-            "$ref": "#/definitions/constrains~1nameOverride@6"
+            "$ref": "#/definitions/constrains~1nameOverride@7"
           }
         },
         "required": [
@@ -7836,25 +7895,30 @@
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
       }
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
       }
     },
     "constrains/fullnameOverride:t@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
       }
     },
     "constrains/fullnameOverride:t@4": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
       }
     },
     "constrains/fullnameOverride:t@5": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
+      }
+    },
+    "constrains/fullnameOverride:t@6": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -7867,20 +7931,25 @@
     },
     "constrains/fullnameOverride@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+        "$ref": "#/definitions/constrains~1fullnameOverride@6"
       }
     },
     "constrains/fullnameOverride@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+        "$ref": "#/definitions/constrains~1fullnameOverride@6"
       }
     },
     "constrains/fullnameOverride@4": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+        "$ref": "#/definitions/constrains~1fullnameOverride@6"
       }
     },
     "constrains/fullnameOverride@5": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride@6"
+      }
+    },
+    "constrains/fullnameOverride@6": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -8922,7 +8991,7 @@
     "constrains/kafka.fullnameOverride:t@2": {
       "properties": {
         "kafka": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
         }
       },
       "required": [
@@ -8933,7 +9002,7 @@
     "constrains/kafka.fullnameOverride@2": {
       "properties": {
         "kafka": {
-          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride@6"
         }
       },
       "required": [
@@ -8944,7 +9013,7 @@
     "constrains/kafka.nameOverride": {
       "properties": {
         "kafka": {
-          "$ref": "#/definitions/constrains~1nameOverride@6"
+          "$ref": "#/definitions/constrains~1nameOverride@7"
         }
       },
       "required": [
@@ -9873,7 +9942,7 @@
     "constrains/minio.fullnameOverride": {
       "properties": {
         "minio": {
-          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride@6"
         }
       },
       "required": [
@@ -9889,7 +9958,7 @@
     "constrains/minio.fullnameOverride:t@2": {
       "properties": {
         "minio": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
         }
       },
       "required": [
@@ -10017,7 +10086,7 @@
     "constrains/minio.nameOverride@2": {
       "properties": {
         "minio": {
-          "$ref": "#/definitions/constrains~1nameOverride@6"
+          "$ref": "#/definitions/constrains~1nameOverride@7"
         }
       },
       "required": [
@@ -10325,15 +10394,7 @@
     "constrains/mysql.architecture": {
       "properties": {
         "mysql": {
-          "properties": {
-            "architecture": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "architecture"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1architecture"
         }
       },
       "required": [
@@ -10390,22 +10451,7 @@
               "type": "object"
             },
             {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1architecture=null"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "architecture": {}
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
-                  }
-                }
-              ]
+              "$ref": "#/definitions/constrains~1architecture+architecture=null"
             }
           ]
         }
@@ -10418,17 +10464,7 @@
     "constrains/mysql.architecture=replication": {
       "properties": {
         "mysql": {
-          "properties": {
-            "architecture": {
-              "enum": [
-                "replication"
-              ]
-            }
-          },
-          "required": [
-            "architecture"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1architecture=replication"
         }
       },
       "required": [
@@ -10509,7 +10545,7 @@
     "constrains/mysql.fullnameOverride:t@2": {
       "properties": {
         "mysql": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
         }
       },
       "required": [
@@ -10520,7 +10556,7 @@
     "constrains/mysql.fullnameOverride@2": {
       "properties": {
         "mysql": {
-          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride@6"
         }
       },
       "required": [
@@ -10532,7 +10568,7 @@
       "not": {
         "properties": {
           "mysql": {
-            "$ref": "#/definitions/constrains~1nameOverride@6"
+            "$ref": "#/definitions/constrains~1nameOverride@7"
           }
         },
         "required": [
@@ -10603,25 +10639,30 @@
     },
     "constrains/nameOverride@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@6"
+        "$ref": "#/definitions/constrains~1nameOverride@7"
       }
     },
     "constrains/nameOverride@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@6"
+        "$ref": "#/definitions/constrains~1nameOverride@7"
       }
     },
     "constrains/nameOverride@4": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@6"
+        "$ref": "#/definitions/constrains~1nameOverride@7"
       }
     },
     "constrains/nameOverride@5": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@6"
+        "$ref": "#/definitions/constrains~1nameOverride@7"
       }
     },
     "constrains/nameOverride@6": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride@7"
+      }
+    },
+    "constrains/nameOverride@7": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -11704,7 +11745,7 @@
     "constrains/pulsar.fullnameOverride:t@2": {
       "properties": {
         "pulsar": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
         }
       },
       "required": [
@@ -11715,7 +11756,7 @@
     "constrains/pulsar.fullnameOverride@2": {
       "properties": {
         "pulsar": {
-          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride@6"
         }
       },
       "required": [
@@ -11747,7 +11788,7 @@
     "constrains/pulsar.nameOverride@2": {
       "properties": {
         "pulsar": {
-          "$ref": "#/definitions/constrains~1nameOverride@6"
+          "$ref": "#/definitions/constrains~1nameOverride@7"
         }
       },
       "required": [
@@ -12840,7 +12881,7 @@
     "constrains/zookeeper.fullnameOverride": {
       "properties": {
         "zookeeper": {
-          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride@6"
         }
       },
       "required": [
@@ -12936,7 +12977,7 @@
     "constrains/zookeeper.fullnameOverride:t": {
       "properties": {
         "zookeeper": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
         }
       },
       "required": [
@@ -12974,7 +13015,7 @@
     "constrains/zookeeper.nameOverride@2": {
       "properties": {
         "zookeeper": {
-          "$ref": "#/definitions/constrains~1nameOverride@6"
+          "$ref": "#/definitions/constrains~1nameOverride@7"
         }
       },
       "required": [
@@ -14560,7 +14601,7 @@
                       },
                       {
                         "not": {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                         }
                       },
                       {
@@ -14571,11 +14612,11 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "not": {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                          "$ref": "#/definitions/constrains~1fullnameOverride@6"
                         }
                       }
                     ]
@@ -14583,10 +14624,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1nameOverride:t@4"
@@ -15501,7 +15542,7 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1nameOverride@6"
+                              "$ref": "#/definitions/constrains~1nameOverride@7"
                             },
                             {
                               "$ref": "#/definitions/constrains~1auth.clientProtocol=mtls+auth.clientProtocol=sasl_tls+auth.clientProtocol=tls+15more"
@@ -15512,7 +15553,7 @@
                           "allOf": [
                             {
                               "not": {
-                                "$ref": "#/definitions/constrains~1nameOverride@6"
+                                "$ref": "#/definitions/constrains~1nameOverride@7"
                               }
                             },
                             {
@@ -15527,12 +15568,12 @@
                                         {
                                           "allOf": [
                                             {
-                                              "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                                              "$ref": "#/definitions/constrains~1fullnameOverride@6"
                                             },
                                             {
                                               "anyOf": [
                                                 {
-                                                  "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                                                  "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                                                 },
                                                 {
                                                   "allOf": [
@@ -15601,7 +15642,7 @@
                         "not": {
                           "anyOf": [
                             {
-                              "$ref": "#/definitions/constrains~1nameOverride@6"
+                              "$ref": "#/definitions/constrains~1nameOverride@7"
                             },
                             {
                               "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -15614,7 +15655,7 @@
                       },
                       {
                         "not": {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                         }
                       },
                       {
@@ -15641,14 +15682,14 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1auth.clientProtocol=mtls+auth.clientProtocol=sasl_tls+auth.clientProtocol=tls+7more"
                       },
                       {
                         "not": {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                          "$ref": "#/definitions/constrains~1fullnameOverride@6"
                         }
                       },
                       {
@@ -15897,14 +15938,14 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1mode=distributed"
                       },
                       {
                         "not": {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                          "$ref": "#/definitions/constrains~1fullnameOverride@6"
                         }
                       },
                       {
@@ -15915,7 +15956,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "not": {
@@ -15936,7 +15977,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                        "$ref": "#/definitions/constrains~1nameOverride@7"
                       },
                       {
                         "type": "object"
@@ -15970,7 +16011,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                        "$ref": "#/definitions/constrains~1nameOverride@7"
                       },
                       {
                         "$ref": "#/definitions/constrains~1mode@2"
@@ -16076,13 +16117,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                        "$ref": "#/definitions/constrains~1nameOverride@7"
                       },
                       {
                         "type": "object"
@@ -16113,10 +16154,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1mode=distributed"
@@ -16135,13 +16176,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                        "$ref": "#/definitions/constrains~1nameOverride@7"
                       },
                       {
                         "$ref": "#/definitions/constrains~1mode@2"
@@ -16172,10 +16213,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "type": "object"
@@ -16200,10 +16241,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1mode@2"
@@ -16228,10 +16269,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1mode@2"
@@ -16262,10 +16303,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "type": "object"
@@ -16499,6 +16540,187 @@
     },
     "mysql": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture=replication"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture=replication"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture=replication"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1architecture=replication"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1architecture"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture=replication"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride:t@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture=replication"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1architecture"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "architecture": {
           "anyOf": [
@@ -16544,10 +16766,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -16581,10 +16803,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -16615,7 +16837,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -16646,7 +16868,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -16902,10 +17124,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -16936,10 +17158,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -16967,10 +17189,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -16992,10 +17214,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -17029,10 +17251,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -17063,10 +17285,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1nameOverride:t@4"
@@ -17147,7 +17369,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1components.zookeeper:t"
@@ -17163,7 +17385,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -17182,7 +17404,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -17207,7 +17429,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -17235,7 +17457,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -17263,7 +17485,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1zookeeper.volumes.data.storageClass:t@2"
@@ -17294,7 +17516,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -17347,7 +17569,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                        "$ref": "#/definitions/constrains~1nameOverride@7"
                       },
                       {
                         "$ref": "#/definitions/constrains~1affinity.anti_affinity:t"
@@ -17378,10 +17600,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1persistence:t@2"
@@ -17409,13 +17631,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1nameOverride@6"
+                        "$ref": "#/definitions/constrains~1nameOverride@7"
                       },
                       {
                         "$ref": "#/definitions/constrains~1affinity.anti_affinity:t"
@@ -17443,10 +17665,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                        "$ref": "#/definitions/constrains~1fullnameOverride@6"
                       },
                       {
                         "$ref": "#/definitions/constrains~1affinity.anti_affinity:t"

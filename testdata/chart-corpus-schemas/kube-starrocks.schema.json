@@ -76,17 +76,7 @@
                       {
                         "properties": {
                           "starrocksFESpec": {
-                            "properties": {
-                              "image": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "image"
-                            ],
-                            "type": "object"
+                            "$ref": "#/definitions/constrains~1image=null"
                           }
                         },
                         "required": [
@@ -98,13 +88,7 @@
                         "not": {
                           "properties": {
                             "starrocksFESpec": {
-                              "properties": {
-                                "image": {}
-                              },
-                              "required": [
-                                "image"
-                              ],
-                              "type": "object"
+                              "$ref": "#/definitions/constrains~1image"
                             }
                           },
                           "required": [
@@ -1343,17 +1327,7 @@
                       {
                         "properties": {
                           "datadog": {
-                            "properties": {
-                              "profiling": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "profiling"
-                            ],
-                            "type": "object"
+                            "$ref": "#/definitions/constrains~1profiling=null"
                           }
                         },
                         "required": [
@@ -1929,17 +1903,7 @@
                       {
                         "properties": {
                           "metrics": {
-                            "properties": {
-                              "serviceMonitor": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "serviceMonitor"
-                            ],
-                            "type": "object"
+                            "$ref": "#/definitions/constrains~1serviceMonitor=null"
                           }
                         },
                         "required": [
@@ -1979,39 +1943,7 @@
           {
             "properties": {
               "starrocks": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "metrics": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "metrics"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "metrics": {}
-                          },
-                          "required": [
-                            "metrics"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1metrics+metrics=null"
               }
             },
             "required": [
@@ -3205,7 +3137,7 @@
                 "$ref": "#/definitions/constrains~1operator.nameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@4"
+                "$ref": "#/definitions/constrains~1operator.nameOverride@3"
               },
               {
                 "$ref": "#/definitions/constrains~1operator.nameOverride:t"
@@ -3308,6 +3240,41 @@
       ],
       "type": "object"
     },
+    "constrains/datadog+datadog=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "datadog": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "datadog": {}
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
     "constrains/datadog.log.logConfig": {
       "properties": {
         "datadog": {
@@ -3338,21 +3305,30 @@
         "datadog": {
           "properties": {
             "log": {
-              "properties": {
-                "logConfig": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "logConfig"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1logConfig=null"
             }
           },
           "required": [
             "log"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "datadog"
+      ],
+      "type": "object"
+    },
+    "constrains/datadog.metrics.enabled:t": {
+      "properties": {
+        "datadog": {
+          "properties": {
+            "metrics": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "metrics"
           ],
           "type": "object"
         }
@@ -7328,6 +7304,28 @@
       ],
       "type": "object"
     },
+    "constrains/image": {
+      "properties": {
+        "image": {}
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "constrains/image=null": {
+      "properties": {
+        "image": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
     "constrains/initPassword.enabled:t": {
       "properties": {
         "initPassword": {
@@ -7376,21 +7374,72 @@
     "constrains/initPassword.passwordSecret:t@2": {
       "properties": {
         "initPassword": {
-          "properties": {
-            "passwordSecret": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "passwordSecret"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1passwordSecret:t"
         }
       },
       "required": [
         "initPassword"
       ],
       "type": "object"
+    },
+    "constrains/logConfig": {
+      "properties": {
+        "logConfig": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "logConfig"
+      ],
+      "type": "object"
+    },
+    "constrains/logConfig=null": {
+      "properties": {
+        "logConfig": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "logConfig"
+      ],
+      "type": "object"
+    },
+    "constrains/metrics+metrics=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "metrics": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "metrics": {}
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        }
+      ]
     },
     "constrains/name": {
       "properties": {
@@ -8129,7 +8178,7 @@
                       "$ref": "#/definitions/constrains~1operator.nameOverride@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1operator.nameOverride@3"
+                      "$ref": "#/definitions/constrains~1operator.nameOverride@4"
                     }
                   ]
                 }
@@ -8163,7 +8212,7 @@
                       "$ref": "#/definitions/constrains~1operator.nameOverride@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1operator.nameOverride@3"
+                      "$ref": "#/definitions/constrains~1operator.nameOverride@4"
                     }
                   ]
                 },
@@ -8206,7 +8255,7 @@
           "$ref": "#/definitions/constrains~1operator.nameOverride"
         },
         {
-          "$ref": "#/definitions/constrains~1operator.nameOverride@4"
+          "$ref": "#/definitions/constrains~1operator.nameOverride@3"
         }
       ]
     },
@@ -9046,7 +9095,7 @@
     "constrains/operator.nameOverride@3": {
       "properties": {
         "operator": {
-          "$ref": "#/definitions/constrains~1nameOverride@7"
+          "$ref": "#/definitions/constrains~1nameOverride@6"
         }
       },
       "required": [
@@ -9057,7 +9106,7 @@
     "constrains/operator.nameOverride@4": {
       "properties": {
         "operator": {
-          "$ref": "#/definitions/constrains~1nameOverride@6"
+          "$ref": "#/definitions/constrains~1nameOverride@7"
         }
       },
       "required": [
@@ -9365,42 +9414,47 @@
       ],
       "type": "object"
     },
+    "constrains/passwordSecret:t": {
+      "properties": {
+        "passwordSecret": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "passwordSecret"
+      ],
+      "type": "object"
+    },
+    "constrains/profiling=null": {
+      "properties": {
+        "profiling": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "profiling"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceMonitor=null": {
+      "properties": {
+        "serviceMonitor": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
     "constrains/starrocks.datadog+starrocks.datadog=null": {
       "properties": {
         "starrocks": {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "properties": {
-                    "datadog": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "datadog"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "datadog": {}
-                    },
-                    "required": [
-                      "datadog"
-                    ],
-                    "type": "object"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1datadog+datadog=null"
         }
       },
       "required": [
@@ -9442,15 +9496,7 @@
             "datadog": {
               "properties": {
                 "log": {
-                  "properties": {
-                    "logConfig": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "logConfig"
-                  ],
-                  "type": "object"
+                  "$ref": "#/definitions/constrains~1logConfig"
                 }
               },
               "required": [
@@ -9473,23 +9519,7 @@
     "constrains/starrocks.datadog.metrics.enabled:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "datadog": {
-              "properties": {
-                "metrics": {
-                  "$ref": "#/definitions/constrains~1enabled:t"
-                }
-              },
-              "required": [
-                "metrics"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "datadog"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1datadog.metrics.enabled:t"
         }
       },
       "required": [
@@ -9500,39 +9530,7 @@
     "constrains/starrocks.starrocksFESpec+starrocks.starrocksFESpec=null": {
       "properties": {
         "starrocks": {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "starrocksFESpec": {}
-                    },
-                    "required": [
-                      "starrocksFESpec"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "starrocksFESpec": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "starrocksFESpec"
-                  ],
-                  "type": "object"
-                }
-              ]
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1starrocksFESpec+starrocksFESpec=null"
         }
       },
       "required": [
@@ -9543,23 +9541,7 @@
     "constrains/starrocks.starrocksFESpec.hostAliases:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "hostAliases": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "hostAliases"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.hostAliases:t"
         }
       },
       "required": [
@@ -9575,31 +9557,7 @@
     "constrains/starrocks.starrocksFESpec.image.tag:t@2": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "tag": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "tag"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.image.tag:t@2"
         }
       },
       "required": [
@@ -9610,23 +9568,7 @@
     "constrains/starrocks.starrocksFESpec.imagePullSecrets:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "imagePullSecrets": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "imagePullSecrets"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.imagePullSecrets:t"
         }
       },
       "required": [
@@ -9637,23 +9579,7 @@
     "constrains/starrocks.starrocksFESpec.nodeSelector:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "nodeSelector": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "nodeSelector"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.nodeSelector:t"
         }
       },
       "required": [
@@ -9664,23 +9590,7 @@
     "constrains/starrocks.starrocksFESpec.podLabels:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "podLabels": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "podLabels"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.podLabels:t"
         }
       },
       "required": [
@@ -9691,23 +9601,7 @@
     "constrains/starrocks.starrocksFESpec.runAsNonRoot:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "runAsNonRoot": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "runAsNonRoot"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.runAsNonRoot:t"
         }
       },
       "required": [
@@ -9718,23 +9612,7 @@
     "constrains/starrocks.starrocksFESpec.schedulerName:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "schedulerName": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "schedulerName"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.schedulerName:t"
         }
       },
       "required": [
@@ -9745,23 +9623,7 @@
     "constrains/starrocks.starrocksFESpec.service.annotations:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "service": {
-                  "$ref": "#/definitions/constrains~1annotations:t"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.service.annotations:t"
         }
       },
       "required": [
@@ -9772,31 +9634,7 @@
     "constrains/starrocks.starrocksFESpec.service.type:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "type": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.service.type:t"
         }
       },
       "required": [
@@ -9807,23 +9645,7 @@
     "constrains/starrocks.starrocksFESpec.serviceAccount:t": {
       "properties": {
         "starrocks": {
-          "properties": {
-            "starrocksFESpec": {
-              "properties": {
-                "serviceAccount": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "starrocksFESpec"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1starrocksFESpec.serviceAccount:t"
         }
       },
       "required": [
@@ -9842,6 +9664,50 @@
           }
         ]
       }
+    },
+    "constrains/starrocksCluster.componentValues+starrocksCluster.componentValues=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "starrocksCluster": {
+                "properties": {
+                  "componentValues": {}
+                },
+                "required": [
+                  "componentValues"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocksCluster"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "starrocksCluster": {
+              "properties": {
+                "componentValues": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "componentValues"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "starrocksCluster"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/starrocksCluster.name": {
       "not": {
@@ -10032,6 +9898,41 @@
       ],
       "type": "object"
     },
+    "constrains/starrocksFESpec+starrocksFESpec=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "starrocksFESpec": {}
+                },
+                "required": [
+                  "starrocksFESpec"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "starrocksFESpec": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "starrocksFESpec"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
     "constrains/starrocksFESpec.feEnvVars": {
       "properties": {
         "starrocksFESpec": {
@@ -10061,6 +9962,217 @@
           },
           "required": [
             "feEnvVars"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.hostAliases:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "hostAliases": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "hostAliases"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.image.tag:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1starrocksFESpec.image.tag:t@2"
+      }
+    },
+    "constrains/starrocksFESpec.image.tag:t@2": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "image": {
+              "properties": {
+                "tag": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "tag"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.imagePullSecrets:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "imagePullSecrets": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "imagePullSecrets"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.nodeSelector:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "nodeSelector": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "nodeSelector"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.podLabels:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "podLabels": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "podLabels"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.runAsNonRoot:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "runAsNonRoot": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "runAsNonRoot"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.schedulerName:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "schedulerName": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "schedulerName"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.service.annotations:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "service": {
+              "$ref": "#/definitions/constrains~1annotations:t"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.service.type:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
+      ],
+      "type": "object"
+    },
+    "constrains/starrocksFESpec.serviceAccount:t": {
+      "properties": {
+        "starrocksFESpec": {
+          "properties": {
+            "serviceAccount": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "serviceAccount"
           ],
           "type": "object"
         }
@@ -11010,6 +11122,44 @@
       "allOf": [
         {
           "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "starrocksOperator": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "starrocksOperator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "starrocksOperator": {}
+                      },
+                      "required": [
+                        "starrocksOperator"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
             "anyOf": [
               {
                 "allOf": [
@@ -11450,6 +11600,30 @@
         },
         "starrocksOperator": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1image=null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "affinity": {
               "description": "affinity for operator pod scheduling."
@@ -11519,6 +11693,119 @@
     "starrocks": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "$ref": "#/definitions/constrains~1datadog+datadog=null"
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "starrocksCluster": {}
+                      },
+                      "required": [
+                        "starrocksCluster"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "starrocksCluster": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "starrocksCluster"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "$ref": "#/definitions/constrains~1metrics+metrics=null"
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "starrocksCluster": {
+                          "properties": {
+                            "componentValues": {
+                              "$ref": "#/definitions/constrains~1image"
+                            }
+                          },
+                          "required": [
+                            "componentValues"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "starrocksCluster"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "starrocksCluster": {
+                        "properties": {
+                          "componentValues": {
+                            "$ref": "#/definitions/constrains~1image=null"
+                          }
+                        },
+                        "required": [
+                          "componentValues"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "starrocksCluster"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1starrocksFESpec.image.tag:t"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "$ref": "#/definitions/constrains~1starrocksFESpec+starrocksFESpec=null"
+          },
+          "then": false
+        },
         {
           "if": {
             "anyOf": [
@@ -11683,6 +11970,253 @@
           "if": {
             "allOf": [
               {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "starrocksFESpec": {
+                          "properties": {
+                            "config": {}
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "starrocksFESpec"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "starrocksFESpec": {
+                        "properties": {
+                          "config": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "starrocksFESpec"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1datadog.metrics.enabled:t"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1starrocksFESpec.service.type:t"
+                  },
+                  "then": true
+                }
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.hostAliases:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.podLabels:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.nodeSelector:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.imagePullSecrets:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1starrocksFESpec.image.tag:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.serviceAccount:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.schedulerName:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.runAsNonRoot:t"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1starrocksCluster.componentValues+starrocksCluster.componentValues=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "initPassword": {}
+                      },
+                      "required": [
+                        "initPassword"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "initPassword": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "initPassword"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "datadog": {
+                          "properties": {
+                            "metrics": {}
+                          },
+                          "required": [
+                            "metrics"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "datadog"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "datadog": {
+                        "properties": {
+                          "metrics": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "metrics"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "datadog"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1starrocksFESpec.service.type:t"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1starrocksFESpec.service.annotations:t"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1starrocksFESpec.service.type:t"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1starrocksFESpec.service.annotations:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1datadog.metrics.enabled:t"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1starrocksCluster.name:t"
               },
               {
@@ -11811,6 +12345,68 @@
           "if": {
             "allOf": [
               {
+                "type": "object"
+              },
+              {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1starrocksFESpec.hostAliases:t"
+                },
+                "then": {
+                  "else": true,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1starrocksFESpec.image.tag:t@2"
+                  },
+                  "then": {
+                    "else": true,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1starrocksFESpec.imagePullSecrets:t"
+                    },
+                    "then": {
+                      "else": true,
+                      "if": {
+                        "$ref": "#/definitions/constrains~1starrocksFESpec.nodeSelector:t"
+                      },
+                      "then": {
+                        "else": true,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1starrocksFESpec.podLabels:t"
+                        },
+                        "then": {
+                          "else": true,
+                          "if": {
+                            "$ref": "#/definitions/constrains~1starrocksFESpec.runAsNonRoot:t"
+                          },
+                          "then": {
+                            "else": true,
+                            "if": {
+                              "$ref": "#/definitions/constrains~1starrocksFESpec.schedulerName:t"
+                            },
+                            "then": {
+                              "else": true,
+                              "if": {
+                                "$ref": "#/definitions/constrains~1starrocksFESpec.serviceAccount:t"
+                              },
+                              "then": false
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1starrocksCluster.componentValues+starrocksCluster.componentValues=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1initPassword.passwordSecret:t"
               },
               {
@@ -11875,10 +12471,104 @@
         },
         "datadog": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "profiling": {}
+                      },
+                      "required": [
+                        "profiling"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1profiling=null"
+                  }
+                ]
+              },
+              "then": false
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "log": {}
+                      },
+                      "required": [
+                        "log"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "log": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "log"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "This configuration is used to integrate with an external system DataDog.\nYou can enable the integration by setting the enabled to true, e.g., datalog.log.enabled=true will enable datadog agent\nto collect the log.",
           "properties": {
             "log": {
               "additionalProperties": {},
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1logConfig=null"
+                          },
+                          {
+                            "not": {
+                              "properties": {
+                                "logConfig": {}
+                              },
+                              "required": [
+                                "logConfig"
+                              ],
+                              "type": "object"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "else": false,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1enabled:t"
+                        },
+                        "then": {
+                          "else": false,
+                          "if": {
+                            "$ref": "#/definitions/constrains~1logConfig"
+                          },
+                          "then": true
+                        }
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
               "properties": {
                 "enableMultilineLogParsing": {
                   "description": "Enable multiline log parsing rules compatible with the Datadog agent.\nWhen true, a log_processing_rules entry of type \"multi_line\" is added to the log annotation.\nFE nodes use a Java (log4j) timestamp pattern; BE and CN nodes use a C++ glog timestamp pattern.\nIf logConfig already contains \"log_processing_rules\", it takes priority and this flag is ignored.",
@@ -11931,6 +12621,56 @@
         "global": {},
         "initPassword": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "password": {}
+                          },
+                          "required": [
+                            "password"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "password": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "password"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1enabled:t"
+                    },
+                    "then": {
+                      "else": true,
+                      "if": {
+                        "$ref": "#/definitions/constrains~1passwordSecret:t"
+                      },
+                      "then": false
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "This configuration is used to modify the root password during initial deployment.\nAfter deployment is completed, it won't take effect to modify the password here and to do a `helm upgrade`.\nIt also supports providing a secret name that contains a password, using the password in the secret instead of the plaintext in the values.yaml.\nWhen both password and passwordSecret are set, only passwordSecret takes effect.\nNote: If you install StarRocks using helm install without setting the initPassword, then for the following upgrade deployments,\nyou should also not set the initPassword.\nIf you install StarRocks using helm install and set the initPassword, please always retain the configuration of initPassword.",
           "properties": {
             "annotations": {
@@ -11961,6 +12701,29 @@
         },
         "metrics": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceMonitor": {}
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor=null"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "This configuration is used to integrate with the external system Prometheus.",
           "properties": {
             "serviceMonitor": {
@@ -12624,6 +13387,54 @@
         },
         "starrocksFESpec": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1image=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1image"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "spec to deploy fe.",
           "properties": {
             "affinity": {

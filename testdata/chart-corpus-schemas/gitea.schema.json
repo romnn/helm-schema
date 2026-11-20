@@ -157,32 +157,7 @@
             "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/definitions/constrains~1service+service=null"
           },
           {
             "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.rules:t"
@@ -3703,6 +3678,34 @@
       ],
       "type": "object"
     },
+    "constrains/service+service=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "service": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "service": {}
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/valkey-cluster": {
       "not": {
         "properties": {
@@ -4697,6 +4700,29 @@
     "valkey-cluster": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
         {
           "if": {
             "allOf": [

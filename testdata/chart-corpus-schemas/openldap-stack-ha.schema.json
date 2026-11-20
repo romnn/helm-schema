@@ -1076,6 +1076,34 @@
         }
       ]
     },
+    "constrains/ingress+ingress=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "ingress": {}
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "ingress": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/ingress.enabled:t": {
       "properties": {
         "ingress": {
@@ -1704,6 +1732,29 @@
           "if": {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress+ingress=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
               },
               {
@@ -1804,6 +1855,29 @@
           "then": {
             "$ref": "#/definitions/when~1service.type!=null~1then~1fail"
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress+ingress=null"
+              }
+            ]
+          },
+          "then": false
         },
         {
           "if": {

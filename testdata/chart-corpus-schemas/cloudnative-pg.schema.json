@@ -1226,15 +1226,7 @@
           {
             "properties": {
               "monitoring": {
-                "properties": {
-                  "grafanaDashboard": {
-                    "$ref": "#/definitions/constrains~1create:t"
-                  }
-                },
-                "required": [
-                  "grafanaDashboard"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1grafanaDashboard.create:t"
               }
             },
             "required": [
@@ -1245,41 +1237,7 @@
           {
             "properties": {
               "monitoring": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1grafanaDashboard.create"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "create": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1grafanaDashboard.create+grafanaDashboard.create=null"
               }
             },
             "required": [
@@ -2262,6 +2220,54 @@
             "create"
           ],
           "type": "object"
+        }
+      },
+      "required": [
+        "grafanaDashboard"
+      ],
+      "type": "object"
+    },
+    "constrains/grafanaDashboard.create+grafanaDashboard.create=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1grafanaDashboard.create"
+              }
+            },
+            {
+              "properties": {
+                "grafanaDashboard": {
+                  "properties": {
+                    "create": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "grafanaDashboard"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/grafanaDashboard.create:t": {
+      "properties": {
+        "grafanaDashboard": {
+          "$ref": "#/definitions/constrains~1create:t"
         }
       },
       "required": [
@@ -3914,7 +3920,7 @@
                   "$ref": "#/definitions/constrains~1service.name=true"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1service.name@5"
+                  "$ref": "#/definitions/constrains~1service.name@4"
                 },
                 {
                   "$ref": "#/definitions/constrains~1service.name@3"
@@ -3923,7 +3929,7 @@
                   "$ref": "#/definitions/constrains~1service+service.name"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1service.name@4"
+                  "$ref": "#/definitions/constrains~1service.name@5"
                 }
               ]
             }
@@ -4276,13 +4282,13 @@
           "$ref": "#/definitions/constrains~1service.name=true"
         },
         {
-          "$ref": "#/definitions/constrains~1service.name@5"
+          "$ref": "#/definitions/constrains~1service.name@4"
         },
         {
           "$ref": "#/definitions/constrains~1service.name@3"
         },
         {
-          "$ref": "#/definitions/constrains~1service.name@4"
+          "$ref": "#/definitions/constrains~1service.name@5"
         }
       ]
     },
@@ -4375,7 +4381,7 @@
     "constrains/service.name@4": {
       "properties": {
         "service": {
-          "$ref": "#/definitions/constrains~1name@15"
+          "$ref": "#/definitions/constrains~1name@11"
         }
       },
       "required": [
@@ -4386,7 +4392,7 @@
     "constrains/service.name@5": {
       "properties": {
         "service": {
-          "$ref": "#/definitions/constrains~1name@11"
+          "$ref": "#/definitions/constrains~1name@15"
         }
       },
       "required": [
@@ -5196,6 +5202,56 @@
     "imagePullSecrets": {},
     "monitoring": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "grafanaDashboard": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "grafanaDashboard"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "grafanaDashboard": {}
+                      },
+                      "required": [
+                        "grafanaDashboard"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1grafanaDashboard.create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1grafanaDashboard.create+grafanaDashboard.create=null"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "global": {},
         "grafanaDashboard": {

@@ -2,6 +2,123 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "definitions": {
+    "constrains/annotations": {
+      "not": {
+        "$ref": "#/definitions/constrains~1annotations@4"
+      }
+    },
+    "constrains/annotations+annotations=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "annotations": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1annotations@3"
+        }
+      ]
+    },
+    "constrains/annotations+annotations=null@2": {
+      "not": {
+        "allOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1annotations+annotations=null"
+          }
+        ]
+      }
+    },
+    "constrains/annotations:helm-marker-free": {
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/helm-marker-free"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations:t": {
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1annotations@5"
+      }
+    },
+    "constrains/annotations@3": {
+      "not": {
+        "properties": {
+          "annotations": {}
+        },
+        "required": [
+          "annotations"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/annotations@4": {
+      "properties": {
+        "annotations": {
+          "minProperties": 1,
+          "type": "object"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations@5": {
+      "properties": {
+        "annotations": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/prometheusrules.enabled:t": {
+      "properties": {
+        "prometheusrules": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "prometheusrules"
+      ],
+      "type": "object"
+    },
     "helm-marker-free": {
       "anyOf": [
         {
@@ -72,23 +189,159 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "prometheusrules": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/definitions/t"
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "alertmanagers": {}
+                      },
+                      "required": [
+                        "alertmanagers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "alertmanagers": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "alertmanagers"
+                    ],
+                    "type": "object"
                   }
-                },
-                "required": [
-                  "enabled"
-                ],
+                ]
+              },
+              {
                 "type": "object"
               }
-            },
-            "required": [
-              "prometheusrules"
-            ],
-            "type": "object"
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "podmonitors": {}
+                      },
+                      "required": [
+                        "podmonitors"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "podmonitors": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "podmonitors"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "servicemonitors": {}
+                      },
+                      "required": [
+                        "servicemonitors"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "servicemonitors": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "servicemonitors"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "probes": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "probes"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "probes": {}
+                      },
+                      "required": [
+                        "probes"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "$ref": "#/definitions/constrains~1prometheusrules.enabled:t"
           },
           "then": {
             "additionalProperties": {},
@@ -126,6 +379,387 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "scrapeconfigs": {}
+                      },
+                      "required": [
+                        "scrapeconfigs"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "scrapeconfigs": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "scrapeconfigs"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "alertmanagerconfigs": {}
+                      },
+                      "required": [
+                        "alertmanagerconfigs"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "alertmanagerconfigs": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "alertmanagerconfigs"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "thanosrulers": {}
+                      },
+                      "required": [
+                        "thanosrulers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "thanosrulers": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "thanosrulers"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheusrules": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "prometheusrules"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheusrules": {}
+                      },
+                      "required": [
+                        "prometheusrules"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheusagents": {}
+                      },
+                      "required": [
+                        "prometheusagents"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "prometheusagents": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "prometheusagents"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheuses": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "prometheuses"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheuses": {}
+                      },
+                      "required": [
+                        "prometheuses"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:helm-marker-free"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations+annotations=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1prometheusrules.enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:helm-marker-free"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations+annotations=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1prometheusrules.enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1annotations@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:t"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations+annotations=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1prometheusrules.enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1annotations"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations@5"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations+annotations=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1prometheusrules.enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:helm-marker-free"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "annotations"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "annotations": {
+                              "type": "null"
+                            }
+                          },
+                          "required": [
+                            "annotations"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1annotations@3"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations+annotations=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1prometheusrules.enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "description": "Settings for CRDs",

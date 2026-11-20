@@ -51842,17 +51842,7 @@
             {
               "properties": {
                 "csi": {
-                  "properties": {
-                    "volumeSnapshots": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "volumeSnapshots"
-                  ],
-                  "type": "object"
+                  "$ref": "#/definitions/constrains~1volumeSnapshots=null"
                 }
               },
               "required": [
@@ -51864,13 +51854,7 @@
               "not": {
                 "properties": {
                   "csi": {
-                    "properties": {
-                      "volumeSnapshots": {}
-                    },
-                    "required": [
-                      "volumeSnapshots"
-                    ],
-                    "type": "object"
+                    "$ref": "#/definitions/constrains~1volumeSnapshots"
                   }
                 },
                 "required": [
@@ -85341,6 +85325,28 @@
       ],
       "type": "object"
     },
+    "constrains/volumeSnapshots": {
+      "properties": {
+        "volumeSnapshots": {}
+      },
+      "required": [
+        "volumeSnapshots"
+      ],
+      "type": "object"
+    },
+    "constrains/volumeSnapshots=null": {
+      "properties": {
+        "volumeSnapshots": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "volumeSnapshots"
+      ],
+      "type": "object"
+    },
     "constrains/write": {
       "additionalProperties": {},
       "properties": {
@@ -97074,6 +97080,47 @@
                 "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null@2"
               },
               {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "loki": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "loki"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "loki": {}
+                      },
+                      "required": [
+                        "loki"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null@2"
+              },
+              {
                 "$ref": "#/definitions/constrains~1loki.storage.type=alibabacloud+loki.storage.type=azure+loki.storage.type=gcs+2more"
               },
               {
@@ -98070,6 +98117,38 @@
     "nameOverride": {},
     "openebs-crds": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/definitions/constrains~1csi+csi=null"
+          },
+          "then": false
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "csi": {
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1volumeSnapshots=null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1volumeSnapshots"
+                        }
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ]
+            }
+          }
+        }
+      ],
       "properties": {
         "csi": {
           "additionalProperties": {},

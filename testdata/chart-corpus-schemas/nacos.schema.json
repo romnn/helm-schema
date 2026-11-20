@@ -1296,14 +1296,7 @@
           "type": "object"
         },
         {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1architecture=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1architecture"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
         }
       ]
     },
@@ -1317,6 +1310,16 @@
         },
         {
           "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1architecture"
+        }
+      ]
+    },
+    "constrains/architecture+architecture=null@5": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1architecture=null"
         },
         {
           "$ref": "#/definitions/constrains~1architecture"
@@ -1461,6 +1464,16 @@
       "type": "object"
     },
     "constrains/enabled+enabled=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled+enabled=null@2": {
       "anyOf": [
         {
           "not": {
@@ -1684,14 +1697,7 @@
     "constrains/mysql.enabled+mysql.enabled=null": {
       "properties": {
         "mysql": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
         }
       },
       "required": [
@@ -1999,6 +2005,13 @@
       },
       "type": "object"
     },
+    "when/architecture/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1architecture@2"
+      },
+      "then": false
+    },
     "when/commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more/then/fail": {
       "if": {
         "allOf": [
@@ -2151,6 +2164,50 @@
       "allOf": [
         {
           "if": {
+            "else": {
+              "else": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1architecture~1then~1fail~1else~1any"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1architecture~1then~1fail~1else~1any"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
+              },
+              "then": false
+            }
+          },
+          "then": false
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+5more"
@@ -2159,7 +2216,7 @@
                 "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+commonLabels+9more"
               },
               {
-                "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
               },
               {
                 "type": "object"
@@ -2169,6 +2226,57 @@
           "then": {
             "$ref": "#/definitions/when~1commonLabels!=null+fullnameOverride!=null+nameOverride!=null+1more~1then~1fail"
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1architecture=replication@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "secondary": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "secondary"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "secondary": {}
+                      },
+                      "required": [
+                        "secondary"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
         },
         {
           "if": {

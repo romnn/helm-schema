@@ -3718,6 +3718,16 @@
       ],
       "type": "object"
     },
+    "constrains/enabled+enabled:t+enabled=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      ]
+    },
     "constrains/enabled+enabled=null": {
       "allOf": [
         {
@@ -6607,6 +6617,63 @@
           "if": {
             "allOf": [
               {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "metricLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "metricLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "metricLog": {}
+                          },
+                          "required": [
+                            "metricLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password+fullnameOverride+fullnameOverride:t+2more"
               },
               {
@@ -6620,6 +6687,234 @@
             },
             "then": false
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "traceLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "traceLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "traceLog": {}
+                          },
+                          "required": [
+                            "traceLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "processorsProfileLog": {}
+                          },
+                          "required": [
+                            "processorsProfileLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "processorsProfileLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "processorsProfileLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "blobStorageLog": {}
+                          },
+                          "required": [
+                            "blobStorageLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "blobStorageLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "blobStorageLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "sessionLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "sessionLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "sessionLog": {}
+                          },
+                          "required": [
+                            "sessionLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
         },
         {
           "if": {
@@ -6643,6 +6938,218 @@
           "if": {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "queryViewsLog": {}
+                          },
+                          "required": [
+                            "queryViewsLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "queryViewsLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "queryViewsLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "partLog": {}
+                          },
+                          "required": [
+                            "partLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "partLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "partLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {}
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "backupLog": {}
+                          },
+                          "required": [
+                            "backupLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "backupLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "backupLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
               },
               {
@@ -6685,6 +7192,234 @@
           "if": {
             "allOf": [
               {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "asynchronousInsertLog": {}
+                          },
+                          "required": [
+                            "asynchronousInsertLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "asynchronousInsertLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "asynchronousInsertLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "crashLog": {}
+                          },
+                          "required": [
+                            "crashLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "crashLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "crashLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "queryThreadLog": {}
+                          },
+                          "required": [
+                            "queryThreadLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "queryThreadLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "queryThreadLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "queryLog": {}
+                          },
+                          "required": [
+                            "queryLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "queryLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "queryLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1zookeeper.fullnameOverride+zookeeper.fullnameOverride:t+zookeeper.nameOverride+4more"
               },
               {
@@ -6698,6 +7433,120 @@
           "then": {
             "$ref": "#/definitions/when~1zookeeper.fullnameOverride!=null+zookeeper.nameOverride!=null+3more~1then~1fail"
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "zookeeperLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "zookeeperLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "zookeeperLog": {}
+                          },
+                          "required": [
+                            "zookeeperLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clickhouseOperator": {
+                        "properties": {
+                          "asynchronousMetricLog": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "asynchronousMetricLog"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clickhouseOperator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "clickhouseOperator": {
+                          "properties": {
+                            "asynchronousMetricLog": {}
+                          },
+                          "required": [
+                            "asynchronousMetricLog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "clickhouseOperator"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "description": "Clickhouse default values\nFor complete list of configurations, check `values.yaml` of `clickhouse` chart.",

@@ -168,39 +168,7 @@
           {
             "properties": {
               "dask-gateway": {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "traefik": {}
-                          },
-                          "required": [
-                            "traefik"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "traefik": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "traefik"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1traefik+traefik=null"
               }
             },
             "required": [
@@ -1766,6 +1734,41 @@
       ],
       "type": "object"
     },
+    "constrains/traefik+traefik=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "traefik": {}
+                },
+                "required": [
+                  "traefik"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "traefik": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "traefik"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
     "t": {
       "anyOf": [
         {
@@ -2108,6 +2111,50 @@
             },
             "then": false
           }
+        },
+        {
+          "if": {
+            "$ref": "#/definitions/constrains~1traefik+traefik=null"
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "gateway": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "gateway"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "gateway": {}
+                      },
+                      "required": [
+                        "gateway"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {
@@ -2530,6 +2577,39 @@
         },
         "traefik": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "traefik nested config relates to the traefik Pod and Traefik running within it\nthat is acting as a proxy for traffic towards the gateway or user created\nDaskCluster resources.",
           "properties": {
             "additionalArguments": {

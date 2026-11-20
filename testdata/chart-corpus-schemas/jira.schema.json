@@ -697,6 +697,16 @@
       "type": "object"
     },
     "constrains/enabled+enabled=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled+enabled=null@2": {
       "anyOf": [
         {
           "not": {
@@ -1135,14 +1145,7 @@
     "constrains/opensearch.enabled+opensearch.enabled=null": {
       "properties": {
         "opensearch": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
         }
       },
       "required": [
@@ -1454,14 +1457,7 @@
               "else": {
                 "else": false,
                 "if": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                    },
-                    {
-                      "type": "object"
-                    }
-                  ]
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
                 },
                 "then": {
                   "$ref": "#/definitions/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup"
@@ -1502,7 +1498,7 @@
                 "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
               },
               {
-                "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
               },
               {
                 "type": "object"
@@ -1512,6 +1508,54 @@
           "then": {
             "$ref": "#/definitions/when~1image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null~1then~1fail"
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {}
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
         },
         {
           "if": {
