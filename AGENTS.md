@@ -122,3 +122,9 @@ Load the relevant skill for procedures:
 - [landing-workflow](.agents/skills/landing-workflow/SKILL.md): campaigns, ledgers, hand-offs, landing chain and receipts.
 - [rearchitecture](.agents/skills/rearchitecture/SKILL.md): rewriting a pipeline part without losing what the old path
   got right (inventory, parity preview, deletion gate, test reconciliation).
+- [lane-builder](.agents/skills/lane-builder/SKILL.md): implementing one change fast: direction first, a cheap inner loop
+  (focused laws, `--only` dumps, `corpus_replay` in about a minute), CPU before full proof, a Helm-semantics table before
+  hand-back.
+
+Persist generic learnings (process, tooling, pitfalls) in this file or the relevant skill as soon as they are confirmed,
+so a fresh session never has to rediscover them. Campaign state belongs in `plan/` ledgers, not here.
