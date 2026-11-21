@@ -857,10 +857,7 @@ fn certificate_exhaustion_keeps_every_completed_composition_shared() -> eyre::Re
         .ok_or_eyre("the dispatcher proof fits its logical allowance")?;
     let charge = usize::try_from(4 * length - 1)?;
     sim_assert_eq!(have: remaining, want: super::MAX_CANONICAL_WORK - charge);
-    // Only the root can retain query scratch in addition to quota-charged certificate nodes.
-    assert!(
-        table.composed.storage.live.get() <= before + table.composed.certificate_allowance + charge
-    );
+    assert!(table.composed.storage.live.get() <= before + table.composed.certificate_allowance);
     let mut unexpanded = None;
     for selector in selectors {
         let operands = [selector, super::FALSE, super::TRUE];
@@ -1016,5 +1013,33 @@ fn radix_allocation_quotas_count_shared_branches_once() -> eyre::Result<()> {
     sim_assert_eq!(have: allowance, want: 0);
     drop(changed);
     sim_assert_eq!(have: storage.live.get(), want: 0);
+    Ok(())
+}
+
+#[test]
+fn charging_overlapping_certificates_allocates_no_radix_branches() -> eyre::Result<()> {
+    let storage = Rc::new(super::WorkStorage::default());
+    let singleton = |id| {
+        super::WorkSet::Span(super::WorkSpan {
+            first: super::WorkId(id),
+            last: super::WorkId(id),
+        })
+    };
+    let left = singleton(0)
+        .union(&singleton(64), &storage, &mut { usize::MAX })
+        .ok_or_eyre("left certificate must fit")?;
+    let right = singleton(64)
+        .union(&singleton(128), &storage, &mut { usize::MAX })
+        .ok_or_eyre("right certificate must fit")?;
+    let allocations = storage.live.get();
+    for _ in 0..2 {
+        let mut query = super::ProofQuery::<()>::new(4, 0, &storage);
+        query.include_set(&left).ok_or_eyre("left work must fit")?;
+        query
+            .include_set(&right)
+            .ok_or_eyre("overlapping work must fit")?;
+        sim_assert_eq!(have: query.remaining, want: 1);
+        sim_assert_eq!(have: storage.live.get(), want: allocations);
+    }
     Ok(())
 }

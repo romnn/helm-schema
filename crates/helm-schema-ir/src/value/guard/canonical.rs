@@ -13,7 +13,10 @@
 //! Earlier queries and eviction cannot move an exhaustion boundary; an exhausted composition
 //! publishes no result.
 
-use std::{cell::Cell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell, RefMut},
+    rc::Rc,
+};
 
 use ahash::AHashMap;
 
@@ -112,10 +115,21 @@ enum WorkSet {
 #[derive(Default)]
 struct WorkStorage {
     live: Cell<usize>,
+    next_query: Cell<u64>,
+    // Each proof borrows the scratch words for one epoch.
+    marks: RefCell<Vec<MarkedWord>>,
+}
+
+#[derive(Clone, Copy, Default)]
+struct MarkedWord {
+    epoch: u64,
+    bits: u32,
 }
 
 struct WorkBranch {
     storage: Rc<WorkStorage>,
+    // A completed include has marked every identity below this branch.
+    included_in: Cell<u64>,
     left: WorkSet,
     right: WorkSet,
     bounds: WorkSpan,
@@ -158,6 +172,7 @@ impl WorkSet {
         }
     }
 
+    #[cfg(test)]
     fn contains(&self, id: WorkId) -> bool {
         match self {
             Self::Empty => false,
@@ -348,12 +363,14 @@ impl WorkSet {
             slot.right = high;
             slot.bounds = bounds;
             slot.count = count;
+            slot.included_in.set(0);
             return Some(Self::Branch(reuse));
         }
         *allowance = allowance.checked_sub(1)?;
         storage.live.set(storage.live.get() + 1);
         Some(Self::Branch(Rc::new(WorkBranch {
             storage: Rc::clone(storage),
+            included_in: Cell::new(0),
             count,
             left: low,
             right: high,
@@ -420,73 +437,136 @@ impl<T: Copy> WorkEntry<T> {
     }
 }
 
-struct ProofQuery<T> {
-    storage: Rc<WorkStorage>,
+struct ProofQuery<'marks, T> {
+    epoch: u64,
     remaining: usize,
-    visited: WorkSet,
+    marks: RefMut<'marks, Vec<MarkedWord>>,
+    visited_count: usize,
     root: Option<WorkId>,
     certificates: usize,
     /// Query-local values survive persistent eviction without retaining duplicate certificates.
     retained: AHashMap<WorkId, T>,
 }
 
-impl<T: Copy> ProofQuery<T> {
-    fn new(remaining: usize, certificates: usize, storage: Rc<WorkStorage>) -> Self {
+impl<'marks, T: Copy> ProofQuery<'marks, T> {
+    fn new(remaining: usize, certificates: usize, storage: &'marks WorkStorage) -> Self {
+        let epoch = storage.next_query.get() + 1;
+        storage.next_query.set(epoch);
+        let marks = storage.marks.borrow_mut();
         Self {
-            storage,
+            epoch,
             remaining,
-            visited: WorkSet::Empty,
+            marks,
+            visited_count: 0,
             root: None,
             certificates,
             retained: AHashMap::new(),
         }
     }
 
-    fn include_set(&mut self, work: &WorkSet) -> Option<()> {
-        let previous = self.visited.count();
-        // A query visits at most its logical allowance plus one failed cached closure.
-        // Its temporary radix storage is bounded by those distinct identities.
-        let union =
-            std::mem::take(&mut self.visited).union(work, &self.storage, &mut { usize::MAX })?;
-        let added = union.count() - previous;
+    fn contains(&self, id: WorkId) -> bool {
+        let word = WorkId(id.ordinal() >> 5).index();
+        self.marks.get(word).is_some_and(|word| {
+            word.epoch == self.epoch && word.bits & (1 << (id.ordinal() & 31)) != 0
+        })
+    }
+
+    fn include_word(&mut self, word: u32, bits: u32) -> Option<()> {
+        let index = WorkId(word).index();
+        if index >= self.marks.len() {
+            self.marks
+                .resize(index.checked_add(1)?, MarkedWord::default());
+        }
+        let slot = self.marks.get_mut(index)?;
+        let marked = slot.epoch == self.epoch;
+        let previous = if marked { slot.bits } else { 0 };
+        let missing = bits & !previous;
+        if missing == 0 {
+            return Some(());
+        }
+        let added = usize::try_from(missing.count_ones()).ok()?;
         let Some(remaining) = self.remaining.checked_sub(added) else {
             self.remaining = 0;
             return None;
         };
-        self.visited = union;
+        if marked {
+            slot.bits |= bits;
+        } else {
+            *slot = MarkedWord {
+                epoch: self.epoch,
+                bits,
+            };
+        }
         self.remaining = remaining;
+        self.visited_count += added;
         Some(())
+    }
+
+    fn include_set(&mut self, work: &WorkSet) -> Option<()> {
+        match work {
+            WorkSet::Empty => Some(()),
+            WorkSet::Bits { base, bits } => self.include_word(base >> 5, *bits),
+            WorkSet::Span(WorkSpan { first, last }) => {
+                let first = first.ordinal();
+                let last = last.ordinal();
+                let first_word = first >> 5;
+                let last_word = last >> 5;
+                let lower = u32::MAX << (first & 31);
+                let upper = u32::MAX >> (31 - (last & 31));
+                if first_word == last_word {
+                    return self.include_word(first_word, lower & upper);
+                }
+                self.include_word(first_word, lower)?;
+                for word in first_word + 1..last_word {
+                    self.include_word(word, u32::MAX)?;
+                }
+                self.include_word(last_word, upper)
+            }
+            WorkSet::Branch(branch) => {
+                if branch.included_in.get() != self.epoch {
+                    self.include_set(&branch.left)?;
+                    self.include_set(&branch.right)?;
+                    branch.included_in.set(self.epoch);
+                }
+                Some(())
+            }
+        }
     }
 
     fn visit(&mut self, id: WorkId) -> Option<()> {
-        self.include_set(&WorkSet::Span(WorkSpan {
-            first: id,
-            last: id,
-        }))
+        self.include_word(id.ordinal() >> 5, 1 << (id.ordinal() & 31))
     }
 
     fn include(&mut self, root: WorkId, entries: &[WorkEntry<T>]) -> Option<()> {
-        if self.visited.contains(root) {
-            return Some(());
-        }
-        let work = entries.get(root.index())?.work()?;
-        if let Some(fast) = &work.fast {
-            return self.include_set(fast);
-        }
-        let mut pending = vec![root];
-        while let Some(id) = pending.pop() {
-            if self.visited.contains(id) {
-                continue;
+        let mut pending = Vec::new();
+        let mut id = root;
+        loop {
+            if !self.contains(id) {
+                let work = entries.get(id.index())?.work()?;
+                if let Some(fast) = &work.fast {
+                    self.include_set(fast)?;
+                } else {
+                    self.visit(id)?;
+                    // Follow one child directly and retain only the other arm of a fork.
+                    match work.children {
+                        [Some(left), Some(right)] => {
+                            pending.push(left);
+                            id = right;
+                            continue;
+                        }
+                        [Some(child), None] | [None, Some(child)] => {
+                            id = child;
+                            continue;
+                        }
+                        [None, None] => {}
+                    }
+                }
             }
-            let work = entries.get(id.index())?.work()?;
-            if let Some(fast) = &work.fast {
-                self.include_set(fast)?;
-            } else {
-                self.visit(id)?;
-                pending.extend(work.children.into_iter().flatten());
-            }
+            let Some(next) = pending.pop() else {
+                return Some(());
+            };
+            id = next;
         }
-        Some(())
     }
 }
 
@@ -540,12 +620,8 @@ impl<K: Copy + Eq + std::hash::Hash, T: Copy> ProofMemo<K, T> {
         &self,
         id: WorkId,
         children: [Option<WorkId>; 2],
-        query: &mut ProofQuery<T>,
+        query: &mut ProofQuery<'_, T>,
     ) -> Option<WorkSet> {
-        if query.root == Some(id) {
-            // Cloning the root shares query scratch without allocating any radix branches.
-            return Some(query.visited.clone());
-        }
         let mut sets = [None, None];
         for (slot, child) in sets.iter_mut().zip(children) {
             if let Some(child) = child {
@@ -566,7 +642,7 @@ impl<K: Copy + Eq + std::hash::Hash, T: Copy> ProofMemo<K, T> {
         value: T,
         mut children: [Option<WorkId>; 2],
         capacity: usize,
-        query: &mut ProofQuery<T>,
+        query: &mut ProofQuery<'_, T>,
     ) -> Option<()> {
         if children[0] == children[1] {
             children[1] = None;
@@ -575,7 +651,7 @@ impl<K: Copy + Eq + std::hash::Hash, T: Copy> ProofMemo<K, T> {
         let cold = previous.and_then(|work| work.cold);
         let fast = self.certificate(id, children, query);
         let cold = if query.root == Some(id) {
-            std::num::NonZeroUsize::new(query.visited.count())
+            std::num::NonZeroUsize::new(query.visited_count)
         } else {
             cold.or_else(|| {
                 fast.as_ref()
@@ -609,7 +685,7 @@ impl<K: Copy + Eq + std::hash::Hash, T: Copy> ProofMemo<K, T> {
                     self.entries.get_mut(previous.index())
                 {
                     if let Some(value) = value.take()
-                        && query.visited.contains(previous)
+                        && query.contains(previous)
                     {
                         query.retained.insert(previous, value);
                     }
@@ -750,11 +826,8 @@ impl CanonicalGuards {
             return Some(value);
         }
         let allowance = *work;
-        let mut query = ProofQuery::new(
-            *work,
-            self.composed.certificate_allowance,
-            Rc::clone(&self.composed.storage),
-        );
+        let storage = Rc::clone(&self.composed.storage);
+        let mut query = ProofQuery::new(*work, self.composed.certificate_allowance, &storage);
         let result = self.ite_inner(operands, &mut query);
         *work = query.remaining;
         if let Some(completed) = result {
@@ -767,7 +840,7 @@ impl CanonicalGuards {
     fn ite_inner(
         &mut self,
         mut operands: [u32; 3],
-        query: &mut ProofQuery<u32>,
+        query: &mut ProofQuery<'_, u32>,
     ) -> Option<Completed<u32>> {
         struct IteFrame {
             id: WorkId,
@@ -858,11 +931,8 @@ impl CanonicalGuards {
             return Some(value);
         }
         let allowance = *work;
-        let mut query = ProofQuery::new(
-            *work,
-            self.compatible.certificate_allowance,
-            Rc::clone(&self.compatible.storage),
-        );
+        let storage = Rc::clone(&self.compatible.storage);
+        let mut query = ProofQuery::new(*work, self.compatible.certificate_allowance, &storage);
         let result = self.joint_inner(left, right, &mut query);
         *work = query.remaining;
         if let Some(completed) = result {
@@ -876,7 +946,7 @@ impl CanonicalGuards {
         &mut self,
         mut left: Polar,
         mut right: Polar,
-        query: &mut ProofQuery<bool>,
+        query: &mut ProofQuery<'_, bool>,
     ) -> Option<Completed<bool>> {
         struct JointFrame {
             id: WorkId,
@@ -954,6 +1024,15 @@ impl CanonicalGuards {
     /// The canonical form of `guard`, composing every runtime test it holds; `None` when a
     /// node belongs to another context or a construction exhausts its allowance.
     fn form(&mut self, guard: &RuntimeGuard, context: *const super::GuardQueries) -> Option<u32> {
+        let RuntimeGuard::Branch(node) = guard else {
+            return self.known(guard);
+        };
+        if !std::ptr::eq(Rc::as_ptr(&node.queries), context) {
+            return None;
+        }
+        if let Some(form) = self.forms.get(&node.id) {
+            return *form;
+        }
         let mut pending = vec![(guard, false)];
         while let Some((guard, expanded)) = pending.pop() {
             let RuntimeGuard::Branch(node) = guard else {
