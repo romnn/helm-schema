@@ -4,25 +4,45 @@
   "allOf": [
     {
       "if": {
-        "else": false,
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              "then": false
+            }
+          }
+        },
         "if": {
-          "$ref": "#/definitions/constrains~1global.enabled:t"
+          "$ref": "#/definitions/constrains~1global.enabled:t@3"
         },
         "then": {
           "else": false,
           "if": {
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "nameOverride"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1nameOverride:t"
           },
           "then": {
-            "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            },
+            "then": true
           }
         }
       },
@@ -37,17 +57,58 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "description": "global holds values that affect multiple components of the chart.",
-            "type": "object"
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@3"
+                  }
+                ]
+              }
+            ]
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -97,109 +158,13 @@
             ]
           },
           {
-            "$ref": "#/definitions/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "CACerts": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "CACerts"
-          ],
-          "type": "object"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "CACerts": {
-            "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1global.enabled:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-        }
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "syncWorkspace": {
-                "additionalProperties": {},
-                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
-                "properties": {
-                  "terraformRC": {
-                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
-                    "type": "object"
-                  }
-                }
-              }
-            }
+            "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace"
           },
           {
-            "additionalProperties": {},
-            "properties": {
-              "syncWorkspace": {
-                "additionalProperties": {},
-                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
-                "properties": {
-                  "sensitiveVariables": {
-                    "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "syncWorkspace": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "syncWorkspace"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@2"
           },
           {
-            "not": {
-              "properties": {
-                "syncWorkspace": {}
-              },
-              "required": [
-                "syncWorkspace"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@3"
           }
         ]
       },
@@ -209,45 +174,13 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace"
           },
           {
-            "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
+            "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@2"
+          },
           {
-            "$ref": "#/definitions/when~1global.enabled:t~1then~1syncWorkspace.enabled=-~1else~1fail"
+            "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@3"
           },
           {
             "anyOf": [
@@ -299,25 +232,574 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "description": "global holds values that affect multiple components of the chart.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "else": false,
         "if": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/t"
+          "$ref": "#/definitions/constrains~1CACerts:t"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "CACerts": {
+            "description": "If the TFE instance the operator talks to is using a private CA then CACerts\ncan be used to install a custom CA bundle in the operator's container that\nwill allow it to communicate with TFE.\nCACerts can be set like this:\nhelm install <other parameters> --set-file CACerts=/path/to/certs.pem",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "syncWorkspace": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "syncWorkspace"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "syncWorkspace": {}
+              },
+              "required": [
+                "syncWorkspace"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "terraformRC": {
+                    "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
+                    "type": "object"
+                  }
+                }
+              }
             }
           },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
+          {
+            "additionalProperties": {},
+            "properties": {
+              "syncWorkspace": {
+                "additionalProperties": {},
+                "description": "syncWorkspace will run the workspace sync process to sync K8S Workspaces with\nTerraform Cloud workspaces.\nThis process will deploy a Workspace Custom Resource Definition and\nTerraform Cloud Workspace Operator to the Kubernetes cluster. It requires\na Kubernetes secret for Terraform Cloud access and sensitive variables.",
+                "properties": {
+                  "sensitiveVariables": {
+                    "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1CACerts:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1CACerts+CACerts=''+CACerts=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global+nameOverride+nameOverride:t+2more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1CACerts:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global+nameOverride+nameOverride:t+2more"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1CACerts"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1CACerts+CACerts=''+CACerts=null"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1CACerts+CACerts:t+CACerts=''+CACerts=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global.enabled:t+nameOverride+nameOverride:t+2more"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1syncWorkspace.sensitiveVariables.secretName+2more"
+                          }
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more"
+                                  }
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "not": {
+                                        "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more"
+                                      }
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace.enabled=-@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t+syncWorkspace.enabled=-"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace.enabled=-@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t+syncWorkspace.enabled=-"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1syncWorkspace.sensitiveVariables.secretName+2more@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace.enabled=-@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t+syncWorkspace.enabled=-"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1CACerts+CACerts:t+CACerts=''+CACerts=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global.enabled:t+nameOverride+nameOverride:t+2more"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1syncWorkspace.sensitiveVariables.secretName+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global+nameOverride+nameOverride:t+2more"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1CACerts+CACerts:t+CACerts=''+CACerts=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global+nameOverride+nameOverride:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1CACerts+CACerts:t+CACerts=''+CACerts=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global+nameOverride+nameOverride:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1CACerts+CACerts:t+CACerts=''+CACerts=null"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         },
         "then": {
-          "else": false,
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              "then": false
+            }
+          },
           "if": {
-            "$ref": "#/definitions/constrains~1global.enabled:t"
+            "$ref": "#/definitions/constrains~1global.enabled:t@3"
           },
           "then": {
-            "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            },
+            "then": true
           }
         }
       },
@@ -332,12 +814,637 @@
     }
   ],
   "definitions": {
+    "constrains/CACerts": {
+      "properties": {
+        "CACerts": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "CACerts"
+      ],
+      "type": "object"
+    },
+    "constrains/CACerts+CACerts:t+CACerts=''+CACerts=null": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1CACerts:t"
+          }
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1CACerts:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts=''"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts+CACerts=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts+CACerts=null"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/CACerts+CACerts:t+CACerts=''+CACerts=null@2": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1CACerts:t"
+          }
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1CACerts:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts+CACerts=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts+CACerts=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts=''"
+            },
+            {
+              "$ref": "#/definitions/constrains~1CACerts"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/CACerts+CACerts=''+CACerts=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "CACerts": {}
+            },
+            "required": [
+              "CACerts"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1CACerts=null"
+        },
+        {
+          "properties": {
+            "CACerts": {
+              "enum": [
+                ""
+              ]
+            }
+          },
+          "required": [
+            "CACerts"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/CACerts+CACerts=null": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "CACerts": {}
+              },
+              "required": [
+                "CACerts"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1CACerts=null"
+          }
+        ]
+      }
+    },
+    "constrains/CACerts:t": {
+      "properties": {
+        "CACerts": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "CACerts"
+      ],
+      "type": "object"
+    },
+    "constrains/CACerts=''": {
+      "not": {
+        "properties": {
+          "CACerts": {
+            "enum": [
+              ""
+            ]
+          }
+        },
+        "required": [
+          "CACerts"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/CACerts=null": {
+      "properties": {
+        "CACerts": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "CACerts"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+      }
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+global+nameOverride+nameOverride:t+2more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global+syncWorkspace.enabled:t+1more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global+syncWorkspace.enabled:t+1more"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1nameOverride:t"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t+syncWorkspace.enabled=-@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace.enabled=-"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+global+syncWorkspace.enabled:t+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t+syncWorkspace.enabled=-@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace.enabled=-"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+global.enabled:t+nameOverride+nameOverride:t+2more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global.enabled:t+syncWorkspace+1more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace.enabled=-@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t+syncWorkspace.enabled=-"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1nameOverride:t"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+global.enabled:t+syncWorkspace+1more"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+global.enabled:t+syncWorkspace+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  }
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.enabled:t+syncWorkspace.enabled=-@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t+syncWorkspace.enabled=-"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
     "constrains/global.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.enabled:t@3"
+      }
+    },
+    "constrains/global.enabled:t+syncWorkspace": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1global.enabled:t@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+        }
+      ]
+    },
+    "constrains/global.enabled:t+syncWorkspace+syncWorkspace.enabled=-": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1global.enabled:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1global.enabled:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1global.enabled:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@2"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1global.enabled:t@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-"
+        }
+      ]
+    },
+    "constrains/global.enabled:t+syncWorkspace+syncWorkspace.enabled=-@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+        }
+      ]
+    },
+    "constrains/global.enabled:t+syncWorkspace.enabled=-": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1global.enabled:t"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1global.enabled:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/global.enabled:t+syncWorkspace.enabled=-@2": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1global.enabled:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@2"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/global.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global.enabled:t@3"
+      }
+    },
+    "constrains/global.enabled:t@3": {
       "properties": {
         "global": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride@2"
+      }
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/secretName=''": {
+      "properties": {
+        "secretName": {
+          "enum": [
+            ""
+          ]
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "constrains/secretName=null": {
+      "properties": {
+        "secretName": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "constrains/syncWorkspace.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+      }
+    },
+    "constrains/syncWorkspace.enabled:t+syncWorkspace.enabled=-": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@2"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/syncWorkspace.enabled:t+syncWorkspace.enabled=-@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/syncWorkspace.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1syncWorkspace.enabled:t@3"
+      }
+    },
+    "constrains/syncWorkspace.enabled:t@3": {
+      "properties": {
+        "syncWorkspace": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "syncWorkspace"
+      ],
+      "type": "object"
+    },
+    "constrains/syncWorkspace.enabled=-": {
+      "not": {
+        "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+      }
+    },
+    "constrains/syncWorkspace.enabled=-@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1syncWorkspace.enabled=-@3"
+      }
+    },
+    "constrains/syncWorkspace.enabled=-@3": {
+      "properties": {
+        "syncWorkspace": {
           "properties": {
             "enabled": {
-              "$ref": "#/definitions/t"
+              "enum": [
+                "-"
+              ]
             }
           },
           "required": [
@@ -347,9 +1454,256 @@
         }
       },
       "required": [
-        "global"
+        "syncWorkspace"
       ],
       "type": "object"
+    },
+    "constrains/syncWorkspace.sensitiveVariables.secretName+2more": {
+      "$ref": "#/definitions/constrains~1syncWorkspace.sensitiveVariables.secretName+2more@2"
+    },
+    "constrains/syncWorkspace.sensitiveVariables.secretName+2more@2": {
+      "anyOf": [
+        {
+          "properties": {
+            "syncWorkspace": {
+              "properties": {
+                "sensitiveVariables": {
+                  "$ref": "#/definitions/constrains~1secretName=null"
+                }
+              },
+              "required": [
+                "sensitiveVariables"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "syncWorkspace": {
+              "properties": {
+                "sensitiveVariables": {
+                  "$ref": "#/definitions/constrains~1secretName=''"
+                }
+              },
+              "required": [
+                "sensitiveVariables"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "syncWorkspace": {
+                "properties": {
+                  "sensitiveVariables": {
+                    "properties": {
+                      "secretName": {}
+                    },
+                    "required": [
+                      "secretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "sensitiveVariables"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "syncWorkspace"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more": {
+      "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more@3"
+    },
+    "constrains/syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more@2": {
+      "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more@3"
+    },
+    "constrains/syncWorkspace.terraformRC.secretKey+syncWorkspace.terraformRC.secretKey=''+1more@3": {
+      "anyOf": [
+        {
+          "properties": {
+            "syncWorkspace": {
+              "properties": {
+                "terraformRC": {
+                  "properties": {
+                    "secretKey": {
+                      "enum": [
+                        ""
+                      ]
+                    }
+                  },
+                  "required": [
+                    "secretKey"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "terraformRC"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "syncWorkspace": {
+                "properties": {
+                  "terraformRC": {
+                    "properties": {
+                      "secretKey": {}
+                    },
+                    "required": [
+                      "secretKey"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "terraformRC"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "syncWorkspace"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "syncWorkspace": {
+              "properties": {
+                "terraformRC": {
+                  "properties": {
+                    "secretKey": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "secretKey"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "terraformRC"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more": {
+      "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@3"
+    },
+    "constrains/syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@2": {
+      "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@3"
+    },
+    "constrains/syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@3": {
+      "anyOf": [
+        {
+          "properties": {
+            "syncWorkspace": {
+              "properties": {
+                "terraformRC": {
+                  "$ref": "#/definitions/constrains~1secretName=''"
+                }
+              },
+              "required": [
+                "terraformRC"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "syncWorkspace": {
+              "properties": {
+                "terraformRC": {
+                  "$ref": "#/definitions/constrains~1secretName=null"
+                }
+              },
+              "required": [
+                "terraformRC"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "syncWorkspace": {
+                "properties": {
+                  "terraformRC": {
+                    "properties": {
+                      "secretName": {}
+                    },
+                    "required": [
+                      "secretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "terraformRC"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "syncWorkspace"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@4": {
+      "not": {
+        "$ref": "#/definitions/constrains~1syncWorkspace.terraformRC.secretName+syncWorkspace.terraformRC.secretName=''+1more@2"
+      }
     },
     "t": {
       "anyOf": [
@@ -375,40 +1729,6 @@
           "const": true
         }
       ]
-    },
-    "when/global.enabled:t/then/syncWorkspace.enabled=-/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1global.enabled:t"
-      },
-      "then": {
-        "$ref": "#/definitions/when~1syncWorkspace.enabled=-~1then~1any~1else~1fail"
-      }
-    },
-    "when/syncWorkspace.enabled=-/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "syncWorkspace": {
-            "properties": {
-              "enabled": {
-                "enum": [
-                  "-"
-                ]
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "syncWorkspace"
-        ],
-        "type": "object"
-      },
-      "then": true
     }
   },
   "properties": {
@@ -450,17 +1770,24 @@
           "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
           "properties": {
             "secretName": {}
-          },
-          "type": "object"
+          }
         },
         "terraformRC": {
-          "additionalProperties": {},
-          "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
-          "properties": {
-            "secretKey": {},
-            "secretName": {}
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "secretName": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "secretKey": {}
+              }
+            }
+          ],
+          "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token"
         },
         "terraformVersion": {
           "description": "terraformVersion describes the version of Terraform to use for each workspace.\nIf this is not set then it will default to the latest version of Terraform\ncompiled with the operator."

@@ -9,37 +9,7 @@
             "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
           },
           {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@3"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-              },
-              "then": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                },
-                "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
-                  },
-                  "then": true
-                }
-              }
-            }
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@2"
           }
         ]
       },
@@ -91,6 +61,45 @@
                 }
               }
             }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@4"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.secret:t+2more~1else~1fail@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset~1else~1fail"
           }
         ]
       },
@@ -181,35 +190,82 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any@2"
           },
           {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any"
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@6"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset~1else~1fail@2"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail@2"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+2more~1else~1any@2"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any@2"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@3"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.secret:t+2more~1else~1fail"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@3"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              }
+            ]
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1serviceNameOverride:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
-        }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "serviceNameOverride": {
-            "type": "string"
+          "nginxAgent": {
+            "additionalProperties": {},
+            "properties": {
+              "instanceManager": {
+                "type": "object"
+              }
+            }
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@4"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -288,6 +344,69 @@
           },
           {
             "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "nginxAgent": {
+                    "properties": {
+                      "napMonitoring": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "napMonitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nginxAgent"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nginxAgent": {
+                      "properties": {
+                        "napMonitoring": {}
+                      },
+                      "required": [
+                        "napMonitoring"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nginxAgent"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -384,12 +503,370 @@
             "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
           },
           {
-            "anyOf": [
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+2more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@5"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
               {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@4"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
               },
               {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@3"
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.selectorLabels:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "nginxAgent": {
+                    "properties": {
+                      "syslog": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "syslog"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nginxAgent"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nginxAgent": {
+                      "properties": {
+                        "syslog": {}
+                      },
+                      "required": [
+                        "syslog"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nginxAgent"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1controller.kind=statefulset"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "containerPort": {
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nginxAgent": {
+                "additionalProperties": {},
+                "properties": {
+                  "syslog": {
+                    "description": "Syslog listener which NGINX Agent uses to accept messages from App Protect WAF",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nginxAgent": {
+                "additionalProperties": {},
+                "properties": {
+                  "napMonitoring": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1controller.securityContext:t"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1controller.securityContext.readOnlyRootFilesystem:t"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1controller.volumes:t~1then~1fail~1else~1controller.kind=statefulset+nginxAgent.enable:t"
+                  }
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1controller.readOnlyRootFilesystem:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1controller.volumes:t~1then~1fail~1else~1controller.kind=statefulset+nginxAgent.enable:t"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1controller.appprotect.v5:t"
+            },
+            "then": false
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@3"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
+                  },
+                  "then": true
+                }
+              }
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@4"
               },
               {
                 "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -407,7 +884,7 @@
             "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
           },
           {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@5"
+            "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
           }
         ]
       },
@@ -420,11 +897,459 @@
             "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
           },
           {
-            "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@3"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                },
+                "then": {
+                  "else": true,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
+                  },
+                  "then": false
+                }
+              }
+            }
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.secret:t+2more~1else~1fail@2"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset~1else~1fail"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1controller.readOnlyRootFilesystem:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.securityContext:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "securityContext": {
+                "description": "The security context for the Ingress Controller containers.",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@2"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@4"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/when~1fullnameOverride:t~1then~1controller.kind=statefulset~1else~1fail"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/when~1fullnameOverride:t~1then~1controller.kind=statefulset~1else~1fail"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+          },
+          "then": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@3"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1fullnameOverride:t~1then~1controller.kind=statefulset~1else~1fail"
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+2more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail@2"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@3"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nginxAgent": {
+            "additionalProperties": {},
+            "properties": {
+              "instanceManager": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1serviceNameOverride:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceNameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+          },
+          {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1nginxAgent.dataplaneKeySecretName=''~1then~1fail~1else~1any"
+              }
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
+          },
+          {
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "appprotect": {
+                    "properties": {
+                      "ipIntelligence": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/t"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ipIntelligence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "appprotect"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.appprotect.v5:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "appprotect": {
+                "additionalProperties": {},
+                "description": "Support for App Protect WAF",
+                "properties": {
+                  "ipIntelligence": {
+                    "description": "Configuration for App Protect WAF v5 IP Intelligence",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -521,7 +1446,7 @@
                                                                   "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+3more"
                                                                 },
                                                                 {
-                                                                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@2"
+                                                                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3"
                                                                 }
                                                               ]
                                                             },
@@ -589,37 +1514,6 @@
                                                 {
                                                   "allOf": [
                                                     {
-                                                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@2"
-                                                    },
-                                                    {
-                                                      "anyOf": [
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@5"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@2"
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@5"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@5"
-                                                            }
-                                                          ]
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
                                                       "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
                                                     },
                                                     {
@@ -639,7 +1533,7 @@
                                                                   ]
                                                                 },
                                                                 {
-                                                                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@2"
+                                                                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3"
                                                                 }
                                                               ]
                                                             },
@@ -653,9 +1547,6 @@
                                                             {
                                                               "anyOf": [
                                                                 {
-                                                                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@2"
-                                                                },
-                                                                {
                                                                   "allOf": [
                                                                     {
                                                                       "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@7"
@@ -664,11 +1555,45 @@
                                                                       "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@5"
                                                                     }
                                                                   ]
+                                                                },
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@2"
                                                                 }
                                                               ]
                                                             },
                                                             {
                                                               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@5"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@2"
+                                                    },
+                                                    {
+                                                      "anyOf": [
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@5"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@5"
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@5"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@2"
                                                             }
                                                           ]
                                                         }
@@ -708,6 +1633,16 @@
                                         {
                                           "allOf": [
                                             {
+                                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@2"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
                                               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
                                             },
                                             {
@@ -717,6 +1652,9 @@
                                                     {
                                                       "anyOf": [
                                                         {
+                                                          "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3"
+                                                        },
+                                                        {
                                                           "allOf": [
                                                             {
                                                               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@7"
@@ -725,9 +1663,6 @@
                                                               "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more"
                                                             }
                                                           ]
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@2"
                                                         }
                                                       ]
                                                     },
@@ -739,24 +1674,14 @@
                                                 {
                                                   "allOf": [
                                                     {
-                                                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more"
+                                                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@5"
                                                     },
                                                     {
-                                                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@5"
+                                                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more"
                                                     }
                                                   ]
                                                 }
                                               ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@2"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more"
                                             }
                                           ]
                                         }
@@ -784,10 +1709,10 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1controller.selectorLabels:t@3"
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
                         },
                         {
                           "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -797,10 +1722,25 @@
                     {
                       "anyOf": [
                         {
+                          "$ref": "#/definitions/constrains~1controller.readOnlyRootFilesystem:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
                           "$ref": "#/definitions/constrains~1controller.readOnlyRootFilesystem:t@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1controller.securityContext.readOnlyRootFilesystem:t"
+                          "not": {
+                            "$ref": "#/definitions/constrains~1controller.securityContext.readOnlyRootFilesystem:t"
+                          }
                         },
                         {
                           "not": {
@@ -813,18 +1753,15 @@
                       ]
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                    },
-                    {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                          "$ref": "#/definitions/constrains~1controller.selectorLabels:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
                         }
                       ]
                     },
@@ -848,33 +1785,23 @@
                       ]
                     },
                     {
-                      "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1controller.readOnlyRootFilesystem:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        }
-                      ]
-                    },
-                    {
                       "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t@2"
                     },
                     {
                       "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -889,52 +1816,6 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null@2"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
                   },
                   {
@@ -946,6 +1827,86 @@
                           },
                           {
                             "anyOf": [
+                              {
+                                "allOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@2"
+                                  },
+                                  {
+                                    "anyOf": [
+                                      {
+                                        "allOf": [
+                                          {
+                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+2more"
+                                          },
+                                          {
+                                            "anyOf": [
+                                              {
+                                                "allOf": [
+                                                  {
+                                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
+                                                  },
+                                                  {
+                                                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more@2"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "allOf": [
+                                                  {
+                                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
+                                                  },
+                                                  {
+                                                    "anyOf": [
+                                                      {
+                                                        "allOf": [
+                                                          {
+                                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more"
+                                                          },
+                                                          {
+                                                            "anyOf": [
+                                                              {
+                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+3more@2"
+                                                              },
+                                                              {
+                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@2"
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "allOf": [
+                                                          {
+                                                            "anyOf": [
+                                                              {
+                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@4"
+                                                              },
+                                                              {
+                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+3more@2"
+                                                              }
+                                                            ]
+                                                          },
+                                                          {
+                                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@4"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
                               {
                                 "allOf": [
                                   {
@@ -970,6 +1931,30 @@
                                                       {
                                                         "allOf": [
                                                           {
+                                                            "anyOf": [
+                                                              {
+                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@4"
+                                                              },
+                                                              {
+                                                                "allOf": [
+                                                                  {
+                                                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@7"
+                                                                  },
+                                                                  {
+                                                                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@6"
+                                                                  }
+                                                                ]
+                                                              }
+                                                            ]
+                                                          },
+                                                          {
+                                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@4"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "allOf": [
+                                                          {
                                                             "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more"
                                                           },
                                                           {
@@ -985,33 +1970,9 @@
                                                                 ]
                                                               },
                                                               {
-                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3"
+                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@2"
                                                               }
                                                             ]
-                                                          }
-                                                        ]
-                                                      },
-                                                      {
-                                                        "allOf": [
-                                                          {
-                                                            "anyOf": [
-                                                              {
-                                                                "allOf": [
-                                                                  {
-                                                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@7"
-                                                                  },
-                                                                  {
-                                                                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@6"
-                                                                  }
-                                                                ]
-                                                              },
-                                                              {
-                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@4"
-                                                              }
-                                                            ]
-                                                          },
-                                                          {
-                                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@4"
                                                           }
                                                         ]
                                                       }
@@ -1060,86 +2021,6 @@
                                     ]
                                   }
                                 ]
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@2"
-                                  },
-                                  {
-                                    "anyOf": [
-                                      {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+2more"
-                                          },
-                                          {
-                                            "anyOf": [
-                                              {
-                                                "allOf": [
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
-                                                  },
-                                                  {
-                                                    "anyOf": [
-                                                      {
-                                                        "allOf": [
-                                                          {
-                                                            "anyOf": [
-                                                              {
-                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+3more@2"
-                                                              },
-                                                              {
-                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@4"
-                                                              }
-                                                            ]
-                                                          },
-                                                          {
-                                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@4"
-                                                          }
-                                                        ]
-                                                      },
-                                                      {
-                                                        "allOf": [
-                                                          {
-                                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more"
-                                                          },
-                                                          {
-                                                            "anyOf": [
-                                                              {
-                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+3more@2"
-                                                              },
-                                                              {
-                                                                "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3"
-                                                              }
-                                                            ]
-                                                          }
-                                                        ]
-                                                      }
-                                                    ]
-                                                  }
-                                                ]
-                                              },
-                                              {
-                                                "allOf": [
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
-                                                  },
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more@2"
-                                                  }
-                                                ]
-                                              }
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more"
-                                      }
-                                    ]
-                                  }
-                                ]
                               }
                             ]
                           }
@@ -1159,16 +2040,6 @@
                                       {
                                         "allOf": [
                                           {
-                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more@2"
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "allOf": [
-                                          {
                                             "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
                                           },
                                           {
@@ -1181,9 +2052,6 @@
                                                   {
                                                     "anyOf": [
                                                       {
-                                                        "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3"
-                                                      },
-                                                      {
                                                         "allOf": [
                                                           {
                                                             "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@7"
@@ -1192,6 +2060,9 @@
                                                             "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more@2"
                                                           }
                                                         ]
+                                                      },
+                                                      {
+                                                        "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+8more@2"
                                                       }
                                                     ]
                                                   }
@@ -1208,6 +2079,16 @@
                                                 ]
                                               }
                                             ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "allOf": [
+                                          {
+                                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
+                                          },
+                                          {
+                                            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more@2"
                                           }
                                         ]
                                       }
@@ -1237,20 +2118,19 @@
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
                     "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
@@ -1259,8 +2139,12 @@
                     "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
                   {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
                   },
@@ -1270,7 +2154,31 @@
                     }
                   },
                   {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
+                  },
+                  {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   }
                 ]
               },
@@ -1280,19 +2188,19 @@
                     "$ref": "#/definitions/constrains~1controller.selectorLabels:t@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -1305,13 +2213,13 @@
                     "$ref": "#/definitions/constrains~1fullnameOverride:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -1322,21 +2230,6 @@
                 "allOf": [
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
@@ -1357,13 +2250,28 @@
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@4"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -1374,24 +2282,6 @@
                 "allOf": [
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
@@ -1415,53 +2305,28 @@
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+17more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -1472,55 +2337,6 @@
                 "allOf": [
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
@@ -1544,7 +2360,142 @@
                     }
                   },
                   {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
                     "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+17more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -1560,7 +2511,34 @@
                     "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
                   },
                   {
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+2more@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+17more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
+                  },
+                  {
                     "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
@@ -1569,25 +2547,84 @@
                     "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+2more"
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+2more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+17more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+2more@3"
                   },
                   {
                     "not": {
@@ -1602,151 +2639,22 @@
                     }
                   },
                   {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+2more@3"
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+17more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+2more@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset+controller.readOnlyRootFilesystem:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -1766,76 +2674,6 @@
                   },
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
                   },
                   {
                     "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
@@ -1850,12 +2688,101 @@
                     "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+1more@4"
                   },
                   {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap+nginxAgent.customConfigMap:t+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceNameOverride+serviceNameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+nameOverride+nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller+controller.kind+controller.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controller.selectorLabels:t+controller.wildcardTLS.cert:t+6more"
+                  },
+                  {
                     "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
                   }
                 ]
@@ -1868,150 +2795,44 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.secret:t+2more~1else~1fail@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail@2"
+            "$ref": "#/definitions/constrains~1controller.kind=statefulset"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nginxAgent": {
-            "additionalProperties": {},
-            "properties": {
-              "instanceManager": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any@2"
+          },
           {
             "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@6"
           },
           {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@2"
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1controller.securityContext:t"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1controller.securityContext.readOnlyRootFilesystem:t"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1controller.volumes:t~1then~1fail~1else~1controller.kind=statefulset+nginxAgent.enable:t@2"
+                  }
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1controller.readOnlyRootFilesystem:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1controller.volumes:t~1then~1fail~1else~1controller.kind=statefulset+nginxAgent.enable:t@2"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1controller.appprotect.v5:t"
+            },
+            "then": false
           },
           {
             "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset~1else~1fail@2"
@@ -2020,346 +2841,10 @@
             "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail@2"
           },
           {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any@2"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any@2"
-          },
-          {
             "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+2more~1else~1any@2"
           },
           {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@3"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.secret:t+2more~1else~1fail"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nginxAgent": {
-            "additionalProperties": {},
-            "properties": {
-              "instanceManager": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "nginxAgent": {
-                    "properties": {
-                      "syslog": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "syslog"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "nginxAgent"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "nginxAgent": {
-                      "properties": {
-                        "syslog": {}
-                      },
-                      "required": [
-                        "syslog"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "nginxAgent"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1controller.kind=statefulset"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "containerPort": {
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nginxAgent": {
-                "additionalProperties": {},
-                "properties": {
-                  "syslog": {
-                    "description": "Syslog listener which NGINX Agent uses to accept messages from App Protect WAF",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nginxAgent": {
-                "additionalProperties": {},
-                "properties": {
-                  "napMonitoring": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@4"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@5"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
-          },
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@3"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-              },
-              "then": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                },
-                "then": {
-                  "else": true,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
-                  },
-                  "then": false
-                }
-              }
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "nginxAgent": {
-                    "properties": {
-                      "napMonitoring": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "napMonitoring"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "nginxAgent"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "nginxAgent": {
-                      "properties": {
-                        "napMonitoring": {}
-                      },
-                      "required": [
-                        "napMonitoring"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "nginxAgent"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
+            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any@2"
           },
           {
             "else": false,
@@ -2375,113 +2860,6 @@
                 "$ref": "#/definitions/when~1nginxAgent.dataplaneKeySecretName=''~1then~1fail~1else~1any"
               }
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@4"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1controller.readOnlyRootFilesystem:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.securityContext:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "securityContext": {
-                "description": "The security context for the Ingress Controller containers.",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1controller.kind=statefulset"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@6"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@2"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset~1else~1fail@2"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls:t~1else~1fail@2"
           },
           {
             "else": false,
@@ -2542,12 +2920,6 @@
             }
           },
           {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any@2"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any@2"
-          },
-          {
             "else": {
               "else": false,
               "if": {
@@ -2589,22 +2961,7 @@
             }
           },
           {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1nginxAgent.dataplaneKeySecretName=''~1then~1fail~1else~1any"
-              }
-            }
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+2more~1else~1any@2"
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail"
           },
           {
             "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@3"
@@ -2618,7 +2975,7 @@
                 "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more"
               },
               {
-                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@2"
+                "$ref": "#/definitions/constrains~1controller.kind=statefulset+nginxAgent.enable:t+5more@3"
               },
               {
                 "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -2643,318 +3000,7 @@
             "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
           },
           {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+4more~1else~1any"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": {
-          "$ref": "#/definitions/when~1fullnameOverride:t~1then~1controller.kind=statefulset~1else~1fail"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1fullnameOverride:t~1then~1controller.kind=statefulset~1else~1fail"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-          },
-          "then": {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              "then": true
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@3"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1fullnameOverride:t~1then~1controller.kind=statefulset~1else~1fail"
-            }
-          }
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+2more~1else~1any"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.secret:t+2more~1else~1fail@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+2more~1else~1any"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "controller": {
-                "properties": {
-                  "appprotect": {
-                    "properties": {
-                      "ipIntelligence": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/t"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "ipIntelligence"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "appprotect"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "controller": {
-                "properties": {
-                  "appprotect": {
-                    "properties": {
-                      "v5": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "v5"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "appprotect"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "appprotect": {
-                "additionalProperties": {},
-                "description": "Support for App Protect WAF",
-                "properties": {
-                  "ipIntelligence": {
-                    "description": "Configuration for App Protect WAF v5 IP Intelligence",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent=null"
-          },
-          {
-            "$ref": "#/definitions/when~1nginxAgent.customConfigMap:t~1then~1controller.kind=statefulset+nginxAgent.customConfigMap=''+3more~1else~1any"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.selectorLabels:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
+            "$ref": "#/definitions/when~1nginxAgent.enable:t~1then~1controller.kind=statefulset+nginxAgent.instanceManager.tls.caSecret:t+4more~1else~1fail@5"
           }
         ]
       },
@@ -3059,6 +3105,33 @@
         }
       ]
     },
+    "constrains/controller.appprotect.v5:t": {
+      "properties": {
+        "controller": {
+          "properties": {
+            "appprotect": {
+              "properties": {
+                "v5": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "v5"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "appprotect"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
+    },
     "constrains/controller.kind=statefulset": {
       "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
     },
@@ -3081,11 +3154,13 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1controller.securityContext:t"
+            "$ref": "#/definitions/constrains~1controller.securityContext.readOnlyRootFilesystem:t"
           }
         },
         {
-          "$ref": "#/definitions/constrains~1controller.securityContext.readOnlyRootFilesystem:t"
+          "not": {
+            "$ref": "#/definitions/constrains~1controller.securityContext:t"
+          }
         },
         {
           "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -3101,6 +3176,12 @@
             },
             {
               "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t"
             },
             {
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
@@ -3122,13 +3203,7 @@
               "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
-            },
-            {
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
@@ -3148,13 +3223,19 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
             },
             {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
+            },
+            {
               "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@2"
             },
             {
               "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -3167,19 +3248,13 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
             },
             {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
+            },
+            {
               "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
             },
             {
               "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -3196,13 +3271,13 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
-            },
-            {
               "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
             },
             {
               "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -3215,19 +3290,19 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
-            },
-            {
               "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
             },
             {
               "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
@@ -3312,25 +3387,23 @@
       "type": "object"
     },
     "constrains/controller.securityContext.readOnlyRootFilesystem:t": {
-      "not": {
-        "properties": {
-          "controller": {
-            "properties": {
-              "securityContext": {
-                "$ref": "#/definitions/constrains~1readOnlyRootFilesystem:t"
-              }
-            },
-            "required": [
-              "securityContext"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "controller"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "controller": {
+          "properties": {
+            "securityContext": {
+              "$ref": "#/definitions/constrains~1readOnlyRootFilesystem:t"
+            }
+          },
+          "required": [
+            "securityContext"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
     },
     "constrains/controller.securityContext:t": {
       "properties": {
@@ -3367,19 +3440,16 @@
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
             },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1controller.selectorLabels:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1controller.selectorLabels:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
@@ -3392,6 +3462,12 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
               "$ref": "#/definitions/constrains~1nameOverride@2"
             },
             {
@@ -3404,66 +3480,10 @@
               "$ref": "#/definitions/constrains~1nameOverride:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1controller.selectorLabels:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-              }
             }
           ]
         },
@@ -3491,6 +3511,59 @@
             },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+              }
             }
           ]
         }
@@ -3501,25 +3574,16 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
             },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1controller.selectorLabels:t"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@2"
@@ -3544,10 +3608,10 @@
               "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1controller.selectorLabels:t"
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@2"
+              "$ref": "#/definitions/constrains~1controller.selectorLabels:t"
             }
           ]
         },
@@ -3566,10 +3630,22 @@
               "$ref": "#/definitions/constrains~1nameOverride:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
+              }
             }
           ]
         },
@@ -3577,6 +3653,9 @@
           "not": {
             "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
           }
+        },
+        {
+          "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t+controller.wildcardTLS.key:t+1more"
         },
         {
           "allOf": [
@@ -3601,10 +3680,16 @@
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t+controller.wildcardTLS.key:t+1more"
-        },
-        {
           "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
             },
@@ -3612,25 +3697,13 @@
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
+              "$ref": "#/definitions/constrains~1nameOverride:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1controller.wildcardTLS.secret:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1controller.wildcardTLS.cert:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1controller.wildcardTLS.key:t"
-              }
+              "$ref": "#/definitions/constrains~1controller.selectorLabels:t"
             }
           ]
         }
@@ -3664,6 +3737,25 @@
           },
           "required": [
             "selectorLabels"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
+    },
+    "constrains/controller.volumes:t": {
+      "properties": {
+        "controller": {
+          "properties": {
+            "volumes": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "volumes"
           ],
           "type": "object"
         }
@@ -3918,25 +4010,22 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more"
             },
             {
               "anyOf": [
                 {
                   "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
-                    },
                     {
                       "anyOf": [
                         {
@@ -3952,20 +4041,23 @@
                           "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName@2"
                         }
                       ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more@4"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.host+nginxAgent.instanceManager.host=''+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more"
                     }
                   ]
                 }
               ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more"
             }
           ]
         }
@@ -3975,6 +4067,21 @@
       "anyOf": [
         {
           "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more@2"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more"
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more@2"
+            },
             {
               "anyOf": [
                 {
@@ -4013,21 +4120,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more@2"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1nginxAgent.instanceManager+nginxAgent.instanceManager.sni+2more"
-              }
             }
           ]
         }
@@ -4038,20 +4130,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+11more@2"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+4more@2"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+11more@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@2"
             }
           ]
         }
@@ -4093,20 +4185,20 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
+                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+13more@2"
+                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+11more"
                     }
                   ]
                 },
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more"
+                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+13more@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+11more"
+                      "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
                     }
                   ]
                 }
@@ -4129,7 +4221,7 @@
     "constrains/nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+3more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t@2"
+          "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t"
         },
         {
           "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@4"
@@ -4139,10 +4231,10 @@
     "constrains/nginxAgent+nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+3more@2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
+          "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t"
+          "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
         }
       ]
     },
@@ -4161,7 +4253,7 @@
                       "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t"
+                      "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t@2"
                     }
                   ]
                 },
@@ -4186,19 +4278,19 @@
             {
               "anyOf": [
                 {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
-                  }
-                },
-                {
                   "allOf": [
                     {
                       "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t@2"
+                      "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t"
                     }
                   ]
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1nginxAgent.dataplaneKeySecretName=''@7"
+                  }
                 }
               ]
             },
@@ -4252,10 +4344,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.enable:t"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@4"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@4"
+              "$ref": "#/definitions/constrains~1nginxAgent.enable:t"
             }
           ]
         },
@@ -4275,10 +4367,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+1more@5"
+              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
             }
           ]
         },
@@ -4312,20 +4404,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more"
+              "$ref": "#/definitions/constrains~1nginxAgent.enable:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.enable:t"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@4"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more"
             }
           ]
         }
@@ -4336,20 +4428,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t"
+              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
             }
           ]
         }
@@ -4400,20 +4492,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+2more"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
             }
           ]
         }
@@ -4456,6 +4548,30 @@
     "constrains/nginxAgent+nginxAgent.dataplaneKeySecretName+8more@2": {
       "allOf": [
         {
+          "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@3"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3": {
+      "allOf": [
+        {
           "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@5"
         },
         {
@@ -4472,30 +4588,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/nginxAgent+nginxAgent.dataplaneKeySecretName+8more@3": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
-        },
-        {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+4more@2"
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@3"
             }
           ]
         }
@@ -4535,10 +4627,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
+              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@6"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent+nginxAgent.dataplaneKeySecretName+5more@6"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.caSecret+1more@4"
             }
           ]
         },
@@ -4607,10 +4699,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''"
+              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@2"
             }
           ]
         }
@@ -4624,38 +4716,10 @@
               "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.enable:t"
             }
           ]
         },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@3"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t@2": {
-      "anyOf": [
         {
           "allOf": [
             {
@@ -4679,6 +4743,34 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    "constrains/nginxAgent.customConfigMap:t+nginxAgent.customConfigMap=''+nginxAgent.enable:t@2": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@3"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         },
         {
           "allOf": [
@@ -4686,7 +4778,7 @@
               "$ref": "#/definitions/constrains~1nginxAgent.customConfigMap=''@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.enable:t"
+              "$ref": "#/definitions/constrains~1nginxAgent.enable:t@2"
             }
           ]
         }
@@ -4988,22 +5080,15 @@
             {
               "anyOf": [
                 {
+                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+3more"
+                },
+                {
                   "allOf": [
                     {
                       "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+2more"
                     },
                     {
                       "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t"
-                            }
-                          ]
-                        },
                         {
                           "allOf": [
                             {
@@ -5027,13 +5112,20 @@
                               ]
                             }
                           ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t"
+                            }
+                          ]
                         }
                       ]
                     }
                   ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls+nginxAgent.instanceManager.tls.secret+3more"
                 }
               ]
             },
@@ -5485,16 +5577,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@2"
             }
           ]
         },
@@ -5520,13 +5609,16 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@3"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@2"
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret:t@2"
             }
           ]
         }
@@ -6084,7 +6176,7 @@
         "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
       },
       "then": {
-        "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''"
+        "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@2"
       }
     },
     "when/controller.kind=statefulset/then/nginxAgent.instanceManager.tls.secret=''/else/fail@2": {
@@ -6093,8 +6185,38 @@
         "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
       },
       "then": {
-        "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@3"
+        "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@4"
       }
+    },
+    "when/controller.volumes:t/then/fail/else/controller.kind=statefulset+nginxAgent.enable:t": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1controller.volumes:t"
+      },
+      "then": false
+    },
+    "when/controller.volumes:t/then/fail/else/controller.kind=statefulset+nginxAgent.enable:t@2": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1any~1else~1fail"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1nginxAgent.enable:t@3"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1controller.volumes:t"
+      },
+      "then": false
     },
     "when/fullnameOverride:t/then/controller.kind=statefulset/else/fail": {
       "else": false,
@@ -6464,7 +6586,7 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
             },
             "then": {
-              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail"
+              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail@2"
             }
           },
           "if": {
@@ -6478,7 +6600,7 @@
               },
               "then": {
                 "else": {
-                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''"
+                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@4"
                 },
                 "if": {
                   "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
@@ -6490,7 +6612,7 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
             },
             "then": {
-              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail"
+              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail@2"
             }
           }
         }
@@ -6513,7 +6635,7 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
             },
             "then": {
-              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail@2"
+              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail"
             }
           },
           "if": {
@@ -6527,7 +6649,7 @@
               },
               "then": {
                 "else": {
-                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@3"
+                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@2"
                 },
                 "if": {
                   "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
@@ -6539,7 +6661,7 @@
               "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret:t@3"
             },
             "then": {
-              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail@2"
+              "$ref": "#/definitions/when~1controller.kind=statefulset~1then~1nginxAgent.instanceManager.tls.secret=''~1else~1fail"
             }
           }
         }
@@ -6567,7 +6689,7 @@
                 "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
               },
               "then": {
-                "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@4"
+                "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''"
               }
             }
           },
@@ -6598,7 +6720,7 @@
                   "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
                 },
                 "then": {
-                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@4"
+                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''"
                 }
               }
             }
@@ -6628,7 +6750,7 @@
                 "$ref": "#/definitions/constrains~1controller.kind=statefulset@2"
               },
               "then": {
-                "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@2"
+                "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@3"
               }
             }
           },
@@ -6659,7 +6781,7 @@
                   "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.caSecret=''@3"
                 },
                 "then": {
-                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@2"
+                  "$ref": "#/definitions/constrains~1nginxAgent.instanceManager.tls.secret=''@3"
                 }
               }
             }
