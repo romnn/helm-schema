@@ -911,98 +911,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@3"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
@@ -1230,6 +1138,98 @@
           ]
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@3"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -1753,6 +1753,52 @@
     }
   ],
   "definitions": {
+    "constrains/core.tcpRoute.enabled:t": {
+      "properties": {
+        "core": {
+          "properties": {
+            "tcpRoute": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "tcpRoute"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "core"
+      ],
+      "type": "object"
+    },
+    "constrains/core.tcpRoute.parentRefs:t": {
+      "properties": {
+        "core": {
+          "properties": {
+            "tcpRoute": {
+              "properties": {
+                "parentRefs": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "parentRefs"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tcpRoute"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "core"
+      ],
+      "type": "object"
+    },
     "constrains/enabled": {
       "properties": {
         "enabled": {}
@@ -2279,23 +2325,7 @@
     "constrains/gatewayAPI.core.tcpRoute.enabled:t": {
       "properties": {
         "gatewayAPI": {
-          "properties": {
-            "core": {
-              "properties": {
-                "tcpRoute": {
-                  "$ref": "#/definitions/constrains~1enabled:t"
-                }
-              },
-              "required": [
-                "tcpRoute"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "core"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1core.tcpRoute.enabled:t"
         }
       },
       "required": [
@@ -2306,31 +2336,7 @@
     "constrains/gatewayAPI.core.tcpRoute.parentRefs:t": {
       "properties": {
         "gatewayAPI": {
-          "properties": {
-            "core": {
-              "properties": {
-                "tcpRoute": {
-                  "properties": {
-                    "parentRefs": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "parentRefs"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "tcpRoute"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "core"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1core.tcpRoute.parentRefs:t"
         }
       },
       "required": [
@@ -4303,6 +4309,28 @@
                 "$ref": "#/definitions/constrains~1enabled:t"
               }
             ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1core.tcpRoute.enabled:t"
+            },
+            "then": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled:t"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1core.tcpRoute.parentRefs:t"
+              },
+              "then": false
+            }
           },
           "then": false
         }

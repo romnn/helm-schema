@@ -789,6 +789,24 @@
     },
     {
       "if": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1extraObjects:t"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1extraObjects@15"
+          },
+          "then": false
+        }
+      },
+      "then": false
+    },
+    {
+      "if": {
         "else": {
           "else": false,
           "if": {
@@ -832,7 +850,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
+                    "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@8"
@@ -848,7 +866,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
+                    "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@8"
@@ -1099,7 +1117,7 @@
                 "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.enabled+eck-fleet-server.enabled:t+1more"
               },
               {
-                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
+                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
               },
               {
                 "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.deployment?+eck-fleet-server.spec+2more"
@@ -1115,7 +1133,7 @@
                 "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.enabled+eck-fleet-server.enabled:t+1more"
               },
               {
-                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
+                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
               },
               {
                 "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@7"
@@ -1861,6 +1879,97 @@
             "object"
           ]
         }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.enabled+eck-fleet-server.enabled=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null~1then~1eck-fleet-server.deployment?+eck-fleet-server.fleetServerEnabled?+2more~1else~1eck-fleet-server.spec.deployment?+eck-fleet-..."
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.enabled+eck-fleet-server.enabled=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?~1else~1eck-fleet-server.statefulSet?"
+              }
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects:t"
+          },
+          "then": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.enabled+eck-fleet-server.enabled=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null~1then~1eck-fleet-server+eck-fleet-server.deployment?+eck-fleet-server.extraObjects+3more~1else~1eck-fleet-server.spec.deployment?+..."
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.enabled+eck-fleet-server.enabled=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1eck-fleet-server.extraObjects~1then~1eck-fleet-server.deployment?+eck-fleet-server.fleetServerEnabled?+2more~1else~1eck-fleet-server.extraObjects"
+              }
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null~1then~1eck-fleet-server.deployment?+eck-fleet-server.fleetServerEnabled?+2more~1else~1eck-fleet-server.spec.deployment?+eck-fleet-..."
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?~1else~1eck-fleet-server.statefulSet?"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null~1then~1eck-fleet-server+eck-fleet-server.deployment?+eck-fleet-server.extraObjects+3more~1else~1eck-fleet-server.spec.deployment?+..."
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1eck-fleet-server.extraObjects~1then~1eck-fleet-server.deployment?+eck-fleet-server.fleetServerEnabled?+2more~1else~1eck-fleet-server.extraObjects"
+            }
+          }
+        }
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects!=null"
+        },
+        "then": false
       }
     },
     {
@@ -3281,7 +3390,7 @@
                           }
                         },
                         {
-                          "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
+                          "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
                         }
                       ]
                     }
@@ -3684,7 +3793,7 @@
             }
           },
           {
-            "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
+            "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
           }
         ]
       },
@@ -5200,7 +5309,7 @@
               "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@11"
             },
             {
-              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
             },
             {
               "$ref": "#/definitions/constrains~1eck-fleet-server.nameOverride+eck-fleet-server.nameOverride:t"
@@ -5231,7 +5340,7 @@
                     "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@10"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
+                    "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
                   }
                 ]
               }
@@ -5476,7 +5585,7 @@
               "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@11"
             },
             {
-              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
             }
           ]
         }
@@ -5507,7 +5616,7 @@
                 "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@10"
               },
               {
-                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
+                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
               }
             ]
           }
@@ -5530,7 +5639,7 @@
               "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@11"
             },
             {
-              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
             },
             {
               "$ref": "#/definitions/constrains~1eck-fleet-server.spec.mode?"
@@ -5556,7 +5665,7 @@
                 "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@10"
               },
               {
-                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
+                "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
               },
               {
                 "not": {
@@ -5667,7 +5776,7 @@
               "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@10"
             },
             {
-              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
             }
           ]
         },
@@ -5771,7 +5880,7 @@
               "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@11"
             },
             {
-              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@3"
+              "$ref": "#/definitions/constrains~1eck-fleet-server.spec+eck-fleet-server.spec=null@2"
             },
             {
               "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec.version+eck-fleet-server.spec.version=''+1more@5"
@@ -6144,6 +6253,17 @@
       "not": {
         "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects@4"
       }
+    },
+    "constrains/eck-fleet-server.extraObjects!=null": {
+      "properties": {
+        "eck-fleet-server": {
+          "$ref": "#/definitions/constrains~1extraObjects!=null"
+        }
+      },
+      "required": [
+        "eck-fleet-server"
+      ],
+      "type": "object"
     },
     "constrains/eck-fleet-server.extraObjects:t": {
       "properties": {
@@ -7970,16 +8090,7 @@
     "constrains/elasticsearchRef+elasticsearchRef=null": {
       "allOf": [
         {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1elasticsearchRef=null"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1elasticsearchRef"
-              }
-            }
-          ]
+          "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
         },
         {
           "type": "object"
@@ -8009,7 +8120,7 @@
                       "$ref": "#/definitions/constrains~1spec.elasticsearchRef:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+                      "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@4"
                     },
                     {
                       "$ref": "#/definitions/constrains~1spec+spec=null@5"
@@ -8054,6 +8165,18 @@
       ]
     },
     "constrains/elasticsearchRef+elasticsearchRef=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1elasticsearchRef=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1elasticsearchRef"
+          }
+        }
+      ]
+    },
+    "constrains/elasticsearchRef+elasticsearchRef=null@4": {
       "not": {
         "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@2"
       }
@@ -10674,7 +10797,7 @@
               "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+              "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1spec+spec=null@5"
@@ -10750,16 +10873,7 @@
           "type": "object"
         },
         {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1spec.elasticsearchRef=null"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1spec.elasticsearchRef"
-              }
-            }
-          ]
+          "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null@3"
         }
       ]
     },
@@ -10775,6 +10889,18 @@
         },
         {
           "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+        }
+      ]
+    },
+    "constrains/spec.elasticsearchRef+spec.elasticsearchRef=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1spec.elasticsearchRef=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1spec.elasticsearchRef"
+          }
         }
       ]
     },
@@ -11474,6 +11600,146 @@
         "$ref": "#/definitions/when~1eck-fleet-server.serviceAccount+eck-fleet-server.serviceAccount=null~1then~1fail~1else~1any"
       }
     },
+    "when/eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null/then/eck-fleet-server+eck-fleet-server.deployment?+eck-fleet-server.extraObjects+3more/else/eck-fleet-server.spec.deployment?+...": {
+      "else": {
+        "else": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?+2more~1else~1eck-fleet-server.spec.deployment?+eck-fleet-server.spec.statefulSet?+1more"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects@4"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?+2more~1else~1eck-fleet-server.spec.deployment?+eck-fleet-server.spec.statefulSet?+1more"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@9"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1eck-fleet-server.extraObjects~1then~1eck-fleet-server.deployment?+eck-fleet-server.fleetServerEnabled?+2more~1else~1eck-fleet-server.extraObjects"
+      }
+    },
+    "when/eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null/then/eck-fleet-server.deployment?+eck-fleet-server.fleetServerEnabled?+2more/else/eck-fleet-server.spec.deployment?+eck-fleet-...": {
+      "else": {
+        "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?+2more~1else~1eck-fleet-server.spec.deployment?+eck-fleet-server.spec.statefulSet?+1more"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1eck-fleet-server+eck-fleet-server.spec+eck-fleet-server.spec=null@9"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?~1else~1eck-fleet-server.statefulSet?"
+      }
+    },
+    "when/eck-fleet-server.deployment?/then/eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?+2more/else/eck-fleet-server.spec.deployment?+eck-fleet-server.spec.statefulSet?+1more": {
+      "else": {
+        "else": {
+          "else": {
+            "else": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": true,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1eck-fleet-server.spec.statefulSet?"
+                    },
+                    "then": false
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1eck-fleet-server.spec.mode?"
+                  },
+                  "then": true
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1eck-fleet-server.spec.fleetServerEnabled?"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1eck-fleet-server.spec.deployment?"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1eck-fleet-server.spec.fleetServerEnabled?~1then~1any~1else~1eck-fleet-server.spec.mode?"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1eck-fleet-server.statefulSet?@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1eck-fleet-server.spec.fleetServerEnabled?~1then~1any~1else~1eck-fleet-server.spec.mode?"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1eck-fleet-server.mode?"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.fleetServerEnabled?"
+        },
+        "then": true
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1eck-fleet-server.deployment?@2"
+      },
+      "then": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/when~1eck-fleet-server.spec.fleetServerEnabled?~1then~1any~1else~1eck-fleet-server.spec.mode?"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1eck-fleet-server.mode?"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.fleetServerEnabled?"
+        },
+        "then": true
+      }
+    },
+    "when/eck-fleet-server.deployment?/then/eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?/else/eck-fleet-server.statefulSet?": {
+      "else": {
+        "else": {
+          "else": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1eck-fleet-server.statefulSet?@2"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1eck-fleet-server.mode?"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.fleetServerEnabled?"
+        },
+        "then": true
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1eck-fleet-server.deployment?@2"
+      },
+      "then": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1eck-fleet-server.mode?"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.fleetServerEnabled?"
+        },
+        "then": true
+      }
+    },
     "when/eck-fleet-server.extraObjects!=null+eck-fleet-server.serviceAccount!=null+1more/then/fail": {
       "if": {
         "allOf": [
@@ -11484,15 +11750,7 @@
             "$ref": "#/definitions/constrains~1eck-fleet-server.version!=null"
           },
           {
-            "properties": {
-              "eck-fleet-server": {
-                "$ref": "#/definitions/constrains~1extraObjects!=null"
-              }
-            },
-            "required": [
-              "eck-fleet-server"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects!=null"
           }
         ]
       },
@@ -11504,6 +11762,23 @@
         "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects@4"
       },
       "then": true
+    },
+    "when/eck-fleet-server.extraObjects/then/eck-fleet-server.deployment?+eck-fleet-server.fleetServerEnabled?+2more/else/eck-fleet-server.extraObjects": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects@3"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?~1else~1eck-fleet-server.statefulSet?"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1eck-fleet-server.extraObjects@4"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1eck-fleet-server.deployment?~1then~1eck-fleet-server.fleetServerEnabled?+eck-fleet-server.mode?~1else~1eck-fleet-server.statefulSet?"
+      }
     },
     "when/eck-fleet-server.extraObjects/then/fail/else/eck-fleet-server.extraObjects": {
       "else": {
@@ -11574,6 +11849,19 @@
         "$ref": "#/definitions/constrains~1eck-fleet-server.serviceAccount+eck-fleet-server.serviceAccount=null@4"
       },
       "then": false
+    },
+    "when/eck-fleet-server.spec.fleetServerEnabled?/then/any/else/eck-fleet-server.spec.mode?": {
+      "else": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1eck-fleet-server.spec.mode?"
+        },
+        "then": true
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1eck-fleet-server.spec.fleetServerEnabled?"
+      },
+      "then": true
     },
     "when/eck-kibana+eck-kibana.enabled+eck-kibana.enabled=null/then/any/else/fail": {
       "else": false,
@@ -11661,6 +11949,338 @@
       },
       "then": false
     },
+    "when/elasticsearchRef+elasticsearchRef=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null"
+      },
+      "then": true
+    },
+    "when/elasticsearchRef+elasticsearchRef=null/then/any/else/spec+spec=null": {
+      "else": {
+        "$ref": "#/definitions/when~1spec+spec=null~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null"
+      },
+      "then": true
+    },
+    "when/elasticsearchRef+elasticsearchRef=null/then/enabled+enabled=null+spec+spec=null/else/any": {
+      "else": {
+        "else": {
+          "else": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1enabled+enabled=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1spec+spec=null~1then~1fail~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1enabled+enabled=null~1then~1spec+spec.elasticsearchRef+spec.elasticsearchRef=null+spec=null~1else~1fail"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1enabled+enabled=null~1else~1spec+spec=null"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1spec+spec=null@3"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1enabled+enabled=null~1else~1fail"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1spec+spec=null~1then~1enabled+enabled=null~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+      }
+    },
+    "when/elasticsearchRef+elasticsearchRef=null/then/enabled+enabled=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+      }
+    },
+    "when/elasticsearchRef+elasticsearchRef=null/then/enabled+enabled=null/else/spec+spec=null": {
+      "else": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1spec+spec=null~1then~1fail~1else~1any"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+      }
+    },
+    "when/elasticsearchRef+elasticsearchRef=null/then/spec+spec=null/else/any": {
+      "else": {
+        "else": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1spec+spec=null~1then~1fail~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1spec+spec=null~1then~1any~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1any~1else~1spec+spec=null"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1spec+spec=null@3"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1any~1else~1fail"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1spec+spec=null~1then~1any~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null@2"
+      }
+    },
+    "when/enabled+enabled=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+      },
+      "then": true
+    },
+    "when/enabled+enabled=null/then/any/else/fail@2": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+      },
+      "then": true
+    },
+    "when/enabled+enabled=null/then/extraObjects/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects"
+      }
+    },
+    "when/enabled+enabled=null/then/spec+spec.elasticsearchRef+spec.elasticsearchRef=null+spec=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1spec+spec=null~1then~1any~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+      }
+    },
+    "when/enabled:t/then/elasticsearchRef+elasticsearchRef=null+spec+spec.elasticsearchRef.name:t+3more/else/enabled+enabled=null": {
+      "else": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1enabled+enabled=null~1else~1fail"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1spec.elasticsearchRef:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1enabled+enabled=null~1else~1spec+spec=null"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1spec+spec=null@3"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1enabled+enabled=null~1else~1fail"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1spec.elasticsearchRef.secretName:t@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1enabled+enabled=null+spec+spec=null~1else~1any"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1spec.elasticsearchRef.name:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1enabled+enabled=null+spec+spec=null~1else~1any"
+          }
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1enabled:t"
+      },
+      "then": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1any~1else~1fail"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1spec.elasticsearchRef:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1any~1else~1spec+spec=null"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1spec+spec=null@3"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1any~1else~1fail"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1spec.elasticsearchRef.secretName:t@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1spec+spec=null~1else~1any"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1spec.elasticsearchRef.name:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1elasticsearchRef+elasticsearchRef=null~1then~1spec+spec=null~1else~1any"
+          }
+        }
+      }
+    },
+    "when/enabled:t/then/extraObjects+extraObjects:t+pipelines:t+pipelinesRef:t/else/enabled+enabled=null": {
+      "else": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1pipelines:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1pipelinesRef:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail@2"
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1extraObjects:t"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/when~1enabled+enabled=null~1then~1extraObjects~1else~1fail"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1pipelines:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1enabled+enabled=null~1then~1extraObjects~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1pipelinesRef:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail@2"
+            }
+          }
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1enabled:t"
+      },
+      "then": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1pipelines:t"
+          },
+          "then": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1pipelinesRef:t"
+            },
+            "then": true
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1extraObjects:t"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1pipelines:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1pipelinesRef:t"
+            },
+            "then": true
+          }
+        }
+      }
+    },
     "when/extraObjects!=null+serviceAccount!=null/then/fail": {
       "if": {
         "allOf": [
@@ -11677,6 +12297,76 @@
     "when/extraObjects!=null/then/fail": {
       "if": {
         "$ref": "#/definitions/constrains~1extraObjects!=null"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@16"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/extraObjects": {
+      "else": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@15"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/extraObjects@2": {
+      "else": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@15"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/extraObjects@3": {
+      "else": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@15"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/extraObjects@4": {
+      "else": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@15"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/extraObjects@5": {
+      "else": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@15"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/extraObjects@6": {
+      "else": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@15"
+      },
+      "then": false
+    },
+    "when/extraObjects/then/fail/else/extraObjects@7": {
+      "else": {
+        "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects@15"
       },
       "then": false
     },
@@ -11731,6 +12421,72 @@
         "type": "object"
       },
       "then": false
+    },
+    "when/spec+spec=null/then/any/else/spec.elasticsearchRef+spec.elasticsearchRef=null": {
+      "else": {
+        "$ref": "#/definitions/when~1spec.elasticsearchRef+spec.elasticsearchRef=null~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1spec+spec=null"
+      },
+      "then": true
+    },
+    "when/spec+spec=null/then/any/else/spec.elasticsearchRef+spec.elasticsearchRef=null@2": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1spec+spec=null~1then~1any~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null@3"
+        },
+        "then": true
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1spec+spec=null@3"
+      },
+      "then": true
+    },
+    "when/spec+spec=null/then/enabled+enabled=null/else/spec.elasticsearchRef+spec.elasticsearchRef=null": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1enabled+enabled=null~1then~1spec+spec.elasticsearchRef+spec.elasticsearchRef=null+spec=null~1else~1fail"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null@3"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1spec+spec=null@3"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+      }
+    },
+    "when/spec+spec=null/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1spec+spec=null"
+      },
+      "then": false
+    },
+    "when/spec+spec=null/then/fail/else/spec.elasticsearchRef+spec.elasticsearchRef=null": {
+      "else": {
+        "$ref": "#/definitions/when~1spec.elasticsearchRef+spec.elasticsearchRef=null~1then~1any~1else~1fail"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1spec+spec=null"
+      },
+      "then": false
+    },
+    "when/spec.elasticsearchRef+spec.elasticsearchRef=null/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+      },
+      "then": true
     }
   },
   "properties": {
@@ -11799,6 +12555,40 @@
                 }
               }
             }
+          }
+        },
+        {
+          "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@2"
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@2"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/when~1extraObjects!=null~1then~1fail"
           }
         },
         {
@@ -12101,6 +12891,40 @@
       "allOf": [
         {
           "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@3"
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@3"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/when~1extraObjects!=null~1then~1fail"
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1extraObjects:t"
@@ -12157,6 +12981,40 @@
     "eck-autoops-agent-policy": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@4"
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@4"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/when~1extraObjects!=null~1then~1fail"
+          }
+        },
         {
           "if": {
             "allOf": [
@@ -12357,6 +13215,40 @@
                 }
               }
             }
+          }
+        },
+        {
+          "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@5"
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@5"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/when~1extraObjects!=null~1then~1fail"
           }
         },
         {
@@ -12691,6 +13583,40 @@
                 "$ref": "#/definitions/constrains~1enabled:t"
               }
             ]
+          },
+          "then": {
+            "$ref": "#/definitions/when~1extraObjects!=null~1then~1fail"
+          }
+        },
+        {
+          "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@6"
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@6"
+              }
+            }
           },
           "then": {
             "$ref": "#/definitions/when~1extraObjects!=null~1then~1fail"
@@ -13058,16 +13984,7 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1elasticsearchRef=null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1elasticsearchRef"
-                    }
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
               },
               {
                 "type": "object"
@@ -13095,7 +14012,7 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@3"
+                "$ref": "#/definitions/constrains~1elasticsearchRef+elasticsearchRef=null@4"
               }
             ]
           },
@@ -13142,6 +14059,80 @@
             },
             "then": false
           }
+        },
+        {
+          "if": {
+            "else": {
+              "else": {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1spec.elasticsearchRef:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1spec.elasticsearchRef.secretName:t@2"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1spec+spec=null~1then~1enabled+enabled=null~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1spec.elasticsearchRef.name:t@2"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1spec+spec=null~1then~1enabled+enabled=null~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null"
+                    }
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled:t"
+                },
+                "then": {
+                  "else": true,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1spec.elasticsearchRef:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": true,
+                      "if": {
+                        "$ref": "#/definitions/constrains~1spec.elasticsearchRef.secretName:t@2"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1spec+spec=null~1then~1any~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null@2"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1spec.elasticsearchRef.name:t@2"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1spec+spec=null~1then~1any~1else~1spec.elasticsearchRef+spec.elasticsearchRef=null@2"
+                    }
+                  }
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1elasticsearchRef.secretName:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1enabled:t~1then~1elasticsearchRef+elasticsearchRef=null+spec+spec.elasticsearchRef.name:t+3more~1else~1enabled+enabled=null"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1elasticsearchRef.name:t@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1enabled:t~1then~1elasticsearchRef+elasticsearchRef=null+spec+spec.elasticsearchRef.name:t+3more~1else~1enabled+enabled=null"
+            }
+          },
+          "then": false
         },
         {
           "if": {
@@ -13318,6 +14309,49 @@
         },
         {
           "if": {
+            "else": {
+              "$ref": "#/definitions/when~1enabled:t~1then~1extraObjects+extraObjects:t+pipelines:t+pipelinesRef:t~1else~1enabled+enabled=null"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1config:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1enabled:t~1then~1extraObjects+extraObjects:t+pipelines:t+pipelinesRef:t~1else~1enabled+enabled=null"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1configRef:t"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1enabled+enabled=null~1then~1any~1else~1fail@2"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled:t"
+                },
+                "then": true
+              }
+            }
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1pipelines!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1extraObjects!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1config!=null"
+                }
+              ]
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1extraObjects:t"
@@ -13439,6 +14473,40 @@
     "eck-package-registry": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@7"
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1extraObjects~1then~1fail~1else~1extraObjects@7"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/when~1extraObjects!=null~1then~1fail"
+          }
+        },
         {
           "if": {
             "allOf": [

@@ -268,6 +268,108 @@
     },
     {
       "if": {
+        "else": {
+          "else": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1reports-server.postgresql.architecture~1then~1fail~1else~1any"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+            },
+            "then": false
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1reportsServer.enabled+reportsServer.enabled=null~1then~1reports-server.postgresql.architecture~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1reports-server.postgresql.architecture~1then~1fail~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+            },
+            "then": false
+          }
+        }
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -663,294 +765,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
           "else": false,
           "if": {
@@ -1324,6 +1138,294 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "properties": {
               "reportsController": {
                 "enum": [
@@ -1346,6 +1448,327 @@
               ],
               "type": "object"
             }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              }
+            ]
           }
         ]
       },
@@ -1994,6 +2417,360 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version=''"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "else": false,
         "if": {
           "$ref": "#/definitions/constrains~1reports-server.apiServicesManagement.enabled:t"
@@ -2034,360 +2811,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -2559,327 +2982,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.templating.version=''"
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -5341,7 +5443,7 @@
                       "$ref": "#/definitions/constrains~1namespaceOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1namespace:t"
+                      "$ref": "#/definitions/constrains~1namespace:t@2"
                     },
                     {
                       "anyOf": [
@@ -5372,7 +5474,7 @@
                       "$ref": "#/definitions/constrains~1namespaceOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1namespace:t"
+                      "$ref": "#/definitions/constrains~1namespace:t@2"
                     },
                     {
                       "anyOf": [
@@ -5426,7 +5528,7 @@
                       "$ref": "#/definitions/constrains~1namespaceOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1namespace:t"
+                      "$ref": "#/definitions/constrains~1namespace:t@2"
                     },
                     {
                       "anyOf": [
@@ -5446,7 +5548,7 @@
                       "$ref": "#/definitions/constrains~1namespaceOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1namespace:t"
+                      "$ref": "#/definitions/constrains~1namespace:t@2"
                     },
                     {
                       "anyOf": [
@@ -21736,7 +21838,7 @@
               ]
             },
             {
-              "$ref": "#/definitions/constrains~1namespace:t"
+              "$ref": "#/definitions/constrains~1namespace:t@2"
             }
           ]
         },
@@ -21746,7 +21848,7 @@
               "$ref": "#/definitions/constrains~1namespaceOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespace:t"
+              "$ref": "#/definitions/constrains~1namespace:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1namespaceOverride@5"
@@ -21798,7 +21900,7 @@
               "$ref": "#/definitions/constrains~1namespaceOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespace:t"
+              "$ref": "#/definitions/constrains~1namespace:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride=null"
@@ -21847,7 +21949,7 @@
               "$ref": "#/definitions/constrains~1namespaceOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespace:t@2"
+              "$ref": "#/definitions/constrains~1namespace:t"
             },
             {
               "$ref": "#/definitions/constrains~1namespaceOverride@5"
@@ -21870,7 +21972,7 @@
               "$ref": "#/definitions/constrains~1namespaceOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespace:t@2"
+              "$ref": "#/definitions/constrains~1namespace:t"
             },
             {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride=null"
@@ -21883,7 +21985,7 @@
               "$ref": "#/definitions/constrains~1namespaceOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespace:t@2"
+              "$ref": "#/definitions/constrains~1namespace:t"
             },
             {
               "anyOf": [
@@ -22653,7 +22755,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride@2"
@@ -22693,7 +22795,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
             }
           ]
         },
@@ -22703,7 +22805,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
@@ -22731,7 +22833,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride"
@@ -22756,7 +22858,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride:t"
@@ -22769,7 +22871,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
@@ -22791,7 +22893,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
             },
             {
               "not": {
@@ -22959,47 +23061,52 @@
       ],
       "type": "object"
     },
-    "constrains/reports-server.postgresql.architecture+1more": {
-      "not": {
-        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
-      }
-    },
-    "constrains/reports-server.postgresql.architecture+1more@2": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
+    "constrains/reports-server.postgresql.architecture!=null": {
+      "properties": {
+        "reports-server": {
+          "properties": {
+            "postgresql": {
               "properties": {
-                "reports-server": {
-                  "properties": {
-                    "postgresql": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "postgresql"
-                  ],
-                  "type": "object"
+                "architecture": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
                 }
               },
               "required": [
-                "reports-server"
+                "architecture"
               ],
               "type": "object"
             }
           },
-          {
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "reports-server"
+      ],
+      "type": "object"
+    },
+    "constrains/reports-server.postgresql.architecture+1more": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
               "reports-server": {
                 "properties": {
                   "postgresql": {
-                    "$ref": "#/definitions/constrains~1architecture=null"
+                    "properties": {
+                      "architecture": {}
+                    },
+                    "required": [
+                      "architecture"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
@@ -23013,10 +23120,39 @@
             ],
             "type": "object"
           }
-        ]
+        },
+        {
+          "properties": {
+            "reports-server": {
+              "properties": {
+                "postgresql": {
+                  "$ref": "#/definitions/constrains~1architecture=null"
+                }
+              },
+              "required": [
+                "postgresql"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "reports-server"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/reports-server.postgresql.architecture+1more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
       }
     },
     "constrains/reports-server.postgresql.architecture+1more@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+      }
+    },
+    "constrains/reports-server.postgresql.architecture+1more@4": {
       "properties": {
         "reports-server": {
           "properties": {
@@ -24147,37 +24283,16 @@
             "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled!=null"
           },
           {
-            "properties": {
-              "reports-server": {
-                "properties": {
-                  "postgresql": {
-                    "properties": {
-                      "architecture": {
-                        "not": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "postgresql"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "reports-server"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture!=null"
           }
         ]
+      },
+      "then": false
+    },
+    "when/reports-server.postgresql.architecture/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
       },
       "then": false
     },
@@ -24194,6 +24309,15 @@
         "$ref": "#/definitions/constrains~1reportsServer.enabled+reportsServer.enabled=null@3"
       },
       "then": true
+    },
+    "when/reportsServer.enabled+reportsServer.enabled=null/then/reports-server.postgresql.architecture/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1reportsServer.enabled+reportsServer.enabled=null@3"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1reports-server.postgresql.architecture~1then~1fail~1else~1any"
+      }
     }
   },
   "properties": {
@@ -24651,7 +24775,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1namespace:t@2"
+                    "$ref": "#/definitions/constrains~1namespace:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1configMapName"
@@ -24673,7 +24797,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1namespace:t@2"
+                    "$ref": "#/definitions/constrains~1namespace:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1configMapName"

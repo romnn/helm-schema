@@ -6,27 +6,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1rawfile-localpv.fullnameOverride+rawfile-localpv.fullnameOverride:t+4more@3"
           },
           {
@@ -179,6 +158,27 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
       }
     },
     {
@@ -632,6 +632,45 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.enabled:t@2"
+              },
+              "then": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.priorityClassName:t@2"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.nodeDeployment.enabled:t@3"
+                },
+                "then": false
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
+            },
+            "then": false
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1localpv-provisioner.hostpathClass+localpv-provisioner.localpv+2more~1then~1fail"
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1engines.local.lvm.enabled+engines.local.lvm.enabled:t+1more"
       },
       "then": {
@@ -889,6 +928,21 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1lvm-localpv.rbac.pspEnabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1engines.local.lvm.enabled+engines.local.lvm.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1lvm-localpv.rbac.pspEnabled!=null~1then~1fail"
       }
     },
     {
@@ -1481,6 +1535,33 @@
       "if": {
         "allOf": [
           {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.create:t@2"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.pspEnabled:t"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+              }
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1localpv-provisioner.rbac.pspEnabled!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled:t+1more"
           },
           {
@@ -1591,21 +1672,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1engines.local.lvm.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1lvm-localpv.rbac.pspEnabled:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1lvm-localpv.rbac.pspEnabled!=null~1then~1fail"
       }
     },
     {
@@ -2104,7 +2170,7 @@
                 "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@10"
+                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@11"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.local.lvm.enabled+engines.local.lvm.enabled=null"
@@ -2123,7 +2189,7 @@
                 "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@10"
+                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@11"
               }
             ]
           }
@@ -3519,7 +3585,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
@@ -3535,7 +3601,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
@@ -3554,7 +3620,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
@@ -3576,7 +3642,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
@@ -3938,42 +4004,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1lvm-localpv.rbac.pspEnabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1engines.local.lvm.enabled+engines.local.lvm.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1lvm-localpv.rbac.pspEnabled!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled:t+1more"
       },
       "then": {
@@ -4012,6 +4042,24 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.pspEnabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.fullnameOverride:t@3"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
       }
     },
     {
@@ -5739,27 +5787,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -5881,6 +5908,27 @@
       },
       "then": {
         "$ref": "#/definitions/when~1mayastor.loki.grafana-agent-operator.fullnameOverride!=null+3more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
       }
     },
     {
@@ -6544,6 +6592,74 @@
     },
     {
       "if": {
+        "else": {
+          "else": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled=null~1then~1mayastor.jaeger-operator.service+mayastor.jaeger-operator.service.type+1more~1else~1fail"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled:t"
+          },
+          "then": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null~1then~1fail~1else~1mayastor.jaeger-operator.service.type"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+            },
+            "then": false
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled=null~1then~1mayastor.jaeger-operator.service+mayastor.jaeger-operator.service.type+1more~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null~1then~1fail~1else~1mayastor.jaeger-operator.service.type"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+            },
+            "then": false
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.base.jaeger.enabled!=null+mayastor.jaeger-operator.service.type!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1mayastor+mayastor.localpv-provisioner+8more@2"
@@ -6784,6 +6900,263 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.basePath:helm-no-template-actions"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.basePath:helm-no-template-actions"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.basePath:helm-no-template-actions"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.basePath:helm-no-template-actions"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.basePath:helm-no-template-actions"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.basePath:helm-no-template-actions"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1loki.minio!=null~1then~1fail"
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "mayastor": {
@@ -6993,6 +7366,63 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mayastor.etcd.localpvScConfig.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mayastor.etcd.localpvScConfig.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1loki!=null+mayastor.etcd.localpvScConfig.enabled!=null~1then~1fail"
       }
     },
     {
@@ -10761,27 +11191,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
-      }
-    },
-    {
-      "if": {
         "else": {
           "else": false,
           "if": {
@@ -10989,23 +11398,148 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "else": false,
+        "else": {
+          "else": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1mayastor.loki.enabled+mayastor.loki.enabled=null~1then~1mayastor.loki+mayastor.loki.minio+mayastor.loki.minio.mode+1more~1else~1fail"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
+            },
             "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.create:t@2"
+              "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled:t"
             },
             "then": {
-              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1mayastor.loki.enabled+mayastor.loki.enabled=null~1then~1mayastor.loki.minio+mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1else~1fail"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
             }
           },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          "if": {
+            "$ref": "#/definitions/constrains~1mayastor.loki.enabled:t"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1mayastor.loki.minio.enabled+mayastor.loki.minio.enabled=null~1then~1mayastor.loki.minio+mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1else~1fail"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled:t"
+            },
+            "then": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1then~1fail~1else~1mayastor.loki.minio.mode"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
+            }
           }
-        ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1mayastor.loki.enabled+mayastor.loki.enabled=null~1then~1mayastor.loki+mayastor.loki.minio+mayastor.loki.minio.mode+1more~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1mayastor.loki.enabled+mayastor.loki.enabled=null~1then~1mayastor.loki.minio+mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mayastor.loki.enabled:t"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1mayastor.loki.minio.enabled+mayastor.loki.minio.enabled=null~1then~1mayastor.loki.minio+mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1then~1fail~1else~1mayastor.loki.minio.mode"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null"
+              },
+              "then": false
+            }
+          }
+        }
       },
       "then": {
-        "$ref": "#/definitions/when~1localpv-provisioner!=null~1then~1fail"
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -11279,7 +11813,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11298,7 +11832,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11314,7 +11848,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11333,7 +11867,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11349,7 +11883,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11371,7 +11905,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11396,7 +11930,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11412,7 +11946,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
@@ -11551,24 +12085,6 @@
       },
       "then": {
         "$ref": "#/definitions/when~1mayastor.loki.enterprise+mayastor.loki.loki.image.tag!=null+2more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.pspEnabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.fullnameOverride:t@3"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
       }
     },
     {
@@ -11825,6 +12341,122 @@
       },
       "then": {
         "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+11more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+                  },
+                  "then": {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
+                    },
+                    "then": true
+                  }
+                }
+              }
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "loki": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "localpvScConfig": {
+                                  "properties": {
+                                    "loki": {
+                                      "$ref": "#/definitions/constrains~1name@17"
+                                    }
+                                  },
+                                  "required": [
+                                    "loki"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "localpvScConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "localpvScConfig": {
+                                "properties": {
+                                  "loki": {
+                                    "properties": {
+                                      "name": {
+                                        "enum": [
+                                          null
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "loki"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "localpvScConfig"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "loki"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1loki!=null~1then~1fail"
       }
     },
     {
@@ -12822,6 +13454,128 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "loki": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "localpvScConfig": {
+                                  "properties": {
+                                    "minio": {
+                                      "$ref": "#/definitions/constrains~1name@17"
+                                    }
+                                  },
+                                  "required": [
+                                    "minio"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "localpvScConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "localpvScConfig": {
+                                "properties": {
+                                  "minio": {
+                                    "properties": {
+                                      "name": {
+                                        "enum": [
+                                          null
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "minio"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "localpvScConfig"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "loki"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1loki@2"
+              }
+            ]
+          },
+          {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": false,
+                      "if": {
+                        "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
+                      },
+                      "then": true
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
+                    },
+                    "then": false
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1loki.minio!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -13195,33 +13949,6 @@
       "if": {
         "allOf": [
           {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.enabled:t@2"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
-            },
-            "then": false
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1localpv-provisioner.hostpathClass+localpv-provisioner.localpv.enabled!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1mayastor+mayastor.loki+mayastor.loki.enterprise.enabled+11more"
           },
           {
@@ -13237,30 +13964,6 @@
       },
       "then": {
         "$ref": "#/definitions/when~1mayastor.loki.enterprise+mayastor.loki.loki.image.tag!=null+1more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.create:t@3"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.create!=null"
-        },
-        "then": false
       }
     },
     {
@@ -13294,7 +13997,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@11"
+                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@10"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.local.lvm.enabled:t"
@@ -13310,7 +14013,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@11"
+                "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmNode.name@10"
               },
               {
                 "$ref": "#/definitions/constrains~1lvm-localpv.serviceAccount.lvmController.create:t@2"
@@ -14612,6 +15315,48 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1loki.localpvScConfig.enabled:t~1then~1any~1else~1fail"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1mayastor.etcd.localpvScConfig.enabled:t~1then~1any~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1loki.enabled:t@3"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1mayastor.etcd.localpvScConfig.enabled:t~1then~1any~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+              },
+              "then": true
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
+        },
+        "then": false
+      },
+      "then": {
+        "$ref": "#/definitions/when~1loki!=null+mayastor.etcd.localpvScConfig.enabled!=null~1then~1fail"
       }
     },
     {
@@ -18384,17 +19129,34 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "else": false,
             "if": {
               "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
             },
             "then": {
               "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-                },
-                "then": true
+                "$ref": "#/definitions/when~1loki.localpvScConfig.enabled:t~1then~1any~1else~1fail"
               },
               "if": {
                 "$ref": "#/definitions/constrains~1loki.enabled:t@3"
@@ -18417,39 +19179,6 @@
       },
       "then": {
         "$ref": "#/definitions/when~1loki.minio!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.enabled:t@2"
-              },
-              "then": {
-                "else": {
-                  "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.nodeDeployment.enabled:t@3"
-                },
-                "then": false
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
-            },
-            "then": false
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1localpv-provisioner.hostpathClass+localpv-provisioner.localpv+1more~1then~1fail"
       }
     },
     {
@@ -26928,6 +27657,27 @@
       "if": {
         "allOf": [
           {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.create:t@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1localpv-provisioner!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1mayastor+mayastor.loki+mayastor.loki.monitoring+7more"
           },
           {
@@ -27285,27 +28035,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.pspEnabled:t"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1localpv-provisioner.rbac.pspEnabled!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -27319,7 +28048,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.create:t@2"
@@ -27338,7 +28067,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.create:t@2"
@@ -27357,7 +28086,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.create:t@2"
@@ -27376,7 +28105,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled=null@4"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.create:t@2"
@@ -37449,6 +38178,27 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.pspEnabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.fullnameOverride:t@3"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+1more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1engines.local.lvm.enabled:t"
           },
           {
@@ -37841,6 +38591,33 @@
             "$ref": "#/definitions/constrains~1loki.image"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.enabled:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
+            },
+            "then": false
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1localpv-provisioner.hostpathClass+localpv-provisioner.localpv.enabled!=null~1then~1fail"
       }
     },
     {
@@ -38314,7 +39091,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled=null@4"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
@@ -38336,7 +39113,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled=null@4"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.create:t@2"
@@ -38352,7 +39129,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
@@ -38374,7 +39151,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@8"
+                "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.name@7"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.serviceAccount.create:t@2"
@@ -38963,6 +39740,51 @@
       },
       "then": {
         "$ref": "#/definitions/when~1loki!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.pspEnabled:t"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1localpv-provisioner.rbac.pspEnabled!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": {
+              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
+            },
+            "then": false
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled!=null"
+        },
+        "then": false
       }
     },
     {
@@ -39820,33 +40642,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.create:t@2"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1localpv-provisioner.rbac.pspEnabled:t"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
-              }
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1localpv-provisioner.rbac.pspEnabled!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1alloy.enabled=true"
@@ -40170,45 +40965,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.enabled:t@2"
-              },
-              "then": {
-                "else": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.priorityClassName:t@2"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.nodeDeployment.enabled:t@3"
-                },
-                "then": false
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
-            },
-            "then": false
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1localpv-provisioner.hostpathClass+localpv-provisioner.localpv+2more~1then~1fail"
       }
     },
     {
@@ -44406,7 +45162,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null@16"
@@ -44425,7 +45181,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
@@ -44447,7 +45203,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.enabled+1more@4"
@@ -44466,7 +45222,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
@@ -44488,7 +45244,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               }
             ]
           },
@@ -44498,7 +45254,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
@@ -44523,7 +45279,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null@16"
@@ -44539,7 +45295,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@7"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
               },
               {
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
@@ -44737,30 +45493,6 @@
             "$ref": "#/definitions/constrains~1loki.image.tag"
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": {
-              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
-            },
-            "then": false
-          },
-          {
-            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled!=null"
-        },
-        "then": false
       }
     },
     {
@@ -45638,122 +46370,6 @@
       "if": {
         "allOf": [
           {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              "then": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-                },
-                "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-                  },
-                  "then": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
-                    },
-                    "then": true
-                  }
-                }
-              }
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "loki": {
-                    "allOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "localpvScConfig": {
-                                  "properties": {
-                                    "loki": {
-                                      "$ref": "#/definitions/constrains~1name@17"
-                                    }
-                                  },
-                                  "required": [
-                                    "loki"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "localpvScConfig"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "localpvScConfig": {
-                                "properties": {
-                                  "loki": {
-                                    "properties": {
-                                      "name": {
-                                        "enum": [
-                                          null
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "loki"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "localpvScConfig"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1loki!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1mayastor.loki.monitoring.dashboards:t@2"
           },
           {
@@ -45937,6 +46553,21 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1engines.local.lvm.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1lvm-localpv.rbac.pspEnabled:t"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1lvm-localpv.rbac.pspEnabled!=null~1then~1fail"
       }
     },
     {
@@ -47521,6 +48152,30 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "else": false,
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.create:t@3"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.create!=null"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "else": {
           "else": {
             "else": {
@@ -48197,259 +48852,35 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.enabled:t@2"
               },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.basePath:helm-no-template-actions"
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1engines.local.hostpath.enabled+engines.local.hostpath.enabled=null~1then~1any~1else~1fail"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1localpv-provisioner.localpv.nodeDeployment.enabled:t@3"
+                },
+                "then": false
               }
-            ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1localpv-provisioner.hostpathClass.enabled:t@3"
+            },
+            "then": false
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.basePath:helm-no-template-actions"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.basePath:helm-no-template-actions"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.basePath:helm-no-template-actions"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.basePath:helm-no-template-actions"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.minio.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.loki.basePath+loki.localpvScConfig.loki.basePath=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.loki.basePath:helm-no-template-actions"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1localpv-provisioner.localpv+localpv-provisioner.localpv=null"
           }
         ]
       },
       "then": {
-        "$ref": "#/definitions/when~1loki.minio!=null~1then~1fail"
+        "$ref": "#/definitions/when~1localpv-provisioner.hostpathClass+localpv-provisioner.localpv+1more~1then~1fail"
       }
     },
     {
@@ -48569,128 +49000,6 @@
       },
       "then": {
         "$ref": "#/definitions/when~1mayastor.localpv-provisioner.fullnameOverride!=null+4more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "loki": {
-                    "allOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "localpvScConfig": {
-                                  "properties": {
-                                    "minio": {
-                                      "$ref": "#/definitions/constrains~1name@17"
-                                    }
-                                  },
-                                  "required": [
-                                    "minio"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "localpvScConfig"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "localpvScConfig": {
-                                "properties": {
-                                  "minio": {
-                                    "properties": {
-                                      "name": {
-                                        "enum": [
-                                          null
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "minio"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "localpvScConfig"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki@2"
-              }
-            ]
-          },
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t@3"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              "then": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-                },
-                "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1loki.minio.persistence.enabled:t"
-                  },
-                  "then": {
-                    "else": {
-                      "else": false,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1loki+loki.localpvScConfig.minio.basePath+1more"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1loki.singleBinary.persistence.enabled:t@3"
-                    },
-                    "then": false
-                  }
-                }
-              }
-            }
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1loki.minio!=null~1then~1fail"
       }
     },
     {
@@ -49130,7 +49439,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
@@ -49152,7 +49461,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null@6"
@@ -49171,7 +49480,7 @@
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@9"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
@@ -49187,7 +49496,7 @@
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.rbac.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@9"
+                "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.serviceAccount.name@10"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.enabled:t"
@@ -49707,109 +50016,6 @@
             "object"
           ]
         }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mayastor.etcd.localpvScConfig.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mayastor.etcd.localpvScConfig.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1engines.local.hostpath.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "properties": {
-                "mayastor": {
-                  "properties": {
-                    "etcd": {
-                      "properties": {
-                        "localpvScConfig": {
-                          "$ref": "#/definitions/constrains~1enabled!=null"
-                        }
-                      },
-                      "required": [
-                        "localpvScConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "etcd"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "mayastor"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "loki": {
-                  "not": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "loki"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        "then": false
       }
     },
     {
@@ -62878,7 +63084,7 @@
             "serviceAccount": {
               "properties": {
                 "lvmNode": {
-                  "$ref": "#/definitions/constrains~1name@15"
+                  "$ref": "#/definitions/constrains~1name@14"
                 }
               },
               "required": [
@@ -62905,7 +63111,7 @@
             "serviceAccount": {
               "properties": {
                 "lvmNode": {
-                  "$ref": "#/definitions/constrains~1name@14"
+                  "$ref": "#/definitions/constrains~1name@15"
                 }
               },
               "required": [
@@ -66812,7 +67018,7 @@
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.nameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type"
@@ -66853,7 +67059,7 @@
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type"
@@ -66900,7 +67106,7 @@
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.nameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type"
@@ -66922,7 +67128,7 @@
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
+              "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type"
@@ -67667,7 +67873,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.enabled:t@3"
@@ -67726,7 +67932,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@6"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -67744,7 +67950,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -67772,7 +67978,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:helm-marker-free"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -67793,7 +67999,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.enabled:t@3"
@@ -67861,7 +68067,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -67948,7 +68154,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -67973,7 +68179,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:helm-marker-free"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -67994,7 +68200,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68013,7 +68219,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@6"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68031,7 +68237,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68068,7 +68274,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68189,7 +68395,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68217,7 +68423,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.reclaimPolicy"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68235,7 +68441,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68306,7 +68512,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68328,7 +68534,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.reclaimPolicy"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68346,7 +68552,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68436,7 +68642,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies.reclaimPolicy?"
@@ -68473,7 +68679,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -68495,7 +68701,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.reclaimPolicy"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68513,7 +68719,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -68541,7 +68747,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.reclaimPolicy"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68559,7 +68765,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies.reclaimPolicy?"
@@ -68631,7 +68837,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68653,7 +68859,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@6"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68671,7 +68877,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68714,7 +68920,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68816,7 +69022,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:helm-marker-free"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68834,7 +69040,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -68878,7 +69084,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -68940,7 +69146,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:helm-marker-free"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -68958,7 +69164,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies.reclaimPolicy?"
@@ -69001,7 +69207,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies.reclaimPolicy?"
@@ -69063,7 +69269,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@6"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -69081,7 +69287,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -69244,7 +69450,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@6"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -69262,7 +69468,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -69287,7 +69493,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:helm-marker-free"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -69305,7 +69511,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies.reclaimPolicy?"
@@ -69345,7 +69551,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies.reclaimPolicy?"
@@ -69379,7 +69585,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:t"
@@ -69467,7 +69673,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.allowedTopologies:helm-marker-free"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -69485,7 +69691,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -69525,7 +69731,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -69581,7 +69787,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@6"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.ext4Quota.enabled:t"
@@ -69599,7 +69805,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -69633,7 +69839,7 @@
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@3"
+              "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@4"
             },
             {
               "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.nodeAffinityLabels:t"
@@ -70685,82 +70891,16 @@
     "constrains/mayastor+mayastor.loki+mayastor.loki.minio+mayastor.loki.minio.mode+1more@3": {
       "anyOf": [
         {
-          "properties": {
-            "mayastor": {
-              "properties": {
-                "loki": {
-                  "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null"
-                }
-              },
-              "required": [
-                "loki"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "mayastor"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null@2"
         },
         {
-          "not": {
-            "properties": {
-              "mayastor": {
-                "properties": {
-                  "loki": {
-                    "$ref": "#/definitions/constrains~1minio.mode@2"
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mayastor"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode"
         },
         {
-          "properties": {
-            "mayastor": {
-              "properties": {
-                "loki": {
-                  "$ref": "#/definitions/constrains~1minio.mode"
-                }
-              },
-              "required": [
-                "loki"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "mayastor"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode@2"
         },
         {
-          "properties": {
-            "mayastor": {
-              "properties": {
-                "loki": {
-                  "$ref": "#/definitions/constrains~1minio.mode=null"
-                }
-              },
-              "required": [
-                "loki"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "mayastor"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode=null"
         }
       ]
     },
@@ -70937,7 +71077,7 @@
           "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name:t"
         },
         {
-          "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
+          "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
         },
         {
           "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@9"
@@ -70971,7 +71111,7 @@
           "not": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@6"
+                "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name@8"
               },
               {
                 "$ref": "#/definitions/constrains~1mayastor.loki.rollout_operator.serviceAccount.name"
@@ -73672,7 +73812,7 @@
           "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
+          "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@4"
         },
         {
           "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type@3"
@@ -75037,23 +75177,26 @@
       "type": "object"
     },
     "constrains/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null": {
-      "not": {
-        "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3"
-      }
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type=null"
+        }
+      ]
     },
     "constrains/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@2": {
       "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type=null"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null"
       }
     },
     "constrains/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@4"
+      }
+    },
+    "constrains/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@4": {
       "properties": {
         "mayastor": {
           "properties": {
@@ -75334,7 +75477,7 @@
         "mayastor": {
           "properties": {
             "jaeger-operator": {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@9"
+              "$ref": "#/definitions/constrains~1serviceAccount.name@10"
             }
           },
           "required": [
@@ -75353,7 +75496,7 @@
         "mayastor": {
           "properties": {
             "jaeger-operator": {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@10"
+              "$ref": "#/definitions/constrains~1serviceAccount.name@9"
             }
           },
           "required": [
@@ -76678,12 +76821,12 @@
     },
     "constrains/mayastor.localpv-provisioner.hostpathClass.name@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@8"
+        "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@7"
       }
     },
     "constrains/mayastor.localpv-provisioner.hostpathClass.name@4": {
       "not": {
-        "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@7"
+        "$ref": "#/definitions/constrains~1mayastor.localpv-provisioner.hostpathClass.name@8"
       }
     },
     "constrains/mayastor.localpv-provisioner.hostpathClass.name@5": {
@@ -77133,7 +77276,7 @@
     "constrains/mayastor.localpv-provisioner.serviceAccount.name@10": {
       "properties": {
         "mayastor": {
-          "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.name@10"
+          "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.name@9"
         }
       },
       "required": [
@@ -77232,7 +77375,7 @@
     "constrains/mayastor.localpv-provisioner.serviceAccount.name@9": {
       "properties": {
         "mayastor": {
-          "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.name@9"
+          "$ref": "#/definitions/constrains~1localpv-provisioner.serviceAccount.name@10"
         }
       },
       "required": [
@@ -78161,6 +78304,33 @@
         "type": "object"
       }
     },
+    "constrains/mayastor.loki.minio.enabled!=null": {
+      "properties": {
+        "mayastor": {
+          "properties": {
+            "loki": {
+              "properties": {
+                "minio": {
+                  "$ref": "#/definitions/constrains~1enabled!=null"
+                }
+              },
+              "required": [
+                "minio"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "loki"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mayastor"
+      ],
+      "type": "object"
+    },
     "constrains/mayastor.loki.minio.enabled+mayastor.loki.minio.enabled!=false": {
       "anyOf": [
         {
@@ -78303,10 +78473,137 @@
       ],
       "type": "object"
     },
+    "constrains/mayastor.loki.minio.mode": {
+      "not": {
+        "properties": {
+          "mayastor": {
+            "properties": {
+              "loki": {
+                "$ref": "#/definitions/constrains~1minio.mode@2"
+              }
+            },
+            "required": [
+              "loki"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mayastor"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mayastor.loki.minio.mode!=null": {
+      "properties": {
+        "mayastor": {
+          "properties": {
+            "loki": {
+              "properties": {
+                "minio": {
+                  "properties": {
+                    "mode": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "minio"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "loki"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mayastor"
+      ],
+      "type": "object"
+    },
+    "constrains/mayastor.loki.minio.mode+mayastor.loki.minio.mode=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode=null"
+        }
+      ]
+    },
+    "constrains/mayastor.loki.minio.mode+mayastor.loki.minio.mode=null@2": {
+      "properties": {
+        "mayastor": {
+          "properties": {
+            "loki": {
+              "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null@2"
+            }
+          },
+          "required": [
+            "loki"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mayastor"
+      ],
+      "type": "object"
+    },
     "constrains/mayastor.loki.minio.mode=distributed": {
       "properties": {
         "mayastor": {
           "$ref": "#/definitions/constrains~1loki.minio.mode=distributed"
+        }
+      },
+      "required": [
+        "mayastor"
+      ],
+      "type": "object"
+    },
+    "constrains/mayastor.loki.minio.mode=null": {
+      "properties": {
+        "mayastor": {
+          "properties": {
+            "loki": {
+              "$ref": "#/definitions/constrains~1minio.mode=null"
+            }
+          },
+          "required": [
+            "loki"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mayastor"
+      ],
+      "type": "object"
+    },
+    "constrains/mayastor.loki.minio.mode@2": {
+      "properties": {
+        "mayastor": {
+          "properties": {
+            "loki": {
+              "$ref": "#/definitions/constrains~1minio.mode"
+            }
+          },
+          "required": [
+            "loki"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -79441,7 +79738,7 @@
         "mayastor": {
           "properties": {
             "loki": {
-              "$ref": "#/definitions/constrains~1rollout_operator.serviceAccount.name@8"
+              "$ref": "#/definitions/constrains~1rollout_operator.serviceAccount.name@9"
             }
           },
           "required": [
@@ -79460,7 +79757,7 @@
         "mayastor": {
           "properties": {
             "loki": {
-              "$ref": "#/definitions/constrains~1rollout_operator.serviceAccount.name@9"
+              "$ref": "#/definitions/constrains~1rollout_operator.serviceAccount.name@10"
             }
           },
           "required": [
@@ -79479,7 +79776,7 @@
         "mayastor": {
           "properties": {
             "loki": {
-              "$ref": "#/definitions/constrains~1rollout_operator.serviceAccount.name@10"
+              "$ref": "#/definitions/constrains~1rollout_operator.serviceAccount.name@8"
             }
           },
           "required": [
@@ -81114,7 +81411,7 @@
           "$ref": "#/definitions/constrains~1minio.mode"
         },
         {
-          "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null"
+          "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null@2"
         },
         {
           "$ref": "#/definitions/constrains~1minio.mode=null"
@@ -81256,6 +81553,18 @@
       "type": "object"
     },
     "constrains/minio.mode+minio.mode=null": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1minio.mode@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1minio.mode=null"
+        }
+      ]
+    },
+    "constrains/minio.mode+minio.mode=null@2": {
       "properties": {
         "minio": {
           "allOf": [
@@ -87439,11 +87748,7 @@
       },
       "then": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
-          },
-          "then": true
+          "$ref": "#/definitions/when~1loki.localpvScConfig.enabled:t~1then~1any~1else~1fail"
         },
         "if": {
           "$ref": "#/definitions/constrains~1loki.enabled:t@3"
@@ -88349,6 +88654,55 @@
       },
       "then": true
     },
+    "when/loki!=null+mayastor.etcd.localpvScConfig.enabled!=null/then/fail": {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "mayastor": {
+                "properties": {
+                  "etcd": {
+                    "properties": {
+                      "localpvScConfig": {
+                        "$ref": "#/definitions/constrains~1enabled!=null"
+                      }
+                    },
+                    "required": [
+                      "localpvScConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "etcd"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "mayastor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "loki": {
+                "not": {
+                  "enum": [
+                    null
+                  ]
+                }
+              }
+            },
+            "required": [
+              "loki"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
     "when/loki!=null/then/fail": {
       "if": {
         "properties": {
@@ -88607,6 +88961,13 @@
           "$ref": "#/definitions/when~1loki.minio.mode=distributed~1then~1any~1else~1fail"
         }
       }
+    },
+    "when/loki.localpvScConfig.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1loki.localpvScConfig.enabled:t@2"
+      },
+      "then": true
     },
     "when/loki.loki.storage.type=alibabacloud/then/any/else/loki+loki.loki.storage.type=azure+loki.loki.storage.type=gcs+4more": {
       "else": {
@@ -91875,6 +92236,15 @@
       },
       "then": true
     },
+    "when/mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled=null/then/mayastor.jaeger-operator.service+mayastor.jaeger-operator.service.type+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.base.jaeger.enabled+mayastor.base.jaeger.enabled=null@4"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null~1then~1fail~1else~1mayastor.jaeger-operator.service.type"
+      }
+    },
     "when/mayastor.etcd.auth.token+7more/then/fail": {
       "if": {
         "allOf": [
@@ -92186,6 +92556,13 @@
       },
       "then": true
     },
+    "when/mayastor.etcd.localpvScConfig.enabled:t/then/any/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.etcd.localpvScConfig.enabled:t"
+      },
+      "then": true
+    },
     "when/mayastor.eventing.enabled+mayastor.eventing.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
@@ -92435,6 +92812,19 @@
       "then": {
         "$ref": "#/definitions/when~1mayastor.nats.reloader+mayastor.nats.reloader=null~1then~1fail~1else~1any"
       }
+    },
+    "when/mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null/then/fail/else/mayastor.jaeger-operator.service.type": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type@3"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.jaeger-operator.service.type+mayastor.jaeger-operator.service.type=null@4"
+      },
+      "then": false
     },
     "when/mayastor.localpv-provisioner.enabled+mayastor.localpv-provisioner.enabled=null/then/any/else/fail": {
       "else": false,
@@ -92738,6 +93128,24 @@
         "$ref": "#/definitions/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null@16"
       },
       "then": true
+    },
+    "when/mayastor.loki.enabled+mayastor.loki.enabled=null/then/mayastor.loki+mayastor.loki.minio+mayastor.loki.minio.mode+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null@16"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.loki.minio.enabled+mayastor.loki.minio.enabled=null~1then~1mayastor.loki.minio+mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1else~1fail"
+      }
+    },
+    "when/mayastor.loki.enabled+mayastor.loki.enabled=null/then/mayastor.loki.minio+mayastor.loki.minio.mode+mayastor.loki.minio.mode=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.loki.enabled+mayastor.loki.enabled=null@16"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1then~1fail~1else~1mayastor.loki.minio.mode"
+      }
     },
     "when/mayastor.loki.enabled+mayastor.loki.enabled=null/then/mayastor.loki.minio/else/fail": {
       "else": false,
@@ -93495,6 +93903,88 @@
                 "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=swift"
               },
               "then": {
+                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=s3"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=gcs"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=azure"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=alibabacloud"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
+      }
+    },
+    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@2": {
+      "else": {
+        "else": {
+          "else": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=swift"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=s3"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=gcs"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=azure"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=alibabacloud"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
+      }
+    },
+    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@3": {
+      "else": {
+        "else": {
+          "else": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=swift"
+              },
+              "then": {
                 "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@3"
               }
             },
@@ -93526,7 +94016,7 @@
         "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@3"
       }
     },
-    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@2": {
+    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@4": {
       "else": {
         "else": {
           "else": {
@@ -93567,7 +94057,7 @@
         "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@4"
       }
     },
-    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@3": {
+    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@5": {
       "else": {
         "else": {
           "else": {
@@ -93608,7 +94098,7 @@
         "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@5"
       }
     },
-    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@4": {
+    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@6": {
       "else": {
         "else": {
           "else": {
@@ -93647,88 +94137,6 @@
       },
       "then": {
         "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@6"
-      }
-    },
-    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@5": {
-      "else": {
-        "else": {
-          "else": {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=swift"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=s3"
-            },
-            "then": {
-              "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=gcs"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=azure"
-        },
-        "then": {
-          "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
-        }
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=alibabacloud"
-      },
-      "then": {
-        "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null"
-      }
-    },
-    "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@6": {
-      "else": {
-        "else": {
-          "else": {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=swift"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=s3"
-            },
-            "then": {
-              "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=gcs"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=azure"
-        },
-        "then": {
-          "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
-        }
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1mayastor.loki.loki.storage.type=alibabacloud"
-      },
-      "then": {
-        "$ref": "#/definitions/constrains~1engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null@2"
       }
     },
     "when/mayastor.loki.loki.storage.type=alibabacloud/then/engines.replicated.mayastor.enabled+engines.replicated.mayastor.enabled=null/else/mayastor.loki.loki.storage.type=azure+mayastor.loki.loki.sto...@7": {
@@ -94089,31 +94497,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "mayastor": {
-                "properties": {
-                  "loki": {
-                    "properties": {
-                      "minio": {
-                        "$ref": "#/definitions/constrains~1enabled!=null"
-                      }
-                    },
-                    "required": [
-                      "minio"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mayastor"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled!=null"
           },
           {
             "properties": {
@@ -94135,43 +94519,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "mayastor": {
-                "properties": {
-                  "loki": {
-                    "properties": {
-                      "minio": {
-                        "properties": {
-                          "mode": {
-                            "not": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "mode"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "minio"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mayastor"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode!=null"
           },
           {
             "properties": {
@@ -94202,6 +94550,28 @@
         "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled+mayastor.loki.minio.enabled=null@5"
       },
       "then": true
+    },
+    "when/mayastor.loki.minio.enabled+mayastor.loki.minio.enabled=null/then/mayastor.loki.minio+mayastor.loki.minio.mode+mayastor.loki.minio.mode=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.loki.minio.enabled+mayastor.loki.minio.enabled=null@5"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null~1then~1fail~1else~1mayastor.loki.minio.mode"
+      }
+    },
+    "when/mayastor.loki.minio.mode+mayastor.loki.minio.mode=null/then/fail/else/mayastor.loki.minio.mode": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode@2"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1mayastor.loki.minio.mode+mayastor.loki.minio.mode=null@2"
+      },
+      "then": false
     },
     "when/mayastor.loki.minio.mode=distributed/then/any/else/fail": {
       "else": false,
@@ -94876,6 +95246,15 @@
       },
       "then": true
     },
+    "when/minio.enabled+minio.enabled=null/then/minio+minio.mode+minio.mode=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1minio.enabled+minio.enabled=null"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1minio.mode+minio.mode=null~1then~1fail~1else~1minio.mode"
+      }
+    },
     "when/minio.fullnameOverride!=null+minio.nameOverride!=null+minio.tls.enabled!=null/then/fail": {
       "if": {
         "allOf": [
@@ -94889,6 +95268,19 @@
             "$ref": "#/definitions/constrains~1minio.fullnameOverride!=null"
           }
         ]
+      },
+      "then": false
+    },
+    "when/minio.mode+minio.mode=null/then/fail/else/minio.mode": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1minio.mode"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null@2"
       },
       "then": false
     },
@@ -96382,80 +96774,6 @@
         },
         {
           "if": {
-            "allOf": [
-              {
-                "else": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
-                    },
-                    "then": {
-                      "else": false,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      "then": {
-                        "$ref": "#/definitions/when~1minio.enabled+minio.enabled=null~1then~1any~1else~1fail"
-                      }
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1minio.enabled:t"
-                  },
-                  "then": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
-                    },
-                    "then": {
-                      "else": false,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      "then": true
-                    }
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1enabled:t"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1minio.enabled+minio.enabled=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1minio.enabled:t"
-                  },
-                  "then": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
-                    },
-                    "then": true
-                  }
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1minio.persistence+minio.persistence=null"
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "$ref": "#/definitions/constrains~1minio!=null"
-            },
-            "then": false
-          }
-        },
-        {
-          "if": {
             "anyOf": [
               {
                 "allOf": [
@@ -96885,6 +97203,80 @@
           "if": {
             "allOf": [
               {
+                "else": {
+                  "else": {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
+                    },
+                    "then": {
+                      "else": false,
+                      "if": {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1minio.enabled+minio.enabled=null~1then~1any~1else~1fail"
+                      }
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1minio.enabled:t"
+                  },
+                  "then": {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
+                    },
+                    "then": {
+                      "else": false,
+                      "if": {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      "then": true
+                    }
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled:t"
+                },
+                "then": {
+                  "else": {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1minio.enabled+minio.enabled=null~1then~1any~1else~1fail"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1minio.enabled:t"
+                  },
+                  "then": {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1minio.mode=distributed"
+                    },
+                    "then": true
+                  }
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1minio.persistence+minio.persistence=null"
+              }
+            ]
+          },
+          "then": {
+            "if": {
+              "$ref": "#/definitions/constrains~1minio!=null"
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1enterprise.enabled+loki.image.tag+loki.image.tag:t+monitoring+8more"
               },
               {
@@ -97071,6 +97463,77 @@
           },
           "then": {
             "$ref": "#/definitions/constrains~1rollout_operator.serviceAccount.name:t@2"
+          }
+        },
+        {
+          "if": {
+            "else": {
+              "else": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1minio.enabled+minio.enabled=null~1then~1minio+minio.mode+minio.mode=null~1else~1fail"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1minio.enabled:t"
+              },
+              "then": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1minio.mode+minio.mode=null~1then~1fail~1else~1minio.mode"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null"
+                },
+                "then": false
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1minio.enabled+minio.enabled=null~1then~1minio+minio.mode+minio.mode=null~1else~1fail"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1minio.enabled:t"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1minio.mode+minio.mode=null~1then~1fail~1else~1minio.mode"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1minio.mode+minio.mode=null"
+                },
+                "then": false
+              }
+            }
+          },
+          "then": {
+            "if": {
+              "$ref": "#/definitions/constrains~1minio!=null"
+            },
+            "then": false
           }
         },
         {

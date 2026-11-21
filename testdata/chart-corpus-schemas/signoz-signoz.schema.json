@@ -521,6 +521,56 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "clickhouse": {
@@ -970,56 +1020,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -4161,19 +4161,12 @@
             },
             {
               "not": {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
               }
             },
             {
               "not": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.architecture=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.architecture"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
               }
             }
           ]
@@ -4189,7 +4182,7 @@
           "$ref": "#/definitions/constrains~1postgresql.architecture"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.architecture@2"
@@ -4211,7 +4204,7 @@
           "$ref": "#/definitions/constrains~1postgresql.architecture"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.readReplicas.extendedConfiguration:t@2"
@@ -4267,6 +4260,16 @@
       "type": "object"
     },
     "constrains/postgresql.architecture+postgresql.architecture=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture"
+        }
+      ]
+    },
+    "constrains/postgresql.architecture+postgresql.architecture=null@2": {
       "properties": {
         "postgresql": {
           "allOf": [
@@ -4379,6 +4382,17 @@
       "properties": {
         "postgresql": {
           "$ref": "#/definitions/constrains~1enabled!=null"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.enabled+postgresql.enabled=null": {
+      "properties": {
+        "postgresql": {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
         }
       },
       "required": [
@@ -5728,15 +5742,7 @@
     "constrains/signoz-otel-gateway.postgresql.enabled+1more@3": {
       "properties": {
         "signoz-otel-gateway": {
-          "properties": {
-            "postgresql": {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled=null"
         }
       },
       "required": [
@@ -6412,6 +6418,37 @@
             "$ref": "#/definitions/constrains~1postgresql.architecture!=null"
           }
         ]
+      },
+      "then": false
+    },
+    "when/postgresql.architecture+postgresql.architecture=null/then/fail/else/postgresql.architecture": {
+      "else": {
+        "$ref": "#/definitions/when~1postgresql.architecture~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+      },
+      "then": false
+    },
+    "when/postgresql.architecture+postgresql.architecture=null/then/fail/else/postgresql.architecture+postgresql.enabled+postgresql.enabled=null": {
+      "else": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled=null"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1postgresql.architecture~1then~1fail~1else~1any"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+      },
+      "then": false
+    },
+    "when/postgresql.architecture/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture@2"
       },
       "then": false
     },
@@ -8405,6 +8442,74 @@
                 }
               }
             }
+          }
+        },
+        {
+          "if": {
+            "else": {
+              "else": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1postgresql.architecture+postgresql.architecture=null~1then~1fail~1else~1postgresql.architecture+postgresql.enabled+postgresql.enabled=null"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1postgresql.enabled:t"
+              },
+              "then": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1postgresql.architecture+postgresql.architecture=null~1then~1fail~1else~1postgresql.architecture"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+                },
+                "then": false
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1postgresql.architecture+postgresql.architecture=null~1then~1fail~1else~1postgresql.architecture+postgresql.enabled+postgresql.enabled=null"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+                },
+                "then": false
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1postgresql.enabled:t"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1postgresql.architecture+postgresql.architecture=null~1then~1fail~1else~1postgresql.architecture"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+                },
+                "then": false
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/when~1postgresql.architecture!=null+postgresql.enabled!=null~1then~1fail"
           }
         },
         {

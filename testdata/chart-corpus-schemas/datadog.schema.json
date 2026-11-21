@@ -1382,7 +1382,7 @@
             "$ref": "#/definitions/constrains~1datadog.networkMonitoring.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t"
@@ -1908,7 +1908,7 @@
             "$ref": "#/definitions/constrains~1datadog.networkMonitoring.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t"
@@ -2000,7 +2000,7 @@
             "$ref": "#/definitions/constrains~1datadog.networkMonitoring.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.systemProbe.enableTCPQueueLength:t"
@@ -2248,6 +2248,76 @@
       },
       "then": {
         "$ref": "#/definitions/when~1operator.datadogCRDs.nameOverride!=null+operator.installCRDs!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1operator.serviceAccount.create:t@3"
+          },
+          "then": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1datadog.operator.enabled+datadog.operator.enabled=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1operator.serviceAccount.automountServiceAccountToken+1more~1then~1fail~1else~1operator.serviceAccount.automountServiceAccountToken"
+              }
+            },
+            "if": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken"
+                }
+              ]
+            },
+            "then": false
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1datadog.operator.enabled:t"
+        },
+        "then": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1operator.serviceAccount.create:t@3"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1operator.serviceAccount.automountServiceAccountToken+1more~1then~1fail~1else~1operator.serviceAccount.automountServiceAccountToken"
+            },
+            "if": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken"
+                }
+              ]
+            },
+            "then": false
+          }
+        }
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1operator.serviceAccount.create!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -2755,7 +2825,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
+                "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t@2"
@@ -3745,7 +3815,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t@2"
@@ -3849,6 +3919,109 @@
       },
       "then": {
         "$ref": "#/definitions/when~1operator.datadogCRDs.crds.datadogAgentProfiles!=null+2more~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1datadog.kubeStateMetricsEnabled+datadog.kubeStateMetricsEnabled=null~1then~1kube-state-metrics.rbac+kube-state-metrics.rbac.create+1more~1else~1fail"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create=true@2"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1datadog.kubeStateMetricsEnabled+datadog.kubeStateMetricsEnabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null~1then~1kube-state-metrics.rbac+kube-state-metrics.rbac.useClusterRole+1more~1else~1kube-state-metrics.rbac.create"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1datadog.kubeStateMetricsEnabled+datadog.kubeStateMetricsEnabled=null~1then~1kube-state-metrics.rbac+kube-state-metrics.rbac.create+1more~1else~1fail"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null"
+            },
+            "then": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1datadog.kubeStateMetricsEnabled+datadog.kubeStateMetricsEnabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1kube-state-metrics.rbac.useClusterRole+1more~1then~1fail~1else~1kube-state-metrics.rbac.useClusterRole"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more"
+              },
+              "then": false
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1datadog.kubeStateMetricsEnabled:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null~1then~1fail~1else~1kube-state-metrics.rbac.create"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create=true@2"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null~1then~1kube-state-metrics.rbac+kube-state-metrics.rbac.useClusterRole+1more~1else~1kube-state-metrics.rbac.create"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null~1then~1fail~1else~1kube-state-metrics.rbac.create"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1kube-state-metrics.rbac.useClusterRole+1more~1then~1fail~1else~1kube-state-metrics.rbac.useClusterRole"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more"
+              },
+              "then": false
+            }
+          }
+        }
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole!=null"
+        },
+        "then": false
       }
     },
     {
@@ -4728,7 +4901,7 @@
             "$ref": "#/definitions/constrains~1datadog.networkMonitoring.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t"
@@ -5168,7 +5341,7 @@
             "$ref": "#/definitions/constrains~1datadog.networkMonitoring.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t"
@@ -6329,7 +6502,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.securityAgent.runtime.enabled:t@2"
@@ -6549,7 +6722,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
+                    "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t@2"
@@ -6685,7 +6858,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
+                "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t@2"
@@ -7326,7 +7499,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t@2"
@@ -7732,7 +7905,7 @@
             "$ref": "#/definitions/constrains~1datadog.networkMonitoring.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
+            "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
           },
           {
             "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t"
@@ -9367,7 +9540,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -9386,7 +9559,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9405,7 +9578,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -9421,7 +9594,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         }
@@ -9469,7 +9642,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9488,7 +9661,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -9507,7 +9680,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9529,7 +9702,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         }
@@ -9552,7 +9725,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9574,7 +9747,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -9618,7 +9791,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9637,7 +9810,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         }
@@ -9660,7 +9833,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9682,7 +9855,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -9701,7 +9874,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -9745,7 +9918,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         }
@@ -9762,7 +9935,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             },
             {
               "$ref": "#/definitions/constrains~1datadog-crds.crds.datadogInstrumentations:t@2"
@@ -9812,7 +9985,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             },
             {
               "$ref": "#/definitions/constrains~1datadog-crds.crds.datadogInstrumentations:t@2"
@@ -9831,7 +10004,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             },
             {
               "$ref": "#/definitions/constrains~1datadog-crds.crds.datadogInstrumentations:t@2"
@@ -9850,7 +10023,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             },
             {
               "$ref": "#/definitions/constrains~1datadog-crds.crds.datadogInstrumentations:t@2"
@@ -9873,7 +10046,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9923,7 +10096,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -9942,7 +10115,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -9961,7 +10134,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         }
@@ -9981,7 +10154,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -10028,7 +10201,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         },
@@ -10047,7 +10220,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
             }
           ]
         },
@@ -10069,7 +10242,7 @@
               "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations+datadog-crds.crds.annotations=null"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations"
+              "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@2"
             }
           ]
         }
@@ -10277,7 +10450,7 @@
     },
     "constrains/datadog-crds.crds.annotations": {
       "not": {
-        "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@4"
+        "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@5"
       }
     },
     "constrains/datadog-crds.crds.annotations!=null": {
@@ -10331,7 +10504,7 @@
     },
     "constrains/datadog-crds.crds.annotations@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@5"
+        "$ref": "#/definitions/constrains~1datadog-crds.crds.annotations@4"
       }
     },
     "constrains/datadog-crds.crds.annotations@3": {
@@ -11306,7 +11479,7 @@
               "$ref": "#/definitions/constrains~1datadog.networkMonitoring.enabled:t"
             },
             {
-              "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t@2"
+              "$ref": "#/definitions/constrains~1datadog.systemProbe.enableOOMKill:t"
             },
             {
               "$ref": "#/definitions/constrains~1datadog.serviceMonitoring.enabled:t"
@@ -12197,7 +12370,7 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more"
+                  "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more@2"
                 },
                 {
                   "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole"
@@ -12246,7 +12419,7 @@
               "not": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more"
+                    "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole"
@@ -12448,7 +12621,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more"
+                "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more@2"
               },
               {
                 "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole"
@@ -12535,82 +12708,16 @@
     "constrains/kube-state-metrics+kube-state-metrics.rbac+kube-state-metrics.rbac.create+1more@3": {
       "anyOf": [
         {
-          "properties": {
-            "kube-state-metrics": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "kube-state-metrics"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create@2"
         },
         {
-          "not": {
-            "properties": {
-              "kube-state-metrics": {
-                "$ref": "#/definitions/constrains~1rbac.create"
-              }
-            },
-            "required": [
-              "kube-state-metrics"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create"
         },
         {
-          "properties": {
-            "kube-state-metrics": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1rbac.create"
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1rbac.create=null"
-                    }
-                  ]
-                },
-                {
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "kube-state-metrics"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null@2"
         },
         {
-          "properties": {
-            "kube-state-metrics": {
-              "$ref": "#/definitions/constrains~1rbac.create=null"
-            }
-          },
-          "required": [
-            "kube-state-metrics"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create=null"
         }
       ]
     },
@@ -13519,6 +13626,56 @@
       ],
       "type": "object"
     },
+    "constrains/kube-state-metrics.rbac.create": {
+      "not": {
+        "properties": {
+          "kube-state-metrics": {
+            "$ref": "#/definitions/constrains~1rbac.create"
+          }
+        },
+        "required": [
+          "kube-state-metrics"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create"
+        },
+        {
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create=null"
+        }
+      ]
+    },
+    "constrains/kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null@2": {
+      "properties": {
+        "kube-state-metrics": {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1rbac.create"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/constrains~1rbac.create=null"
+                }
+              ]
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kube-state-metrics"
+      ],
+      "type": "object"
+    },
     "constrains/kube-state-metrics.rbac.create:t": {
       "not": {
         "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create:t@3"
@@ -13548,6 +13705,17 @@
       ],
       "type": "object"
     },
+    "constrains/kube-state-metrics.rbac.create=null": {
+      "properties": {
+        "kube-state-metrics": {
+          "$ref": "#/definitions/constrains~1rbac.create=null"
+        }
+      },
+      "required": [
+        "kube-state-metrics"
+      ],
+      "type": "object"
+    },
     "constrains/kube-state-metrics.rbac.create=true": {
       "not": {
         "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create=true@2"
@@ -13563,6 +13731,33 @@
                   "enum": [
                     true
                   ]
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "kube-state-metrics"
+      ],
+      "type": "object"
+    },
+    "constrains/kube-state-metrics.rbac.create@2": {
+      "properties": {
+        "kube-state-metrics": {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "create": {
+                  "type": "boolean"
                 }
               },
               "required": [
@@ -13627,6 +13822,16 @@
       "type": "object"
     },
     "constrains/kube-state-metrics.rbac.useClusterRole+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole"
+        },
+        {
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole=null"
+        }
+      ]
+    },
+    "constrains/kube-state-metrics.rbac.useClusterRole+1more@2": {
       "properties": {
         "kube-state-metrics": {
           "allOf": [
@@ -15366,82 +15571,16 @@
     "constrains/operator+operator.serviceAccount+2more@3": {
       "anyOf": [
         {
-          "properties": {
-            "operator": {
-              "allOf": [
-                {
-                  "type": "object"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken=null"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken"
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken+1more"
         },
         {
-          "properties": {
-            "operator": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken@2"
         },
         {
-          "properties": {
-            "operator": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken=null"
-            }
-          },
-          "required": [
-            "operator"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken=null"
         },
         {
-          "not": {
-            "properties": {
-              "operator": {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken"
         }
       ]
     },
@@ -16754,6 +16893,146 @@
       "properties": {
         "operator": {
           "$ref": "#/definitions/constrains~1nameOverride:t"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.serviceAccount.automountServiceAccountToken": {
+      "not": {
+        "properties": {
+          "operator": {
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken"
+          }
+        },
+        "required": [
+          "operator"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/operator.serviceAccount.automountServiceAccountToken!=null": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "serviceAccount": {
+              "properties": {
+                "automountServiceAccountToken": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "automountServiceAccountToken"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.serviceAccount.automountServiceAccountToken+1more": {
+      "properties": {
+        "operator": {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken=null"
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.serviceAccount.automountServiceAccountToken=null": {
+      "properties": {
+        "operator": {
+          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken=null"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.serviceAccount.automountServiceAccountToken@2": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "serviceAccount": {
+              "properties": {
+                "automountServiceAccountToken": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "automountServiceAccountToken"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.serviceAccount.create!=null": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "serviceAccount": {
+              "properties": {
+                "create": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -18889,6 +19168,15 @@
       },
       "then": true
     },
+    "when/datadog.kubeStateMetricsEnabled+datadog.kubeStateMetricsEnabled=null/then/kube-state-metrics.rbac+kube-state-metrics.rbac.create+1more/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1datadog.kubeStateMetricsEnabled+datadog.kubeStateMetricsEnabled=null"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null~1then~1fail~1else~1kube-state-metrics.rbac.create"
+      }
+    },
     "when/datadog.networkMonitoring.enabled:t/then/targetSystem=linux/else/datadog.discovery.enabled+datadog.discovery.enabled=null+5more": {
       "else": {
         "else": {
@@ -19080,6 +19368,63 @@
       },
       "then": false
     },
+    "when/kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null/then/fail/else/kube-state-metrics.rbac.create": {
+      "else": {
+        "$ref": "#/definitions/when~1kube-state-metrics.rbac.create~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null@2"
+      },
+      "then": false
+    },
+    "when/kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null/then/kube-state-metrics.rbac+kube-state-metrics.rbac.useClusterRole+1more/else/kube-state-metrics.rbac.create": {
+      "else": {
+        "else": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1kube-state-metrics.rbac.useClusterRole~1then~1fail~1else~1any"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1kube-state-metrics.rbac.create~1then~1fail~1else~1any"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create+kube-state-metrics.rbac.create=null@2"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1kube-state-metrics.rbac.useClusterRole+1more~1then~1fail~1else~1kube-state-metrics.rbac.useClusterRole"
+      }
+    },
+    "when/kube-state-metrics.rbac.create/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.create@2"
+      },
+      "then": false
+    },
+    "when/kube-state-metrics.rbac.useClusterRole+1more/then/fail/else/kube-state-metrics.rbac.useClusterRole": {
+      "else": {
+        "$ref": "#/definitions/when~1kube-state-metrics.rbac.useClusterRole~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole+1more@2"
+      },
+      "then": false
+    },
+    "when/kube-state-metrics.rbac.useClusterRole/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1kube-state-metrics.rbac.useClusterRole@2"
+      },
+      "then": false
+    },
     "when/operator.datadogCRDs.crds.annotations!=null+2more/then/fail": {
       "if": {
         "allOf": [
@@ -19243,66 +19588,10 @@
             "type": "object"
           },
           {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "not": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1operator.serviceAccount.create!=null"
           },
           {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "automountServiceAccountToken": {
-                        "not": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "automountServiceAccountToken"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken!=null"
           }
         ]
       },
@@ -19323,6 +19612,19 @@
       "then": {
         "$ref": "#/definitions/when~1tags.install-crds+tags.install-crds=null~1then~1any~1else~1fail"
       }
+    },
+    "when/operator.serviceAccount.automountServiceAccountToken+1more/then/fail/else/operator.serviceAccount.automountServiceAccountToken": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken@2"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1operator.serviceAccount.automountServiceAccountToken+1more"
+      },
+      "then": false
     },
     "when/providers.gke.autopilot:t/then/fail/else/datadog.discovery.enabled+datadog.discovery.enabled=null": {
       "else": {

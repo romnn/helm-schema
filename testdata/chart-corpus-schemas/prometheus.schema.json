@@ -426,6 +426,22 @@
                 "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t@2"
               },
               {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t@2"
+              },
+              {
                 "$ref": "#/definitions/constrains~1nameOverride:t@2"
               },
               {
@@ -451,20 +467,77 @@
                 "$ref": "#/definitions/constrains~1server.fullnameOverride"
               }
             ]
-          },
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t@2"
+                "$ref": "#/definitions/constrains~1nameOverride@2"
               },
               {
                 "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
               },
               {
+                "$ref": "#/definitions/constrains~1server.service.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
                 "$ref": "#/definitions/constrains~1server.fullnameOverride"
               },
               {
+                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.service.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1server.service.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
               }
             ]
           }
@@ -531,70 +604,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -678,79 +687,6 @@
     {
       "if": {
         "$ref": "#/definitions/constrains~1server+server=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.service.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.service.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.fullnameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1server.service.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          }
-        ]
       },
       "then": false
     },
@@ -1396,6 +1332,70 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccounts.server.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1server.verticalAutoscaler.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -1898,14 +1898,7 @@
     "constrains/alertmanager.enabled+alertmanager.enabled=null": {
       "properties": {
         "alertmanager": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
         }
       },
       "required": [
@@ -2008,6 +2001,21 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=null": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=true": {
       "properties": {
         "enabled": {
@@ -2024,6 +2032,16 @@
       "type": "object"
     },
     "constrains/enabled+enabled=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled+enabled=null@2": {
       "anyOf": [
         {
           "not": {
@@ -2212,6 +2230,127 @@
         "nameOverride"
       ],
       "type": "object"
+    },
+    "constrains/persistentVolume.enabled:t": {
+      "properties": {
+        "persistentVolume": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "persistentVolume"
+      ],
+      "type": "object"
+    },
+    "constrains/persistentVolume.storageClass": {
+      "properties": {
+        "persistentVolume": {
+          "properties": {
+            "storageClass": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistentVolume"
+      ],
+      "type": "object"
+    },
+    "constrains/persistentVolume.storageClass+persistentVolume.storageClass=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "persistentVolume": {
+              "properties": {
+                "storageClass": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "storageClass"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "persistentVolume"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "persistentVolume": {
+                "properties": {
+                  "storageClass": {}
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistentVolume"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/persistentVolume.storageClass:t": {
+      "properties": {
+        "persistentVolume": {
+          "properties": {
+            "storageClass": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistentVolume"
+      ],
+      "type": "object"
+    },
+    "constrains/podAntiAffinity+podAntiAffinity=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "podAntiAffinity": {}
+            },
+            "required": [
+              "podAntiAffinity"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "podAntiAffinity": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "podAntiAffinity"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/probe.httpGet": {
       "additionalProperties": {},
@@ -2555,14 +2694,7 @@
     "constrains/prometheus-pushgateway.enabled+prometheus-pushgateway.enabled=null": {
       "properties": {
         "prometheus-pushgateway": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
         }
       },
       "required": [
@@ -2900,15 +3032,7 @@
     "constrains/prometheus-pushgateway.runAsStatefulSet:t": {
       "properties": {
         "prometheus-pushgateway": {
-          "properties": {
-            "runAsStatefulSet": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "runAsStatefulSet"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
         }
       },
       "required": [
@@ -3002,6 +3126,17 @@
       },
       "required": [
         "readiness"
+      ],
+      "type": "object"
+    },
+    "constrains/runAsStatefulSet:t": {
+      "properties": {
+        "runAsStatefulSet": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "runAsStatefulSet"
       ],
       "type": "object"
     },
@@ -3261,19 +3396,7 @@
           {
             "properties": {
               "verticalPodAutoscaler": {
-                "properties": {
-                  "enabled": {
-                    "not": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1enabled!=null"
               }
             },
             "required": [
@@ -3312,6 +3435,123 @@
             "type": "object"
           }
         ]
+      },
+      "then": false
+    },
+    "when/persistentVolume.storageClass+persistentVolume.storageClass=null/then/fail/else/persistentVolume.storageClass": {
+      "else": {
+        "$ref": "#/definitions/when~1persistentVolume.storageClass~1then~1fail~1else~1any"
+      },
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    "when/persistentVolume.storageClass+persistentVolume.storageClass=null/then/podAntiAffinity+podAntiAffinity=null/else/persistentVolume.storageClass": {
+      "else": {
+        "else": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1persistentVolume.storageClass"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1podAntiAffinity~1then~1fail~1else~1any"
+          }
+        },
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "then": {
+          "$ref": "#/definitions/when~1persistentVolume.storageClass~1then~1fail~1else~1any"
+        }
+      },
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity@2"
+      }
+    },
+    "when/persistentVolume.storageClass/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1persistentVolume.storageClass"
+      },
+      "then": false
+    },
+    "when/podAntiAffinity+podAntiAffinity=null/then/fail/else/enabled+enabled=null+podAntiAffinity": {
+      "else": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity@2"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+      },
+      "then": false
+    },
+    "when/podAntiAffinity+podAntiAffinity=null/then/fail/else/podAntiAffinity": {
+      "else": {
+        "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity@2"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+      },
+      "then": false
+    },
+    "when/podAntiAffinity+podAntiAffinity=null/then/fail/else/podAntiAffinity@2": {
+      "else": {
+        "$ref": "#/definitions/when~1podAntiAffinity~1then~1fail~1else~1any"
+      },
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+          },
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    "when/podAntiAffinity/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "properties": {
+          "podAntiAffinity": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "podAntiAffinity"
+        ],
+        "type": "object"
       },
       "then": false
     },
@@ -3439,6 +3679,24 @@
         },
         "then": true
       }
+    },
+    "when/runAsStatefulSet:t/then/enabled+enabled=null+podAntiAffinity+podAntiAffinity=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1enabled+enabled=null+podAntiAffinity"
+      }
+    },
+    "when/runAsStatefulSet:t/then/podAntiAffinity+podAntiAffinity=null/else/fail": {
+      "else": false,
+      "if": {
+        "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity"
+      }
     }
   },
   "properties": {
@@ -3467,7 +3725,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
               },
               {
                 "type": "object"
@@ -3589,6 +3847,157 @@
     },
     "prometheus-pushgateway": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1enabled+enabled=null+podAntiAffinity+podAntiAffinity=null~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1persistentVolume.enabled:t"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1enabled+enabled=null+podAntiAffinity+podAntiAffinity=null~1else~1fail"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1persistentVolume.storageClass:t"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "else": false,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/when~1persistentVolume.storageClass+persistentVolume.storageClass=null~1then~1podAntiAffinity+podAntiAffinity=null~1else~1persistentVolume.storageClass"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+                      },
+                      "then": {
+                        "else": false,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/when~1persistentVolume.storageClass+persistentVolume.storageClass=null~1then~1fail~1else~1persistentVolume.storageClass"
+                        }
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1enabled+enabled=null+podAntiAffinity"
+                    }
+                  }
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1podAntiAffinity+podAntiAffinity=null~1else~1fail"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1persistentVolume.enabled:t"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1podAntiAffinity+podAntiAffinity=null~1else~1fail"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1persistentVolume.storageClass:t"
+                },
+                "then": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "$ref": "#/definitions/when~1persistentVolume.storageClass+persistentVolume.storageClass=null~1then~1podAntiAffinity+podAntiAffinity=null~1else~1persistentVolume.storageClass"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1persistentVolume.storageClass+persistentVolume.storageClass=null~1then~1fail~1else~1persistentVolume.storageClass"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "properties": {
+                    "persistentVolume": {
+                      "$ref": "#/definitions/constrains~1enabled!=null"
+                    }
+                  },
+                  "required": [
+                    "persistentVolume"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "runAsStatefulSet": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "runAsStatefulSet"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "then": false
+          }
+        }
+      ],
       "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
       "properties": {
         "affinity": {

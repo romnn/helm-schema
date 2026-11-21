@@ -60,6 +60,19 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1halyard.additionalSecrets+halyard.additionalSecrets=null"
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "not": {
               "$ref": "#/definitions/constrains~1redis.global.redis"
             }
@@ -255,6 +268,32 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps+halyard.additionalConfigMaps=null"
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1halyard.persistence+halyard.persistence=null"
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -350,6 +389,76 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "properties": {
+                  "halyard": {
+                    "properties": {
+                      "additionalInitScript": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "additionalInitScript"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "halyard"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "halyard": {
+                      "properties": {
+                        "additionalInitScript": {}
+                      },
+                      "required": [
+                        "additionalInitScript"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "halyard"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1halyard+halyard=null"
+            },
+            "then": false
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1securityContext+securityContext=null"
           },
           {
@@ -397,7 +506,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1halyard.persistence+halyard.persistence=null"
+            "$ref": "#/definitions/constrains~1halyard.image+halyard.image=null"
           },
           {
             "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
@@ -417,19 +526,6 @@
           },
           {
             "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1securityContext+securityContext=null"
-          },
-          {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
           }
         ]
       },
@@ -511,32 +607,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1halyard.customCerts+halyard.customCerts=null"
-          },
-          {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1gcs+gcs=null"
-          },
-          {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -691,187 +761,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1halyard@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1halyard@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1halyard@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1halyard@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1halyard@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1halyard@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
@@ -958,6 +847,32 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1securityContext+securityContext=null"
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1halyard.customCerts+halyard.customCerts=null"
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "not": {
               "properties": {
                 "minio": {
@@ -1025,19 +940,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1halyard.additionalSecrets+halyard.additionalSecrets=null"
-          },
-          {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -1139,7 +1041,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1kubeConfig+kubeConfig=null"
+            "$ref": "#/definitions/constrains~1gcs+gcs=null"
           },
           {
             "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
@@ -1150,12 +1052,180 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps+halyard.additionalConfigMaps=null"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1halyard@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1halyard@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1halyard@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1halyard@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1halyard@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1halyard@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+              }
+            ]
           }
         ]
       },
@@ -1340,6 +1410,19 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1kubeConfig+kubeConfig=null"
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null"
           },
           {
@@ -1381,19 +1464,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
-          },
-          {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -1614,19 +1684,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1halyard.image+halyard.image=null"
-          },
-          {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1minio+minio.enabled+minio.enabled:t+minio.enabled=null"
           },
           {
@@ -1762,6 +1819,19 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1kubeConfig+kubeConfig=null"
           },
           {
@@ -1795,76 +1865,6 @@
           ]
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "halyard": {
-                    "properties": {
-                      "additionalInitScript": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "additionalInitScript"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "halyard"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "halyard": {
-                      "properties": {
-                        "additionalInitScript": {}
-                      },
-                      "required": [
-                        "additionalInitScript"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "halyard"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "else": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-                },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1halyard+halyard=null"
-            },
-            "then": false
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -2874,7 +2874,7 @@
               "$ref": "#/definitions/constrains~1slave.service.type"
             },
             {
-              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
+              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@3"
@@ -2924,7 +2924,7 @@
               "$ref": "#/definitions/constrains~1slave.service.type"
             },
             {
-              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
+              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@3"
@@ -2974,7 +2974,7 @@
               "$ref": "#/definitions/constrains~1slave.service.type"
             },
             {
-              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
+              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@3"
@@ -3033,7 +3033,7 @@
               "$ref": "#/definitions/constrains~1slave.service.type"
             },
             {
-              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
+              "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@3"
@@ -3522,7 +3522,7 @@
               "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@3"
             },
             {
-              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
+              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.service.type"
@@ -3544,7 +3544,7 @@
               "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@3"
             },
             {
-              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
+              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.service.type"
@@ -3597,7 +3597,7 @@
               "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@3"
             },
             {
-              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
+              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.service.type"
@@ -3641,7 +3641,7 @@
               "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@3"
             },
             {
-              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
+              "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.service.type"
@@ -5821,14 +5821,7 @@
     "constrains/sentinel.service.type+sentinel.service.type=null": {
       "allOf": [
         {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1sentinel.service.type=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.service.type@2"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
         },
         {
           "type": "object"
@@ -5836,20 +5829,23 @@
       ]
     },
     "constrains/sentinel.service.type+sentinel.service.type=null@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null"
-      }
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1sentinel.service.type=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1sentinel.service.type@2"
+        }
+      ]
     },
     "constrains/sentinel.service.type+sentinel.service.type=null@3": {
       "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1sentinel.service.type=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1sentinel.service.type@2"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
+      }
+    },
+    "constrains/sentinel.service.type+sentinel.service.type=null@4": {
+      "not": {
+        "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null"
       }
     },
     "constrains/sentinel.service.type=null": {
@@ -6087,14 +6083,7 @@
     "constrains/slave.service.type+slave.service.type=null": {
       "allOf": [
         {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1slave.service.type=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1slave.service.type@2"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
         },
         {
           "type": "object"
@@ -6102,20 +6091,23 @@
       ]
     },
     "constrains/slave.service.type+slave.service.type=null@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null"
-      }
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1slave.service.type=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1slave.service.type@2"
+        }
+      ]
     },
     "constrains/slave.service.type+slave.service.type=null@3": {
       "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1slave.service.type=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1slave.service.type@2"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
+      }
+    },
+    "constrains/slave.service.type+slave.service.type=null@4": {
+      "not": {
+        "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null"
       }
     },
     "constrains/slave.service.type=null": {
@@ -6402,6 +6394,26 @@
       },
       "then": false
     },
+    "when/mode+mode=null/then/fail/else/mode": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1mode@2"
+        },
+        "then": false
+      },
+      "if": {
+        "allOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mode+mode=null"
+          }
+        ]
+      },
+      "then": false
+    },
     "when/redis+redis.enabled+redis.enabled=null/then/any/else/fail": {
       "else": false,
       "if": {
@@ -6445,6 +6457,56 @@
             "$ref": "#/definitions/constrains~1slave.service.type!=null"
           }
         ]
+      },
+      "then": false
+    },
+    "when/sentinel.service.type+sentinel.service.type=null/then/fail/else/enabled+enabled=null+sentinel.service.type": {
+      "else": {
+        "else": false,
+        "if": {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1sentinel.service.type+sentinel.service.type=null~1then~1fail~1else~1sentinel.service.type@2"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
+      },
+      "then": false
+    },
+    "when/sentinel.service.type+sentinel.service.type=null/then/fail/else/sentinel.service.type": {
+      "else": {
+        "$ref": "#/definitions/when~1sentinel.service.type+sentinel.service.type=null~1then~1fail~1else~1sentinel.service.type@2"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null@2"
+      },
+      "then": false
+    },
+    "when/sentinel.service.type+sentinel.service.type=null/then/fail/else/sentinel.service.type@2": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1sentinel.service.type@3"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1sentinel.service.type+sentinel.service.type=null"
+      },
+      "then": false
+    },
+    "when/slave.service.type+slave.service.type=null/then/fail/else/slave.service.type": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1slave.service.type@3"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null"
       },
       "then": false
     }
@@ -6550,6 +6612,40 @@
     "minio": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1mode+mode=null~1then~1fail~1else~1mode"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mode+mode=null"
+              },
+              "then": false
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1mode+mode=null~1then~1fail~1else~1mode"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mode+mode=null"
+              },
+              "then": false
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/when~1mode!=null~1then~1fail"
+          }
+        },
         {
           "if": {
             "allOf": [
@@ -7112,6 +7208,97 @@
           "then": {
             "if": {
               "$ref": "#/definitions/constrains~1usePassword!=null"
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
+            "else": {
+              "else": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1sentinel.enabled:t@3"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1sentinel.service.type+sentinel.service.type=null~1then~1fail~1else~1enabled+enabled=null+sentinel.service.type"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1sentinel.enabled:t@3"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1sentinel.service.type+sentinel.service.type=null~1then~1fail~1else~1sentinel.service.type"
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1cluster.enabled:t@3"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1slave.service.type+slave.service.type=null~1then~1fail~1else~1slave.service.type"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
+                  },
+                  "then": false
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1sentinel.enabled:t@3"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1sentinel.service.type+sentinel.service.type=null~1then~1fail~1else~1enabled+enabled=null+sentinel.service.type"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              },
+              "then": {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/when~1slave.service.type+slave.service.type=null~1then~1fail~1else~1slave.service.type"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1slave.service.type+slave.service.type=null@2"
+                  },
+                  "then": false
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1sentinel.enabled:t@3"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1sentinel.service.type+sentinel.service.type=null~1then~1fail~1else~1sentinel.service.type"
+                }
+              }
+            }
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1sentinel.enabled!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1sentinel.service.type!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1slave.service.type!=null"
+                }
+              ]
             },
             "then": false
           }

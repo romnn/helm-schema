@@ -436,6 +436,62 @@
     },
     {
       "if": {
+        "else": {
+          "else": false,
+          "if": {
+            "$ref": "#/definitions/constrains~1workload.kind:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1workload.kind=Deployment~1then~1workload+workload.kind+workload.kind=null~1else~1workload.kind=StatefulSet"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1persistence.provider+persistence.provider=null~1then~1fail~1else~1persistence.provider"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1persistence.provider+persistence.provider=null"
+            },
+            "then": false
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1workload.kind:t@2"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1workload.kind=StatefulSet@2"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1workload.kind+workload.kind=null~1then~1persistence+persistence.provider+persistence.provider=null~1else~1workload.kind"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1workload.kind=Deployment@2"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1workload.kind+workload.kind=null~1then~1persistence+persistence.provider+persistence.provider=null~1else~1workload.kind"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1persistence.provider+persistence.provider=null"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1workload.kind=Deployment~1then~1workload+workload.kind+workload.kind=null~1else~1workload.kind=StatefulSet"
+            }
+          }
+        }
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -989,304 +1045,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride@4"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@6"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind=Deployment"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind=StatefulSet"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind:t@2"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1workload.kind@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1workload.kind"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1workload.kind=null"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1persistence.enabled:t"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1persistence.provider=null"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1persistence.provider@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1persistence.provider"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@5"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@5"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind=null"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "properties": {
-                        "extraLabels": {
-                          "$ref": "#/definitions/t"
-                        }
-                      },
-                      "required": [
-                        "extraLabels"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1workload.kind=null"
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@5"
-                    }
-                  ]
-                },
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1workload.kind:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1workload.kind=Deployment"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1workload.kind=StatefulSet"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1persistence.provider=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1persistence.provider@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1persistence.provider"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1persistence.enabled:t"
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": false,
         "if": {
           "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
@@ -1591,6 +1349,304 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.provider=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.provider@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.provider"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind=Deployment"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind=StatefulSet"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind:t@2"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1workload.kind@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1workload.kind"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1workload.kind=null"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@4"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1nameOverride:t@6"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1workload+workload.kind+workload.kind:t+workload.kind=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1workload.kind:t+workload.kind=Deployment+workload.kind=StatefulSet"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence+persistence.enabled:t+persistence.provider+persistence.provider=null"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride@5"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride@4"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@5"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1persistence.enabled+persistence.enabled:t"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "extraLabels": {
+                          "$ref": "#/definitions/t"
+                        }
+                      },
+                      "required": [
+                        "extraLabels"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind=null"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1workload.kind=null"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1persistence.provider=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1persistence.provider@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1persistence.provider"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "not": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1workload.kind:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1workload.kind=Deployment"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1workload.kind=StatefulSet"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "else": {
           "else": false,
           "if": {
@@ -1755,6 +1811,21 @@
           "not": {
             "enum": [
               false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=null": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              null
             ]
           }
         }
@@ -2663,6 +2734,17 @@
       ],
       "type": "object"
     },
+    "constrains/knative.enabled:t": {
+      "properties": {
+        "knative": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "knative"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1nameOverride@4"
@@ -3030,7 +3112,7 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1namespaceOverride@8"
+                          "$ref": "#/definitions/constrains~1namespaceOverride@9"
                         },
                         {
                           "$ref": "#/definitions/constrains~1namespaceOverride@10"
@@ -3053,7 +3135,7 @@
                           "$ref": "#/definitions/constrains~1namespaceOverride@10"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1namespaceOverride@9"
+                          "$ref": "#/definitions/constrains~1namespaceOverride@8"
                         },
                         {
                           "$ref": "#/definitions/constrains~1namespaceOverride"
@@ -3121,50 +3203,50 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t@4"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t@4"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t@4"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t@4"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
                         }
                       ]
                     }
@@ -3253,7 +3335,7 @@
                   "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
                 }
               ]
             }
@@ -3284,7 +3366,7 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@6"
@@ -3308,7 +3390,7 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1namespaceOverride@8"
+                          "$ref": "#/definitions/constrains~1namespaceOverride@9"
                         },
                         {
                           "$ref": "#/definitions/constrains~1namespaceOverride@10"
@@ -3368,7 +3450,7 @@
                           "$ref": "#/definitions/constrains~1namespaceOverride@10"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1namespaceOverride@9"
+                          "$ref": "#/definitions/constrains~1namespaceOverride@8"
                         },
                         {
                           "$ref": "#/definitions/constrains~1namespaceOverride@2"
@@ -4586,7 +4668,7 @@
     "constrains/namespaceOverride@8": {
       "properties": {
         "namespaceOverride": {
-          "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x25"
+          "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x5b"
         }
       },
       "required": [
@@ -4597,7 +4679,7 @@
     "constrains/namespaceOverride@9": {
       "properties": {
         "namespaceOverride": {
-          "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x5b"
+          "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x25"
         }
       },
       "required": [
@@ -4677,18 +4759,89 @@
       ],
       "type": "object"
     },
-    "constrains/ollama.knative.enabled:t": {
+    "constrains/ollama.gpu.enabled:t": {
       "properties": {
         "ollama": {
           "properties": {
-            "knative": {
+            "gpu": {
               "$ref": "#/definitions/constrains~1enabled:t"
             }
           },
           "required": [
-            "knative"
+            "gpu"
           ],
           "type": "object"
+        }
+      },
+      "required": [
+        "ollama"
+      ],
+      "type": "object"
+    },
+    "constrains/ollama.gpu.type+ollama.gpu.type=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "ollama": {
+                "properties": {
+                  "gpu": {
+                    "properties": {
+                      "type": {}
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "gpu"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ollama"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "ollama": {
+              "properties": {
+                "gpu": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "gpu"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ollama"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/ollama.knative.enabled:t": {
+      "properties": {
+        "ollama": {
+          "$ref": "#/definitions/constrains~1knative.enabled:t"
         }
       },
       "required": [
@@ -4710,23 +4863,7 @@
     "constrains/ollama.ollama.gpu.enabled:t": {
       "properties": {
         "ollama": {
-          "properties": {
-            "ollama": {
-              "properties": {
-                "gpu": {
-                  "$ref": "#/definitions/constrains~1enabled:t"
-                }
-              },
-              "required": [
-                "gpu"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ollama"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
         }
       },
       "required": [
@@ -4972,6 +5109,16 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/persistence.provider+persistence.provider=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.provider=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.provider"
+        }
+      ]
     },
     "constrains/persistence.provider=null": {
       "properties": {
@@ -5853,7 +6000,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x5b"
+              "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x25"
             }
           },
           "required": [
@@ -5872,7 +6019,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x25"
+              "$ref": "#/definitions/constrains~1namespaceOverride~1string;pattern-x20-x5b"
             }
           },
           "required": [
@@ -6200,6 +6347,16 @@
         "type": "object"
       }
     },
+    "constrains/workload.kind+workload.kind=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1workload.kind"
+        },
+        {
+          "$ref": "#/definitions/constrains~1workload.kind=null"
+        }
+      ]
+    },
     "constrains/workload.kind:t": {
       "not": {
         "$ref": "#/definitions/constrains~1workload.kind:t@2"
@@ -6212,10 +6369,14 @@
             "$ref": "#/definitions/constrains~1workload.kind:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1workload.kind=StatefulSet@2"
+            "not": {
+              "$ref": "#/definitions/constrains~1workload.kind=StatefulSet@2"
+            }
           },
           {
-            "$ref": "#/definitions/constrains~1workload.kind=Deployment@2"
+            "not": {
+              "$ref": "#/definitions/constrains~1workload.kind=Deployment@2"
+            }
           }
         ]
       }
@@ -6240,56 +6401,56 @@
       "type": "object"
     },
     "constrains/workload.kind=Deployment": {
-      "$ref": "#/definitions/constrains~1workload.kind=Deployment@2"
+      "not": {
+        "$ref": "#/definitions/constrains~1workload.kind=Deployment@2"
+      }
     },
     "constrains/workload.kind=Deployment@2": {
-      "not": {
-        "properties": {
-          "workload": {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "workload"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "workload": {
+          "properties": {
+            "kind": {
+              "enum": [
+                "Deployment"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "workload"
+      ],
+      "type": "object"
     },
     "constrains/workload.kind=StatefulSet": {
-      "$ref": "#/definitions/constrains~1workload.kind=StatefulSet@2"
+      "not": {
+        "$ref": "#/definitions/constrains~1workload.kind=StatefulSet@2"
+      }
     },
     "constrains/workload.kind=StatefulSet@2": {
-      "not": {
-        "properties": {
-          "workload": {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "StatefulSet"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "workload"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "workload": {
+          "properties": {
+            "kind": {
+              "enum": [
+                "StatefulSet"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "workload"
+      ],
+      "type": "object"
     },
     "constrains/workload.kind=null": {
       "properties": {
@@ -6452,6 +6613,19 @@
       },
       "then": false
     },
+    "when/fullnameOverride+fullnameOverride=null/then/fail/else/fullnameOverride": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1fullnameOverride@5"
+        },
+        "then": false
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=null"
+      },
+      "then": false
+    },
     "when/nameOverride!=null+namespaceOverride!=null+serviceAccount.create!=null+2more/then/fail": {
       "if": {
         "allOf": [
@@ -6507,6 +6681,66 @@
         ]
       },
       "then": true
+    },
+    "when/ollama.gpu.type+ollama.gpu.type=null/then/fail/else/ollama.gpu.type": {
+      "else": {
+        "else": true,
+        "if": {
+          "properties": {
+            "ollama": {
+              "properties": {
+                "gpu": {
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "gpu"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ollama"
+          ],
+          "type": "object"
+        },
+        "then": false
+      },
+      "if": {
+        "allOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    "when/persistence.provider+persistence.provider=null/then/fail/else/persistence.provider": {
+      "else": {
+        "$ref": "#/definitions/when~1persistence.provider~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1persistence.provider+persistence.provider=null"
+      },
+      "then": false
+    },
+    "when/persistence.provider/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1persistence.provider@2"
+      },
+      "then": false
     },
     "when/pipelines+pipelines.enabled+pipelines.enabled=null/then/any/else/fail": {
       "else": false,
@@ -6566,6 +6800,81 @@
         ]
       },
       "then": true
+    },
+    "when/workload.kind+workload.kind=null/then/fail/else/workload.kind": {
+      "else": {
+        "$ref": "#/definitions/when~1workload.kind~1then~1fail~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1workload.kind+workload.kind=null"
+      },
+      "then": false
+    },
+    "when/workload.kind+workload.kind=null/then/fail/else/workload.kind@2": {
+      "else": {
+        "$ref": "#/definitions/when~1workload.kind+workload.kind=null~1then~1fail~1else~1workload.kind"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1workload.kind+workload.kind=null"
+      },
+      "then": false
+    },
+    "when/workload.kind+workload.kind=null/then/persistence+persistence.provider+persistence.provider=null/else/workload.kind": {
+      "else": {
+        "else": {
+          "else": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1persistence.provider@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1workload.kind~1then~1fail~1else~1any"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1workload.kind+workload.kind=null"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1persistence.provider~1then~1fail~1else~1any"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1persistence.provider+persistence.provider=null"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1workload.kind+workload.kind=null~1then~1fail~1else~1workload.kind"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1workload.kind+workload.kind=null"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1persistence.provider+persistence.provider=null~1then~1fail~1else~1persistence.provider"
+      }
+    },
+    "when/workload.kind/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1workload.kind@2"
+      },
+      "then": false
+    },
+    "when/workload.kind=Deployment/then/workload+workload.kind+workload.kind=null/else/workload.kind=StatefulSet": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1workload.kind=StatefulSet@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1workload.kind+workload.kind=null~1then~1fail~1else~1workload.kind@2"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1workload.kind=Deployment@2"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1workload.kind+workload.kind=null~1then~1fail~1else~1workload.kind@2"
+      }
     }
   },
   "properties": {
@@ -6640,6 +6949,131 @@
     },
     "ollama": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1knative.enabled:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+                },
+                "then": {
+                  "else": {
+                    "else": false,
+                    "if": {
+                      "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1ollama.gpu.type"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
+                  },
+                  "then": false
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1knative.enabled:t"
+              },
+              "then": {
+                "else": false,
+                "if": {
+                  "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/when~1ollama.gpu.type+ollama.gpu.type=null~1then~1fail~1else~1ollama.gpu.type"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
+                  },
+                  "then": false
+                }
+              }
+            }
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "properties": {
+                    "ollama": {
+                      "properties": {
+                        "gpu": {
+                          "properties": {
+                            "type": {
+                              "not": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "gpu"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "ollama": {
+                      "properties": {
+                        "gpu": {
+                          "$ref": "#/definitions/constrains~1enabled!=null"
+                        }
+                      },
+                      "required": [
+                        "gpu"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ollama"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "knative": {
+                      "$ref": "#/definitions/constrains~1enabled!=null"
+                    }
+                  },
+                  "required": [
+                    "knative"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "then": false
+          }
+        }
+      ],
       "properties": {
         "enabled": {
           "description": "Automatically install Ollama Helm chart from https://otwld.github.io/ollama-helm/. Use [Helm Values](https://github.com/otwld/ollama-helm/#helm-values) to configure"
@@ -6883,6 +7317,50 @@
           "then": {
             "$ref": "#/definitions/constrains~1serviceAccount.name:t@3"
           }
+        },
+        {
+          "if": {
+            "else": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
+              },
+              "then": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1fullnameOverride+fullnameOverride=null~1then~1fail~1else~1fullnameOverride"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=null@2"
+                },
+                "then": false
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1enabled:t"
+            },
+            "then": {
+              "else": false,
+              "if": {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@7"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1fullnameOverride+fullnameOverride=null~1then~1fail~1else~1fullnameOverride"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=null@2"
+                },
+                "then": false
+              }
+            }
+          },
+          "then": false
         },
         {
           "if": {

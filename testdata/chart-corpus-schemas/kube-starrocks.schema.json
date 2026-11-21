@@ -341,604 +341,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1operator.global.rbac"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.create"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount"
-          },
-          {
-            "$ref": "#/definitions/constrains~1operator.global.rbac.create"
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+8more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
-                            },
-                            {
-                              "anyOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
-                                  }
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@2"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more@2"
-                            },
-                            {
-                              "anyOf": [
-                                {
-                                  "not": {
-                                    "properties": {
-                                      "operator": {
-                                        "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
-                                      }
-                                    },
-                                    "required": [
-                                      "operator"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                {
-                                  "properties": {
-                                    "operator": {
-                                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@2"
-                                    }
-                                  },
-                                  "required": [
-                                    "operator"
-                                  ],
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
-                            },
-                            {
-                              "anyOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
-                                  }
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels=null"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more@2"
-                            },
-                            {
-                              "properties": {
-                                "operator": {
-                                  "allOf": [
-                                    {
-                                      "type": "object"
-                                    },
-                                    {
-                                      "anyOf": [
-                                        {
-                                          "not": {
-                                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
-                                          }
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels=null"
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more@2"
-                            },
-                            {
-                              "properties": {
-                                "operator": {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels"
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "properties": {
-                              "operator": {
-                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:helm-marker-free"
-                              }
-                            },
-                            "required": [
-                              "operator"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:helm-marker-free"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "properties": {
-                              "operator": {
-                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:t"
-                              }
-                            },
-                            "required": [
-                              "operator"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "properties": {
-                              "operator": {
-                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free"
-                              }
-                            },
-                            "required": [
-                              "operator"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "properties": {
-                              "operator": {
-                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:t"
-                              }
-                            },
-                            "required": [
-                              "operator"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "anyOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
-                                  }
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations=null"
-                                }
-                              ]
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations+2more"
-                            },
-                            {
-                              "properties": {
-                                "operator": {
-                                  "allOf": [
-                                    {
-                                      "type": "object"
-                                    },
-                                    {
-                                      "anyOf": [
-                                        {
-                                          "not": {
-                                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
-                                          }
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations=null"
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations+2more"
-                            },
-                            {
-                              "properties": {
-                                "operator": {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations"
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations+2more"
-                            },
-                            {
-                              "anyOf": [
-                                {
-                                  "not": {
-                                    "properties": {
-                                      "operator": {
-                                        "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
-                                      }
-                                    },
-                                    "required": [
-                                      "operator"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                {
-                                  "properties": {
-                                    "operator": {
-                                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@2"
-                                    }
-                                  },
-                                  "required": [
-                                    "operator"
-                                  ],
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "anyOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
-                                  }
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@2"
-                                }
-                              ]
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "operator": {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@3"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount"
-          },
-          {
-            "not": {
-              "properties": {
-                "operator": {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@3"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@3"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@3"
-            }
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1operator+operator.global+operator.global.rbac+operator.global.rbac.create:t+7more"
           },
           {
@@ -1046,6 +448,160 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.create"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac.create"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@14"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1operator+operator.nameOverride@3"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@6"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@14"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1operator!=null~1then~1fail"
       }
     },
     {
@@ -1361,144 +917,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1operator.global.rbac"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.create"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount"
-          },
-          {
-            "$ref": "#/definitions/constrains~1operator.global.rbac.create"
-          },
-          {
-            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name"
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+8more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+17more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride@6"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+17more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride:t"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
           },
           {
@@ -1656,44 +1074,19 @@
                     "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+17more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+10more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride@6"
                   },
                   {
                     "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+10more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+17more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+10more"
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride:t"
@@ -1709,29 +1102,652 @@
                     "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
                   },
                   {
                     "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+10more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+8more"
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+17more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
                   }
                 ]
               },
               {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+14more"
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+11more"
               },
               {
                 "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+6more"
               },
               {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+11more"
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+14more"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+7more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+10more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
+                  }
+                ]
               }
             ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1operator!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.create"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount"
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac.create"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+7more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:helm-marker-free"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "properties": {
+                              "operator": {
+                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:helm-marker-free"
+                              }
+                            },
+                            "required": [
+                              "operator"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "properties": {
+                              "operator": {
+                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:t"
+                              }
+                            },
+                            "required": [
+                              "operator"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more@2"
+                            },
+                            {
+                              "properties": {
+                                "operator": {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels"
+                                }
+                              },
+                              "required": [
+                                "operator"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more@2"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "properties": {
+                                      "operator": {
+                                        "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
+                                      }
+                                    },
+                                    "required": [
+                                      "operator"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                {
+                                  "properties": {
+                                    "operator": {
+                                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@2"
+                                    }
+                                  },
+                                  "required": [
+                                    "operator"
+                                  ],
+                                  "type": "object"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
+                                  }
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@2"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels!=null"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
+                                  }
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels=null"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.labels+1more@2"
+                            },
+                            {
+                              "properties": {
+                                "operator": {
+                                  "allOf": [
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "not": {
+                                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@4"
+                                          }
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels=null"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "operator"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "properties": {
+                              "operator": {
+                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free"
+                              }
+                            },
+                            "required": [
+                              "operator"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:helm-marker-free"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "properties": {
+                              "operator": {
+                                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:t"
+                              }
+                            },
+                            "required": [
+                              "operator"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.annotations+1more"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations+2more"
+                            },
+                            {
+                              "properties": {
+                                "operator": {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations"
+                                }
+                              },
+                              "required": [
+                                "operator"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
+                                  }
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@2"
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations+2more"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "properties": {
+                                      "operator": {
+                                        "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
+                                      }
+                                    },
+                                    "required": [
+                                      "operator"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                {
+                                  "properties": {
+                                    "operator": {
+                                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@2"
+                                    }
+                                  },
+                                  "required": [
+                                    "operator"
+                                  ],
+                                  "type": "object"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations+2more"
+                            },
+                            {
+                              "properties": {
+                                "operator": {
+                                  "allOf": [
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "not": {
+                                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
+                                          }
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations=null"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "operator"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@4"
+                                  }
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations=null"
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations!=null"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@3"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@2"
+          },
+          {
+            "not": {
+              "properties": {
+                "operator": {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@3"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "operator": {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.annotations@3"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.labels@3"
+            }
           }
         ]
       },
@@ -2168,40 +2184,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1operator.global.rbac"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.create"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.rbac"
-          },
-          {
-            "$ref": "#/definitions/constrains~1operator.global.rbac.create"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+14more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+6more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+11more"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1global.rbac+global.rbac!=null+global.rbac=null+global.rbac?+operator.global.rbac"
           },
           {
@@ -2422,6 +2404,40 @@
             "$ref": "#/definitions/constrains~1global.rbac"
           },
           {
+            "$ref": "#/definitions/constrains~1operator.global.rbac.create"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+11more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+6more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+14more"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/when~1operator!=null~1then~1fail"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.create"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac"
+          },
+          {
             "$ref": "#/definitions/constrains~1global.rbac.serviceAccount"
           },
           {
@@ -2441,6 +2457,63 @@
               {
                 "allOf": [
                   {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+7more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
+                  },
+                  {
                     "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
                   },
                   {
@@ -2448,46 +2521,20 @@
                   },
                   {
                     "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+17more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
                   },
-                  {
-                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+8more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
                   {
                     "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
                   },
@@ -2498,10 +2545,10 @@
                     "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+17more@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride:t"
@@ -3086,138 +3133,91 @@
             "$ref": "#/definitions/constrains~1global.rbac"
           },
           {
-            "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount"
           },
           {
             "$ref": "#/definitions/constrains~1operator.global.rbac.create"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@11"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@14"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+7more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@12"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+1more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@9"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@10"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@13"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@11"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@14"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@12"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.starrocksOperator.watchNamespace:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@9"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@10"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@7"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@13"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1operator+operator.nameOverride@3"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride@6"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1operator.nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+2more@2"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.create+global.rbac.create!=null+16more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride:t"
+                  }
+                ]
               }
             ]
           }
@@ -3237,6 +3237,17 @@
       },
       "required": [
         "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/configyaml": {
+      "properties": {
+        "configyaml": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "configyaml"
       ],
       "type": "object"
     },
@@ -3416,19 +3427,19 @@
     "constrains/global+global.rbac+global.rbac.create+global.rbac.create!=null+16more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+6more"
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+6more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+10more"
         },
         {
           "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more"
         },
         {
-          "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+9more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@2"
-        },
-        {
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+3more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more"
         }
       ]
     },
@@ -3438,32 +3449,32 @@
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+4more"
         },
         {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+6more"
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+6more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+10more"
         },
         {
           "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more"
         },
         {
-          "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+9more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@2"
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more"
         }
       ]
     },
     "constrains/global+global.rbac+global.rbac.create+global.rbac.create!=null+17more@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+6more"
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+6more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+10more"
         },
         {
           "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more"
         },
         {
-          "$ref": "#/definitions/constrains~1global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+9more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@2"
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more"
         },
         {
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+4more@2"
@@ -3529,53 +3540,17 @@
         }
       ]
     },
-    "constrains/global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+8more": {
+    "constrains/global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+7more": {
       "anyOf": [
         {
           "allOf": [
             {
               "anyOf": [
                 {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "operator": {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@8"
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@8"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name!=null+3more"
-                    }
-                  ]
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
                 },
                 {
                   "anyOf": [
@@ -3585,84 +3560,13 @@
                           "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@10"
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@11"
                         },
                         {
                           "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
                         }
                       ]
                     },
-                    {
-                      "allOf": [
-                        {
-                          "properties": {
-                            "operator": {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@10"
-                            }
-                          },
-                          "required": [
-                            "operator"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@7"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "properties": {
-                            "operator": {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@7"
-                            }
-                          },
-                          "required": [
-                            "operator"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
-                },
-                {
-                  "anyOf": [
                     {
                       "allOf": [
                         {
@@ -3680,24 +3584,8 @@
                           "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
                         }
                       ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@11"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                        }
-                      ]
                     }
                   ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more@2"
                 }
               ]
             },
@@ -3710,12 +3598,6 @@
           "allOf": [
             {
               "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more@2"
-                },
                 {
                   "anyOf": [
                     {
@@ -3750,6 +3632,12 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
                 }
               ]
             },
@@ -3763,10 +3651,10 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more@2"
+                  "$ref": "#/definitions/constrains~1global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
                 }
               ]
             },
@@ -3774,200 +3662,129 @@
               "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
             }
           ]
-        }
-      ]
-    },
-    "constrains/global+global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+9more": {
-      "allOf": [
+        },
         {
-          "anyOf": [
+          "allOf": [
             {
-              "allOf": [
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@8"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "operator": {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@8"
+                                }
+                              },
+                              "required": [
+                                "operator"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
+                    }
+                  ]
+                },
                 {
                   "anyOf": [
                     {
-                      "anyOf": [
+                      "allOf": [
                         {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@6"
+                          "properties": {
+                            "operator": {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@7"
                             }
-                          ]
+                          },
+                          "required": [
+                            "operator"
+                          ],
+                          "type": "object"
                         },
                         {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@9"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name=true"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=true"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@6"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@4"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@16"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@7"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                            }
-                          ]
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
                         }
                       ]
                     },
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name!=null+3more"
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
                         },
                         {
-                          "anyOf": [
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@2"
-                                }
-                              ]
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@3"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name=false"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                            }
-                          ]
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@7"
                         },
                         {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=false"
-                            }
-                          ]
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
                         }
                       ]
                     }
                   ]
                 },
                 {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "operator": {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@10"
+                            }
+                          },
+                          "required": [
+                            "operator"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@10"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             },
             {
-              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@2"
+              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
         }
       ]
     },
@@ -4054,13 +3871,13 @@
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+4more"
         },
         {
-          "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride+1more@2"
+          "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more@2"
         },
         {
           "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@2"
         },
         {
-          "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more@2"
+          "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride+1more@2"
         }
       ]
     },
@@ -4143,9 +3960,6 @@
     "constrains/global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t+2more"
-        },
-        {
           "$ref": "#/definitions/constrains~1operator.nameOverride:t"
         },
         {
@@ -4153,19 +3967,22 @@
         },
         {
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+4more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t+2more"
         }
       ]
     },
     "constrains/global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t+2more"
-        },
-        {
           "$ref": "#/definitions/constrains~1operator.nameOverride:t"
         },
         {
           "$ref": "#/definitions/constrains~1operator.nameOverride+operator.nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t+2more"
         },
         {
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+4more@2"
@@ -4175,13 +3992,13 @@
     "constrains/global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+9more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride+1more@2"
+          "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more@2"
         },
         {
           "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+2more@2"
         },
         {
-          "$ref": "#/definitions/constrains~1operator+operator.starrocksOperator+operator.starrocksOperator.namespaceOverride+3more@2"
+          "$ref": "#/definitions/constrains~1operator.starrocksOperator.namespaceOverride+1more@2"
         },
         {
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+3more"
@@ -4219,10 +4036,10 @@
           "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create=null+1more"
         },
         {
-          "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
+          "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+10more"
         },
         {
-          "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+10more"
+          "$ref": "#/definitions/constrains~1global.rbac+global.rbac.create+global.rbac.create!=null+global.rbac.create:t+8more"
         },
         {
           "$ref": "#/definitions/constrains~1operator+operator.nameOverride+operator.nameOverride:t"
@@ -4274,6 +4091,200 @@
         }
       ]
     },
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+10more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@9"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@6"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@6"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@4"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@7"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@16"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=false"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name=false"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@3"
+                                }
+                              ]
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@2"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
+        }
+      ]
+    },
     "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+2more": {
       "allOf": [
         {
@@ -4296,6 +4307,48 @@
               }
             }
           ]
+        }
+      ]
+    },
+    "constrains/global.rbac+global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@9"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "properties": {
+                    "operator": {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@9"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more"
         }
       ]
     },
@@ -4577,18 +4630,60 @@
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name!=null+3more": {
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@18"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+          }
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+3more": {
       "anyOf": [
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount+operator.global.rbac.serviceAccount.name"
+              "properties": {
+                "operator": {
+                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@13"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
             },
             {
               "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
             }
           ]
         },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+            },
+            {
+              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@13"
+            },
+            {
+              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more": {
+      "anyOf": [
         {
           "allOf": [
             {
@@ -4610,53 +4705,11 @@
               "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
             }
           ]
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=null"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@18"
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-          }
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+4more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-            },
-            {
-              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@13"
-            },
-            {
-              "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-            }
-          ]
         },
         {
           "allOf": [
             {
-              "properties": {
-                "operator": {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@13"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount+operator.global.rbac.serviceAccount.name"
             },
             {
               "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
@@ -4672,16 +4725,6 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
                   "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
                 },
                 {
@@ -4691,163 +4734,14 @@
                   "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@3"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+5more@2": {
-      "allOf": [
-        {
-          "anyOf": [
+            },
             {
               "allOf": [
                 {
-                  "properties": {
-                    "operator": {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@9"
-                    }
-                  },
-                  "required": [
-                    "operator"
-                  ],
-                  "type": "object"
+                  "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@4"
                 },
                 {
                   "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@9"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name!=null+3more"
-        }
-      ]
-    },
-    "constrains/global.rbac.serviceAccount+global.rbac.serviceAccount.name+6more": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=null"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@18"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@15"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@18"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@8"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@14"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
-                    }
-                  ]
                 }
               ]
             }
@@ -5573,6 +5467,25 @@
         }
       ]
     },
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+3more": {
+      "not": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name:t+1more"
+          }
+        ]
+      }
+    },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more": {
       "anyOf": [
         {
@@ -5590,24 +5503,122 @@
         }
       ]
     },
-    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more@2": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null+global.rbac.serviceAccount.name:t+1more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name=null+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name:t@2"
-              }
-            ]
-          }
-        ]
-      }
+    "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+6more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name=null"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@18"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@5"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@14"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name?"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@15"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name@18"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name!=null"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1operator.global.rbac.serviceAccount.name@8"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global.rbac.serviceAccount+global.rbac.serviceAccount.name+1more"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.rbac.serviceAccount.name+global.rbac.serviceAccount.name!=null+4more"
+        }
+      ]
     },
     "constrains/global.rbac.serviceAccount.name+global.rbac.serviceAccount.name:t": {
       "allOf": [
@@ -8070,23 +8081,6 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1operator.nameOverride@12"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1operator+operator.nameOverride"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1operator.nameOverride:t@3"
-            },
-            {
-              "anyOf": [
-                {
                   "$ref": "#/definitions/constrains~1operator.nameOverride@14"
                 },
                 {
@@ -8138,6 +8132,23 @@
                       "$ref": "#/definitions/constrains~1operator.nameOverride@6"
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1operator.nameOverride:t@3"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1operator.nameOverride@12"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1operator+operator.nameOverride"
                 }
               ]
             }
@@ -9438,6 +9449,69 @@
       ],
       "type": "object"
     },
+    "constrains/service.type+service.type=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/service.type:t": {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
     "constrains/serviceMonitor=null": {
       "properties": {
         "serviceMonitor": {
@@ -10139,23 +10213,7 @@
     "constrains/starrocksFESpec.service.type:t": {
       "properties": {
         "starrocksFESpec": {
-          "properties": {
-            "service": {
-              "properties": {
-                "type": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1service.type:t"
         }
       },
       "required": [
@@ -11060,6 +11118,13 @@
       ],
       "type": "string"
     },
+    "when/configyaml/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1configyaml"
+      },
+      "then": false
+    },
     "when/operator!=null/then/fail": {
       "if": {
         "properties": {
@@ -11073,6 +11138,29 @@
         },
         "required": [
           "operator"
+        ],
+        "type": "object"
+      },
+      "then": false
+    },
+    "when/service.type/then/fail/else/any": {
+      "else": true,
+      "if": {
+        "properties": {
+          "service": {
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
         ],
         "type": "object"
       },
@@ -13431,6 +13519,76 @@
                     }
                   }
                 ]
+              },
+              "then": false
+            },
+            {
+              "if": {
+                "else": {
+                  "else": false,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1service.type:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "$ref": "#/definitions/when~1service.type~1then~1fail~1else~1any"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1service.type+service.type=null"
+                      },
+                      "then": false
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1service.type+service.type=null"
+                    },
+                    "then": false
+                  }
+                },
+                "if": {
+                  "properties": {
+                    "configyaml": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "configyaml"
+                  ],
+                  "type": "object"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/when~1configyaml~1then~1fail~1else~1any"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1service.type:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "else": true,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1configyaml"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/when~1service.type~1then~1fail~1else~1any"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1service.type+service.type=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1configyaml~1then~1fail~1else~1any"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1service.type+service.type=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1configyaml~1then~1fail~1else~1any"
+                    }
+                  }
+                }
               },
               "then": false
             }
