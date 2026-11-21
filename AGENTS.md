@@ -29,48 +29,13 @@ ingest it or intersect it with generated output. Explicit override schemas are c
 
 ## Every session
 
-- Parse structured input with proper parsers instead of regexes or prefix chains. For action text,
-  use `helm_schema_ast::parse_action_expressions` and match `TemplateExpr`; for Helm/YAML structure,
-  use the tree-sitter-backed `helm_schema_ast::TreeSitterParser` and `HelmAst`.
-- Keep Rust direct and simple: prefer local loops and `match`; add abstractions only for real
-  duplication or clearer control flow.
-- Use `indoc!` for multiline ordinary/raw Rust strings and `formatdoc!` when interpolating.
-  Trailing-backslash continuations need neither; retain direct literals where syntax or a macro
-  requires a literal token (attributes, patterns, `$literal` arguments).
-- Put public API/end-to-end tests in crate `tests/`, private tests in `src/tests/`. No sibling
-  `foo_test.rs`/`foo_tests.rs`/`foo.spec.rs` files or inline test modules in production files;
-  only a minimal `#[cfg(test)] mod tests;` bridge to `src/tests/` is allowed.
-  Mirrored integration tests may reuse production filenames under `tests/`.
-- Keep test-only helpers out of production modules; use `tests/common.rs`, `tests/util.rs`, or
-  `src/tests/` for private access. Exclude `src/tests/**` and crate `tests/` from production LOC.
-- Import `use test_util::prelude::sim_assert_eq;` in each test module/integration-test file and
-  assert equality with `sim_assert_eq!(have: actual, want: expected)`. `std::assert_eq!` is denied.
-  Add `test-util.workspace = true` under dev-dependencies if missing.
-- Assert full JSON schema equality in schema integration tests, never selected fields or snapshots.
-  Update full expected fixtures explicitly for intentional changes; do not auto-regenerate expectations.
-- Use typed `thiserror` enums throughout production libraries/binaries, including `main`;
-  reserve `color_eyre` reports for tests and shared test support.
-- In tests, import `color_eyre::eyre` and write `eyre::Result<T>`, never the fully qualified type
-  inline. Import extension traits anonymously, e.g. `use color_eyre::eyre::{self, OptionExt as _};`.
-  Use `ok_or_eyre(...)` for missing options; reserve `ok_or_else` for genuinely lazy/dynamic errors.
-  Avoid importing a bare `Result` alias; keep result types explicit.
-- Return `eyre::Result<T>` from fallible tests/helpers and propagate failures with `?` and useful
-  context; do not add suppressed `expect`, `unwrap`, or `panic!` for representable errors.
-- Before adding/changing Rust lint suppressions, load `rust-lint`; every `#[allow]` needs a
-  concrete `reason = "…"` per the [lint policy](.agents/skills/verification-gates/SKILL.md#lint-policy-pointers).
-- Destructure every semantic-carrier field and match owned enums without wildcards in merges, path maps, cache keys and dispatch; collapse hand-synced twins.
-- Preserve semantic features during refactors; removing one requires an explicit product decision.
-- Rewrites and producer deletions follow the `rearchitecture` skill:
-  - inventory what the old path produces;
-  - build the replacement beside it;
-  - measure parity with the corpus parity preview, never with an admission suite alone;
-  - delete only what the preview proves covered.
-  False rejections against main are fixed, never rostered.
+- Load the [code-quality](.agents/skills/code-quality/SKILL.md) skill before writing or reviewing code: parsers over
+  regexes, direct Rust, test layout, `sim_assert_eq!`, error types, lint suppressions, exhaustive destructuring, and
+  Helm-derived test expectations.
 - Expected test schemas come from Helm's behaviour, main's fixtures or the destination schema, never from snapshotting
-  current output. A red test must be semantic: validate discriminating documents against the expected and actual
-  schemas before calling a difference a regression.
-- Profile product and verification tooling through `tracing::instrument` spans and the existing Perfetto layer; do not add custom phase timers.
-- Run tests in debug mode with `cargo nextest run --workspace`; never use `--release` for tests.
+  current output.
+- Rewrites and producer deletions follow the `rearchitecture` skill. False rejections against main are fixed, never
+  rostered.
 
 ## Verification gates
 
@@ -122,35 +87,12 @@ Load the relevant skill for procedures:
 - [landing-workflow](.agents/skills/landing-workflow/SKILL.md): campaigns, ledgers, hand-offs, landing chain and receipts.
 - [rearchitecture](.agents/skills/rearchitecture/SKILL.md): rewriting a pipeline part without losing what the old path
   got right (inventory, parity preview, deletion gate, test reconciliation).
+- [code-quality](.agents/skills/code-quality/SKILL.md): house rules for Rust code and tests in this repo.
+- [delegating-to-models](.agents/skills/delegating-to-models/SKILL.md): which model to use for direction, building,
+  reviews and hard decisions, and how to brief it.
 - [lane-builder](.agents/skills/lane-builder/SKILL.md): implementing one change fast: direction first, a cheap inner loop
   (focused laws, `--only` dumps, `corpus_replay` in about a minute), CPU before full proof, a Helm-semantics table before
   hand-back.
-
-## Delegating to models
-
-What each model has proven good at here (as of Nov 2026). Which vendor or account to use at a given
-moment depends on quota and is the orchestrator's call; it is not recorded here.
-
-- **Astra (Codex, xhigh, read-only): direction and root cause.** Design before any new mechanism,
-  optimization or CPU lane; diagnosis when a builder is stuck for 2-3 hours; first-principles
-  challenges of a lane that is not converging. It found combinatorial root causes in minutes that
-  builders missed for hours (7b2 layout walk: 1.68M merges to 1,527; 6a1 cofactor split). Ask for the
-  mechanism with file:line, the structural fix, what gets deleted, and a cheap experiment to confirm.
-- **Sol 6.2 (Codex, high): building from a ready plan, and pre-landing reviews.** As a reviewer it
-  reliably finds Helm-semantics counterexamples (it reproduces them against real Helm), but it reports
-  them one round at a time, so require the builder's semantics table (lane-builder skill) first.
-  Its content filter stops turns on security-sounding words (crash, stack overflow, adversarial,
-  shadowed, integrity, attack, exploit); phrase checks as plain correctness questions. After one
-  flagged turn, rephrase or `continue_fresh`; after two, the session context itself is flagged.
-- **Sol 6.1 (Codex, high): long builder lanes, and the fallback when 6.2's filter stops a turn.** On
-  open-ended work it tends to over-verify and try variants for days (one lane: 5,000 commands, 73
-  full dumps); give it Astra milestones that each produce a measured number within 1-2 hours, plus a
-  stop rule.
-- **Fable (Claude, xhigh): hard decisions and direction checks,** interchangeable with Astra for
-  design; use a cross-vendor second opinion when the stakes are high.
-- **Opus (Claude): builders,** especially for parser-robustness work whose wording keeps tripping
-  Codex's filter.
-- Run every Astra and Fable consult at xhigh: the hard decisions need all of it.
 
 Persist generic learnings (process, tooling, pitfalls) in this file or the relevant skill as soon as they are confirmed,
 so a fresh session never has to rediscover them. Campaign state belongs in `plan/` ledgers, not here.
