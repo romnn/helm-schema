@@ -1,10 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use helm_schema_ast::extract_values_yaml_descriptions;
 use serde_yaml::Value as YamlValue;
 use tracing::instrument;
-use vfs::VfsPath;
 
 use super::paths::scope_values_path;
 use super::types::ChartContext;
@@ -17,12 +16,7 @@ pub fn build_composed_values_document(
 ) -> EngineResult<YamlValue> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
 
-    let root_values_path = root.chart_dir.join("values.yaml")?;
-    let mut doc = if root_values_path.is_file()? {
-        serde_yaml::from_str::<YamlValue>(&root_values_path.read_to_string()?)?
-    } else {
-        YamlValue::Mapping(serde_yaml::Mapping::default())
-    };
+    let mut doc = chart_own_values(root)?;
     // An empty or comment-only file parses to null; Helm reads it as an
     // empty table.
     if doc.is_null() {
@@ -55,11 +49,10 @@ pub fn build_dependency_refill_values_document(charts: &[ChartContext]) -> Engin
 
 /// The chart's own `values.yaml`, or null when it has none.
 pub(crate) fn chart_own_values(chart: &ChartContext) -> EngineResult<YamlValue> {
-    let path = chart.chart_dir.join("values.yaml")?;
-    if !path.is_file()? {
+    let Some(file) = chart.files.file("values.yaml")? else {
         return Ok(YamlValue::Null);
-    }
-    Ok(serde_yaml::from_str(&path.read_to_string()?)?)
+    };
+    Ok(serde_yaml::from_str(file.yaml_text()?)?)
 }
 
 pub(crate) struct DependencyGlobalOwnership {
@@ -135,28 +128,24 @@ fn scoped_global_path(chart_prefix: &[String], relative_path: &[String]) -> Stri
 pub fn build_composed_values_descriptions(
     charts: &[ChartContext],
     include_subchart_values: bool,
-    values_files: &[PathBuf],
+    values_files: &[Arc<str>],
 ) -> EngineResult<BTreeMap<String, String>> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
     let mut descriptions = BTreeMap::new();
 
-    add_values_file_descriptions(&root.chart_dir, &[], &mut descriptions)?;
+    add_values_file_descriptions(root, &mut descriptions)?;
 
     if include_subchart_values {
         for chart in charts {
             if chart.values_prefix.is_empty() {
                 continue;
             }
-            add_values_file_descriptions(
-                &chart.chart_dir,
-                &chart.values_prefix,
-                &mut descriptions,
-            )?;
+            add_values_file_descriptions(chart, &mut descriptions)?;
         }
     }
 
-    for path in values_files {
-        add_layered_values_file_descriptions(path, &mut descriptions)?;
+    for source in values_files {
+        descriptions.extend(extract_values_yaml_descriptions(source));
     }
 
     Ok(descriptions)
@@ -195,34 +184,17 @@ fn compose_subchart_values(charts: &[ChartContext], doc: &mut YamlValue) -> Engi
 }
 
 fn add_values_file_descriptions(
-    chart_dir: &VfsPath,
-    prefix: &[String],
+    chart: &ChartContext,
     out: &mut BTreeMap<String, String>,
 ) -> EngineResult<()> {
-    let values_path = chart_dir.join("values.yaml")?;
-    if !values_path.is_file()? {
+    let Some(file) = chart.files.file("values.yaml")? else {
         return Ok(());
-    }
-
-    let descriptions = extract_values_yaml_descriptions(&values_path.read_to_string()?);
+    };
+    let descriptions = extract_values_yaml_descriptions(file.yaml_text()?);
 
     for (path, description) in descriptions {
-        let scoped_path = scope_values_path(&path, prefix);
+        let scoped_path = scope_values_path(&path, &chart.values_prefix);
         out.entry(scoped_path).or_insert(description);
-    }
-
-    Ok(())
-}
-
-fn add_layered_values_file_descriptions(
-    values_path: &Path,
-    out: &mut BTreeMap<String, String>,
-) -> EngineResult<()> {
-    let source = std::fs::read_to_string(values_path)?;
-    let descriptions = extract_values_yaml_descriptions(&source);
-
-    for (path, description) in descriptions {
-        out.insert(path, description);
     }
 
     Ok(())

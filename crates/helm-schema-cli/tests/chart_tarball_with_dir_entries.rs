@@ -141,7 +141,7 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

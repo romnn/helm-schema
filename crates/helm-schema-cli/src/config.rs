@@ -156,7 +156,7 @@ impl EffectiveKnob {
 }
 
 pub(crate) fn resolve(
-    root_source: &RootChartSource,
+    root_source: &mut RootChartSource,
     chart_path: &Path,
     explicit_config: Option<&Path>,
     no_config: bool,
@@ -181,7 +181,7 @@ pub(crate) fn resolve(
 }
 
 fn load_config(
-    root_source: &RootChartSource,
+    root_source: &mut RootChartSource,
     chart_path: &Path,
     explicit_config: Option<&Path>,
 ) -> EngineResult<Option<LoadedConfig>> {
@@ -193,11 +193,9 @@ fn load_config(
         })?;
         (path.display().to_string(), source, true)
     } else {
-        let config_path = root_source.chart_dir().join(CONFIG_FILE_NAME)?;
-        if !config_path.is_file()? {
+        let Some(source) = root_source.read_root_file(CONFIG_FILE_NAME)? else {
             return Ok(None);
-        }
-        let source = config_path.read_to_string()?;
+        };
         (
             format!("{}/{}", chart_path.display(), CONFIG_FILE_NAME),
             source,

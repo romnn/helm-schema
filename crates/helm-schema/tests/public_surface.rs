@@ -115,7 +115,7 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
     ));
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -194,7 +194,7 @@ fn successive_sessions_keep_schema_and_diagnostics_identical() -> eyre::Result<(
         "},
     )?;
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -256,7 +256,7 @@ fn split_call_and_pipeline_emit_the_same_nil_strict_schema() -> eyre::Result<()>
     )?;
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -355,7 +355,7 @@ fn analysis_session_exposes_contract_and_generated_schema() -> eyre::Result<()> 
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -468,7 +468,7 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -585,7 +585,7 @@ fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()>
     )?;
 
     let opts = GenerateOptions {
-        chart_dir: chart_dir.clone(),
+        chart_source: chart_dir.clone().into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -637,7 +637,7 @@ fn stage_functions_match_session_generated_schema() -> eyre::Result<()> {
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -715,7 +715,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -847,7 +847,7 @@ fn analysis_session_emits_final_schema_through_output_pipeline() -> eyre::Result
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -938,7 +938,7 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1105,7 +1105,7 @@ fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::
 
     let session = AnalysisSession::with_diagnostics(
         GenerateOptions {
-            chart_dir,
+            chart_source: chart_dir.into(),
             include_tests: false,
             include_subchart_values: true,
             values_files: Vec::new(),
@@ -1172,7 +1172,7 @@ fn analysis_session_explains_helper_origin_provenance() -> eyre::Result<()> {
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1246,7 +1246,7 @@ fn dependency_activation_guards_lower_with_helm_precedence() -> eyre::Result<()>
     )?;
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1347,7 +1347,7 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
     )?;
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

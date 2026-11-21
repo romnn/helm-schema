@@ -4,6 +4,7 @@ use indoc::indoc;
 use super::{build_composed_values_document, build_dependency_global_ownership};
 use crate::chart::ChartContext;
 use crate::chart::discover_chart_contexts;
+use crate::load_budget::LoadBudget;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
@@ -17,7 +18,11 @@ fn yaml_pointer<'a>(doc: &'a serde_yaml::Value, path: &[&str]) -> Option<&'a ser
 }
 
 fn discover(chart_dir: &VfsPath) -> eyre::Result<Vec<ChartContext>> {
-    Ok(discover_chart_contexts(chart_dir)?)
+    Ok(discover_chart_contexts(
+        &chart_dir.clone().into(),
+        false,
+        LoadBudget::default(),
+    )?)
 }
 
 #[test]

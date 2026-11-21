@@ -39,7 +39,7 @@ fn session(authoring: AuthoringPolicy) -> eyre::Result<crate::AnalysisSession> {
         "},
     )?;
     Ok(crate::AnalysisSession::new(crate::GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

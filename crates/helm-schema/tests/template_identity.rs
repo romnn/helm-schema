@@ -95,7 +95,7 @@ fn write_shared_helper_chart(chart_dir: &VfsPath) -> eyre::Result<()> {
 
 fn generate(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
     AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

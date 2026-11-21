@@ -68,7 +68,7 @@ pub fn run(
     };
     let bundle = &options.provider_bundle;
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir: VfsPath::new(vfs::PhysicalFS::new(chart)),
+        chart_source: VfsPath::new(vfs::PhysicalFS::new(chart)).into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

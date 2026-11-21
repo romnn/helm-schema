@@ -4,10 +4,21 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use crate::chart::discovery;
-use crate::chart::*;
+use crate::chart::{build_define_index, load_values_files_and_check_keys};
+
 use crate::error::CliError;
 use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
+
+pub(super) fn discover_chart_contexts(
+    chart_dir: &vfs::VfsPath,
+) -> crate::EngineResult<Vec<crate::chart::ChartContext>> {
+    discovery::discover_chart_contexts(
+        &chart_dir.clone().into(),
+        false,
+        crate::load_budget::LoadBudget::default(),
+    )
+}
 
 #[test]
 fn legacy_boolean_alias_keys_are_aggregated_across_values_declarations() -> eyre::Result<()> {
@@ -51,7 +62,7 @@ fn legacy_boolean_alias_keys_are_aggregated_across_values_declarations() -> eyre
     std::fs::write(&override_path, "Y: override\n")?;
     let charts = discover_chart_contexts(&chart_dir)?;
     let Err(error) =
-        reject_legacy_boolean_alias_keys(&charts, std::slice::from_ref(&override_path))
+        load_values_files_and_check_keys(&charts, std::slice::from_ref(&override_path))
     else {
         return Err(eyre::eyre!("plain legacy aliases were accepted"));
     };
@@ -99,7 +110,7 @@ fn every_measured_legacy_boolean_alias_spelling_is_rejected() -> eyre::Result<()
 
     let charts = discover_chart_contexts(&chart_dir)?;
     let Err(CliError::YamlBooleanAliasKeys { details }) =
-        reject_legacy_boolean_alias_keys(&charts, &[])
+        load_values_files_and_check_keys(&charts, &[])
     else {
         return Err(eyre::eyre!("a measured legacy alias spelling was accepted"));
     };
@@ -130,7 +141,7 @@ fn boolean_alias_rejection_precedes_template_analysis() -> eyre::Result<()> {
     )?;
 
     let result = crate::AnalysisSession::new(crate::GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -743,8 +754,9 @@ fn vendored_chart_archive_respects_load_budget() -> eyre::Result<()> {
         file.write_all(&tar_bytes)?;
     }
 
-    let err = discovery::discover_chart_contexts_with_budget(
-        &chart_dir,
+    let err = discovery::discover_chart_contexts(
+        &chart_dir.into(),
+        false,
         crate::load_budget::LoadBudget::new(128, 1024),
     )
     .expect_err("archive should exceed load budget");
@@ -814,8 +826,9 @@ fn vendored_chart_archive_respects_expanded_budget() -> eyre::Result<()> {
     archive_path.parent().create_dir_all()?;
     archive_path.create_file()?.write_all(&tar_bytes)?;
 
-    let err = discovery::discover_chart_contexts_with_budget(
-        &chart_dir,
+    let err = discovery::discover_chart_contexts(
+        &chart_dir.into(),
+        false,
         crate::load_budget::LoadBudget {
             max_chart_archive_unpacked_bytes: 1024,
             ..crate::load_budget::LoadBudget::new(16 * 1024, 1024)
@@ -881,8 +894,9 @@ fn vendored_chart_archive_respects_entry_budget() -> eyre::Result<()> {
     archive_path.parent().create_dir_all()?;
     archive_path.create_file()?.write_all(&tar_bytes)?;
 
-    let err = discovery::discover_chart_contexts_with_budget(
-        &chart_dir,
+    let err = discovery::discover_chart_contexts(
+        &chart_dir.into(),
+        false,
         crate::load_budget::LoadBudget {
             max_chart_archive_entries: 2,
             ..crate::load_budget::LoadBudget::new(16 * 1024, 1024)
@@ -1080,8 +1094,7 @@ fn templates_are_indexed_under_their_execution_names() -> eyre::Result<()> {
     )?;
 
     let charts = discover_chart_contexts(&chart_dir)?;
-    let corpus = LoadedChartCorpus::load(&charts, false)?;
-    let defines = build_define_index(&charts, &corpus)?;
+    let defines = build_define_index(&charts)?;
 
     sim_assert_eq!(
         have: defines.file_sources().map(|(path, ..)| path).collect::<Vec<_>>(),
@@ -1101,5 +1114,30 @@ fn templates_are_indexed_under_their_execution_names() -> eyre::Result<()> {
         ("root".to_owned(), BTreeMap::from([("files/payload.yaml".to_owned(), b"payload: yes\n".to_vec())])),
         ("root/charts/kid".to_owned(), BTreeMap::from([("files/payload.yaml".to_owned(), b"child payload: yes\n".to_vec())])),
     ]));
+    Ok(())
+}
+
+#[test]
+fn layered_descriptions_reuse_the_values_sources_checked_for_boolean_keys() -> eyre::Result<()> {
+    let root = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    let charts = discover_chart_contexts(&root)?;
+    let scratch = ScratchDir::new("layered-values")?;
+    let path = scratch.path().join("override.yaml");
+    std::fs::write(
+        &path,
+        indoc! {"
+        # -- original description
+        key: 0
+    "},
+    )?;
+    let sources = load_values_files_and_check_keys(&charts, &[path.clone(), path.clone()])?;
+    let [first, second] = sources.as_slice() else {
+        return Err(eyre::eyre!("expected both layers"));
+    };
+    assert!(std::sync::Arc::ptr_eq(first, second));
+    std::fs::write(&path, "key: 1")?;
+    let descriptions = crate::chart::build_composed_values_descriptions(&charts, true, &sources)?;
+    sim_assert_eq!(have: descriptions, want: BTreeMap::from([("key".to_string(), "original description".to_string())]));
     Ok(())
 }

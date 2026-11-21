@@ -89,7 +89,7 @@ fn generate_case(case: &RenderCase<'_>) -> eyre::Result<Value> {
     test_util::write(&chart_dir.join("templates/_helpers.tpl")?, helper)?;
     let bundle = test_util::workspace_testdata().join("provider-bundle");
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: false,
         values_files: Vec::new(),

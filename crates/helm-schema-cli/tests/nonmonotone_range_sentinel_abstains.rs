@@ -65,7 +65,7 @@ fn generated_schema(template: &str) -> eyre::Result<serde_json::Value> {
     test_util::write(&chart_dir.join("templates/cm.yaml")?, template)?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

@@ -20,7 +20,7 @@ use vfs::VfsPath;
 
 fn generate(chart_dir: VfsPath) -> eyre::Result<(serde_json::Value, Vec<LintWithdrawal>)> {
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -501,7 +501,7 @@ fn unconditional_dependency_defaults_do_not_require_raw_parent_members() -> eyre
 
 fn generate_provider_schema(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
     Ok(AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

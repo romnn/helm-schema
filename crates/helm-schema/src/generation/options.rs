@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
+use crate::chart_source::RootChartSource;
 use helm_schema_json_schema_minify::DefinitionOrigin;
 use serde_json::Value;
-use vfs::VfsPath;
 
 use crate::provider_builder::ProviderOptions;
 
@@ -16,8 +16,8 @@ pub use helm_schema_gen::{
 /// Inputs and analysis policy for generating one chart schema.
 #[derive(Debug, Clone)]
 pub struct GenerateOptions {
-    /// Virtual-filesystem directory containing `Chart.yaml`.
-    pub chart_dir: VfsPath,
+    /// Directory or packaged archive containing the root chart.
+    pub chart_source: RootChartSource,
     /// Whether templates under the chart's test directories are analyzed.
     pub include_tests: bool,
     /// Whether dependency values are exposed beneath their subchart keys.

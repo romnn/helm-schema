@@ -118,7 +118,7 @@ fn duplicate_helper_name_losing_body_does_not_contaminate_type_hints() -> eyre::
     test_util::write(&chart_dir.join("templates/cm.yaml")?, ROOT_TEMPLATE)?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

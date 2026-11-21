@@ -14,13 +14,6 @@ pub enum CliError {
         path: String,
     },
 
-    /// Prepared chart files were requested for a chart outside the snapshot.
-    #[error("loaded chart corpus has no entry for {path}")]
-    LoadedChartMissing {
-        /// Discovered chart directory missing from the corpus.
-        path: String,
-    },
-
     /// Operating-system I/O operation failed.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
@@ -92,6 +85,13 @@ pub enum CliError {
     /// Helm template source could not be parsed.
     #[error("template parse error: {0}")]
     TemplateParse(#[from] helm_schema_ast::ParseError),
+
+    /// A chart file role was queried before source preparation.
+    #[error("chart file roles have not been prepared for {path}")]
+    ChartRolesNotPrepared {
+        /// Path of the chart whose files were queried.
+        path: String,
+    },
 
     /// Chart discovery found no analyzable charts.
     #[error("no charts discovered")]

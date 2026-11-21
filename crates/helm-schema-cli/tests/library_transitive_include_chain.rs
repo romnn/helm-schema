@@ -114,7 +114,7 @@ fn transitive_library_include_chain_propagates_fallback() -> eyre::Result<()> {
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

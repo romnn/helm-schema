@@ -9,7 +9,6 @@ use crate::error::EngineResult;
 #[tracing::instrument(skip_all, fields(prefix_len = chart.values_prefix.len()))]
 pub(crate) fn collect_manifest_contract_for_chart(
     chart: &chart::ChartContext,
-    loaded_chart: &chart::LoadedChart,
     symbolic_context: &SymbolicIrContext,
     optional_helpers: &[OptionalDependencyHelpers],
     corpus: &DefineCorpus<'_>,
@@ -18,15 +17,22 @@ pub(crate) fn collect_manifest_contract_for_chart(
     let mut local_resource_schemas = Vec::new();
     let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation_chain);
 
-    let files = loaded_chart
-        .files_with_role(chart::FileRole::ManifestTemplate)
-        .chain(loaded_chart.files_with_role(chart::FileRole::NotesTemplate))
-        .map(|file| {
+    let manifests = chart
+        .files
+        .files_with_role(chart::FileRole::ManifestTemplate)?;
+    let notes = chart
+        .files
+        .files_with_role(chart::FileRole::NotesTemplate)?;
+    let files = manifests
+        .iter()
+        .map(|file| (file, false))
+        .chain(notes.iter().map(|file| (file, true)))
+        .map(|(file, textual)| {
             Ok(ManifestSource {
+                path: file.path(),
+                name: chart::template_execution_name(chart, &file.name),
                 source: file.source()?,
-                path: file.path.as_str(),
-                name: chart::template_execution_name(chart, &file.path),
-                textual: file.has_role(chart::FileRole::NotesTemplate),
+                textual,
             })
         })
         .collect::<EngineResult<Vec<_>>>()?;

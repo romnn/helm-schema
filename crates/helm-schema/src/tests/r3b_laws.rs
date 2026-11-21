@@ -46,7 +46,7 @@ fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
         test_util::write(&chart_dir.join(path)?, source)?;
     }
     let session = crate::AnalysisSession::new(crate::GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1738,7 +1738,7 @@ fn kyverno_readiness_requires_a_string_image_tag() -> eyre::Result<()> {
     let bundle = testdata.join("provider-bundle");
     let crds = bundle.join("crds-catalog-cache");
     let session = crate::AnalysisSession::new(crate::GenerateOptions {
-        chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
+        chart_source: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)).into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

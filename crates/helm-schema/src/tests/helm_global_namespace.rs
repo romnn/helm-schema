@@ -77,7 +77,7 @@ fn witness_parent(consumer: bool) -> eyre::Result<VfsPath> {
 
 fn generated_schema(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
     let session = crate::AnalysisSession::new(crate::GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

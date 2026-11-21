@@ -1,15 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Component, Path};
 
-use flate2::read::GzDecoder;
 use serde::Deserialize;
 use tracing::instrument;
-use vfs::VfsPath;
 
+use super::LoadedChart;
 use super::paths::scope_values_path;
 use super::types::{ChartContext, ChartDependencyActivation};
+use crate::chart_source::RootChartSource;
 use crate::error::{CliError, EngineResult};
-use crate::load_budget::{LoadBudget, read_to_end_capped};
+use crate::load_budget::LoadBudget;
 
 #[derive(Debug, Deserialize)]
 struct ChartYaml {
@@ -56,52 +56,71 @@ struct DependencyMetadata {
     activation: ChartDependencyActivation,
 }
 
-#[instrument(skip_all)]
-pub fn discover_chart_contexts(root_chart_dir: &VfsPath) -> EngineResult<Vec<ChartContext>> {
-    discover_chart_contexts_with_budget(root_chart_dir, LoadBudget::default())
+struct InstalledChart {
+    files: LoadedChart,
+    name: String,
+    metadata: ChartYaml,
+    children: Vec<InstalledChart>,
+}
+
+impl InstalledChart {
+    fn read(files: LoadedChart, is_root: bool) -> EngineResult<Self> {
+        let metadata = read_chart_yaml(&files)?;
+        let name = metadata
+            .name
+            .clone()
+            .unwrap_or_else(|| files.filename().to_string());
+        if name.is_empty() && metadata.name.is_none() && !is_root {
+            return Err(CliError::SubchartNameMissing {
+                path: files.path().to_string(),
+            });
+        }
+        Ok(Self {
+            files,
+            name,
+            metadata,
+            children: Vec::new(),
+        })
+    }
+
+    fn load_children(&mut self, budget: LoadBudget) -> EngineResult<()> {
+        self.files.visit_vendored_charts(budget, |child| {
+            self.children.push(Self::read(child, false)?);
+            Ok(())
+        })?;
+        reject_duplicate_installed_dependency_names(
+            &self.children,
+            self.files.file_path("charts"),
+        )?;
+        for child in &mut self.children {
+            child.load_children(budget)?;
+        }
+        Ok(())
+    }
 }
 
 #[instrument(skip_all)]
-pub(crate) fn discover_chart_contexts_with_budget(
-    root_chart_dir: &VfsPath,
+pub(crate) fn discover_chart_contexts(
+    source: &RootChartSource,
+    include_tests: bool,
     load_budget: LoadBudget,
 ) -> EngineResult<Vec<ChartContext>> {
+    let mut root = InstalledChart::read(source.load(include_tests)?, true)?;
+    root.load_children(load_budget)?;
     let mut out = Vec::new();
-    let chart_yaml = read_chart_yaml(root_chart_dir)?;
-    // Helm names the root of the template namespace after the chart, so a
-    // nameless chart falls back to its directory the same way a nameless
-    // dependency does.
-    let namespace = chart_yaml
-        .name
-        .clone()
-        .unwrap_or_else(|| root_chart_dir.filename());
-    discover_chart_contexts_inner(
-        root_chart_dir,
-        &chart_yaml,
-        &namespace,
-        &[],
-        &[],
-        false,
-        load_budget,
-        &mut out,
-    )?;
+    discover_chart_contexts_inner(&root, &root.name, &[], &[], false, &mut out);
     Ok(out)
 }
 
-#[expect(
-    clippy::too_many_arguments,
-    reason = "the recursion threads one chart's placement: namespace, values prefix, activation chain and listing"
-)]
 fn discover_chart_contexts_inner(
-    chart_dir: &VfsPath,
-    chart_yaml: &ChartYaml,
+    chart: &InstalledChart,
     template_namespace: &str,
     parent_prefix: &[String],
     dependency_activation_chain: &[ChartDependencyActivation],
     listed_dependency: bool,
-    load_budget: LoadBudget,
     out: &mut Vec<ChartContext>,
-) -> EngineResult<()> {
+) {
+    let chart_yaml = &chart.metadata;
     let is_library = chart_yaml
         .chart_type
         .as_deref()
@@ -118,7 +137,7 @@ fn discover_chart_contexts_inner(
     );
 
     out.push(ChartContext {
-        chart_dir: chart_dir.clone(),
+        files: chart.files.clone(),
         values_prefix: parent_prefix.to_vec(),
         template_namespace: template_namespace.to_string(),
         is_library,
@@ -129,58 +148,11 @@ fn discover_chart_contexts_inner(
 
     let dependency_metadata_by_name = dependency_metadata_map(chart_yaml, parent_prefix);
 
-    let vendor_charts_dir = chart_dir.join("charts")?;
-    if !vendor_charts_dir.is_dir()? {
-        return Ok(());
-    }
-
-    // VFS backends do not promise read_dir ordering. Keep dependency traversal
-    // stable because DefineIndex and helper graph construction use
-    // last-write-wins semantics for duplicate helper definitions.
-    let mut vendor_entries: Vec<VfsPath> = vendor_charts_dir.read_dir()?.collect();
-    vendor_entries.sort_by_key(VfsPath::filename);
-
-    let mut installed_charts = Vec::new();
-    for entry in vendor_entries {
-        let sub_dir = if entry.is_dir()? {
-            let chart_yaml_path = entry.join("Chart.yaml")?;
-            let chart_template_yaml_path = entry.join("Chart.template.yaml")?;
-            if !chart_yaml_path.is_file()? && !chart_template_yaml_path.is_file()? {
-                continue;
-            }
-            entry
-        } else if entry.is_file()? {
-            if !is_chart_archive(&entry.filename()) {
-                continue;
-            }
-
-            extract_chart_archive(&entry, load_budget)?
-        } else {
-            continue;
-        };
-
-        let sub_chart_yaml = read_chart_yaml(&sub_dir)?;
-        let sub_name = sub_chart_yaml
-            .name
-            .clone()
-            .or_else(|| {
-                let name = sub_dir.filename();
-                if name.is_empty() { None } else { Some(name) }
-            })
-            .ok_or_else(|| CliError::SubchartNameMissing {
-                path: sub_dir.as_str().to_string(),
-            })?;
-
-        installed_charts.push((sub_dir, sub_name, sub_chart_yaml));
-    }
-
-    reject_duplicate_installed_dependency_names(&installed_charts, &vendor_charts_dir)?;
-
-    for (sub_dir, sub_name, sub_chart_yaml) in installed_charts {
-        let listed = dependency_metadata_by_name.get(&sub_name);
+    for child in &chart.children {
+        let listed = dependency_metadata_by_name.get(&child.name);
         let dependency_metadata = listed.cloned().unwrap_or_else(|| {
             vec![DependencyMetadata {
-                values_key: sub_name.clone(),
+                values_key: child.name.clone(),
                 activation: ChartDependencyActivation::default(),
             }]
         });
@@ -203,19 +175,15 @@ fn discover_chart_contexts_inner(
             }
 
             discover_chart_contexts_inner(
-                &sub_dir,
-                &sub_chart_yaml,
+                child,
                 &child_namespace,
                 &prefix,
                 &chain,
                 listed.is_some(),
-                load_budget,
                 out,
-            )?;
+            );
         }
     }
-
-    Ok(())
 }
 
 fn chart_static_root_strings(chart: &ChartYaml) -> BTreeMap<Vec<String>, String> {
@@ -266,57 +234,6 @@ pub(crate) fn is_chart_archive(file_name: &str) -> bool {
     is_tgz || is_tar_gz
 }
 
-pub(crate) fn extract_chart_archive(
-    path: &VfsPath,
-    load_budget: LoadBudget,
-) -> EngineResult<VfsPath> {
-    let mut file = path.open_file()?;
-    let bytes = read_to_end_capped(
-        &mut file,
-        load_budget.max_chart_archive_bytes,
-        path.as_str().to_string(),
-    )?;
-
-    let gz = GzDecoder::new(bytes.as_slice());
-    let mut archive = tar::Archive::new(gz);
-
-    let root = VfsPath::new(vfs::MemoryFS::new());
-    let mut extracted_entries = 0usize;
-    let mut extracted_bytes = 0usize;
-    for entry in archive.entries()? {
-        let mut entry = entry?;
-        if !entry.header().entry_type().is_file() {
-            continue;
-        }
-        extracted_entries = extracted_entries.saturating_add(1);
-        if extracted_entries > load_budget.max_chart_archive_entries {
-            return Err(CliError::LoadEntryBudgetExceeded {
-                subject: path.as_str().to_string(),
-                limit_entries: load_budget.max_chart_archive_entries,
-            });
-        }
-        let entry_path = entry.path()?;
-        validate_archive_entry_path(path.as_str(), &entry_path)?;
-        let path_str = entry_path.to_string_lossy();
-        let out = root.join(path_str.as_ref())?;
-        out.parent().create_dir_all()?;
-        let mut file = out.create_file()?;
-        let copied = std::io::copy(&mut entry, &mut file)?;
-        extracted_bytes =
-            extracted_bytes.saturating_add(usize::try_from(copied).unwrap_or(usize::MAX));
-        if extracted_bytes > load_budget.max_chart_archive_unpacked_bytes {
-            return Err(CliError::LoadBudgetExceeded {
-                subject: format!("expanded {}", path.as_str()),
-                limit_bytes: load_budget.max_chart_archive_unpacked_bytes,
-            });
-        }
-    }
-
-    find_chart_dir(&root)?.ok_or_else(|| CliError::NoChartYamlInArchive {
-        archive: path.as_str().to_string(),
-    })
-}
-
 pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> EngineResult<()> {
     // `components()` parses with the HOST's separator rules, but tar entry
     // names are platform-independent `/`-separated strings: an entry named
@@ -337,31 +254,6 @@ pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> E
         archive: archive.to_string(),
         entry_path: entry_path.display().to_string(),
     })
-}
-
-fn find_chart_dir(root: &VfsPath) -> EngineResult<Option<VfsPath>> {
-    let direct = root.join("Chart.yaml")?;
-    let direct_template = root.join("Chart.template.yaml")?;
-    if direct.is_file()? || direct_template.is_file()? {
-        return Ok(Some(root.clone()));
-    }
-
-    // Multi-chart archives are rare, but choosing alphabetically keeps the
-    // fallback deterministic across filesystems.
-    let mut entries: Vec<VfsPath> = root.read_dir()?.collect();
-    entries.sort_by_key(VfsPath::filename);
-    for entry in entries {
-        if !entry.is_dir()? {
-            continue;
-        }
-        let chart_yaml = entry.join("Chart.yaml")?;
-        let chart_template_yaml = entry.join("Chart.template.yaml")?;
-        if chart_yaml.is_file()? || chart_template_yaml.is_file()? {
-            return Ok(Some(entry));
-        }
-    }
-
-    Ok(None)
 }
 
 fn dependency_metadata_map(
@@ -443,28 +335,16 @@ fn scope_chart_yaml_value_path(path: &str, prefix: &[String]) -> String {
     scope_values_path(path, prefix)
 }
 
-fn read_chart_yaml(chart_dir: &VfsPath) -> EngineResult<ChartYaml> {
-    let chart_yaml = chart_dir.join("Chart.yaml")?;
-    let chart_template_yaml = chart_dir.join("Chart.template.yaml")?;
-
-    let path = if chart_yaml.is_file()? {
-        chart_yaml
-    } else if chart_template_yaml.is_file()? {
-        chart_template_yaml
-    } else {
-        chart_yaml
-    };
-
-    let mut metadata: ChartYaml = serde_yaml::from_str(&path.read_to_string()?)?;
-    let mut dependency_source = path.as_str().to_string();
-    if metadata.dependencies.is_none() {
-        let requirements_yaml = chart_dir.join("requirements.yaml")?;
-        if requirements_yaml.is_file()? {
-            let requirements: RequirementsYaml =
-                serde_yaml::from_str(&requirements_yaml.read_to_string()?)?;
-            metadata.dependencies = requirements.dependencies;
-            dependency_source = requirements_yaml.as_str().to_string();
-        }
+fn read_chart_yaml(chart: &LoadedChart) -> EngineResult<ChartYaml> {
+    let manifest = chart.manifest()?;
+    let mut metadata: ChartYaml = serde_yaml::from_str(manifest.yaml_text()?)?;
+    let mut dependency_source = manifest.path().to_owned();
+    if metadata.dependencies.is_none()
+        && let Some(requirements) = chart.file("requirements.yaml")?
+    {
+        let yaml: RequirementsYaml = serde_yaml::from_str(requirements.yaml_text()?)?;
+        metadata.dependencies = yaml.dependencies;
+        dependency_source = requirements.path().to_owned();
     }
     reject_duplicate_dependency_values_keys(
         metadata.dependencies.as_deref().unwrap_or_default(),
@@ -508,15 +388,15 @@ fn reject_duplicate_dependency_values_keys(
 }
 
 fn reject_duplicate_installed_dependency_names(
-    installed_charts: &[(VfsPath, String, ChartYaml)],
-    charts_dir: &VfsPath,
+    installed_charts: &[InstalledChart],
+    path: String,
 ) -> EngineResult<()> {
     let mut entries_by_name = BTreeMap::new();
-    for (chart_dir, name, _) in installed_charts {
+    for chart in installed_charts {
         entries_by_name
-            .entry(name)
+            .entry(&chart.name)
             .or_insert_with(Vec::new)
-            .push(chart_dir.as_str());
+            .push(chart.files.path());
     }
     let details = entries_by_name
         .into_iter()
@@ -527,8 +407,5 @@ fn reject_duplicate_installed_dependency_names(
     if details.is_empty() {
         return Ok(());
     }
-    Err(CliError::DuplicateInstalledDependencyNames {
-        path: charts_dir.as_str().to_string(),
-        details,
-    })
+    Err(CliError::DuplicateInstalledDependencyNames { path, details })
 }

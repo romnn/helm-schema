@@ -1,8 +1,9 @@
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use helm_schema_syntax::YAML_1_1_BOOLEANS;
-use vfs::VfsPath;
 use yaml_rust::parser::{Event, MarkedEventReceiver, Parser};
 use yaml_rust::scanner::{Marker, TScalarStyle, TokenType};
 
@@ -90,25 +91,33 @@ fn is_explicit_string_tag(tag: Option<&TokenType>) -> bool {
     )
 }
 
-pub(crate) fn reject_legacy_boolean_alias_keys(
+pub(crate) fn load_values_files_and_check_keys(
     charts: &[ChartContext],
     values_files: &[PathBuf],
-) -> EngineResult<()> {
+) -> EngineResult<Vec<Arc<str>>> {
     let mut keys = Vec::new();
 
     for chart in charts {
-        let path = chart.chart_dir.join("values.yaml")?;
-        if path.is_file()? {
-            collect_vfs_keys(&path, &mut keys)?;
+        if let Some(file) = chart.files.file("values.yaml")? {
+            collect_keys(file.path(), file.yaml_text()?, &mut keys)?;
         }
     }
+    let mut loaded = BTreeMap::new();
+    let mut sources = Vec::with_capacity(values_files.len());
     for path in values_files {
-        let source = std::fs::read_to_string(path)?;
-        collect_keys(path.to_string_lossy().as_ref(), &source, &mut keys)?;
+        let source = match loaded.entry(path) {
+            std::collections::btree_map::Entry::Occupied(entry) => entry.into_mut(),
+            std::collections::btree_map::Entry::Vacant(entry) => {
+                let source = read_values_file(charts.first(), path)?;
+                collect_keys(path.to_string_lossy().as_ref(), &source, &mut keys)?;
+                entry.insert(source)
+            }
+        };
+        sources.push(Arc::clone(source));
     }
 
     if keys.is_empty() {
-        return Ok(());
+        return Ok(sources);
     }
 
     keys.sort();
@@ -125,8 +134,15 @@ pub(crate) fn reject_legacy_boolean_alias_keys(
     Err(CliError::YamlBooleanAliasKeys { details })
 }
 
-fn collect_vfs_keys(path: &VfsPath, keys: &mut Vec<AliasKey>) -> EngineResult<()> {
-    collect_keys(path.as_str(), &path.read_to_string()?, keys)
+fn read_values_file(root: Option<&ChartContext>, path: &Path) -> EngineResult<Arc<str>> {
+    if let Some(root) = root
+        && let Some(bytes) = root.files.load_local_file(path)?
+    {
+        let source = std::str::from_utf8(&bytes)
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error))?;
+        return Ok(Arc::from(source));
+    }
+    Ok(Arc::from(std::fs::read_to_string(path)?))
 }
 
 fn collect_keys(path: &str, source: &str, keys: &mut Vec<AliasKey>) -> EngineResult<()> {

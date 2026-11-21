@@ -28,14 +28,13 @@ pub(crate) struct ChartAnalysis {
 #[tracing::instrument(skip_all)]
 pub(crate) fn analyze_charts(
     charts: &[chart::ChartContext],
-    corpus: &chart::LoadedChartCorpus,
     defines: &DefineIndex,
     values_roots: &ValuesRoots,
     kubernetes_version: Option<&str>,
 ) -> EngineResult<ChartAnalysis> {
     let parsed_defines = ParsedDefines::new(defines);
     let mut contract = ContractIr::default();
-    let mut local_schema_universe = collect_static_crd_universe(charts, corpus)?;
+    let mut local_schema_universe = collect_static_crd_universe(charts)?;
     seed_dependency_control_hints(charts, &mut contract);
     let define_corpus = DefineCorpus::build(charts, &parsed_defines);
     let dependency_global_ownership = chart::build_dependency_global_ownership(charts)?;
@@ -58,7 +57,6 @@ pub(crate) fn analyze_charts(
             local_resource_schemas,
         } = collect_manifest_contract_for_chart(
             chart,
-            corpus.chart(chart)?,
             &symbolic_context,
             &optional_helpers,
             &define_corpus,

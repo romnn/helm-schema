@@ -210,7 +210,7 @@ fn emission_profile_validator_benchmark() -> eyre::Result<()> {
 fn temporal_session() -> AnalysisSession {
     let chart_dir = temporal_chart_path().to_string_lossy().to_string();
     AnalysisSession::new(GenerateOptions {
-        chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
+        chart_source: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)).into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

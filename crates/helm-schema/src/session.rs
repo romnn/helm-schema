@@ -79,11 +79,14 @@ struct PreparedSession {
 
 impl PreparedSession {
     fn from_generate_options(opts: &GenerateOptions) -> EngineResult<Self> {
-        let charts = &chart::discover_chart_contexts(&opts.chart_dir)?;
-        chart::reject_legacy_boolean_alias_keys(charts, &opts.values_files)?;
+        let charts = &chart::discover_chart_contexts(
+            &opts.chart_source,
+            opts.include_tests,
+            crate::load_budget::LoadBudget::default(),
+        )?;
+        let values_files = chart::load_values_files_and_check_keys(charts, &opts.values_files)?;
 
-        let loaded_corpus = chart::LoadedChartCorpus::load(charts, opts.include_tests)?;
-        let defines = chart::build_define_index(charts, &loaded_corpus)?;
+        let defines = chart::build_define_index(charts)?;
         let composed_values =
             chart::build_composed_values_document(charts, opts.include_subchart_values)?;
         // What a DELETED dependency values root refills with. Absence INSIDE
@@ -99,12 +102,11 @@ impl PreparedSession {
         let values_descriptions = chart::build_composed_values_descriptions(
             charts,
             opts.include_subchart_values,
-            &opts.values_files,
+            &values_files,
         )?;
         let kubernetes_version = primary_kubernetes_version(opts);
         let chart_analysis = analyze_charts(
             charts,
-            &loaded_corpus,
             &defines,
             &values_roots,
             kubernetes_version.as_deref(),
@@ -506,7 +508,7 @@ impl AnalysisSession {
     }
 
     fn chart_base_dir(&self) -> &Path {
-        Path::new(self.opts.chart_dir.as_str())
+        Path::new(self.opts.chart_source.logical_path())
     }
 
     #[tracing::instrument(skip_all)]

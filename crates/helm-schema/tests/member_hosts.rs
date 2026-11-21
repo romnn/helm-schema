@@ -2402,7 +2402,7 @@ fn schema_for(values: &str, program: &str) -> eyre::Result<Value> {
         test_util::write(&chart_dir.join(path)?, source)?;
     }
     let session = AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

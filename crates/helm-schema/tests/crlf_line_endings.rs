@@ -71,7 +71,7 @@ fn build_chart(line_ending: &str) -> eyre::Result<VfsPath> {
 
 fn schema_for(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

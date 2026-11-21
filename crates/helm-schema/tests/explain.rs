@@ -110,7 +110,7 @@ fn dependency_root_session() -> eyre::Result<AnalysisSession> {
         "},
     )?;
     Ok(AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -170,7 +170,7 @@ fn literal_chart_session(reversed: bool) -> eyre::Result<AnalysisSession> {
         )?;
     }
     Ok(AnalysisSession::new(GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

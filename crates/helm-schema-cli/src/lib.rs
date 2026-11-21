@@ -70,9 +70,9 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
     );
     let _entered = run_span.enter();
 
-    let root_source = RootChartSource::open(&chart_dir_arg, LoadBudget::default())?;
+    let mut root_source = RootChartSource::open(&chart_dir_arg, LoadBudget::default())?;
     let effective_config = config::resolve(
-        &root_source,
+        &mut root_source,
         &chart_dir_arg,
         cli.config.as_deref(),
         cli.no_config,
@@ -108,7 +108,6 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
             .k8s
             .resolved_fallback_window()
             .map_err(CliError::CliValidation)?;
-        let chart_dir = root_source.into_chart_dir();
         let provider_options = ProviderOptions {
             k8s_versions: cli.k8s.k8s_version.clone(),
             k8s_version_fallback_window: fallback_window,
@@ -126,7 +125,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
             api_version_guess: cli.inference.enabled(),
         };
         let opts = GenerateOptions {
-            chart_dir,
+            chart_source: root_source,
             include_tests: !cli.chart.exclude_tests,
             include_subchart_values: !cli.chart.no_subchart_values,
             values_files: cli.chart.values_files.clone(),

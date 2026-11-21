@@ -1605,7 +1605,7 @@ fn generate_options(
     let chart_dir = chart_path(chart_relative_path);
     let chart_dir = chart_dir.to_string_lossy().to_string();
     GenerateOptions {
-        chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
+        chart_source: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)).into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

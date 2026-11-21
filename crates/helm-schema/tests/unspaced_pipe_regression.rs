@@ -68,7 +68,7 @@ fn write_chart(dir: &Path, template: &str) -> eyre::Result<()> {
 fn emit_schema(chart_dir: &Path) -> eyre::Result<Value> {
     let chart_dir = chart_dir.to_string_lossy().to_string();
     let session = helm_schema::AnalysisSession::new(GenerateOptions {
-        chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
+        chart_source: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)).into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

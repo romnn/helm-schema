@@ -190,7 +190,7 @@ fn packaged_library_common_ingress_helper_propagates_schema() -> eyre::Result<()
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

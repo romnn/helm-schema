@@ -1,9 +1,9 @@
+use super::LoadedChart;
 use std::collections::BTreeMap;
-use vfs::VfsPath;
 
 #[derive(Debug, Clone)]
 pub struct ChartContext {
-    pub chart_dir: VfsPath,
+    pub(crate) files: LoadedChart,
     pub values_prefix: Vec<String>,
     /// Helm's template namespace for this chart: the root chart's name
     /// followed by one `charts/<dependency key>` segment per dependency

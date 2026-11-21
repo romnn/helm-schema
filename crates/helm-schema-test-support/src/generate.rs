@@ -49,7 +49,7 @@ pub fn generate_options_at(chart_dir: &Path, recipe: &ChartRecipe) -> GenerateOp
     let bundle = test_util::workspace_testdata().join(PROVIDER_BUNDLE);
     let chart_dir = chart_dir.to_string_lossy().to_string();
     GenerateOptions {
-        chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
+        chart_source: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)).into(),
         include_tests: recipe.include_tests,
         include_subchart_values: recipe.include_subchart_values,
         values_files: recipe

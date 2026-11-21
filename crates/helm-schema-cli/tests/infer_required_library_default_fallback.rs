@@ -90,7 +90,7 @@ fn library_helper_non_literal_default_suppresses_required() -> eyre::Result<()> 
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

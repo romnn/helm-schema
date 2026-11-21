@@ -32,9 +32,9 @@ fn temporal_combination_keeps_profile_provenance_and_cli_profile_resets_file_del
         emission:
           local-conditionals: off
     "})?;
-    let root = RootChartSource::open(chart.path(), LoadBudget::default())?;
+    let mut root = RootChartSource::open(chart.path(), LoadBudget::default())?;
     let effective = resolve(
-        &root,
+        &mut root,
         chart.path(),
         None,
         false,
@@ -54,7 +54,7 @@ fn temporal_combination_keeps_profile_provenance_and_cli_profile_resets_file_del
     sim_assert_eq!(have: delta.kind_partitions(), want: None);
 
     let reset = resolve(
-        &root,
+        &mut root,
         chart.path(),
         None,
         false,
@@ -74,9 +74,9 @@ fn cli_knob_override_wins_over_file_and_profile_values() -> eyre::Result<()> {
         emission:
           local-conditionals: off
     "})?;
-    let root = RootChartSource::open(chart.path(), LoadBudget::default())?;
+    let mut root = RootChartSource::open(chart.path(), LoadBudget::default())?;
     let effective = resolve(
-        &root,
+        &mut root,
         chart.path(),
         None,
         false,
@@ -112,9 +112,9 @@ fn malformed_unknown_and_invalid_policy_configs_are_hard_errors() -> eyre::Resul
         "},
     ] {
         let chart = chart_with_config(source)?;
-        let root = RootChartSource::open(chart.path(), LoadBudget::default())?;
+        let mut root = RootChartSource::open(chart.path(), LoadBudget::default())?;
         let result = resolve(
-            &root,
+            &mut root,
             chart.path(),
             None,
             false,
@@ -143,9 +143,9 @@ fn config_cannot_activate_narrowing_or_transport_policy() -> eyre::Result<()> {
         "},
     ] {
         let chart = chart_with_config(source)?;
-        let root = RootChartSource::open(chart.path(), LoadBudget::default())?;
+        let mut root = RootChartSource::open(chart.path(), LoadBudget::default())?;
         let result = resolve(
-            &root,
+            &mut root,
             chart.path(),
             None,
             false,
@@ -163,9 +163,9 @@ fn config_cannot_activate_narrowing_or_transport_policy() -> eyre::Result<()> {
 #[test]
 fn no_config_ignores_malformed_discovered_config() -> eyre::Result<()> {
     let chart = chart_with_config("version: [\n")?;
-    let root = RootChartSource::open(chart.path(), LoadBudget::default())?;
+    let mut root = RootChartSource::open(chart.path(), LoadBudget::default())?;
     let effective = resolve(
-        &root,
+        &mut root,
         chart.path(),
         None,
         true,
@@ -193,9 +193,9 @@ fn unsupported_versions_name_the_supported_range_and_remediation() -> eyre::Resu
         ),
     ] {
         let chart = chart_with_config(source)?;
-        let root = RootChartSource::open(chart.path(), LoadBudget::default())?;
+        let mut root = RootChartSource::open(chart.path(), LoadBudget::default())?;
         let error = resolve(
-            &root,
+            &mut root,
             chart.path(),
             None,
             false,
@@ -235,9 +235,9 @@ fn dependency_config_is_not_discovered() -> eyre::Result<()> {
             profile: lean
         "},
     )?;
-    let root = RootChartSource::open(chart.path(), LoadBudget::default())?;
+    let mut root = RootChartSource::open(chart.path(), LoadBudget::default())?;
     let effective = resolve(
-        &root,
+        &mut root,
         chart.path(),
         None,
         false,

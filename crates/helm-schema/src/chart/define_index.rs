@@ -1,48 +1,33 @@
 use helm_schema_ast::DefineIndex;
 use tracing::instrument;
-use vfs::VfsPath;
 
+use super::FileRole;
 use super::types::ChartContext;
-use super::{FileRole, LoadedChartCorpus};
 use crate::error::EngineResult;
 
 #[instrument(skip_all)]
-pub fn build_define_index(
-    charts: &[ChartContext],
-    corpus: &LoadedChartCorpus,
-) -> EngineResult<DefineIndex> {
+pub fn build_define_index(charts: &[ChartContext]) -> EngineResult<DefineIndex> {
+    // The loading stage precedes UTF-8 validation and defaults decoding.
+    for chart in charts {
+        chart.files.prepare_roles()?;
+    }
     let mut index = DefineIndex::new();
 
     for chart in charts {
-        let chart_files = corpus.chart(chart)?;
-
-        for path in chart_files.files_with_role(FileRole::DefineIndexTemplate) {
+        for file in chart.files.files_with_role(FileRole::DefineIndexTemplate)? {
             index.add_chart_template_source(
                 &chart.template_namespace,
-                &template_execution_name(chart, &path.path),
-                path.source()?,
+                &template_execution_name(chart, &file.name),
+                file.source()?,
             );
         }
 
-        for path in chart_files.files_with_role(FileRole::FilesGetSource) {
-            index.add_chart_file(
-                &chart.template_namespace,
-                &chart_relative_path(&chart.chart_dir, &path.path),
-                path.bytes(),
-            );
+        for file in chart.files.files_with_role(FileRole::FilesGetSource)? {
+            index.add_chart_file(&chart.template_namespace, &file.name, &file.bytes);
         }
     }
 
     Ok(index)
-}
-
-fn chart_relative_path(chart_dir: &VfsPath, path: &VfsPath) -> String {
-    let abs = path.as_str();
-    let root = chart_dir.as_str().trim_end_matches('/');
-    abs.strip_prefix(root)
-        .and_then(|path| path.strip_prefix('/'))
-        .unwrap_or(abs)
-        .to_string()
 }
 
 /// The name Helm registers this template under.
@@ -53,10 +38,6 @@ fn chart_relative_path(chart_dir: &VfsPath, path: &VfsPath) -> String {
 /// for the analyzer and for Helm: two charts shipping `templates/x.yaml`
 /// stay two distinct templates, and a computed include resolves to the
 /// executing chart's own file.
-pub(crate) fn template_execution_name(chart: &ChartContext, path: &VfsPath) -> String {
-    format!(
-        "{}/{}",
-        chart.template_namespace,
-        chart_relative_path(&chart.chart_dir, path)
-    )
+pub(crate) fn template_execution_name(chart: &ChartContext, name: &str) -> String {
+    format!("{}/{name}", chart.template_namespace)
 }

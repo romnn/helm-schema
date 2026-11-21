@@ -49,7 +49,7 @@ fn infer_required_skips_synthetic_top_level_value_keys() -> eyre::Result<()> {
 
     let dir = chart_dir("cert-manager");
     let opts = GenerateOptions {
-        chart_dir: dir.clone(),
+        chart_source: dir.clone().into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

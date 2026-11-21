@@ -7,7 +7,7 @@ use helm_schema_syntax::{
 };
 use serde_json::{Value, json};
 
-use crate::chart::{ChartContext, FileRole, LoadedChartCorpus};
+use crate::chart::{ChartContext, FileRole};
 use crate::error::EngineResult;
 
 const TEMPLATE_CRD_SOURCE_ID: &str = "chart-template-crd";
@@ -18,16 +18,15 @@ const STATIC_CRD_SOURCE_ID: &str = "chart-static-crd";
 #[tracing::instrument(skip_all)]
 pub(crate) fn collect_static_crd_universe(
     charts: &[ChartContext],
-    corpus: &LoadedChartCorpus,
 ) -> EngineResult<LocalSchemaUniverse> {
     let mut universe = LocalSchemaUniverse::default();
 
     for chart in charts {
-        for file in corpus.chart(chart)?.files_with_role(FileRole::StaticCrd) {
+        for file in chart.files.files_with_role(FileRole::StaticCrd)? {
             for resource_schema in resource_schemas_from_literal_documents(
                 file.source()?,
                 STATIC_CRD_SOURCE_ID,
-                file.path.as_str(),
+                file.path(),
             ) {
                 universe.insert_resource_schema(resource_schema);
             }

@@ -105,7 +105,7 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> eyre::Result<()> {
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -190,7 +190,7 @@ fn unused_helper_in_used_library_does_not_perturb_infer_required() -> eyre::Resu
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

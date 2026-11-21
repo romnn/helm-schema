@@ -76,7 +76,7 @@ fn unused_sibling_does_not_leak_when_consumer_is_root_chart() -> eyre::Result<()
     test_util::write(&chart_dir.join("templates/cm.yaml")?, ROOT_TEMPLATE)?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

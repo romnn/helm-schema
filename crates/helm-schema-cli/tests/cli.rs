@@ -139,7 +139,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> eyre::Result<()>
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -272,7 +272,7 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> eyre::Re
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -345,7 +345,7 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> eyre::Resul
     test_util::write(&chart_dir.join("charts/child/values.yaml")?, "{}\n")?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -453,7 +453,7 @@ fn static_chart_crds_type_custom_resource_values() -> eyre::Result<()> {
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -538,7 +538,7 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> eyre::Re
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -653,7 +653,7 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Re
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: vec![layer_one, layer_two],
@@ -761,7 +761,7 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -904,7 +904,7 @@ fn whole_global_range_accepts_a_child_default_when_the_parent_is_absent() -> eyr
     )?;
 
     let actual = generate_values_schema_for_chart(&GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1034,7 +1034,7 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1141,7 +1141,7 @@ fn subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Re
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1276,7 +1276,7 @@ fn library_subchart_helper_descendant_access_does_not_widen_parent_objects() -> 
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1370,7 +1370,7 @@ fn deployment_annotations_fragment_stays_annotations_map() -> eyre::Result<()> {
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1465,7 +1465,7 @@ fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> eyre::Res
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1551,7 +1551,7 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> eyre::Result
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1633,7 +1633,7 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field() -> eyre
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1732,7 +1732,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1827,7 +1827,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Resul
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1922,7 +1922,7 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads() -> eyre:
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -2008,7 +2008,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
     )?;
 
     let opts = GenerateOptions {
-        chart_dir,
+        chart_source: chart_dir.into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
