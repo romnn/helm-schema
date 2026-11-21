@@ -28,3 +28,13 @@ moment depends on quota and is the orchestrator's call; it is not recorded here.
 - **Opus (Claude): builders,** especially for parser-robustness work whose wording keeps tripping
   Codex's filter.
 - Run every Astra and Fable consult at xhigh: the hard decisions need all of it.
+
+## When every Codex tool call fails
+
+If Codex delegates answer that their command runner "timed out" and the logs show
+`gRPC code-mode host timed out waiting for session opening response`, check the Mac's screen first.
+After a Codex update, macOS asks once to approve the new `codex-code-mode-host` binary; until someone
+clicks OK, every shell and tool call in every Codex session fails, while the turns still settle as
+"completed" (Nov 2026, Codex 0.171.0; upstream openai/codex#47521). Sessions started before the
+update keep working on the old binary, which makes it look lane-specific. A one-line probe
+(`pwd` through agentmux) confirms the fix in seconds.
