@@ -76,9 +76,8 @@ fn frozen_capture_releases_execution_accounting_and_keeps_rendered_parts() -> ey
         eyre::bail!("expected a capture without marker stripping");
     };
     sim_assert_eq!(have: frozen.parts.len(), want: 3);
-    sim_assert_eq!(have: frozen.counts.is_empty(), want: true);
-    sim_assert_eq!(have: frozen.arena.is_none(), want: true);
-    sim_assert_eq!(have: graph.counts.is_empty(), want: false);
+    assert!(frozen.counter.is_none());
+    assert!(graph.counter.is_some());
 
     // A cached object containing captured text must not keep the query arena alive.
     let map = state.heap.map(crate::value::Remainder::Closed);
@@ -473,8 +472,9 @@ fn immutable_output_children_do_not_retain_historical_budget_guards() -> eyre::R
             .arena
             .decision(condition.clone(), condition.negated(), Coverage::Exact);
     let mut output = TextBuffer::join(Rc::clone(&decision), &yes, &no, &state.heap.arena);
-    assert!(!output.counts.is_empty());
-    assert!(output.arena.is_some());
+    let counter = output.counter.as_mut().ok_or_eyre("counter missing")?;
+    assert!(!counter.counts.is_empty());
+    assert!(counter.arena.is_some());
     let [
         crate::value::OutputNode {
             occurrences: _,
@@ -490,13 +490,12 @@ fn immutable_output_children_do_not_retain_historical_budget_guards() -> eyre::R
         eyre::bail!("joined selection missing");
     };
     for child in [child_yes, child_no] {
-        assert!(child.counts.is_empty());
-        assert!(child.arena.is_none());
+        assert!(child.counter.is_none());
     }
     drop(yes);
     drop(no);
     drop(historical);
-    output.counts = super::BranchCounts::default();
+    counter.counts = super::BranchCounts::default();
     // The bounded cache working set releases guards at its normal collection threshold.
     for index in 0..4096 {
         let condition = Predicate::truthy_path(format!("temporary{index}"));

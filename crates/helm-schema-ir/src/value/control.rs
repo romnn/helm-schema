@@ -1211,7 +1211,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
             // Recorded sites keep their placements' facts only where the output stays exact.
             representative.state.output_widened = true;
             representative.state.observation_count = super::output::BranchCounts::default();
-            representative.state.output = super::TextBuffer::default();
+            representative.state.output.clear();
             representative.state.output.emit(
                 representative
                     .state

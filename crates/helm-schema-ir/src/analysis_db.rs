@@ -5,7 +5,7 @@ use std::rc::Rc;
 use helm_schema_ast::{
     DefineIndex, DefineSourceRole, ParsedActions, TemplateExpr, parse_go_template,
 };
-use helm_schema_syntax::{TemplateAction, TemplatedDocument};
+use helm_schema_syntax::{ActionKind, ControlKind, TemplateAction, TemplatedDocument};
 
 use crate::symbolic::SymbolicPolicy;
 
@@ -38,6 +38,7 @@ pub(crate) struct ParsedProgramSyntax {
     pub(crate) actions: Vec<TemplateAction>,
     pub(crate) expressions: ParsedActions,
     pub(crate) block_calls: BTreeMap<usize, TemplateExpr>,
+    pub(crate) text_term_bound: Option<usize>,
 }
 
 impl ParsedProgram {
@@ -75,11 +76,25 @@ fn program_syntax(tree: tree_sitter::Tree, source: &str) -> Option<ParsedProgram
     let expressions = ParsedActions::lower(tree.root_node(), source, &actions);
     let mut block_calls = BTreeMap::new();
     collect_block_calls(tree.root_node(), source, &mut block_calls);
+    // A loop-free path can render one term per action and one per literal gap.
+    // Nested calls render into separate buffers and return a single value.
+    let text_term_bound = (!actions.iter().any(|action| {
+        matches!(
+            action.kind,
+            ActionKind::Error
+                | ActionKind::RegionOpen {
+                    kind: ControlKind::Range,
+                    ..
+                }
+        )
+    }))
+    .then(|| actions.len().saturating_mul(2).saturating_add(1));
     Some(ParsedProgramSyntax {
         tree,
         actions,
         expressions,
         block_calls,
+        text_term_bound,
     })
 }
 

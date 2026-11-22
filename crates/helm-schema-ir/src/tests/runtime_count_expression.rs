@@ -9,6 +9,7 @@ use super::{
     TextPart,
 };
 use crate::value::guard::RuntimeGuard;
+use crate::value::helpers::tests::{count_crossings, run_capture};
 use crate::value::{Arena, Coverage, DecisionEdge, FrozenTest, State, Value};
 
 fn precise<T>(result: Result<T, crate::value::BoundReason>) -> eyre::Result<T> {
@@ -182,7 +183,8 @@ fn count_work_exhaustion_is_sticky_without_an_exact_threshold() -> eyre::Result<
 
     let mut output = TextBuffer::default();
     output.bytes("prior");
-    output.counts = counts.clone();
+    let counter = output.counter.as_mut().ok_or_eyre("counter missing")?;
+    counter.counts = counts.clone();
     output.bytes("suffix");
     assert!(matches!(
         output.parts.iter().collect::<Vec<_>>().as_slice(),
@@ -192,8 +194,13 @@ fn count_work_exhaustion_is_sticky_without_an_exact_threshold() -> eyre::Result<
         }]
     ));
     assert!(output.exact_text().is_none());
-    assert!(!output.counts.is_exhausted());
-    assert!(output.counts.definitely_below(2));
+    let reset = &output
+        .counter
+        .as_ref()
+        .ok_or_eyre("counter missing")?
+        .counts;
+    assert!(!reset.is_exhausted());
+    assert!(reset.definitely_below(2));
 
     state.observation_count = counts.clone();
     assert!(state.reserve_observation().is_empty());
@@ -457,7 +464,7 @@ fn unreachable_counts_release_history_before_certification() {
 }
 
 #[test]
-fn count_storage_has_a_structural_bound_below_the_event_limit() {
+fn count_storage_has_a_structural_bound_below_the_event_limit() -> eyre::Result<()> {
     let arena = Arena::default();
     let choices = ["left", "right"].map(|path| {
         let predicate = Predicate::truthy_path(path);
@@ -477,6 +484,61 @@ fn count_storage_has_a_structural_bound_below_the_event_limit() {
     // Every execution emits at most one event; only retained structure exhausts here.
     assert!(count.is_exhausted());
     assert!(count.overflow(&arena).is_err());
+
+    // Both parsed bodies enter the helper with the same exhausted count.
+    let mut state = State::new(Value::nil());
+    state
+        .output
+        .counter
+        .as_mut()
+        .ok_or_eyre("counter missing")?
+        .counts = count;
+    let (counted, crossings) = count_crossings(|| {
+        run_capture("{{ range 0 }}{{ end }}suffix", &Value::nil(), state.clone())
+    });
+    sim_assert_eq!(have: counted?.exact_text(), want: None);
+    sim_assert_eq!(have: crossings, want: 1);
+
+    let (bounded, crossings) = count_crossings(|| run_capture("suffix", &Value::nil(), state));
+    let bounded = bounded?;
+    assert!(bounded.counter.is_none());
+    sim_assert_eq!(have: bounded.exact_text(), want: Some("suffix".to_owned()));
+    sim_assert_eq!(have: crossings, want: 0);
+    Ok(())
+}
+
+#[test]
+fn count_query_exhaustion_records_one_text_crossing() -> eyre::Result<()> {
+    let state = State::new(Value::nil());
+    let arena = &state.heap.arena;
+    let mut expression = CountExpression::constant(0);
+    // Sharing keeps the stored expression small, but a threshold query visits
+    // the same subtree under many different remaining counts.
+    for index in 0..256 {
+        let predicate = Predicate::truthy_path(format!("term{index}"));
+        let test = arena.decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+        let condition = arena.runtime_path(&[DecisionEdge { test, taken: true }]);
+        let incremented = CountExpression::increment(&expression);
+        expression = CountExpression::selected(condition, &incremented, &expression);
+    }
+    let counts = BranchCounts::with_state(CountState::Exact(expression), RuntimeGuard::True);
+    let mut after_increment = counts.clone();
+    after_increment.increment();
+    assert!(!after_increment.is_exhausted());
+    assert!(!after_increment.definitely_below(129));
+    assert!(!after_increment.definitely_at_least(129));
+
+    let mut output = TextBuffer::default();
+    let counter = output.counter.as_mut().ok_or_eyre("counter missing")?;
+    counter.counts = counts;
+    counter.arena = Some(Rc::clone(arena));
+    let ((), crossings) = count_crossings(|| output.bytes("suffix"));
+    assert!(matches!(
+        output.parts.single().map(crate::value::OutputNode::content),
+        Some(TextPart::Unknown(_))
+    ));
+    sim_assert_eq!(have: crossings, want: 1);
+    Ok(())
 }
 
 #[test]
@@ -765,11 +827,8 @@ fn sealed_files_release_counters_and_preserve_invocation_completeness() {
                 for exit in execution.exits {
                     let state = exit.state;
                     sim_assert_eq!(have: state.invocations_complete(), want: count < 128);
-                    for counts in [
-                        state.observation_count,
-                        state.invocation_count,
-                        state.output.counts,
-                    ] {
+                    assert!(state.output.counter.is_none());
+                    for counts in [state.observation_count, state.invocation_count] {
                         assert!(counts.definitely_below(1));
                     }
                 }

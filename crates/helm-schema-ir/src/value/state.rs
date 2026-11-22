@@ -286,13 +286,17 @@ impl State {
             active.push(DecisionEdge { test, taken }, kind);
         }
         let mut output = self.output.clone();
-        let runtime = self.heap.arena.path_guard(&active);
-        output.restrict_budget(&runtime, &self.heap.arena);
-        let output_widened = self.output_widened
-            && (output.is_widened_under(&runtime, &self.heap.arena)
-                || self
-                    .observation_count
-                    .overflow_under(&runtime, &self.heap.arena));
+        let output_widened = if output.counter.is_some() || self.output_widened {
+            let runtime = self.heap.arena.path_guard(&active);
+            output.restrict_budget(&runtime, &self.heap.arena);
+            self.output_widened
+                && (output.is_widened_under(&runtime, &self.heap.arena)
+                    || self
+                        .observation_count
+                        .overflow_under(&runtime, &self.heap.arena))
+        } else {
+            false
+        };
         Self {
             heap: self.heap.fork(),
             frames: self.frames.clone(),

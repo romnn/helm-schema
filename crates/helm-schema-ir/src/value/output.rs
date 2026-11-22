@@ -1,4 +1,5 @@
 use super::scalar_value::ScalarContent;
+use super::text_dag::TextParts;
 use super::{Consumption, Datum, Exit, Flow, FrozenValue, Leaf, ObjectData, Value, ValueNode};
 use super::{
     DocumentExecution, ExecutedSite, ExecutedText, ObservationId, OutputNode, TextBuffer, TextPart,
@@ -7,13 +8,29 @@ use ahash::{AHashMap, AHashSet};
 use helm_schema_core::{GuardValue, Predicate, PredicateMemo};
 use std::collections::{BTreeMap, BTreeSet};
 
+pub(super) const OUTPUT_EVENT_LIMIT: usize = 128;
+
+#[derive(Clone, Debug, Default)]
+pub(super) struct TextCounter {
+    counts: BranchCounts,
+    arena: Option<std::rc::Rc<super::Arena>>,
+}
+
+impl Default for TextBuffer {
+    fn default() -> Self {
+        Self {
+            parts: TextParts::default(),
+            counter: Some(TextCounter::default()),
+        }
+    }
+}
+
 impl TextBuffer {
     /// Frozen text retains rendered parts without owning mutable budget accounting.
-    pub(super) fn immutable_text(parts: impl Into<super::text_dag::TextParts>) -> Self {
+    pub(super) fn immutable_text(parts: impl Into<TextParts>) -> Self {
         Self {
             parts: parts.into(),
-            counts: BranchCounts::empty(),
-            arena: None,
+            counter: None,
         }
     }
 
@@ -24,43 +41,36 @@ impl TextBuffer {
     )]
     fn push(&mut self, part: OutputNode) {
         self.parts.push(part);
-        self.counts.increment();
-        if self.counts.is_empty() || self.counts.definitely_below(129) {
+        let Some(TextCounter { counts, arena }) = &mut self.counter else {
+            return;
+        };
+        counts.increment();
+        if counts.is_empty() || counts.definitely_below(OUTPUT_EVENT_LIMIT + 1) {
             return;
         }
-        if self.counts.definitely_at_least(129) {
-            self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
-            self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
-            return;
-        }
-        if self.counts.is_exhausted() {
-            self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
-            self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
-            return;
-        }
-        if let Some(arena) = &self.arena {
-            let Ok(overflow) = self.counts.overflow(arena) else {
-                self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
-                self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
-                return;
-            };
-            if overflow.is_impossible() {
-                return;
-            }
-            tracing::debug!(reason = ?super::BoundReason::OutputTerms, "widen output");
-            let unknown = Self::immutable_text(vec![TextPart::Unknown(self.inputs()).into()]);
-            if overflow == self.counts.domain {
-                self.parts = unknown.parts;
-                self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
-                return;
-            }
+        let overflow = if counts.definitely_at_least(OUTPUT_EVENT_LIMIT + 1) {
+            Ok(counts.domain.clone())
+        } else if let Some(arena) = arena {
+            counts.overflow(arena)
+        } else {
+            Err(super::BoundReason::BudgetNodes)
+        };
+        let reason = match &overflow {
+            Ok(guard) if guard.is_impossible() => return,
+            Ok(_) => super::BoundReason::OutputTerms,
+            Err(reason) => *reason,
+        };
+        tracing::debug_span!(target: "helm_schema_ir::counters", "output_bound", ?reason)
+            .in_scope(|| {});
+        if let (Some(arena), Ok(overflow)) = (arena, overflow)
+            && overflow != counts.domain
+        {
+            let unknown = Self::immutable_text(vec![
+                TextPart::Unknown(Self::part_inputs(&self.parts)).into(),
+            ]);
             let allowed = arena.complement_runtime_guard(&overflow);
             let decision = arena.budget_test(overflow.clone());
-            let exact = std::rc::Rc::new(Self {
-                parts: self.parts.clone(),
-                counts: BranchCounts::empty(),
-                arena: None,
-            });
+            let exact = std::rc::Rc::new(Self::immutable_text(self.parts.clone()));
             let exact = {
                 let _span = tracing::debug_span!(
                     target: "helm_schema_ir::value::output_work",
@@ -78,11 +88,17 @@ impl TextBuffer {
                 .into(),
             ]
             .into();
-            self.counts.reset_overflow(overflow);
-        } else {
-            // Variable counts are produced only by joins/restriction, which attach the arena.
-            self.parts = vec![OutputNode::from(TextPart::Unknown(self.inputs()))].into();
-            self.counts = BranchCounts::constant_on(1, self.counts.domain.clone());
+            counts.reset_overflow(overflow);
+            return;
+        }
+        self.parts = vec![TextPart::Unknown(Self::part_inputs(&self.parts)).into()].into();
+        *counts = BranchCounts::constant_on(1, counts.domain.clone());
+    }
+
+    pub(super) fn clear(&mut self) {
+        self.parts = TextParts::default();
+        if let Some(counter) = &mut self.counter {
+            *counter = TextCounter::default();
         }
     }
 
@@ -91,24 +107,35 @@ impl TextBuffer {
         active: &super::guard::RuntimeGuard,
         arena: &std::rc::Rc<super::Arena>,
     ) {
-        self.counts = self.counts.restrict(active, arena);
-        self.arena = Some(std::rc::Rc::clone(arena));
+        if let Some(TextCounter {
+            counts,
+            arena: attached,
+        }) = &mut self.counter
+        {
+            *counts = counts.restrict(active, arena);
+            *attached = Some(std::rc::Rc::clone(arena));
+        }
+    }
+
+    pub(super) fn inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
+        Self::part_inputs(&self.parts)
     }
 
     #[tracing::instrument(
         skip_all,
+        name = "inputs",
         level = "debug",
         target = "helm_schema_ir::value::output_work"
     )]
-    pub(super) fn inputs(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
+    fn part_inputs(parts: &TextParts) -> BTreeSet<helm_schema_core::ValuesPath> {
         let mut inputs = BTreeSet::new();
-        let mut pending = vec![self];
+        let mut pending = vec![parts];
         let mut seen = BTreeSet::new();
-        while let Some(buffer) = pending.pop() {
-            if !seen.insert(std::ptr::from_ref(buffer)) {
+        while let Some(parts) = pending.pop() {
+            if !seen.insert(std::ptr::from_ref(parts)) {
                 continue;
             }
-            for part in &buffer.parts {
+            for part in parts {
                 match part.content() {
                     TextPart::Bytes(_) => {}
                     TextPart::Frozen(value) => inputs.extend(value.inputs()),
@@ -117,7 +144,7 @@ impl TextBuffer {
                         decision: _,
                         yes,
                         no,
-                    } => pending.extend([yes.as_ref(), no.as_ref()]),
+                    } => pending.extend([&yes.parts, &no.parts]),
                 }
             }
         }
@@ -149,10 +176,22 @@ impl TextBuffer {
             .zip(&no.parts)
             .take_while(|(yes, no)| yes.same_part(no))
             .count();
+        // Both arms descend from the same execution buffer.
+        debug_assert!(matches!(
+            (&yes.counter, &no.counter),
+            (Some(_), Some(_)) | (None, None)
+        ));
+        let counter = yes
+            .counter
+            .as_ref()
+            .zip(no.counter.as_ref())
+            .map(|(yes, no)| TextCounter {
+                counts: BranchCounts::selected(&decision, &yes.counts, &no.counts, arena),
+                arena: Some(std::rc::Rc::clone(arena)),
+            });
         let mut output = Self {
             parts: yes.parts.iter().take(prefix).cloned().collect(),
-            counts: BranchCounts::selected(&decision, &yes.counts, &no.counts, arena),
-            arena: Some(std::rc::Rc::clone(arena)),
+            counter,
         };
         let yes = Self::immutable_text(yes.parts.iter().skip(prefix).cloned().collect::<Vec<_>>());
         let no = Self::immutable_text(no.parts.iter().skip(prefix).cloned().collect::<Vec<_>>());
@@ -766,7 +805,7 @@ enum CountExpressionKind {
 
 impl CountExpression {
     fn constant(count: usize) -> std::rc::Rc<Self> {
-        let count = count.min(129);
+        let count = count.min(OUTPUT_EVENT_LIMIT + 1);
         std::rc::Rc::new(Self {
             minimum: count,
             maximum: count,
@@ -777,8 +816,8 @@ impl CountExpression {
     }
 
     fn increment(source: &std::rc::Rc<Self>) -> std::rc::Rc<Self> {
-        let minimum = source.minimum.saturating_add(1).min(129);
-        let maximum = source.maximum.saturating_add(1).min(129);
+        let minimum = source.minimum.saturating_add(1).min(OUTPUT_EVENT_LIMIT + 1);
+        let maximum = source.maximum.saturating_add(1).min(OUTPUT_EVENT_LIMIT + 1);
         if minimum == maximum {
             return Self::constant(minimum);
         }
@@ -1120,25 +1159,25 @@ impl BranchCounts {
         if self.is_exhausted() {
             return Err(super::BoundReason::BudgetNodes);
         }
-        if self.is_empty() || self.definitely_below(129) {
+        if self.is_empty() || self.definitely_below(OUTPUT_EVENT_LIMIT + 1) {
             return Ok(super::guard::RuntimeGuard::False);
         }
-        if self.definitely_at_least(129) {
+        if self.definitely_at_least(OUTPUT_EVENT_LIMIT + 1) {
             return Ok(self.domain.clone());
         }
         let mut query = CountThreshold::default();
         // D ∧ ¬(D ∧ L) = D ∧ ¬L: mask the raw threshold once, after complementing it.
         let result = match &*self.state.borrow() {
-            CountState::Exact(expression) => {
-                query.below(expression, 129, arena).and_then(|below| {
+            CountState::Exact(expression) => query
+                .below(expression, OUTPUT_EVENT_LIMIT + 1, arena)
+                .and_then(|below| {
                     query.select(
                         &below,
                         &super::guard::RuntimeGuard::False,
                         &self.domain,
                         arena,
                     )
-                })
-            }
+                }),
             CountState::Empty => Ok(super::guard::RuntimeGuard::False),
             CountState::Exhausted => Err(super::BoundReason::BudgetNodes),
         };
@@ -1162,7 +1201,7 @@ impl BranchCounts {
         // On this live domain only count 129 overflowed; the complementary arm is at most 128.
         let next = std::rc::Rc::new(CountExpression {
             minimum: source.minimum.min(1),
-            maximum: 128,
+            maximum: OUTPUT_EVENT_LIMIT,
             threshold: std::cell::RefCell::default(),
             retained_work: std::cell::Cell::default(),
             kind: CountExpressionKind::Select {
@@ -1365,7 +1404,7 @@ impl super::State {
             }]
         };
         // Storage ordinals preserve event order; only admission consumes the branch-local budget.
-        if count.definitely_below(128) {
+        if count.definitely_below(OUTPUT_EVENT_LIMIT) {
             return Ok((ambient_slot(), false));
         }
         let mut query = CountThreshold::default();
@@ -1375,7 +1414,7 @@ impl super::State {
             CountState::Exhausted => return Err(super::BoundReason::BudgetNodes),
         };
         let admission = query
-            .below(&expression, 128, &self.heap.arena)
+            .below(&expression, OUTPUT_EVENT_LIMIT, &self.heap.arena)
             .inspect_err(|_| count.exhaust())?;
         let admitted = query
             .select(

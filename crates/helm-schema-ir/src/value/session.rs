@@ -179,7 +179,7 @@ fn execute_file(
         state.invocation_records_complete = state.invocations_complete();
         state.observation_count = super::output::BranchCounts::default();
         state.invocation_count = super::output::BranchCounts::default();
-        state.output.counts = super::output::BranchCounts::default();
+        state.output.counter = None;
     }
     FileExecution {
         exits,

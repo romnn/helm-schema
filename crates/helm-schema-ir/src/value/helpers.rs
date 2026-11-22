@@ -150,6 +150,14 @@ impl Executor<'_> {
                 }]
             }
             HelperTarget::Program(program) if !recursive && program.syntax().is_some() => {
+                // An execution summary can replace an empty prefix with one placeholder.
+                if program
+                    .syntax()
+                    .and_then(|syntax| syntax.text_term_bound)
+                    .is_some_and(|bound| bound < super::output::OUTPUT_EVENT_LIMIT)
+                {
+                    state.output.counter = None;
+                }
                 self.parsed_body(&program, state)
             }
             HelperTarget::Program(_) | HelperTarget::Unknown => {
@@ -205,3 +213,7 @@ fn unknown_helper_text(influences: BTreeSet<ValuesPath>) -> Value {
         })),
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/runtime_helper_text_budget.rs"]
+pub(super) mod tests;

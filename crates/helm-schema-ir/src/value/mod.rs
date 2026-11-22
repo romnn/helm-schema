@@ -665,11 +665,10 @@ enum ArgumentForm {
     Evaluated,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub(crate) struct TextBuffer {
     parts: text_dag::TextParts,
-    counts: output::BranchCounts,
-    arena: Option<Rc<Arena>>,
+    counter: Option<output::TextCounter>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
