@@ -71,7 +71,7 @@ pub enum Baseline {
     Git(String),
 }
 
-/// Inputs to a complete saved-evidence replay.
+/// Inputs to a verified saved-evidence replay.
 #[derive(Debug, Clone)]
 pub struct Options {
     /// Complete producer output with recorded build provenance.
@@ -84,6 +84,8 @@ pub struct Options {
     pub census: Option<PathBuf>,
     /// Retain every document verdict, including unchanged occurrences, for shared-input audits.
     pub include_unchanged: bool,
+    /// Permit registry omissions in either dump, reporting and skipping their keys.
+    pub allow_partial: bool,
     /// Maximum concurrent charts.
     pub jobs: usize,
 }
@@ -202,7 +204,7 @@ pub struct ChartReport {
     pub observations: Option<Vec<Record>>,
 }
 
-/// Complete, sorted replay output.
+/// Sorted replay output with every omitted registry artifact named.
 #[derive(Debug, Serialize)]
 pub struct Report {
     /// Candidate manifest digest binding this run to the producer.
@@ -213,11 +215,13 @@ pub struct Report {
     pub count_unit: &'static str,
     /// Resolved Git commit or baseline manifest digest.
     pub baseline: String,
+    /// Registry artifacts absent from either manifest, excluded only with explicit partial mode.
+    pub skipped_keys: Vec<String>,
     /// Chart results in lexical order, including charts with no saved evidence.
     pub charts: Vec<ChartReport>,
-    /// Corpus totals.
+    /// Totals for scheduled charts.
     pub counts: Counts,
-    /// Corpus counts by census class.
+    /// Counts by census class within scheduled charts.
     pub classes: BTreeMap<String, Counts>,
 }
 
@@ -267,19 +271,27 @@ pub fn run(options: &Options) -> Result<Report, ReplayError> {
     }
     let frozen = resolve_options(options)?;
     let options = &frozen;
-    let candidate_manifest_sha256 =
-        sha256_hex(&read(&options.candidate.join(manifest::MANIFEST_FILE))?);
-    let candidate = dump::verify(&options.candidate)?;
-    let baseline_identity = match &options.baseline {
-        Baseline::Git(revision) => revision.clone(),
-        Baseline::Dump(path) => sha256_hex(&read(&path.join(manifest::MANIFEST_FILE))?),
-    };
+    let dump::VerifiedDump {
+        manifest: candidate,
+        manifest_sha256: candidate_manifest_sha256,
+        mut skipped_keys,
+    } = dump::verify(&options.candidate, options.allow_partial)?;
+    let baseline_identity;
     let baseline = match &options.baseline {
         Baseline::Dump(path) => {
-            let baseline = dump::verify(path)?;
-            Some(baseline)
+            let dump::VerifiedDump {
+                manifest,
+                manifest_sha256,
+                skipped_keys: missing,
+            } = dump::verify(path, options.allow_partial)?;
+            skipped_keys.extend(missing);
+            baseline_identity = manifest_sha256;
+            Some(manifest)
         }
-        Baseline::Git(_) => None,
+        Baseline::Git(revision) => {
+            baseline_identity = revision.clone();
+            None
+        }
     };
     let mut census_sha256 = None;
     let classes = match &options.census {
@@ -299,12 +311,23 @@ pub fn run(options: &Options) -> Result<Report, ReplayError> {
         .artifacts
         .iter()
         .filter(|entry| entry.key.starts_with("chart/") && entry.fixture.is_some())
+        .filter(|entry| !skipped_keys.contains(&entry.key))
         .collect();
+    if entries.is_empty() {
+        return Err(ReplayError::Input(
+            "nothing to replay: every artifact was skipped".into(),
+        ));
+    }
     validate_census_charts(
         &options.evidence,
         entries
             .iter()
-            .filter_map(|entry| entry.key.strip_prefix("chart/")),
+            .filter_map(|entry| entry.key.strip_prefix("chart/"))
+            .chain(
+                skipped_keys
+                    .iter()
+                    .filter_map(|key| key.strip_prefix("chart/")),
+            ),
         &classes,
     )?;
     let charts = replay_charts(options, &entries, baseline.as_ref(), &classes)?;
@@ -313,6 +336,7 @@ pub fn run(options: &Options) -> Result<Report, ReplayError> {
         census_sha256,
         count_unit: "saved_source_occurrences",
         baseline: baseline_identity,
+        skipped_keys: skipped_keys.into_iter().collect(),
         charts,
         counts: Counts::default(),
         classes: BTreeMap::new(),
@@ -638,6 +662,16 @@ impl Report {
             .sum();
         rows.push(String::new());
         rows.push(format!("Unresolved index references: {missing}. These are excluded from document and verdict counts; see the JSON report."));
+        rows.push(format!(
+            "Skipped registry artifacts: {}.",
+            self.skipped_keys.len()
+        ));
+        if !self.skipped_keys.is_empty() {
+            rows.push("These keys are absent from the candidate or baseline manifest and excluded by --allow-partial.".into());
+            rows.push(String::new());
+            rows.extend(self.skipped_keys.iter().map(|key| format!("- `{key}`")));
+            rows.push(String::new());
+        }
         rows.push("Counts are saved source occurrences, including controls and embedded documents, independently of live rosters. Candidate-dependent probes absent from the saved evidence are not evaluated.".into());
         rows.join("\n") + "\n"
     }

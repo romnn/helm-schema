@@ -1,21 +1,32 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Component, Path};
 
-use super::{ReplayError, json, read};
+use super::{ReplayError, read};
 use crate::manifest::{self, CompanionFile, Manifest, ManifestEntry};
+
+pub(super) struct VerifiedDump {
+    pub(super) manifest: Manifest,
+    pub(super) manifest_sha256: String,
+    pub(super) skipped_keys: BTreeSet<String>,
+}
 
 /// Rechecks immutable historical dumps without requiring their source build to
 /// equal this replay tool's build. Recipe inputs, registry membership, artifact
 /// bytes and Helm-ready derivations remain checked; recorded build provenance
 /// stays bound by the manifest digest in the output.
-pub(super) fn verify(directory: &Path) -> Result<Manifest, ReplayError> {
-    let manifest: Manifest = json(&directory.join(manifest::MANIFEST_FILE))?;
+/// Partial mode checks every present artifact and reports the missing registry keys.
+pub(super) fn verify(directory: &Path, allow_partial: bool) -> Result<VerifiedDump, ReplayError> {
     if directory.join(manifest::LOCK_FILE).exists() {
         return Err(ReplayError::Input(format!(
             "producer still owns {}",
             directory.display()
         )));
     }
+    let path = directory.join(manifest::MANIFEST_FILE);
+    let bytes = read(&path)?;
+    let manifest: Manifest =
+        serde_json::from_slice(&bytes).map_err(|source| ReplayError::Json { path, source })?;
+    let manifest_sha256 = crate::source_digest::sha256_hex(&bytes);
     if manifest.harness_version != manifest::HARNESS_VERSION {
         return Err(ReplayError::Input(
             "unsupported producer manifest version".into(),
@@ -27,18 +38,30 @@ pub(super) fn verify(directory: &Path) -> Result<Manifest, ReplayError> {
         .iter()
         .map(|entry| (entry.key.as_str(), entry))
         .collect();
-    if entries.len() != manifest.artifacts.len() || entries.len() != specs.len() {
+    if entries.len() != manifest.artifacts.len() || (!allow_partial && entries.len() != specs.len())
+    {
         return Err(ReplayError::Input(
             "incomplete or duplicate producer registry".into(),
         ));
     }
+    let registered = specs
+        .iter()
+        .map(|spec| spec.id.key())
+        .collect::<BTreeSet<_>>();
+    if let Some(key) = entries.keys().find(|key| !registered.contains(**key)) {
+        return Err(ReplayError::Input(format!(
+            "unregistered producer artifact {key}"
+        )));
+    }
+    let mut skipped_keys = BTreeSet::new();
     let mut inputs = manifest::InputDigester::new(test_util::workspace_testdata());
     let mut listed = BTreeSet::from([manifest::MANIFEST_FILE.to_owned()]);
     for spec in specs {
         let key = spec.id.key();
-        let entry = entries
-            .get(key.as_str())
-            .ok_or_else(|| ReplayError::Input(format!("missing artifact {key}")))?;
+        let Some(entry) = entries.get(key.as_str()) else {
+            skipped_keys.insert(key);
+            continue;
+        };
         safe_path(&entry.file)?;
         listed.insert(entry.file.clone());
         let bytes = read(&directory.join(&entry.file))?;
@@ -73,6 +96,15 @@ pub(super) fn verify(directory: &Path) -> Result<Manifest, ReplayError> {
             }
         }
     }
+    verify_listed_files(directory, &listed)?;
+    Ok(VerifiedDump {
+        manifest,
+        manifest_sha256,
+        skipped_keys,
+    })
+}
+
+fn verify_listed_files(directory: &Path, listed: &BTreeSet<String>) -> Result<(), ReplayError> {
     let mut files = Vec::new();
     crate::source_digest::collect_files(directory, &mut files, &|_| true).map_err(|source| {
         ReplayError::Io {
@@ -92,7 +124,7 @@ pub(super) fn verify(directory: &Path) -> Result<Manifest, ReplayError> {
             )));
         }
     }
-    Ok(manifest)
+    Ok(())
 }
 
 fn safe_path(path: &str) -> Result<(), ReplayError> {

@@ -6,7 +6,7 @@ use helm_schema_test_support::corpus_replay::{self, Baseline, Options, ReplayErr
 
 const USAGE: &str = "corpus_replay --candidate <dump> (--baseline-dump <dump> | --baseline-ref <ref>) \
     --evidence <preview-root> --out <directory> [--census <placement-census.json>] \
-    [--jobs <n>] [--include-unchanged]";
+    [--jobs <n>] [--include-unchanged] [--allow-partial]";
 
 fn main() -> Result<(), ReplayError> {
     let mut candidate = None;
@@ -16,11 +16,16 @@ fn main() -> Result<(), ReplayError> {
     let mut out = None;
     let mut jobs = 4;
     let mut include_unchanged = false;
+    let mut allow_partial = false;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         if arg == "--help" {
             println!("{USAGE}");
             return Ok(());
+        }
+        if arg == "--allow-partial" {
+            allow_partial = true;
+            continue;
         }
         if arg == "--include-unchanged" {
             include_unchanged = true;
@@ -53,6 +58,7 @@ fn main() -> Result<(), ReplayError> {
         evidence: evidence.ok_or_else(missing)?,
         census,
         include_unchanged,
+        allow_partial,
         jobs,
     };
     let out = out.ok_or_else(missing)?;
@@ -71,12 +77,13 @@ fn main() -> Result<(), ReplayError> {
     let path = out.join("replay.md");
     std::fs::write(&path, report.markdown()).map_err(|source| ReplayError::Io { path, source })?;
     println!(
-        "charts={} documents={} fa_closed={} fa_reopened={} new_fr_candidates={}",
+        "charts={} documents={} fa_closed={} fa_reopened={} new_fr_candidates={} skipped_keys={}",
         report.charts.len(),
         report.counts.documents,
         report.counts.fa_closed,
         report.counts.fa_reopened,
-        report.counts.new_fr_candidates
+        report.counts.new_fr_candidates,
+        report.skipped_keys.len()
     );
     Ok(())
 }
