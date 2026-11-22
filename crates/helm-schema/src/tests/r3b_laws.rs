@@ -1437,7 +1437,10 @@ fn merge_recurses_into_a_conditionally_set_nested_map() -> eyre::Result<()> {
                 {{- $_ := mergeOverwrite $d (dict "inner" (dict "x" .Values.x)) }}
             "#},
             CONFIG_MAP,
-            "data:\n  x: {{ upper $d.inner.x | quote }}\n",
+            indoc! {"
+                data:
+                  x: {{ upper $d.inner.x | quote }}
+            "},
         ],
         "",
     )?;
@@ -1476,7 +1479,10 @@ fn merged_copy_members_do_not_follow_source_writes() -> eyre::Result<()> {
                 {{- $_ := set .Values.a.inner "x" "ok" }}
             "#},
             CONFIG_MAP,
-            "data:\n  x: {{ upper $d.inner.x | quote }}\n",
+            indoc! {"
+                data:
+                  x: {{ upper $d.inner.x | quote }}
+            "},
         ],
         "",
     )?;
@@ -1546,10 +1552,16 @@ fn layer_bound_widens_only_the_destination() -> eyre::Result<()> {
             bad: "s"
         "#},
         &[
-            "{{- $u := dict \"x\" .Values.bad }}\n{{- $m := dict }}\n",
+            indoc! {r#"
+                {{- $u := dict "x" .Values.bad }}
+                {{- $m := dict }}
+            "#},
             &merges,
             CONFIG_MAP,
-            "data:\n  x: {{ upper $u.x | quote }}\n",
+            indoc! {"
+                data:
+                  x: {{ upper $u.x | quote }}
+            "},
         ],
         "",
     )?;
@@ -1589,7 +1601,10 @@ fn copies_of_copies_keep_their_members() -> eyre::Result<()> {
                 {{- $d := merge (dict) (first $copies) }}
             "#},
             CONFIG_MAP,
-            "data:\n  x: {{ upper $d.inner.x | quote }}\n",
+            indoc! {"
+                data:
+                  x: {{ upper $d.inner.x | quote }}
+            "},
         ],
         "",
     )?;
@@ -1632,7 +1647,10 @@ fn bounded_destination_keeps_its_source_aliases() -> eyre::Result<()> {
             &merges,
             "{{- $_ := mergeOverwrite $d.nested (dict \"inner\" (dict \"x\" \"ok\")) }}\n",
             CONFIG_MAP,
-            "data:\n  x: {{ upper $alias.x | quote }}\n",
+            indoc! {"
+                data:
+                  x: {{ upper $alias.x | quote }}
+            "},
         ],
         "",
     )?;
@@ -1804,4 +1822,1476 @@ fn kyverno_readiness_requires_a_string_image_tag() -> eyre::Result<()> {
     )?;
     sim_assert_eq!(have: validator.is_valid(&skip_readiness), want: true);
     Ok(())
+}
+
+// Step 6a laws (ADR 0072 §6). Receipts: `transfer/receipts-6a/<law>` (Helm 4.2.3, `make.py`,
+// `run.sh`, `verdicts.txt`); integer counts are also rendered through `--set` (ADR 0044).
+
+fn include_repair_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            items: []
+            after: "x"
+        "#},
+        &[
+            "{{- range .Values.items }}{{- include \"repair\" $ }}{{- end }}\n",
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  after: {{ upper .Values.after | quote }}
+            "},
+        ],
+        "{{- define \"repair\" -}}{{- $_ := set .Values \"after\" \"ok\" -}}{{- end -}}\n",
+    )
+}
+
+/// (6a-A) A helper included in the body writes the input; the write leaves the loop
+/// (receipts `a_include_repair`: a1, a4 render).
+#[test]
+fn an_included_write_in_a_range_body_repairs_a_later_input() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &include_repair_schema()?,
+        &[
+            (
+                "a1: a member runs the repair",
+                json!({ "items": ["a"], "after": 7 }),
+            ),
+            (
+                "a4: no member, string",
+                json!({ "items": [], "after": "y" }),
+            ),
+        ],
+        true,
+    )
+}
+
+/// (6a-A) Without a member nothing repairs the input (receipt a2 aborts at `upper`).
+#[test]
+#[ignore = "target: ADR 0073 step 4c (a join keeps the arm an input write did not reach); the loop part is step 6a1"]
+fn a_range_without_members_leaves_a_later_input_unrepaired() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &include_repair_schema()?,
+        &[("a2: no member, integer", json!({ "items": [], "after": 7 }))],
+        false,
+    )
+}
+
+fn include_noop_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            items: []
+            after: "x"
+        "#},
+        &[
+            "{{- range .Values.items }}{{- include \"noop\" $ }}{{- end }}\n",
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  after: {{ upper .Values.after | quote }}
+            "},
+        ],
+        "{{- define \"noop\" -}}{{- end -}}\n",
+    )
+}
+
+/// (6a1-M) A string renders whether or not members run (receipt `m_include_noop` m3).
+#[test]
+fn an_include_that_writes_nothing_accepts_a_later_string() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &include_noop_schema()?,
+        &[(
+            "m3: a member, string",
+            json!({ "items": ["a"], "after": "y" }),
+        )],
+        true,
+    )
+}
+
+/// (6a1-M) An included helper that writes nothing leaves the later abort in place: the body's
+/// footprint is what it executed, not its text (receipts m1, m2 abort at `upper`).
+#[test]
+fn an_include_that_writes_nothing_keeps_a_later_abort() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &include_noop_schema()?,
+        &[
+            (
+                "m1: a member, integer",
+                json!({ "items": ["a"], "after": 7 }),
+            ),
+            ("m2: no member, integer", json!({ "items": [], "after": 7 })),
+        ],
+        false,
+    )
+}
+
+fn include_flag_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        "items: []\n",
+        &[
+            indoc! {r#"
+                {{- $state := dict "first" true }}
+                {{- range .Values.items }}
+                {{- if not $state.first }}{{ $_ := upper . }}{{ end }}
+                {{- include "mark" $state }}
+                {{- end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "{{- define \"mark\" -}}{{- $_ := set . \"first\" false -}}{{- end -}}\n",
+    )
+}
+
+/// (6a-B) A flag an included helper clears skips only the first member
+/// (receipts `b_include_flag`: b1, b2, b4 render).
+#[test]
+fn an_included_flag_skips_only_the_first_member() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &include_flag_schema()?,
+        &[
+            ("b1: integer, then string", json!({ "items": [7, "a"] })),
+            ("b2: one integer", json!({ "items": [7] })),
+            ("b4: strings", json!({ "items": ["a", "b"] })),
+        ],
+        true,
+    )
+}
+
+/// (6a-B) The write carries into the next iteration, so later members are consumed
+/// (receipt b3 aborts at `upper`).
+#[test]
+#[ignore = "target: ADR 0073 step 6b (ADR 0072 §6: carried state and positional members)"]
+fn an_included_flag_rejects_a_later_integer_member() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &include_flag_schema()?,
+        &[("b3: string, then integer", json!({ "items": ["a", 7] }))],
+        false,
+    )
+}
+
+/// (6a-C) A flag set by a member's value guards later consumers; no universal member
+/// demand may follow from it (receipts `c_carried_flag`: c1, c2, c4 render; c3 aborts and
+/// is not claimed).
+#[test]
+fn a_carried_flag_accepts_members_before_the_flag() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "items: []\n",
+        &[
+            indoc! {r#"
+                {{- $found := false }}
+                {{- range .Values.items }}
+                {{- if $found }}{{ $_ := upper . }}{{ else if eq (toString .) "x" }}{{ $found = true }}{{ end }}
+                {{- end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("c1: integer, then x", json!({ "items": [7, "x"] })),
+            ("c2: integers", json!({ "items": [7, 7] })),
+            ("c4: x, then string", json!({ "items": ["x", "a"] })),
+        ],
+        true,
+    )
+}
+
+fn member_field_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        "count: []\n",
+        &[
+            "{{- range .Values.count }}{{ $_ := .name }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )
+}
+
+/// (6a-D) Member structure read over a map member, no member, or a zero count, which
+/// `--set count=0` renders (receipts `d_member_field`: d1, d5, d4.set render).
+#[test]
+fn a_member_field_read_accepts_map_members_and_a_zero_count() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &member_field_schema()?,
+        &[
+            ("d1: map member", json!({ "count": [{ "name": "a" }] })),
+            ("d4: zero count", json!({ "count": 0 })),
+            ("d5: no member", json!({ "count": [] })),
+        ],
+        true,
+    )
+}
+
+/// (6a-D) A string member and a positive count abort in every transport: `.name` on a
+/// string, and on the integer members `--set count=3` yields (receipts d2, d3, d3.set).
+#[test]
+#[ignore = "target: ADR 0073 step 6a (ADR 0072 §6: kind split, members and integer arms)"]
+fn a_member_field_read_rejects_scalar_members_and_positive_counts() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &member_field_schema()?,
+        &[
+            ("d2: string member", json!({ "count": ["a"] })),
+            ("d3: count three", json!({ "count": 3 })),
+        ],
+        false,
+    )
+}
+
+fn printing_count_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        "count: []\n",
+        &[
+            "{{- range .Values.count }}{{ $_ := print . }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )
+}
+
+/// (6a-E) A body that only prints iterates integer counts under `--set` (ADR 0044)
+/// (receipts `e_printing_count`: e1.set, e2.set, e3 render).
+#[test]
+fn a_printing_range_body_accepts_integer_counts_and_lists() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &printing_count_schema()?,
+        &[
+            ("e1: count three", json!({ "count": 3 })),
+            ("e2: count zero", json!({ "count": 0 })),
+            ("e3: list", json!({ "count": ["a", 7] })),
+        ],
+        true,
+    )
+}
+
+/// (6a-E) A string and a fractional number abort in every transport (receipts e4, e5).
+#[test]
+fn a_printing_range_body_rejects_strings_and_fractions() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &printing_count_schema()?,
+        &[
+            ("e4: string", json!({ "count": "abc" })),
+            ("e5: fraction", json!({ "count": 2.5 })),
+        ],
+        false,
+    )
+}
+
+fn member_tpl_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            items: []
+            after: "x"
+        "#},
+        &[
+            "{{- range .Values.items }}{{ $_ := tpl .template $ }}{{- end }}\n",
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  after: {{ upper .Values.after | quote }}
+            "},
+        ],
+        "",
+    )
+}
+
+/// (6a-F) A member program that writes repairs the later input
+/// (receipts `f_member_tpl`: f2, f3, f4 render).
+#[test]
+fn a_member_program_in_a_range_body_accepts_a_repairing_member() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &member_tpl_schema()?,
+        &[
+            (
+                "f2: repairing member",
+                json!({ "items": [{ "template": "{{ $_ := set .Values \"after\" \"ok\" }}" }], "after": 7 }),
+            ),
+            (
+                "f3: plain, then repairing member",
+                json!({ "items": [{ "template": "plain" }, { "template": "{{ $_ := set .Values \"after\" \"ok\" }}" }], "after": 7 }),
+            ),
+            (
+                "f4: plain member, string",
+                json!({ "items": [{ "template": "plain" }], "after": "y" }),
+            ),
+        ],
+        true,
+    )
+}
+
+/// (6a-F) When every member program is action-free the later abort stands; the atom is
+/// closed over the members at the loop exit (receipt f1 aborts at `upper`).
+#[test]
+#[ignore = "target: ADR 0073 step 6a (ADR 0072 §5-§6: a member atom closed over the loop)"]
+fn a_plain_member_program_keeps_a_later_abort() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &member_tpl_schema()?,
+        &[(
+            "f1: plain member, integer",
+            json!({ "items": [{ "template": "plain" }], "after": 7 }),
+        )],
+        false,
+    )
+}
+
+// Step 6 laws from the Sol design review (agentmux 20261117T164516-0544b181), receipts in
+// `transfer/receipts-6a/<law>`.
+
+fn two_binder_count_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        "count: []\n",
+        &[
+            "{{- range $k, $v := .Values.count }}{{ $_ := print $v }}{{- else }}{{ $_ := print \"empty\" }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )
+}
+
+/// (6a-G) Two binders over a list run the body or `else` (receipt `g_two_binder_count` g3).
+#[test]
+fn two_binders_accept_an_empty_list() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &two_binder_count_schema()?,
+        &[("g3: empty list", json!({ "count": [] }))],
+        true,
+    )
+}
+
+/// (6a-G, green on the line; 6a keeps it) Two binders over an integer abort before emptiness
+/// is tested, so `else` never runs, in every transport (receipts g1, g2, g1.set, g2.set).
+#[test]
+fn two_binders_reject_every_integer_count() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &two_binder_count_schema()?,
+        &[
+            ("g1: count zero", json!({ "count": 0 })),
+            ("g2: count two", json!({ "count": 2 })),
+        ],
+        false,
+    )
+}
+
+fn shallow_snapshot_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            a: "x"
+            b: "y"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $m := dict "a" .Values.a "b" .Values.b }}
+                {{- range $k, $v := $m }}
+                {{- if eq $k "a" }}{{ $_ := set $m "b" "new" }}{{ end }}
+                {{- $_ := upper $v }}
+                {{- end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )
+}
+
+/// (6a-H) String entries render (receipt `h_shallow_snapshot` h2).
+#[test]
+fn a_range_snapshot_accepts_string_entries() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &shallow_snapshot_schema()?,
+        &[("h2: strings", json!({ "a": "x", "b": "y" }))],
+        true,
+    )
+}
+
+/// (6a-H, green on the line; 6a keeps it) The entry value is captured when the range starts: a later `set` of the key does
+/// not change the value the iteration sees (receipt h1 aborts at `upper`).
+#[test]
+fn a_range_snapshot_rejects_an_entry_overwritten_after_it_began() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &shallow_snapshot_schema()?,
+        &[("h1: integer b", json!({ "a": "x", "b": 7 }))],
+        false,
+    )
+}
+
+/// (6a-H) Nested maps inside entries stay live: an earlier iteration's write reaches the later
+/// member (receipt `h_nested_live` h3 renders).
+#[test]
+fn a_range_snapshot_keeps_nested_members_live() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "b: \"y\"\n",
+        &[
+            indoc! {r#"
+                {{- $m := dict "a" (dict "v" "x") "b" (dict "v" .Values.b) }}
+                {{- range $k, $v := $m }}
+                {{- if eq $k "a" }}{{ $_ := set (get $m "b") "v" "ok" }}{{ end }}
+                {{- $_ := upper $v.v }}
+                {{- end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("h3: integer b repaired", json!({ "b": 7 }))],
+        true,
+    )
+}
+
+/// (6a-I) A fact relative to the first member is not a fact about every member: no claim may
+/// follow from relabelling the first iteration (receipts `i_first_relative` i1, i2 render; i3
+/// aborts and is relational, so it is not claimed).
+#[test]
+fn a_first_member_comparison_accepts_equal_members() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "xs: []\n",
+        &[
+            "{{- range .Values.xs }}{{ if ne . (index $.Values.xs 0) }}{{ fail \"later\" }}{{ end }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("i1: equal members", json!({ "xs": ["a", "a"] })),
+            ("i2: one member", json!({ "xs": ["a"] })),
+        ],
+        true,
+    )
+}
+
+fn cross_member_repair_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        "xs: []\n",
+        &[
+            "{{- range .Values.xs }}{{ $_ := tpl .p $ }}{{ $_ := upper .v }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )
+}
+
+/// (6a-J) One member's program repairs a later member before its consumer runs
+/// (receipt `j_cross_member_repair` j1 renders).
+#[test]
+fn an_earlier_member_program_accepts_a_later_repaired_member() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &cross_member_repair_schema()?,
+        &[(
+            "j1: the first program repairs the second value",
+            json!({ "xs": [
+                { "p": "{{ $_ := set (index .Values.xs 1) \"v\" \"ok\" }}", "v": "ok" },
+                { "p": "", "v": 7 }
+            ] }),
+        )],
+        true,
+    )
+}
+
+/// (6a-J) When every member program is action-free, every member value is consumed
+/// (receipt j2 aborts at `upper`).
+#[test]
+#[ignore = "target: ADR 0073 step 6a (ADR 0072 §5-§6: preceding validity guards each iteration's reads)"]
+fn plain_member_programs_reject_an_integer_member() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &cross_member_repair_schema()?,
+        &[(
+            "j2: plain programs, integer second value",
+            json!({ "xs": [{ "p": "", "v": "ok" }, { "p": "", "v": 7 }] }),
+        )],
+        false,
+    )
+}
+
+fn guarded_member_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        "xs: []\n",
+        &[
+            "{{- range .Values.xs }}{{ if .enabled }}{{ $_ := upper .name }}{{ end }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )
+}
+
+/// (6a-K) A guarded consumer demands nothing of the members its guard skips
+/// (receipts `k_guarded_member` k1, k2 render).
+#[test]
+fn a_guarded_member_consumer_accepts_skipped_members() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &guarded_member_schema()?,
+        &[
+            (
+                "k1: disabled, integer name",
+                json!({ "xs": [{ "enabled": false, "name": 7 }] }),
+            ),
+            (
+                "k2: enabled string, then disabled integer",
+                json!({ "xs": [{ "enabled": true, "name": "a" }, { "enabled": false, "name": 7 }] }),
+            ),
+        ],
+        true,
+    )
+}
+
+/// (6a-K) The guarded consumer is a universal implication over every member
+/// (receipts k3, k4 abort at `upper`).
+#[test]
+#[ignore = "target: ADR 0073 step 6a (ADR 0072 §6: universal guarded implications)"]
+fn a_guarded_member_consumer_rejects_any_enabled_integer_name() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &guarded_member_schema()?,
+        &[
+            (
+                "k3: enabled integer second",
+                json!({ "xs": [{ "enabled": true, "name": "a" }, { "enabled": true, "name": 7 }] }),
+            ),
+            (
+                "k4: enabled integer first",
+                json!({ "xs": [{ "enabled": true, "name": 7 }] }),
+            ),
+        ],
+        false,
+    )
+}
+
+fn recursive_walk_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        "root: {}\n",
+        &["{{- $_ := include \"walk\" .Values.root }}\n", CONFIG_MAP],
+        "{{- define \"walk\" -}}{{- if .next }}{{ include \"walk\" .next }}{{- else }}{{ upper .v }}{{- end }}{{- end -}}\n",
+    )
+}
+
+/// (6e-L) A recursive walk renders when its leaf is a string (receipt `l_recursive_walk` l2).
+#[test]
+fn a_recursive_walk_accepts_a_string_leaf() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &recursive_walk_schema()?,
+        &[(
+            "l2: deep string leaf",
+            json!({ "root": { "next": { "next": { "v": "a" } } } }),
+        )],
+        true,
+    )
+}
+
+/// (6e-L) Without recursion the leaf is consumed directly (receipt l3 aborts).
+#[test]
+fn a_recursive_walk_rejects_an_integer_leaf_at_the_root() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &recursive_walk_schema()?,
+        &[("l3: shallow integer leaf", json!({ "root": { "v": 7 } }))],
+        false,
+    )
+}
+
+/// (6e-L) The recursion descends its argument and aborts at the leaf (receipt l1).
+#[test]
+#[ignore = "target: ADR 0073 step 6e (a recursive call transfer over arguments and outcomes)"]
+fn a_recursive_walk_rejects_a_deep_integer_leaf() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &recursive_walk_schema()?,
+        &[(
+            "l1: deep integer leaf",
+            json!({ "root": { "next": { "next": { "v": 7 } } } }),
+        )],
+        false,
+    )
+}
+
+// Step 6 laws from Sol's re-review of design v2 (agentmux 20261117T164516-0544b181, turn 2),
+// receipts in `transfer/receipts-6a/<law>`.
+
+/// (6a2-N) `--set count=3` yields int64 elements, so a body requiring int64 renders under the
+/// transport union (ADR 0044; receipts `n_int64_elements` n1.set renders, n2).
+#[test]
+fn an_integer_count_accepts_a_body_requiring_int64_elements() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "count: []\n",
+        &[
+            "{{- range .Values.count }}{{ if not (kindIs \"int64\" .) }}{{ fail \"not int64\" }}{{ end }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("n1: count three", json!({ "count": 3 })),
+            ("n2: empty list", json!({ "count": [] })),
+        ],
+        true,
+    )
+}
+
+/// (6a2-N) The elements are never `int`, so a body requiring `int` aborts in every transport
+/// (receipts `n_int_elements` n3, n3.set).
+#[test]
+#[ignore = "target: ADR 0073 step 6a2 (ADR 0072 §6: int64 integer-arm elements)"]
+fn an_integer_count_rejects_a_body_requiring_int_elements() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "count: []\n",
+        &[
+            "{{- range .Values.count }}{{ if not (kindIs \"int\" .) }}{{ fail \"not int\" }}{{ end }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("n3: count three", json!({ "count": 3 }))],
+        false,
+    )
+}
+
+/// (6a1-O) A slice range reads each slot when it visits it: sorting the backing in an earlier
+/// iteration changes what the later one appends (receipts `o_slice_slots_live`: o1 renders with
+/// `$o = [b b]`).
+#[test]
+fn a_slice_range_reads_each_slot_when_visited() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "xs: []\n",
+        &[
+            indoc! {r#"
+                {{- $s := toStrings .Values.xs }}{{- $o := list }}
+                {{- range $s }}{{ $o = append $o . }}{{ $_ := sortAlpha $s }}{{- end }}
+                {{- if has "a" $o }}{{ fail "a appended" }}{{ end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("o1: b, then a", json!({ "xs": ["b", "a"] }))],
+        true,
+    )
+}
+
+/// (6a1-P) A write under a computed key may hit any field, so it updates them weakly
+/// (receipts `p_computed_key`: p1 renders).
+#[test]
+fn a_computed_key_write_in_a_loop_accepts_a_repaired_field() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            before: "x"
+            key: "k"
+            xs: []
+        "#},
+        &[
+            indoc! {r#"
+                {{- $d := dict "v" .Values.before }}
+                {{- range .Values.xs }}{{ $_ := set $d $.Values.key "ok" }}{{- end }}
+            "#},
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  v: {{ upper $d.v | quote }}
+            "},
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "p1: the key hits v",
+            json!({ "before": 7, "key": "v", "xs": ["a"] }),
+        )],
+        true,
+    )
+}
+
+/// (6a2-Q) A member compared with the first member: only members equal to it are consumed
+/// (receipts `q_mixed_members`: q1 renders; q2 aborts and is relational, so it is not claimed).
+#[test]
+fn a_first_member_equality_accepts_mixed_later_members() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "xs: []\n",
+        &[
+            "{{- range .Values.xs }}{{ if eq (toString .) (toString (index $.Values.xs 0)) }}{{ $_ := upper . }}{{ end }}{{- end }}\n",
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("q1: string, then integer", json!({ "xs": ["a", 7] }))],
+        true,
+    )
+}
+
+fn bound_locality_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            first: "f"
+            name: "n"
+            xs: []
+        "#},
+        &[
+            indoc! {r#"
+                {{- $_ := upper .Values.first }}
+                {{- $saved := .Values.name }}
+                {{- $a := "" }}{{- $b := "" }}{{- $c := "" }}{{- $d := "" }}{{- $e := "" }}
+                {{- range .Values.xs }}{{ $e = $d }}{{ $d = $c }}{{ $c = $b }}{{ $b = $a }}{{ $a = . }}{{- end }}
+            "#},
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  saved: {{ upper $saved | quote }}
+                  e: {{ $e | quote }}
+            "},
+        ],
+        "",
+    )
+}
+
+/// (6a1-R) A loop whose carried bindings need more passes than the bound renders strings
+/// (receipt `r_bound_locality` r3).
+#[test]
+fn a_loop_past_its_pass_bound_accepts_strings() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &bound_locality_schema()?,
+        &[(
+            "r3: strings",
+            json!({ "first": "f", "name": "n", "xs": ["a", "b", "c", "d", "e", "f"] }),
+        )],
+        true,
+    )
+}
+
+/// (6a1-R, Sol S7) The bound widens only what the loop carries: a scalar captured before it and a
+/// fact recorded before it keep their demands (receipts r1, r2 abort at `upper`).
+#[test]
+fn a_loop_past_its_pass_bound_keeps_unrelated_facts() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &bound_locality_schema()?,
+        &[
+            (
+                "r1: integer captured name",
+                json!({ "first": "f", "name": 7, "xs": ["a", "b"] }),
+            ),
+            (
+                "r2: integer first",
+                json!({ "first": 7, "name": "n", "xs": ["a", "b"] }),
+            ),
+        ],
+        false,
+    )
+}
+
+// Step 6a1 laws from Sol's pre-landing review of 5863e6d9 (agentmux 20261117T215117-7f241ebd),
+// receipts in `transfer/receipts-6a/<law>`.
+
+/// Counts the `name` counter spans an analysis opens on this thread.
+struct CounterLayer {
+    name: &'static str,
+    count: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+}
+
+impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for CounterLayer {
+    fn on_new_span(
+        &self,
+        attributes: &tracing::span::Attributes<'_>,
+        _id: &tracing::span::Id,
+        _context: tracing_subscriber::layer::Context<'_, S>,
+    ) {
+        let metadata = attributes.metadata();
+        if metadata.target() == "helm_schema_ir::counters" && metadata.name() == self.name {
+            self.count
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+}
+
+/// Runs `analysis` and counts the `name` counter spans it opens.
+fn counted<T>(name: &'static str, analysis: impl FnOnce() -> T) -> (T, usize) {
+    use tracing_subscriber::layer::SubscriberExt as _;
+    let count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let subscriber = tracing_subscriber::registry().with(CounterLayer {
+        name,
+        count: std::sync::Arc::clone(&count),
+    });
+    let result = tracing::subscriber::with_default(subscriber, analysis);
+    (result, count.load(std::sync::atomic::Ordering::Relaxed))
+}
+
+/// (6a1-T) In-place sorts of shared slots reach a third-iteration state the second does not
+/// cover: three members sort the backing to `abcd`, which skips the consumer (receipts
+/// `t_slice_sort_third`: DCBA, CBAD, BACD, ABCD for zero to three members; t3 and t4 render, t0 to
+/// t2 abort at `upper`).
+#[test]
+fn a_slice_sorted_in_place_reaches_its_third_iteration_state() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            xs: []
+            label: "s"
+        "#},
+        &[
+            indoc! {r#"
+                {{- $s := splitList "," "d,c,b,a" }}
+                {{- range .Values.xs }}{{ $_ := sortAlpha (slice $s 0 2) }}{{ $_ := sortAlpha (slice $s 1 3) }}{{ $_ := sortAlpha (slice $s 2 4) }}{{- end }}
+                {{- if ne (join "" $s) "abcd" }}{{ $_ := upper .Values.label }}{{ end }}
+            "#},
+            CONFIG_MAP,
+            indoc! {r#"
+                data:
+                  s: {{ join "" $s | upper | quote }}
+            "#},
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "t3: three members sort the backing",
+            json!({ "xs": [1, 2, 3], "label": 7 }),
+        )],
+        true,
+    )
+}
+
+fn escaping_dicts_schema() -> eyre::Result<Value> {
+    template_law_schema(
+        indoc! {r#"
+            first: "f"
+            name: "n"
+            v: "s"
+            xs: []
+        "#},
+        &[
+            indoc! {r#"
+                {{- $_ := upper .Values.first }}
+                {{- $saved := .Values.name }}
+                {{- $a := dict "v" "init" }}{{- $b := $a }}{{- $c := $a }}{{- $d := $a }}{{- $e := $a }}
+                {{- range .Values.xs }}{{ $e = $d }}{{ $d = $c }}{{ $c = $b }}{{ $b = $a }}{{ $a = dict "v" $.Values.v }}{{- end }}
+            "#},
+            CONFIG_MAP,
+            indoc! {"
+                data:
+                  saved: {{ upper $saved | quote }}
+                  e: {{ $e.v | quote }}
+            "},
+        ],
+        "",
+    )
+}
+
+/// (6a1-U) Bindings that carry a fresh dictionary per member reach the pass bound, terminate,
+/// and widen only themselves (receipts `u_escaping_dicts`: u1 and u4 render, u2 and u3 abort at
+/// `upper`).
+#[test]
+fn escaping_dictionaries_past_the_pass_bound_terminate_locally() -> eyre::Result<()> {
+    let (schema, bounds) = counted("loop_fixpoint_bound", escaping_dicts_schema);
+    let schema = schema?;
+    assert!(bounds > 0, "the chain must reach the pass bound");
+    let document = |first: Value, name: Value, v: Value| json!({ "first": first, "name": name, "v": v, "xs": [1, 2, 3, 4, 5, 6] });
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("u1: strings", document(json!("f"), json!("n"), json!("s"))),
+            ("u4: integer v", document(json!("f"), json!("n"), json!(7))),
+        ],
+        true,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            (
+                "u2: integer name",
+                document(json!("f"), json!(7), json!("s")),
+            ),
+            (
+                "u3: integer first",
+                document(json!(7), json!("n"), json!("s")),
+            ),
+        ],
+        false,
+    )
+}
+
+/// (6a1-W) A write to an input map first read inside the body changes the state the next
+/// iteration starts from (receipts `w_materialized_input`: w1 renders, w2 and w3 abort at
+/// `upper`).
+#[test]
+fn a_write_to_an_input_map_first_read_in_the_body_is_carried() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {r#"
+            cfg:
+              flag: false
+            label: "s"
+            xs: []
+        "#},
+        &[
+            indoc! {r#"
+                {{- range .Values.xs }}
+                {{- if $.Values.cfg.flag }}{{ $_ := set $.Values.cfg "ready" true }}{{ end }}
+                {{- $_ := set $.Values.cfg "flag" true }}
+                {{- end }}
+                {{- if not .Values.cfg.ready }}{{ $_ := upper .Values.label }}{{ end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "w1: the second member sets ready",
+            json!({ "cfg": { "flag": false }, "label": 7, "xs": [1, 2] }),
+        )],
+        true,
+    )
+}
+
+/// The final schema of a chart whose files are given relative to its root, with the committed
+/// Kubernetes schema bundle, so verdicts include the API server's demands on rendered fields.
+fn provider_law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    for (path, source) in files {
+        test_util::write(&chart_dir.join(path)?, source)?;
+    }
+    let bundle = test_util::workspace_testdata().join("provider-bundle");
+    let session = crate::AnalysisSession::new(crate::GenerateOptions {
+        chart_source: chart_dir.into(),
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy {
+            declared_types: crate::generation::DeclaredTypes::Annotate,
+            ..Default::default()
+        },
+        provider: crate::provider::ProviderOptions {
+            k8s_versions: vec!["v1.29.0-standalone-strict".to_owned()],
+            k8s_schema_cache_dir: Some(bundle.join("kubernetes-json-schema-cache")),
+            allow_net: false,
+            crd_catalog_cache_dir: Some(bundle.join("crds-catalog-cache")),
+            disable_k8s_schemas: false,
+            crd_override_dir: Some(bundle.join("crds-catalog-cache")),
+            ..Default::default()
+        },
+    });
+    Ok(session.emit(crate::output::EmitRequest {
+        reference_policy: crate::output::ReferencePolicy::SelfContained,
+        output: crate::output::OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: true,
+            definition_names: crate::output::DefinitionNames::Source,
+        },
+    })?)
+}
+
+/// (6a1-X, external-dns) A range whose body runs an unknown `tpl` needs the Rest passes, and
+/// their exits must keep the document's placement facts: `serviceAccount.name` lands in a
+/// `ServiceAccount`'s `metadata.name`, which the API server requires to be a string. Each selected
+/// layout of the joined output completes on an allowance of its own, so the costly loop
+/// alternatives no longer starve the others. The chart is corpus external-dns reduced to its
+/// service account (receipt `x_edns_service_account/battery-probe`: Helm renders `name: true`,
+/// Kubernetes rejects it; the line and main reject the document).
+#[test]
+fn a_loop_needing_rest_passes_keeps_its_placement_facts() -> eyre::Result<()> {
+    let chart = test_util::workspace_testdata().join("charts/external-dns");
+    let read = |path: &str| std::fs::read_to_string(chart.join(path));
+    let (manifest, values, helpers, account) = (
+        read("Chart.yaml")?,
+        read("values.yaml")?,
+        read("templates/_helpers.tpl")?,
+        read("templates/serviceaccount.yaml")?,
+    );
+    let schema = provider_law_schema(&[
+        ("Chart.yaml", &manifest),
+        ("values.yaml", &values),
+        ("templates/_helpers.tpl", &helpers),
+        ("templates/serviceaccount.yaml", &account),
+    ])?;
+    // With annotations, the unknown `tpl` output may restructure the document, so neither the
+    // line nor this transfer claims the field there.
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "x1: no annotations, boolean name",
+            test_util::helm_values::coalesce_chart_values(
+                &chart,
+                json!({"serviceAccount": {"name": true}}),
+            )?,
+        )],
+        false,
+    )
+}
+
+/// The final schema of corpus chart `chart` with the committed Kubernetes schema bundle.
+fn provider_corpus_schema(chart: &str) -> eyre::Result<Value> {
+    let chart_dir = test_util::workspace_testdata().join("charts").join(chart);
+    let bundle = test_util::workspace_testdata().join("provider-bundle");
+    let session = crate::AnalysisSession::new(crate::GenerateOptions {
+        chart_source: VfsPath::new(vfs::PhysicalFS::new(chart_dir)).into(),
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy {
+            declared_types: crate::generation::DeclaredTypes::Annotate,
+            ..Default::default()
+        },
+        provider: crate::provider::ProviderOptions {
+            k8s_versions: vec!["v1.29.0-standalone-strict".to_owned()],
+            k8s_schema_cache_dir: Some(bundle.join("kubernetes-json-schema-cache")),
+            allow_net: false,
+            crd_catalog_cache_dir: Some(bundle.join("crds-catalog-cache")),
+            disable_k8s_schemas: false,
+            crd_override_dir: Some(bundle.join("crds-catalog-cache")),
+            ..Default::default()
+        },
+    });
+    Ok(session.emit(crate::output::EmitRequest {
+        reference_policy: crate::output::ReferencePolicy::SelfContained,
+        output: crate::output::OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: true,
+            definition_names: crate::output::DefinitionNames::Source,
+        },
+    })?)
+}
+
+/// (6a1-Y, longhorn) A render use is self-guarded when its condition proves its source truthy,
+/// also when normalization factors that test through every arm of a disjunction: here the
+/// `if and … (not (eq .Values.t "")) … else if eq .Values.t "k3s"` chain splits on `t`'s type.
+/// Helm renders `namespaceOverride: false` (and `0`) through `.Release.Namespace`
+/// (receipt `y_longhorn_namespace_falsy`); main accepts both, the transfer before this law
+/// rejected both.
+#[test]
+fn a_disjunctive_self_guard_keeps_the_falsy_escape() -> eyre::Result<()> {
+    let helpers = indoc! {r#"
+        {{- define "release_namespace" -}}
+        {{- if .Values.namespaceOverride -}}
+        {{- .Values.namespaceOverride -}}
+        {{- else -}}
+        {{- .Release.Namespace -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let account = indoc! {r#"
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: a
+          namespace: {{ include "release_namespace" . }}
+    "#};
+    let policy = indoc! {r#"
+        {{- if and .Values.a .Values.c (not (eq .Values.t "")) }}
+        kind: NetworkPolicy
+        metadata:
+          namespace: {{ include "release_namespace" . }}
+        {{- else if eq .Values.t "k3s" }}
+        {{- end }}
+    "#};
+    let schema = provider_law_schema(&[
+        (
+            "Chart.yaml",
+            indoc! {"
+                apiVersion: v2
+                name: longhorn
+                version: 1.0.0
+            "},
+        ),
+        (
+            "values.yaml",
+            indoc! {r#"
+                namespaceOverride: ""
+                a: false
+                c: false
+                t: ""
+            "#},
+        ),
+        ("templates/_helpers.tpl", helpers),
+        ("templates/sa.yaml", account),
+        ("templates/np.yaml", policy),
+    ])?;
+    let document = |namespace: Value| json!({ "namespaceOverride": namespace, "a": false, "c": false, "t": "" });
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("y1: false", document(json!(false))),
+            ("y2: zero", document(json!(0))),
+        ],
+        true,
+    )
+}
+
+/// (6a1-Z, vpa) An arm guarded by its target's own truthiness never fires on a Helm-falsy input,
+/// even when its member-host domain is incomplete, so it cannot keep the values.yaml base
+/// (`type: object`) for those inputs. Helm renders `updater.podMonitor: false` (the whole
+/// template is under `if .Values.updater.podMonitor`; receipt `z_vpa_pod_monitor_falsy`, the
+/// a11 pair's probe); main and the line accept it, a11 rejected it. The values.yaml base now
+/// holds under the incomplete arm's own guards, whose projection is inexact here, so a truthy
+/// non-map is accepted as on the line.
+#[test]
+fn a_self_truthy_arm_leaves_falsy_inputs_open() -> eyre::Result<()> {
+    let schema = provider_corpus_schema("vpa")?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "z1: updater.podMonitor false",
+            r3b_values("vpa", json!({"updater": {"podMonitor": false}}))?,
+        )],
+        true,
+    )
+}
+
+/// The reduced kube-prometheus-stack chart of the requirement laws: its values, helpers and the
+/// alertmanager rule file, without dependencies.
+fn kps_rule_files() -> eyre::Result<Vec<(&'static str, String)>> {
+    let chart = test_util::workspace_testdata().join("charts/kube-prometheus-stack");
+    let read = |path: &str| std::fs::read_to_string(chart.join(path));
+    Ok(vec![
+        (
+            "Chart.yaml",
+            "apiVersion: v2\nname: kube-prometheus-stack\nversion: 1.0.0\n".to_owned(),
+        ),
+        ("values.yaml", read("values.yaml")?),
+        ("templates/_helpers.tpl", read("templates/_helpers.tpl")?),
+        (
+            "templates/prometheus/_rules.tpl",
+            read("templates/prometheus/_rules.tpl")?,
+        ),
+        (
+            "templates/prometheus/rules-1.14/alertmanager.rules.yaml",
+            read("templates/prometheus/rules-1.14/alertmanager.rules.yaml")?,
+        ),
+    ])
+}
+
+/// (6a1-K, kube-prometheus-stack) The occurrences of one requirement group share almost all of
+/// their guard graphs: every alert's `dig … .Values.customRules` runs below the same rule-file
+/// prefix. One fold walks and imports each shared guard node once, and a group whose union
+/// exhausts its allowance splits into parts that fold, so no occurrence's requirement widens
+/// (before the shared walk, single occurrences fell back here).
+#[test]
+fn a_fold_charges_each_shared_guard_node_once() -> eyre::Result<()> {
+    let files = kps_rule_files()?;
+    let files = files
+        .iter()
+        .map(|(path, source)| (*path, source.as_str()))
+        .collect::<Vec<_>>();
+    let (schema, bounds) = counted("requirement_occurrence_bound", || {
+        provider_law_schema(&files)
+    });
+    schema?;
+    sim_assert_eq!(have: bounds, want: 0);
+    Ok(())
+}
+
+/// (6a1-K) A requirement group is emitted in its smaller exact form, its union or the
+/// conjunction of its parts, and a file's abort needs no earlier survival: the verdicts stay
+/// Helm's. A string `customRules` aborts every enabled alert's `dig`; with the rule group off
+/// nothing reads it and Helm renders (receipt `k_kps_rule_requirements`). The values.yaml
+/// `type: object` base holds only under the incomplete member-host arms' own guards; the line
+/// kept it beside them and rejected the second document (main accepts it).
+#[test]
+fn split_requirements_and_absorbing_failures_keep_helm_verdicts() -> eyre::Result<()> {
+    let files = kps_rule_files()?;
+    let files = files
+        .iter()
+        .map(|(path, source)| (*path, source.as_str()))
+        .collect::<Vec<_>>();
+    let schema = provider_law_schema(&files)?;
+    let mut defaults = serde_yaml::from_str::<Value>(files[1].1)?;
+    let validator = jsonschema::validator_for(&schema)?;
+    let mut verdicts = Vec::new();
+    verdicts.push(("defaults", validator.is_valid(&defaults)));
+    defaults["customRules"] = json!("x");
+    verdicts.push(("string customRules", validator.is_valid(&defaults)));
+    defaults["defaultRules"]["rules"]["alertmanager"] = json!(false);
+    verdicts.push((
+        "group off, string customRules",
+        validator.is_valid(&defaults),
+    ));
+    sim_assert_eq!(
+        have: verdicts,
+        want: vec![
+            ("defaults", true),
+            ("string customRules", false),
+            ("group off, string customRules", true),
+        ]
+    );
+    Ok(())
+}
+
+/// (6a1 exception, longhorn) A coalesced registry rendered as `{{ . }}/` into an image's plain
+/// scalar: a list prints as `[map[]]/…`, which Helm's YAML parse rejects (receipt
+/// `l_longhorn_image_registry_list`). No layer claims the lexical failure of that placement; the
+/// line rejected the corpus document only because its loop havoc kept the values.yaml string
+/// type, which a serialized render now drops (see `transfer/exception-docs-6a1.txt`).
+#[test]
+#[ignore = "target: step 2 seam (2d follow-up); exact replacement by the 7b2 walk's lexical placement"]
+fn a_coalesced_list_rendered_into_a_plain_scalar_is_rejected() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        (
+            "values.yaml",
+            indoc! {r#"
+                global:
+                  imageRegistry: ""
+                image:
+                  registry: ""
+                  repository: longhornio/manager
+                  tag: v1
+            "#},
+        ),
+        (
+            "templates/d.yaml",
+            indoc! {r"
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: x
+                data:
+                  image: {{ with (coalesce .Values.global.imageRegistry .Values.image.registry) }}{{ . }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag }}
+            "},
+        ),
+    ])?;
+    let document = |registry: Value| {
+        json!({
+            "global": { "imageRegistry": registry },
+            "image": { "registry": "", "repository": "longhornio/manager", "tag": "v1" },
+        })
+    };
+    assert_helm_verdicts(
+        &schema,
+        &[("l1: a string registry", document(json!("reg.example")))],
+        true,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("l2: a list registry", document(json!([{}])))],
+        false,
+    )
+}
+
+/// The final schema of corpus chart `chart` under the default (asserting) declared-type
+/// policy, with Kubernetes schemas off so verdicts come from template and authoring policy.
+fn corpus_assert_schema(chart: &str) -> eyre::Result<Value> {
+    let chart_dir = test_util::workspace_testdata().join("charts").join(chart);
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(chart_dir));
+    let session = crate::AnalysisSession::new(crate::GenerateOptions {
+        chart_source: chart_dir.into(),
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy::default(),
+        provider: crate::provider::ProviderOptions {
+            disable_k8s_schemas: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
+            ..Default::default()
+        },
+    });
+    Ok(session.emit(crate::output::EmitRequest {
+        reference_policy: crate::output::ReferencePolicy::SelfContained,
+        output: crate::output::OutputPipelineOptions {
+            strip_descriptions: false,
+            minimize: true,
+            definition_names: crate::output::DefinitionNames::Source,
+        },
+    })?)
+}
+
+fn r3b_values(chart: &str, overrides: Value) -> eyre::Result<Value> {
+    let path = test_util::workspace_testdata().join("charts").join(chart);
+    Ok(test_util::helm_values::coalesce_chart_values(
+        &path, overrides,
+    )?)
+}
+
+/// (6a1 exception, owner: step 2 seam, 2d follow-up) datadog `commonLabels` keeps its declared
+/// `{}` type until a `toYaml` row lowers: `resolve_policy.rs` then discards the declared default
+/// (`used_as_serialized` ⇒ `SerializedRender`), and no template demand types the labels. 6a1
+/// makes `agent-apiservice.yaml`'s row lower (bisected against `system-probe-configmap.yaml`
+/// alone). Helm 4.2.3 rejects `commonLabels: 1.5` (`agent-services.yaml`: could not find expected
+/// ':'). Receipts `transfer/receipts-6a/s_datadog_common_labels` (5 hashes in `hashes.txt`).
+#[test]
+#[ignore = "target: step 2 seam (2d follow-up): declared type as a function of use evidence, not of whether a row lowers"]
+fn datadog_common_labels_keep_their_declared_type_after_a_lowered_serialization() -> eyre::Result<()>
+{
+    assert_helm_verdicts(
+        &corpus_assert_schema("datadog")?,
+        &[(
+            "c1: number",
+            r3b_values("datadog", json!({"commonLabels": 1.5}))?,
+        )],
+        false,
+    )
+}
+
+/// (6a1 exception control) A labels map renders (receipt c2).
+#[test]
+#[ignore = "slow corpus control for the step-2 seam exception above"]
+fn datadog_common_labels_accept_a_labels_map() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &corpus_assert_schema("datadog")?,
+        &[(
+            "c2: map",
+            r3b_values("datadog", json!({"commonLabels": {"team": "dev"}}))?,
+        )],
+        true,
+    )
+}
+
+/// Fresh nondeterministic branch choices around unknown programs reach a finite validity Top.
+#[test]
+fn fresh_loop_validity_assumptions_terminate_with_a_counter() -> eyre::Result<()> {
+    let (schema, bounds) = counted("loop_assumption_top", || {
+        template_law_schema(
+            indoc! {"
+                program: plain
+                name: ok
+            "},
+            &[
+                indoc! {r#"
+                {{- $_ := upper .Values.name }}
+                {{- range 64 }}
+                  {{- if eq (randAlpha 1) "a" }}{{ $_ := tpl $.Values.program $ }}{{ end }}
+                {{- end }}
+            "#},
+                CONFIG_MAP,
+            ],
+            "",
+        )
+    });
+    let schema = schema?;
+    sim_assert_eq!(have: bounds, want: 1);
+    assert_helm_verdicts(
+        &schema,
+        &[("plain program", json!({"program": "plain", "name": "ok"}))],
+        true,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "earlier consumption",
+            json!({"program": "plain", "name": 7}),
+        )],
+        false,
+    )
+}
+
+/// (6a1 rework item 1, ADR 0072 §10) The assumption Top widens only the loop: facts after the
+/// loop, in the template and in a helper's caller, keep the validity assumption each pass states.
+/// Helm aborts at `upper` on `after: 7` for every choice `randAlpha` makes.
+#[test]
+#[ignore = "target: ADR 0073 step 2 effects (ADR 0072 §5: a demand after a randAlpha-guarded tpl survives its partial assumption; the loss reproduces without any loop)"]
+fn a_loop_assumption_top_keeps_the_facts_after_the_loop() -> eyre::Result<()> {
+    const LOOP: &str = indoc! {r#"
+        {{- range 64 }}
+          {{- if eq (randAlpha 1) "a" }}{{ $_ := tpl $.Values.program $ }}{{ end }}
+        {{- end }}
+    "#};
+    let direct = format!("{LOOP}{{{{- $_ := upper .Values.after }}}}\n");
+    let helper = format!("{{{{- define \"law.loop\" }}}}{LOOP}{{{{- end }}}}\n");
+    for (template, helpers) in [
+        (direct, String::new()),
+        (
+            "{{- include \"law.loop\" . }}{{- $_ := upper .Values.after }}\n".to_owned(),
+            helper,
+        ),
+    ] {
+        let (schema, bounds) = counted("loop_assumption_top", || {
+            template_law_schema(
+                indoc! {"
+                    program: plain
+                    after: ok
+                "},
+                &[template.as_str(), CONFIG_MAP],
+                &helpers,
+            )
+        });
+        let schema = schema?;
+        sim_assert_eq!(have: bounds, want: 1, "{template}");
+        assert_helm_verdicts(
+            &schema,
+            &[("plain program", json!({"program": "plain", "after": "ok"}))],
+            true,
+        )?;
+        assert_helm_verdicts(
+            &schema,
+            &[(
+                "consumption after the loop",
+                json!({"program": "plain", "after": 7}),
+            )],
+            false,
+        )?;
+    }
+    Ok(())
+}
+
+/// The exact second iteration consumes bad before the carried binding loses its identity.
+#[test]
+fn rest_keeps_consumptions_proved_before_widening() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "bad: ok\n",
+        &[
+            indoc! {r#"
+                {{- $x := "ok" }}{{ $next := .Values.bad }}
+                {{- range 64 }}
+                  {{- $_ := upper $x }}{{ $x = $next }}{{ $next = "ok" }}
+                {{- end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("second iteration aborts", json!({"bad": 7}))],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("all iterations render", json!({"bad": "ok"}))],
+        true,
+    )
+}
+
+/// An open-source merge changes a late input map even when neither map has explicit fields.
+#[test]
+fn a_late_layered_remainder_reaches_the_next_iteration() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        indoc! {"
+            cfg: {}
+            source: {}
+            label: ok
+        "},
+        &[
+            indoc! {r#"
+                {{- range 64 }}
+                  {{- if hasKey $.Values.cfg "carry" }}{{ $_ := upper $.Values.label }}{{ end }}
+                  {{- $_ := mergeOverwrite $.Values.cfg $.Values.source }}
+                {{- end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "the second iteration consumes label",
+            json!({"cfg": {}, "source": {"carry": true}, "label": 7}),
+        )],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[(
+            "an empty source never adds carry",
+            json!({"cfg": {}, "source": {}, "label": 7}),
+        )],
+        true,
+    )
 }

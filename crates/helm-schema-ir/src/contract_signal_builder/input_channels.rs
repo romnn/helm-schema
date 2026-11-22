@@ -15,7 +15,12 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
     for contract_use in uses {
-        record_contract_use(&mut paths, contract_use, &observed_facts.range_modes);
+        record_contract_use(
+            &mut paths,
+            contract_use,
+            &observed_facts.range_modes,
+            predicate_memo,
+        );
     }
     for capture in &observed_facts.captures {
         record_fail_conjunction(

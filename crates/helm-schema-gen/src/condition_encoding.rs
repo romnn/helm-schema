@@ -1,14 +1,26 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::hash::{DefaultHasher, Hash, Hasher};
+use std::sync::Arc;
 
 use helm_schema_core::{
-    CollectionDomain, CollectionQuantifier, ConditionalGuard, GuardValue, ValuePattern, ValuesPath,
+    CanonicalGuardComponents, CollectionDomain, CollectionQuantifier, ConditionalGuard,
+    GuardConjunction, GuardPrefix, GuardValue, RequirementCondition, RequirementConditionNode,
+    RequirementDecision, ValuePattern, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::schema_model::guard_value_to_json;
 use crate::schema_node::{JsonSchemaType, SchemaNode};
+use crate::schema_tree::SchemaDocument;
+use crate::schema_tree::TypePartitionMemo;
 use crate::values_yaml::yaml_value_at_values_path as yaml_value_at_path;
+
+mod condition_plan;
+mod junctions;
+
+pub(crate) use condition_plan::{EncodedConditionPlan, EncodedConjunction, EncodedPrefix};
+use condition_plan::{EncodedFragment, PositionedFragment};
 
 /// Which way a condition fragment may err where the encoding cannot be
 /// exact.
@@ -18,7 +30,7 @@ use crate::values_yaml::yaml_value_at_values_path as yaml_value_at_path;
 /// (`if C then false`) asserts that rendering aborts, so C must be
 /// SUFFICIENT: a widened leaf would terminate documents that render.
 /// `not` swaps the direction for everything below it.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum ConditionPolarity {
     Widen,
     Narrow,
@@ -36,29 +48,175 @@ impl ConditionPolarity {
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct ConditionFragmentKey {
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct ConditionContextKey {
     values_document: usize,
     runtime_defaults: usize,
     dependency_refill: usize,
     dependency_roots: usize,
     ancestor: Vec<String>,
-    guard: ConditionalGuard,
     polarity: ConditionPolarity,
+}
+
+impl ConditionContextKey {
+    fn new(
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> Self {
+        // The projection keeps these documents immutable and alive across every encoding.
+        Self {
+            values_document: std::ptr::from_ref(values).addr(),
+            runtime_defaults: std::ptr::from_ref(absence.runtime_defaults).addr(),
+            dependency_refill: std::ptr::from_ref(absence.dependency_refill).addr(),
+            dependency_roots: std::ptr::from_ref(absence.dependency_roots).addr(),
+            ancestor: ancestor.to_vec(),
+            polarity,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct ConditionFragmentKey {
+    context: ConditionContextKey,
+    guard: ConditionalGuard,
+}
+
+#[derive(PartialEq, Eq, Hash)]
+struct ConditionPrefixKey {
+    context: ConditionContextKey,
+    prefix: PrefixIdentity,
+}
+
+#[derive(PartialEq, Eq, Hash)]
+struct RequirementContextKey {
+    arena: usize,
+    context: ConditionContextKey,
+}
+
+struct RequirementNodes<T> {
+    // Keep the arena alive for as long as its allocation identity is cached.
+    #[expect(
+        dead_code,
+        reason = "the retained graph prevents cached arena and node identities from being recycled"
+    )]
+    graph: RequirementCondition,
+    nodes: HashMap<usize, T>,
+}
+
+impl<T> RequirementNodes<T> {
+    fn new(graph: &RequirementCondition) -> Self {
+        Self {
+            graph: graph.clone(),
+            nodes: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct RequirementEncoding<'a> {
+    ancestor: &'a [String],
+    values: &'a YamlValue,
+    absence: AbsenceDefaults<'a>,
+    polarity: ConditionPolarity,
+}
+
+impl RequirementEncoding<'_> {
+    fn key(self, graph: &RequirementCondition) -> RequirementContextKey {
+        let Self {
+            ancestor,
+            values,
+            absence,
+            polarity,
+        } = self;
+        RequirementContextKey {
+            arena: graph.arena_id(),
+            context: ConditionContextKey::new(ancestor, values, absence, polarity),
+        }
+    }
+}
+
+struct PrefixIdentity(GuardPrefix);
+
+impl PartialEq for PrefixIdentity {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.shares_storage(&other.0)
+    }
+}
+
+impl Eq for PrefixIdentity {}
+
+impl Hash for PrefixIdentity {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.as_slice().as_ptr().hash(state);
+    }
+}
+
+struct MaterializedPrefix {
+    prefix: Arc<EncodedPrefix>,
+    reference: Arc<SchemaNode>,
 }
 
 /// One projection's condition encodings and private Boolean definitions.
 #[derive(Default)]
 pub(crate) struct ConditionFragmentCache {
-    fragments: BTreeMap<ConditionFragmentKey, Option<SchemaNode>>,
+    fragments: BTreeMap<ConditionFragmentKey, Option<Arc<EncodedFragment>>>,
+    prefixes: HashMap<ConditionPrefixKey, Arc<EncodedPrefix>>,
+    prefix_availability: HashMap<ConditionPrefixKey, bool>,
+    requirements: HashMap<RequirementContextKey, RequirementNodes<Option<Arc<EncodedFragment>>>>,
+    requirement_availability: HashMap<RequirementContextKey, RequirementNodes<bool>>,
+    requirement_encoding_visits: usize,
+    requirement_availability_visits: usize,
+    compact_prefixes: HashMap<usize, MaterializedPrefix>,
+    prefix_definitions: BTreeMap<String, Arc<SchemaNode>>,
     pub(crate) definitions: BTreeMap<String, Value>,
+    type_partitions: TypePartitionMemo,
     reserved: BTreeSet<String>,
     shared: bool,
+    decision_nodes: Option<HashMap<u64, Vec<String>>>,
     /// The schema of each distinct value pattern, which depends on the pattern alone.
     pattern_schemas: HashMap<ValuePattern, Option<Value>>,
 }
 
 impl ConditionFragmentCache {
+    pub(crate) fn record_storage(&self) {
+        tracing::info_span!(
+            target: "helm_schema_gen::counters", "condition_encoding_storage",
+            fragments = self.fragments.len(), prefixes = self.prefixes.len(),
+            definitions = self.definitions.len(), compact_prefixes = self.prefix_definitions.len(),
+            requirement_encoding_visits = self.requirement_encoding_visits,
+            requirement_availability_visits = self.requirement_availability_visits,
+            type_partition_definition_visits = self.type_partitions.definition_visits(),
+        )
+        .in_scope(|| {});
+    }
+
+    /// Shares immutable decision bodies after conditional identity grouping has completed.
+    pub(crate) fn begin_terminal_conditions(&mut self) {
+        if self.shared && self.decision_nodes.is_none() {
+            let mut nodes = HashMap::<u64, Vec<String>>::new();
+            for (name, body) in &self.definitions {
+                nodes
+                    .entry(condition_body_hash(body))
+                    .or_default()
+                    .push(name.clone());
+            }
+            self.decision_nodes = Some(nodes);
+        }
+    }
+
+    pub(crate) fn supports_scope_guards<'guard>(
+        &self,
+        guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
+    ) -> bool {
+        self.shared || guards.into_iter().all(guard_needs_no_private_decisions)
+    }
+
+    pub(crate) fn allows_shared_conditions(&self) -> bool {
+        self.shared
+    }
+
     pub(crate) fn new() -> Self {
         Self {
             shared: true,
@@ -82,8 +240,10 @@ impl ConditionFragmentCache {
                     if let Some(reference) =
                         helm_schema_json_schema_walk::parse_definition_reference(reference)
                     {
+                        // An input reference to any part of a definition reserves
+                        // the whole name before the encoder allocates private junctions.
                         self.reserved.insert(reference.name);
-                    } else if reference.starts_with('#') {
+                    } else {
                         self.shared = false;
                     }
                 }
@@ -118,6 +278,216 @@ impl ConditionFragmentCache {
             .collect()
     }
 
+    /// Encodes a guard row without copying its shared prefix fragments.
+    pub(crate) fn planned_conjunction(
+        &mut self,
+        guards: &GuardConjunction,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> EncodedConjunction {
+        let Some(CanonicalGuardComponents {
+            prefix,
+            extras,
+            tail,
+        }) = guards.canonical_prefix_components().filter(|_| self.shared)
+        else {
+            let fragments = guards
+                .iter()
+                .filter_map(|guard| {
+                    self.encoded_fragment(guard, ancestor, values, absence, polarity)
+                        .map(|fragment| PositionedFragment {
+                            preceding_prefix: 0,
+                            fragment,
+                        })
+                })
+                .collect();
+            return EncodedConjunction::new(None, fragments);
+        };
+        let key = ConditionPrefixKey {
+            context: ConditionContextKey::new(ancestor, values, absence, polarity),
+            prefix: PrefixIdentity(prefix.clone()),
+        };
+        let canonical_prefix = prefix.canonical();
+        if let Some(encoded) = self.prefixes.get(&key).cloned() {
+            let mut fragments = extras
+                .iter()
+                .filter_map(|guard| {
+                    let fragment =
+                        self.encoded_fragment(guard, ancestor, values, absence, polarity)?;
+                    let position =
+                        canonical_prefix.partition_point(|prefix_guard| prefix_guard < guard);
+                    Some(PositionedFragment {
+                        preceding_prefix: encoded.preceding_count(position),
+                        fragment,
+                    })
+                })
+                .collect::<Vec<_>>();
+            let preceding_prefix = encoded.preceding_count(canonical_prefix.len());
+            fragments.extend(tail.iter().filter_map(|guard| {
+                self.encoded_fragment(guard, ancestor, values, absence, polarity)
+                    .map(|fragment| PositionedFragment {
+                        preceding_prefix,
+                        fragment,
+                    })
+            }));
+            return EncodedConjunction::new(Some(encoded), fragments);
+        }
+
+        // A fresh prefix must allocate definitions in the complete row's original order.
+        let mut prefix_guards = canonical_prefix.iter().peekable();
+        let mut encoded = Vec::with_capacity(canonical_prefix.len());
+        let mut fragments = Vec::with_capacity(extras.len() + tail.len());
+        let mut preceding_prefix = 0;
+        for guard in guards {
+            let fragment = self.encoded_fragment(guard, ancestor, values, absence, polarity);
+            if prefix_guards
+                .next_if(|prefix_guard| std::ptr::eq(*prefix_guard, guard))
+                .is_some()
+            {
+                preceding_prefix += usize::from(fragment.is_some());
+                encoded.push(fragment);
+            } else if let Some(fragment) = fragment {
+                fragments.push(PositionedFragment {
+                    preceding_prefix,
+                    fragment,
+                });
+            }
+        }
+        let encoded = Arc::new(EncodedPrefix::new(encoded));
+        self.prefixes.insert(key, Arc::clone(&encoded));
+        EncodedConjunction::new(Some(encoded), fragments)
+    }
+
+    /// Emits a condition plan after its legacy identity has been used for grouping.
+    pub(crate) fn materialize_condition(&mut self, plan: &EncodedConditionPlan) -> SchemaNode {
+        plan.materialize(self)
+    }
+
+    pub(crate) fn is_type_partition(&mut self, condition: &SchemaNode) -> bool {
+        self.type_partitions
+            .classify(&condition.clone().into_value(), &self.definitions)
+    }
+
+    pub(crate) fn compact_condition_junctions(&mut self, document: &SchemaDocument) {
+        junctions::compact(document, &mut self.definitions);
+    }
+
+    pub(crate) fn take_definitions(&mut self) -> BTreeMap<String, Value> {
+        self.type_partitions = TypePartitionMemo::default();
+        std::mem::take(&mut self.definitions)
+    }
+
+    fn compact_prefix_reference(&mut self, prefix: &Arc<EncodedPrefix>) -> Arc<SchemaNode> {
+        let address = Arc::as_ptr(prefix).addr();
+        if let Some(cached) = self.compact_prefixes.get(&address) {
+            debug_assert!(Arc::ptr_eq(&cached.prefix, prefix));
+            return Arc::clone(&cached.reference);
+        }
+        let body = prefix.flat_schema().into_value();
+        let canonical = helm_schema_json_schema_walk::canonical_json_string(&body);
+        let reference = if let Some(reference) = self.prefix_definitions.get(&canonical) {
+            Arc::clone(reference)
+        } else {
+            let reference = Arc::new(self.define_condition(
+                "helm-condition-prefix-",
+                self.prefix_definitions.len(),
+                body,
+            ));
+            self.prefix_definitions
+                .insert(canonical, Arc::clone(&reference));
+            reference
+        };
+        self.compact_prefixes.insert(
+            address,
+            MaterializedPrefix {
+                prefix: Arc::clone(prefix),
+                reference: Arc::clone(&reference),
+            },
+        );
+        reference
+    }
+
+    fn define_leaf_condition(&mut self, body: Value) -> SchemaNode {
+        // Compact references use their own namespace and do not advance leaf ordinals.
+        let ordinal = self
+            .definitions
+            .len()
+            .saturating_sub(self.prefix_definitions.len());
+        self.define_condition("helm-condition-", ordinal, body)
+    }
+
+    fn define_decision_condition(&mut self, body: Value) -> SchemaNode {
+        if let Some(nodes) = &self.decision_nodes
+            && let Some(names) = nodes.get(&condition_body_hash(&body))
+            && let Some(name) = names
+                .iter()
+                .find(|name| self.definitions.get(*name) == Some(&body))
+        {
+            return condition_reference(name);
+        }
+        self.define_leaf_condition(body)
+    }
+
+    fn define_condition(&mut self, stem: &str, mut ordinal: usize, body: Value) -> SchemaNode {
+        let name = loop {
+            let name = format!("{stem}{ordinal}");
+            if self.reserved.insert(name.clone()) {
+                break name;
+            }
+            ordinal += 1;
+        };
+        if let Some(nodes) = &mut self.decision_nodes {
+            nodes
+                .entry(condition_body_hash(&body))
+                .or_default()
+                .push(name.clone());
+        }
+        self.definitions.insert(name.clone(), body);
+        condition_reference(&name)
+    }
+
+    pub(crate) fn conjunction_encodes_fully(
+        &mut self,
+        guards: &GuardConjunction,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+    ) -> bool {
+        let Some(CanonicalGuardComponents {
+            prefix,
+            extras,
+            tail,
+        }) = guards
+            .canonical_prefix_components()
+            .filter(|_| !self.shared)
+        else {
+            return guards
+                .iter()
+                .all(|guard| self.encodes_fully(guard, ancestor, values, absence));
+        };
+        let key = ConditionPrefixKey {
+            context: ConditionContextKey::new(ancestor, values, absence, ConditionPolarity::Widen),
+            prefix: PrefixIdentity(prefix.clone()),
+        };
+        let available = if let Some(available) = self.prefix_availability.get(&key) {
+            *available
+        } else {
+            let available = prefix
+                .canonical()
+                .iter()
+                .all(|guard| self.encodes_fully(guard, ancestor, values, absence));
+            self.prefix_availability.insert(key, available);
+            available
+        };
+        available
+            && extras
+                .iter()
+                .chain(tail)
+                .all(|guard| self.encodes_fully(guard, ancestor, values, absence))
+    }
+
     pub(crate) fn encodes_fully(
         &mut self,
         guard: &ConditionalGuard,
@@ -130,6 +500,9 @@ impl ConditionFragmentCache {
                 node.test.is_exact_requirement_atom()
                     && self.encodes_fully(&node.test, ancestor, values, absence)
             }),
+            ConditionalGuard::Requirement(graph) => {
+                self.requirement_encodes_fully(graph, ancestor, values, absence)
+            }
             ConditionalGuard::Not(inner) => self.encodes_fully(inner, ancestor, values, absence),
             ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
                 !guards.is_empty()
@@ -143,6 +516,91 @@ impl ConditionFragmentCache {
         }
     }
 
+    fn requirement_encodes_fully(
+        &mut self,
+        graph: &RequirementCondition,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+    ) -> bool {
+        let key = RequirementEncoding {
+            ancestor,
+            values,
+            absence,
+            polarity: ConditionPolarity::Widen,
+        }
+        .key(graph);
+        if let Some(&available) = self
+            .requirement_availability
+            .get(&key)
+            .and_then(|cached| cached.nodes.get(&graph.root()))
+        {
+            return available;
+        }
+        let mut cached = self
+            .requirement_availability
+            .remove(&key)
+            .unwrap_or_else(|| RequirementNodes::new(graph));
+        let visits = complete_requirement_nodes(
+            graph,
+            &mut cached.nodes,
+            |available| !available,
+            |node, _| match node {
+                RequirementConditionNode::Guard(guard)
+                | RequirementConditionNode::Decision(RequirementDecision {
+                    test: guard,
+                    when_true: _,
+                    when_false: _,
+                })
+                | RequirementConditionNode::Split(RequirementDecision {
+                    test: guard,
+                    when_true: _,
+                    when_false: _,
+                }) => self.encodes_fully(guard, ancestor, values, absence),
+                RequirementConditionNode::False
+                | RequirementConditionNode::True
+                | RequirementConditionNode::And(_)
+                | RequirementConditionNode::Or(_) => true,
+            },
+        );
+        self.requirement_availability_visits += visits;
+        let available = cached.nodes.get(&graph.root()).copied().unwrap_or(false);
+        self.requirement_availability.insert(key, cached);
+        available
+    }
+
+    pub(crate) fn requirements_encode_fully(
+        &mut self,
+        guard: &ConditionalGuard,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> bool {
+        match guard {
+            ConditionalGuard::Requirement(graph) => self
+                .encode_requirement(
+                    graph,
+                    RequirementEncoding {
+                        ancestor,
+                        values,
+                        absence,
+                        polarity,
+                    },
+                )
+                .is_some(),
+            ConditionalGuard::Not(inner) => {
+                self.requirements_encode_fully(inner, ancestor, values, absence, polarity.flipped())
+            }
+            ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
+                guards.iter().all(|guard| {
+                    self.requirements_encode_fully(guard, ancestor, values, absence, polarity)
+                })
+            }
+            _ => true,
+        }
+    }
+
     fn fragment(
         &mut self,
         guard: &ConditionalGuard,
@@ -151,15 +609,32 @@ impl ConditionFragmentCache {
         absence: AbsenceDefaults<'_>,
         polarity: ConditionPolarity,
     ) -> Option<SchemaNode> {
-        // Contexts are immutable and live for the whole projection; floor projections reuse them.
+        self.encoded_fragment(guard, ancestor, values, absence, polarity)
+            .map(|fragment| fragment.schema.clone())
+    }
+
+    fn encoded_fragment(
+        &mut self,
+        guard: &ConditionalGuard,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> Option<Arc<EncodedFragment>> {
+        if let ConditionalGuard::Requirement(graph) = guard {
+            return self.encode_requirement(
+                graph,
+                RequirementEncoding {
+                    ancestor,
+                    values,
+                    absence,
+                    polarity,
+                },
+            );
+        }
         let key = ConditionFragmentKey {
-            values_document: std::ptr::from_ref(values).addr(),
-            runtime_defaults: std::ptr::from_ref(absence.runtime_defaults).addr(),
-            dependency_refill: std::ptr::from_ref(absence.dependency_refill).addr(),
-            dependency_roots: std::ptr::from_ref(absence.dependency_roots).addr(),
-            ancestor: ancestor.to_vec(),
+            context: ConditionContextKey::new(ancestor, values, absence, polarity),
             guard: guard.clone(),
-            polarity,
         };
         if let Some(fragment) = self.fragments.get(&key) {
             return fragment.clone();
@@ -173,21 +648,241 @@ impl ConditionFragmentCache {
             )
             && let Some(body) = fragment.take()
         {
-            let mut ordinal = self.definitions.len();
-            let name = loop {
-                let name = format!("helm-condition-{ordinal}");
-                if self.reserved.insert(name.clone()) {
-                    break name;
-                }
-                ordinal += 1;
-            };
-            self.definitions.insert(name.clone(), body.into_value());
-            fragment = Some(SchemaNode::foreign(
-                serde_json::json!({ "$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(&name) }),
-            ));
+            fragment = Some(self.define_leaf_condition(body.into_value()));
         }
+        let fragment = fragment.map(|schema| Arc::new(EncodedFragment::new(schema)));
         self.fragments.insert(key, fragment.clone());
         fragment
+    }
+
+    fn encode_requirement(
+        &mut self,
+        graph: &RequirementCondition,
+        encoding: RequirementEncoding<'_>,
+    ) -> Option<Arc<EncodedFragment>> {
+        if !self.shared && !requirement_needs_no_private_decisions(graph) {
+            return None;
+        }
+        let key = encoding.key(graph);
+        if let Some(fragment) = self
+            .requirements
+            .get(&key)
+            .and_then(|cached| cached.nodes.get(&graph.root()))
+        {
+            return fragment.clone();
+        }
+        let mut cached = self
+            .requirements
+            .remove(&key)
+            .unwrap_or_else(|| RequirementNodes::new(graph));
+        let visits = complete_requirement_nodes(
+            graph,
+            &mut cached.nodes,
+            |_| false,
+            |node, children| self.encode_requirement_node(node, children, encoding),
+        );
+        self.requirement_encoding_visits += visits;
+        let root = cached.nodes.get(&graph.root()).and_then(Clone::clone);
+        self.requirements.insert(key, cached);
+        root
+    }
+
+    fn encode_requirement_node(
+        &mut self,
+        node: &RequirementConditionNode,
+        children: &HashMap<usize, Option<Arc<EncodedFragment>>>,
+        encoding: RequirementEncoding<'_>,
+    ) -> Option<Arc<EncodedFragment>> {
+        let RequirementEncoding {
+            ancestor,
+            values,
+            absence,
+            polarity,
+        } = encoding;
+        let child_schema = |id| {
+            children
+                .get(id)?
+                .as_ref()
+                .map(|fragment| fragment.schema.clone())
+        };
+        let body = match node {
+            RequirementConditionNode::False => SchemaNode::foreign(Value::Bool(false)),
+            RequirementConditionNode::True => SchemaNode::foreign(Value::Bool(true)),
+            RequirementConditionNode::Guard(guard) => {
+                if !self.encodes_fully(guard, ancestor, values, absence) {
+                    return None;
+                }
+                return self.encoded_fragment(guard, ancestor, values, absence, polarity);
+            }
+            RequirementConditionNode::And(ids) | RequirementConditionNode::Or(ids) => {
+                let items = ids.iter().map(child_schema).collect::<Option<Vec<_>>>()?;
+                let junction = if matches!(node, RequirementConditionNode::And(_)) {
+                    SchemaNode::all_of(items)
+                } else {
+                    SchemaNode::any_of(items)
+                };
+                self.define_decision_condition(junction.into_value())
+            }
+            RequirementConditionNode::Decision(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            })
+            | RequirementConditionNode::Split(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            }) => {
+                if !exact_requirement_test(test) {
+                    return None;
+                }
+                let test =
+                    self.fragment(test, ancestor, values, absence, ConditionPolarity::Exact)?;
+                let yes = child_schema(when_true)?.into_value();
+                let no = child_schema(when_false)?.into_value();
+                self.define_decision_condition(
+                    serde_json::json!({ "if": test.into_value(), "then": yes, "else": no }),
+                )
+            }
+        };
+        Some(Arc::new(EncodedFragment::new(body)))
+    }
+}
+
+enum RequirementVisit<'a> {
+    Enter(usize),
+    Finish {
+        id: usize,
+        node: &'a RequirementConditionNode,
+    },
+}
+
+fn complete_requirement_nodes<T: Clone>(
+    graph: &RequirementCondition,
+    nodes: &mut HashMap<usize, T>,
+    stops: impl Fn(&T) -> bool,
+    mut resolve: impl FnMut(&RequirementConditionNode, &HashMap<usize, T>) -> T,
+) -> usize {
+    let mut visits = 0;
+    let mut pending = vec![RequirementVisit::Enter(graph.root())];
+    while let Some(visit) = pending.pop() {
+        let stop = match visit {
+            RequirementVisit::Enter(id) => {
+                visits += 1;
+                if let Some(value) = nodes.get(&id) {
+                    stops(value).then(|| value.clone())
+                } else {
+                    let Some(node) = graph.node(id) else {
+                        continue;
+                    };
+                    pending.push(RequirementVisit::Finish { id, node });
+                    pending.extend(node.children().rev().map(RequirementVisit::Enter));
+                    None
+                }
+            }
+            RequirementVisit::Finish { id, node } => {
+                let value = resolve(node, nodes);
+                let stop = stops(&value).then(|| value.clone());
+                nodes.insert(id, value);
+                stop
+            }
+        };
+        if let Some(stop) = stop {
+            // Only active ancestors inherit a failed availability check.
+            for visit in pending {
+                if let RequirementVisit::Finish { id, node: _ } = visit {
+                    nodes.insert(id, stop.clone());
+                }
+            }
+            break;
+        }
+    }
+    visits
+}
+
+fn condition_body_hash(body: &Value) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    body.hash(&mut hasher);
+    hasher.finish()
+}
+
+fn exact_requirement_test(guard: &ConditionalGuard) -> bool {
+    match guard {
+        ConditionalGuard::Decision(graph) => {
+            graph.projection_is_exact()
+                && graph.root() > 1
+                && graph
+                    .decisions()
+                    .iter()
+                    .all(|node| node.test.is_exact_requirement_atom())
+        }
+        _ => guard.is_exact_requirement_atom(),
+    }
+}
+
+fn condition_reference(name: &str) -> SchemaNode {
+    SchemaNode::foreign(serde_json::json!({
+        "$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(name),
+    }))
+}
+
+fn guard_needs_no_private_decisions(guard: &ConditionalGuard) -> bool {
+    match guard {
+        ConditionalGuard::Decision(graph) => graph.decisions().is_empty(),
+        ConditionalGuard::Requirement(graph) => requirement_needs_no_private_decisions(graph),
+        ConditionalGuard::Not(inner) => guard_needs_no_private_decisions(inner),
+        ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
+            guards.iter().all(guard_needs_no_private_decisions)
+        }
+        ConditionalGuard::Truthy { path: _ }
+        | ConditionalGuard::With { path: _ }
+        | ConditionalGuard::Eq { path: _, value: _ }
+        | ConditionalGuard::NotEq { path: _, value: _ }
+        | ConditionalGuard::Absent { path: _ }
+        | ConditionalGuard::TypeIs {
+            path: _,
+            schema_type: _,
+        }
+        | ConditionalGuard::MatchesPattern {
+            path: _,
+            pattern: _,
+        }
+        | ConditionalGuard::MatchesValue {
+            path: _,
+            pattern: _,
+        }
+        | ConditionalGuard::CollectionPattern {
+            path: _,
+            domain: _,
+            quantifier: _,
+            pattern: _,
+        }
+        | ConditionalGuard::IntGt { path: _, bound: _ }
+        | ConditionalGuard::IntLt { path: _, bound: _ }
+        | ConditionalGuard::HasKey { path: _, key: _ }
+        | ConditionalGuard::ContainsMemberEquals {
+            path: _,
+            member: _,
+            value: _,
+        }
+        | ConditionalGuard::ContainsTruthyMember { path: _, member: _ }
+        | ConditionalGuard::ContainsEquals { path: _, value: _ }
+        | ConditionalGuard::AtMostOneMember { path: _ }
+        | ConditionalGuard::MinMembers { path: _, bound: _ } => true,
+    }
+}
+
+fn requirement_needs_no_private_decisions(graph: &RequirementCondition) -> bool {
+    match graph.node(graph.root()) {
+        Some(RequirementConditionNode::False | RequirementConditionNode::True) => true,
+        Some(RequirementConditionNode::Guard(guard)) => guard_needs_no_private_decisions(guard),
+        Some(
+            RequirementConditionNode::And(_)
+            | RequirementConditionNode::Or(_)
+            | RequirementConditionNode::Decision(_)
+            | RequirementConditionNode::Split(_),
+        )
+        | None => false,
     }
 }
 
@@ -636,19 +1331,21 @@ fn build_single_condition_fragment(
                 let yes = nodes.get(*when_true)?.clone().into_value();
                 let no = nodes.get(*when_false)?.clone().into_value();
                 let body = serde_json::json!({ "if": test.into_value(), "then": yes, "else": no });
-                let mut ordinal = cache.definitions.len();
-                let name = loop {
-                    let name = format!("helm-condition-{ordinal}");
-                    if cache.reserved.insert(name.clone()) {
-                        break name;
-                    }
-                    ordinal += 1;
-                };
-                cache.definitions.insert(name.clone(), body);
-                nodes.push(SchemaNode::foreign(serde_json::json!({ "$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(&name) })));
+                nodes.push(cache.define_decision_condition(body));
             }
             nodes.get(graph.root()).cloned()
         }
+        ConditionalGuard::Requirement(graph) => cache
+            .encode_requirement(
+                graph,
+                RequirementEncoding {
+                    ancestor: ancestor_segments,
+                    values: values_yaml_doc,
+                    absence,
+                    polarity,
+                },
+            )
+            .map(|fragment| fragment.schema.clone()),
         ConditionalGuard::AllOf(guards) => {
             if guards.is_empty() && polarity == ConditionPolarity::Exact {
                 return Some(SchemaNode::foreign(Value::Bool(true)));
@@ -718,12 +1415,13 @@ pub(crate) fn dependency_root_gone_condition(root_segments: &[String]) -> Option
 /// document's rather than the refill's. So does a re-rooted `global`
 /// spelling — helm injects the PARENT's globals into the recreated table —
 /// and a wildcard path, which names no single value to read.
-pub(crate) fn deleted_dependency_root_terminates<'a>(
-    guards: &[ConditionalGuard],
+pub(crate) fn deleted_dependency_root_terminates<'a, 'guard>(
+    guards: impl Clone + IntoIterator<Item = &'guard ConditionalGuard>,
     absence: AbsenceDefaults<'a>,
 ) -> Option<&'a [String]> {
     let paths = guards
-        .iter()
+        .clone()
+        .into_iter()
         .flat_map(ConditionalGuard::value_paths)
         .map(|path| {
             path.segments()
@@ -1197,15 +1895,16 @@ pub(crate) fn input_path_present_condition(
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
-pub(crate) fn evaluate_guard_set_on_values(
-    guards: &[ConditionalGuard],
+pub(crate) fn evaluate_guard_set_on_values<'guard>(
+    guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
     values_yaml_doc: &YamlValue,
 ) -> Option<bool> {
-    guards
-        .iter()
-        .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))
-        .collect::<Option<Vec<_>>>()
-        .map(|results| results.into_iter().all(|result| result))
+    let mut all = true;
+    for guard in guards {
+        let holds = evaluate_guard_on_values(guard, values_yaml_doc)?;
+        all &= holds;
+    }
+    Some(all)
 }
 
 fn value_pattern_schema(pattern: &ValuePattern) -> Option<Value> {
@@ -1321,6 +2020,56 @@ fn evaluate_requirement_guard(
     Some(current == 1)
 }
 
+fn evaluate_requirement_condition(
+    graph: &RequirementCondition,
+    values: &YamlValue,
+) -> Option<bool> {
+    let mut nodes = HashMap::<usize, Option<bool>>::new();
+    for id in graph.reachable_ids() {
+        let value = match graph.node(id)? {
+            RequirementConditionNode::False => Some(false),
+            RequirementConditionNode::True => Some(true),
+            RequirementConditionNode::Guard(guard) => evaluate_guard_on_values(guard, values),
+            RequirementConditionNode::And(ids) | RequirementConditionNode::Or(ids) => {
+                let decisive = matches!(graph.node(id)?, RequirementConditionNode::Or(_));
+                let mut outcome = Some(!decisive);
+                for child in ids {
+                    match nodes.get(child).copied().flatten() {
+                        Some(value) if value == decisive => {
+                            outcome = Some(decisive);
+                            break;
+                        }
+                        Some(_) => {}
+                        None => outcome = None,
+                    }
+                }
+                outcome
+            }
+            RequirementConditionNode::Decision(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            })
+            | RequirementConditionNode::Split(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            }) => {
+                let yes = nodes.get(when_true).copied().flatten();
+                let no = nodes.get(when_false).copied().flatten();
+                match evaluate_guard_on_values(test, values) {
+                    Some(true) => yes,
+                    Some(false) => no,
+                    None if yes == no => yes,
+                    None => None,
+                }
+            }
+        };
+        nodes.insert(id, value);
+    }
+    nodes.get(&graph.root()).copied().flatten()
+}
+
 fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValue) -> Option<bool> {
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
@@ -1410,7 +2159,12 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)
         }
         ConditionalGuard::Decision(graph) => evaluate_requirement_guard(graph, values_yaml_doc),
-        ConditionalGuard::AllOf(guards) => evaluate_guard_set_on_values(guards, values_yaml_doc),
+        ConditionalGuard::Requirement(graph) => {
+            evaluate_requirement_condition(graph, values_yaml_doc)
+        }
+        ConditionalGuard::AllOf(guards) => {
+            evaluate_guard_set_on_values(guards.iter(), values_yaml_doc)
+        }
         ConditionalGuard::AnyOf(guards) => guards
             .iter()
             .map(|guard| evaluate_guard_on_values(guard, values_yaml_doc))

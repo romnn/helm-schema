@@ -104,6 +104,7 @@ fn kind_selector_path(
                 }
             }
             ConditionalGuard::Decision(_)
+            | ConditionalGuard::Requirement(_)
             | ConditionalGuard::Truthy { .. }
             | ConditionalGuard::With { .. }
             | ConditionalGuard::Eq { .. }
@@ -148,6 +149,10 @@ pub(super) fn finish_schema_signals(
     predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> ContractSchemaSignals {
     record_member_access_implications(&mut paths, &mut terminal_clauses);
+    let mut terminal_clauses = terminal_clauses
+        .into_iter()
+        .map(helm_schema_core::GuardConjunction::from)
+        .collect::<Vec<_>>();
     super::executed_requirements::record_executed_requirements(
         &mut paths,
         &mut terminal_clauses,
@@ -202,7 +207,7 @@ pub(super) fn finish_schema_signals(
         .collect();
     terminal_clauses.sort();
     terminal_clauses.dedup();
-    ContractSchemaSignals::new(schema_evidence_by_value_path, terminal_clauses)
+    ContractSchemaSignals::from_conjunctions(schema_evidence_by_value_path, terminal_clauses)
 }
 
 pub(super) fn path_accumulator<'a>(

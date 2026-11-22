@@ -117,8 +117,24 @@ fn unreadable_name_shapes_are_recognized() {
 
 #[test]
 fn the_five_largest_fixtures_shorten_under_the_helm_limit() -> eyre::Result<()> {
+    let paths = if let Some(directory) =
+        std::env::var_os(helm_schema_test_support::consume::ARTIFACTS_ENV)
+    {
+        let directory = PathBuf::from(directory);
+        helm_schema_test_support::manifest::load(&directory)?
+            .artifacts
+            .into_iter()
+            .filter(|entry| {
+                entry.fixture.is_some()
+                    && matches!(entry.kind.as_str(), "chart" | "final-policy" | "lean")
+            })
+            .map(|entry| directory.join(entry.file))
+            .collect()
+    } else {
+        schema_fixtures()?
+    };
     let mut sized = Vec::new();
-    for path in schema_fixtures()? {
+    for path in paths {
         sized.push((std::fs::metadata(&path)?.len(), path));
     }
     sized.sort();

@@ -9,6 +9,7 @@ const FALSE: usize = 0;
 const TRUE: usize = 1;
 const MAX_BDD_NODES: usize = 4_096;
 const MAX_BDD_WORK: usize = 16_384;
+const MAX_RESIDUAL_INPUT_DEPTH: usize = 512;
 const MAX_NORMAL_FORM_PATHS: usize = 256;
 const MAX_NORMAL_FORM_LITERALS: usize = 8_192;
 
@@ -20,6 +21,7 @@ pub struct PredicateMemo {
     normal_forms: RefCell<AHashMap<Predicate, Predicate>>,
     implications: RefCell<AHashMap<(Predicate, Predicate), bool>>,
     feasibility: RefCell<AHashMap<Predicate, bool>>,
+    fallback_feasibility: RefCell<AHashMap<Predicate, bool>>,
 }
 
 impl PredicateMemo {
@@ -128,9 +130,26 @@ impl PredicateMemo {
                 .insert(simplified, normalized);
             feasible
         } else {
-            feasible_simplified(&simplified)
+            self.fallback_may_be_true(simplified)
         };
         self.feasibility.borrow_mut().insert(key, feasible);
+        feasible
+    }
+
+    fn fallback_may_be_true(&self, simplified: Predicate) -> bool {
+        if let Some((previous, &cached)) = self
+            .fallback_feasibility
+            .borrow()
+            .get_key_value(&simplified)
+            && same_build_sharing(previous, &simplified)
+        {
+            return cached;
+        }
+        let feasible = feasible_simplified(&simplified);
+        self.fallback_feasibility
+            .borrow_mut()
+            .entry(simplified)
+            .or_insert(feasible);
         feasible
     }
 
@@ -145,6 +164,32 @@ impl PredicateMemo {
         self.implications.borrow_mut().insert(key, implies);
         implies
     }
+}
+
+// A cold build charges nodes by identity, so equal roots must share in the same places.
+fn same_build_sharing(left: &Predicate, right: &Predicate) -> bool {
+    if left.node_id() == right.node_id()
+        || left.syntax_size() <= crate::predicate::DIRECT_WALK_NODES
+    {
+        return true;
+    }
+    let mut left_ids = AHashMap::new();
+    let mut right_ids = AHashSet::new();
+    let mut pending = vec![(left, right)];
+    while let Some((left, right)) = pending.pop() {
+        let right_id = right.node_id();
+        if let Some(previous) = left_ids.insert(left.node_id(), right_id) {
+            if previous != right_id {
+                return false;
+            }
+            continue;
+        }
+        if !right_ids.insert(right_id) {
+            return false;
+        }
+        pending.extend(left.children().iter().zip(right.children()));
+    }
+    true
 }
 
 fn feasible_simplified(predicate: &Predicate) -> bool {
@@ -326,6 +371,18 @@ struct BddNode {
     variable: usize,
     when_false: usize,
     when_true: usize,
+    depth: usize,
+}
+
+enum NodeBudget {
+    Arena { charge_allocations: bool },
+    Operation { remaining_nodes: usize },
+}
+
+enum PredicateBuilds<'a> {
+    Uncached,
+    Identity(AHashMap<usize, usize>),
+    Structural(AHashMap<&'a Predicate, usize>),
 }
 
 struct PredicateBdd<'a> {
@@ -336,10 +393,9 @@ struct PredicateBdd<'a> {
     unique_nodes: AHashMap<BddNode, usize>,
     apply_cache: AHashMap<(BooleanOp, usize, usize), usize>,
     negation_cache: AHashMap<usize, usize>,
-    built: AHashMap<usize, usize>,
+    built: PredicateBuilds<'a>,
     remaining_work: usize,
-    memoize_walks: bool,
-    charge_allocations: bool,
+    node_budget: NodeBudget,
 }
 
 pub(crate) fn normalize(predicate: Predicate) -> Predicate {
@@ -552,6 +608,26 @@ impl<'a> PredicateBdd<'a> {
         let mut atoms = BTreeSet::new();
         let memoize_walks = predicate.syntax_size() > crate::predicate::DIRECT_WALK_NODES;
         collect_atoms(predicate, &mut atoms, &mut AHashSet::new(), memoize_walks)?;
+        Some(Self::from_atoms(
+            atoms,
+            if memoize_walks {
+                PredicateBuilds::Identity(AHashMap::new())
+            } else {
+                PredicateBuilds::Uncached
+            },
+            NodeBudget::Arena {
+                charge_allocations: false,
+            },
+            MAX_BDD_WORK,
+        ))
+    }
+
+    fn from_atoms(
+        atoms: BTreeSet<GuardAtom<'a>>,
+        built: PredicateBuilds<'a>,
+        node_budget: NodeBudget,
+        remaining_work: usize,
+    ) -> Self {
         let atoms = atoms.into_iter().collect::<Vec<_>>();
         let atom_indices = atoms
             .iter()
@@ -559,7 +635,7 @@ impl<'a> PredicateBdd<'a> {
             .enumerate()
             .map(|(index, atom)| (atom.index_key(), index))
             .collect();
-        Some(Self {
+        Self {
             atoms,
             atom_indices,
             literal_prototypes: RefCell::default(),
@@ -567,23 +643,31 @@ impl<'a> PredicateBdd<'a> {
             unique_nodes: AHashMap::new(),
             apply_cache: AHashMap::new(),
             negation_cache: AHashMap::new(),
-            built: AHashMap::new(),
-            remaining_work: MAX_BDD_WORK,
-            memoize_walks,
-            charge_allocations: false,
-        })
+            built,
+            remaining_work,
+            node_budget,
+        }
     }
 
     fn build(&mut self, predicate: &'a Predicate) -> Option<usize> {
-        if self.memoize_walks
-            && let Some(result) = self.built.get(&predicate.node_id())
-        {
-            return Some(*result);
+        let cached = match &self.built {
+            PredicateBuilds::Uncached => None,
+            PredicateBuilds::Identity(built) => built.get(&predicate.node_id()),
+            PredicateBuilds::Structural(built) => built.get(predicate),
+        };
+        if let Some(&result) = cached {
+            return Some(result);
         }
         self.remaining_work = self.remaining_work.checked_sub(1)?;
         let result = self.build_uncached(predicate)?;
-        if self.memoize_walks {
-            self.built.insert(predicate.node_id(), result);
+        match &mut self.built {
+            PredicateBuilds::Uncached => {}
+            PredicateBuilds::Identity(built) => {
+                built.insert(predicate.node_id(), result);
+            }
+            PredicateBuilds::Structural(built) => {
+                built.insert(predicate, result);
+            }
         }
         Some(result)
     }
@@ -681,19 +765,36 @@ impl<'a> PredicateBdd<'a> {
         if when_false == when_true {
             return Some(when_false);
         }
+        let depth = match &mut self.node_budget {
+            NodeBudget::Arena { .. } => 0,
+            NodeBudget::Operation { remaining_nodes } => {
+                *remaining_nodes = remaining_nodes.checked_sub(1)?;
+                self.remaining_work = self.remaining_work.checked_sub(1)?;
+                let no_depth = self.node(when_false).map_or(0, |node| node.depth);
+                let yes_depth = self.node(when_true).map_or(0, |node| node.depth);
+                let depth = no_depth.max(yes_depth) + 1;
+                if depth > MAX_BDD_NODES {
+                    return None;
+                }
+                depth
+            }
+        };
         let node = BddNode {
             variable,
             when_false,
             when_true,
+            depth,
         };
         if let Some(existing) = self.unique_nodes.get(&node) {
             return Some(*existing);
         }
-        if self.nodes.len() >= MAX_BDD_NODES {
-            return None;
-        }
-        if self.charge_allocations {
-            self.remaining_work = self.remaining_work.checked_sub(1)?;
+        if let NodeBudget::Arena { charge_allocations } = self.node_budget {
+            if self.nodes.len() >= MAX_BDD_NODES {
+                return None;
+            }
+            if charge_allocations {
+                self.remaining_work = self.remaining_work.checked_sub(1)?;
+            }
         }
         let id = self.nodes.len() + 2;
         self.nodes.push(node);
@@ -1085,7 +1186,327 @@ fn predicate_from_false_paths(paths: Vec<Vec<Predicate>>) -> Predicate {
 #[path = "tests/predicate_bdd.rs"]
 mod tests;
 
+/// An ordered Boolean atom within one predicate residual session.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PredicateResidualAtom(usize);
+
+impl PredicateResidualAtom {
+    /// Returns this atom's dense ordinal in its residual session.
+    #[must_use]
+    pub fn ordinal(self) -> usize {
+        let Self(ordinal) = self;
+        ordinal
+    }
+}
+
+/// A canonical residual within one predicate residual session.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PredicateResidualNode(usize);
+
+impl PredicateResidualNode {
+    /// The impossible residual.
+    pub const FALSE: Self = Self(FALSE);
+
+    /// The residual that places no restrictions on the remaining atoms.
+    pub const TRUE: Self = Self(TRUE);
+}
+
+/// A shared arena for bounded exact Boolean residuals.
+///
+/// The results of each operation remain available even when a later operation exhausts
+/// its allowance.
+/// A missing result leaves the corresponding proof unresolved.
+pub struct PredicateResiduals<'input> {
+    bdd: PredicateBdd<'input>,
+    inventories: AHashMap<usize, Vec<PredicateResidualAtom>>,
+}
+
+impl<'input> PredicateResiduals<'input> {
+    /// Inventories each supplied predicate within its own allowance.
+    ///
+    /// All completed inventories share one structural atom order.
+    #[must_use]
+    pub fn new(predicates: impl IntoIterator<Item = &'input Predicate>) -> Self {
+        let mut atoms = BTreeSet::new();
+        let mut inventories = AHashMap::new();
+        for predicate in predicates {
+            inventories.entry(predicate.node_id()).or_insert_with(|| {
+                if predicate.contains_approximation() {
+                    return None;
+                }
+                let mut inventory = ResidualInventory {
+                    atoms: BTreeSet::new(),
+                    depths: AHashMap::new(),
+                    remaining: MAX_BDD_WORK,
+                };
+                if inventory
+                    .visit(predicate, MAX_RESIDUAL_INPUT_DEPTH)
+                    .is_none()
+                {
+                    let _bound = tracing::debug_span!(
+                        target: "helm_schema_core::counters", "predicate_residual_inventory_bound"
+                    )
+                    .entered();
+                    return None;
+                }
+                atoms.extend(inventory.atoms.iter().copied());
+                Some(inventory.atoms)
+            });
+        }
+        let bdd = PredicateBdd::from_atoms(
+            atoms,
+            PredicateBuilds::Identity(AHashMap::new()),
+            NodeBudget::Operation {
+                remaining_nodes: MAX_BDD_NODES,
+            },
+            MAX_BDD_WORK,
+        );
+        let inventories = inventories
+            .into_iter()
+            .filter_map(|(predicate, atoms)| {
+                let atoms = atoms?
+                    .into_iter()
+                    .map(|atom| {
+                        bdd.atom_indices
+                            .get(&atom.index_key())
+                            .copied()
+                            .map(PredicateResidualAtom)
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                Some((predicate, atoms))
+            })
+            .collect();
+        Self { bdd, inventories }
+    }
+
+    /// Returns the number of distinct atoms in the session.
+    #[must_use]
+    pub fn atom_count(&self) -> usize {
+        self.bdd.atoms.len()
+    }
+
+    /// Returns inventoried atom identities, shared by both literal polarities.
+    #[must_use]
+    pub fn atoms(&self, predicate: &Predicate) -> Option<BTreeSet<PredicateResidualAtom>> {
+        self.inventories
+            .get(&predicate.node_id())
+            .map(|atoms| atoms.iter().copied().collect())
+    }
+
+    /// Imports one supplied predicate using a fresh allowance.
+    pub fn import(&mut self, predicate: &'input Predicate) -> Option<PredicateResidualNode> {
+        self.inventories.get(&predicate.node_id())?;
+        let committed = self.begin_operation();
+        let root = self.bdd.build(predicate);
+        self.finish_operation(committed, root, "import")
+    }
+
+    /// Complements a residual from this session.
+    pub fn not(&mut self, node: PredicateResidualNode) -> Option<PredicateResidualNode> {
+        let PredicateResidualNode(node) = node;
+        let committed = self.begin_operation();
+        let root = self.bdd.negated(node);
+        self.finish_operation(committed, root, "negate")
+    }
+
+    /// Conjoins two residuals from this session.
+    pub fn and(
+        &mut self,
+        left: PredicateResidualNode,
+        right: PredicateResidualNode,
+    ) -> Option<PredicateResidualNode> {
+        let PredicateResidualNode(left) = left;
+        let PredicateResidualNode(right) = right;
+        let committed = self.begin_operation();
+        let root = self.bdd.apply(BooleanOp::And, left, right);
+        self.finish_operation(committed, root, "conjoin")
+    }
+
+    /// Existentially forgets every variable outside the live frontier.
+    ///
+    /// Any future proof guards combined with the result must only test atoms in `live`.
+    pub fn forget_except(
+        &mut self,
+        node: PredicateResidualNode,
+        live: &BTreeSet<PredicateResidualAtom>,
+    ) -> Option<PredicateResidualNode> {
+        self.forget_where(node, |atom| live.contains(&atom))
+    }
+
+    /// Existentially forgets atoms rejected by a live-frontier test.
+    ///
+    /// The test must retain every atom that any future proof guards can test.
+    pub fn forget_where(
+        &mut self,
+        node: PredicateResidualNode,
+        keep_atom: impl Fn(PredicateResidualAtom) -> bool,
+    ) -> Option<PredicateResidualNode> {
+        let PredicateResidualNode(node) = node;
+        let committed = self.begin_operation();
+        let root = self
+            .bdd
+            .forget_where(node, &keep_atom, &mut AHashMap::new());
+        self.finish_operation(committed, root, "forget")
+    }
+
+    fn begin_operation(&mut self) -> usize {
+        self.bdd.remaining_work = MAX_BDD_WORK;
+        self.bdd.node_budget = NodeBudget::Operation {
+            remaining_nodes: MAX_BDD_NODES,
+        };
+        self.bdd.nodes.len()
+    }
+
+    fn finish_operation(
+        &mut self,
+        committed: usize,
+        root: Option<usize>,
+        operation: &'static str,
+    ) -> Option<PredicateResidualNode> {
+        if root.is_none() {
+            let _bound = tracing::debug_span!(
+                target: "helm_schema_core::counters", "predicate_residual_operation_bound", operation
+            )
+            .entered();
+        }
+        // Operation caches may refer to IDs that compaction will remove or renumber.
+        // Resetting them also makes the next operation pay its full proof cost.
+        self.bdd.apply_cache.clear();
+        self.bdd.negation_cache.clear();
+        match &mut self.bdd.built {
+            PredicateBuilds::Uncached => {}
+            PredicateBuilds::Identity(built) => built.clear(),
+            PredicateBuilds::Structural(built) => built.clear(),
+        }
+        self.bdd
+            .compact_operation(committed, root)
+            .map(PredicateResidualNode)
+    }
+}
+
+struct ResidualInventory<'input> {
+    atoms: BTreeSet<GuardAtom<'input>>,
+    depths: AHashMap<usize, usize>,
+    remaining: usize,
+}
+
+impl<'input> ResidualInventory<'input> {
+    fn visit(&mut self, predicate: &'input Predicate, depth_limit: usize) -> Option<usize> {
+        self.remaining = self.remaining.checked_sub(1)?;
+        if let Some(&depth) = self.depths.get(&predicate.node_id()) {
+            return (depth <= depth_limit).then_some(depth);
+        }
+        let child_limit = depth_limit.checked_sub(1)?;
+        match predicate.kind() {
+            PredicateKind::Approximate { .. } => return None,
+            PredicateKind::Guard(guard) => {
+                let atom = GuardAtom::new(guard);
+                atom.charge_predicate(&mut self.remaining)?;
+                self.atoms.insert(atom);
+            }
+            PredicateKind::True
+            | PredicateKind::False
+            | PredicateKind::Not(_)
+            | PredicateKind::And(_)
+            | PredicateKind::Or(_) => {}
+        }
+        let depth = predicate.children().iter().try_fold(0, |depth, child| {
+            Some(depth.max(self.visit(child, child_limit)?))
+        })? + 1;
+        self.depths.insert(predicate.node_id(), depth);
+        Some(depth)
+    }
+}
+
 impl PredicateBdd<'_> {
+    fn compact_operation(&mut self, committed: usize, root: Option<usize>) -> Option<usize> {
+        let first_new = committed + 2;
+        let Some(root) = root.filter(|root| *root >= first_new) else {
+            self.discard_operation_nodes(committed);
+            return root;
+        };
+        let mut reachable = AHashSet::new();
+        let mut pending = vec![root];
+        while let Some(id) = pending.pop() {
+            if id < first_new || !reachable.insert(id) {
+                continue;
+            }
+            let Some(node) = self.node(id) else {
+                self.discard_operation_nodes(committed);
+                return None;
+            };
+            pending.extend([node.when_false, node.when_true]);
+        }
+        if reachable.len() == self.nodes.len() - committed {
+            return Some(root);
+        }
+        let new_nodes = self.nodes.split_off(committed);
+        for node in &new_nodes {
+            self.unique_nodes.remove(node);
+        }
+        // Allocation order places every new child before its parent.
+        let mut remapped = AHashMap::new();
+        for (offset, node) in new_nodes.into_iter().enumerate() {
+            let id = first_new + offset;
+            if !reachable.contains(&id) {
+                continue;
+            }
+            let BddNode {
+                variable,
+                when_false,
+                when_true,
+                depth,
+            } = node;
+            let node = BddNode {
+                variable,
+                when_false: remapped.get(&when_false).copied().unwrap_or(when_false),
+                when_true: remapped.get(&when_true).copied().unwrap_or(when_true),
+                depth,
+            };
+            let compacted = self.nodes.len() + 2;
+            self.nodes.push(node);
+            self.unique_nodes.insert(node, compacted);
+            remapped.insert(id, compacted);
+        }
+        remapped.get(&root).copied()
+    }
+
+    fn discard_operation_nodes(&mut self, committed: usize) {
+        for node in self.nodes.drain(committed..) {
+            self.unique_nodes.remove(&node);
+        }
+    }
+
+    fn forget_where(
+        &mut self,
+        root: usize,
+        keep_atom: &impl Fn(PredicateResidualAtom) -> bool,
+        memo: &mut AHashMap<usize, usize>,
+    ) -> Option<usize> {
+        self.remaining_work = self.remaining_work.checked_sub(1)?;
+        if root <= TRUE {
+            return Some(root);
+        }
+        if let Some(&projected) = memo.get(&root) {
+            return Some(projected);
+        }
+        let BddNode {
+            variable,
+            when_false,
+            when_true,
+            depth: _,
+        } = self.node(root)?;
+        let when_false = self.forget_where(when_false, keep_atom, memo)?;
+        let when_true = self.forget_where(when_true, keep_atom, memo)?;
+        let projected = if keep_atom(PredicateResidualAtom(variable)) {
+            self.make_node(variable, when_false, when_true)?
+        } else {
+            self.apply(BooleanOp::Or, when_false, when_true)?
+        };
+        memo.insert(root, projected);
+        Some(projected)
+    }
+
     fn project_unresolved(
         &mut self,
         root: usize,
@@ -1189,28 +1610,18 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
                 crate::RequirementAtom::Choice(choice) => GuardAtom::Choice(choice),
             })
             .collect();
-        let atoms: Vec<_> = atoms.into_iter().collect();
-        let atom_indices = atoms
-            .iter()
-            .copied()
-            .enumerate()
-            .map(|(index, atom)| (atom.index_key(), index))
-            .collect();
         let initial_work = allowance;
         Some(Self {
-            bdd: PredicateBdd {
+            bdd: PredicateBdd::from_atoms(
                 atoms,
-                atom_indices,
-                literal_prototypes: RefCell::default(),
-                nodes: Vec::new(),
-                unique_nodes: AHashMap::new(),
-                apply_cache: AHashMap::new(),
-                negation_cache: AHashMap::new(),
-                built: AHashMap::new(),
-                remaining_work: initial_work,
-                memoize_walks: true,
-                charge_allocations: true,
-            },
+                // Predicate inventory already identifies subgraphs by content. Import the
+                // same canonical subgraphs regardless of the retained occurrence's sharing.
+                PredicateBuilds::Structural(AHashMap::new()),
+                NodeBudget::Arena {
+                    charge_allocations: true,
+                },
+                initial_work,
+            ),
             remaining,
             initial_work,
         })
@@ -1266,6 +1677,30 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
     #[must_use]
     pub fn always() -> crate::RequirementNode {
         crate::RequirementNode(TRUE)
+    }
+
+    /// Evaluates a literal under a fixed value of the same BDD variable.
+    /// Returns `None` when the literals denote different variables.
+    #[must_use]
+    pub fn cofactor_atom(guard: &Guard, atom: &Guard, taken: bool) -> Option<bool> {
+        let guard = GuardAtom::new(guard);
+        let atom = GuardAtom::new(atom);
+        if guard.index_key() != atom.index_key() {
+            return None;
+        }
+        Some(if guard.is_positive() == atom.is_positive() {
+            taken
+        } else {
+            !taken
+        })
+    }
+
+    /// Returns the positive representative of the literal's BDD variable.
+    #[must_use]
+    pub fn cofactor_variable(guard: &Guard) -> Guard {
+        GuardAtom::new(guard)
+            .to_guard()
+            .unwrap_or_else(|| guard.clone())
     }
 
     /// Whether reduction proved this node false.

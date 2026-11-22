@@ -1,6 +1,6 @@
 //! Schema emission policy.
 
-use helm_schema_core::ConditionalGuard;
+use helm_schema_core::{ConditionalGuard, GuardConjunction};
 use serde::Serialize;
 
 /// Version of the policy vocabulary used in output annotations.
@@ -363,13 +363,17 @@ pub(crate) struct NestedGuardScope {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct GuardScopes {
-    pub(crate) outer: Vec<ConditionalGuard>,
+    pub(crate) outer: GuardConjunction,
     pub(crate) nested: Vec<NestedGuardScope>,
 }
 
 impl GuardScopes {
-    pub(crate) fn new(mut outer: Vec<ConditionalGuard>, mut nested: Vec<NestedGuardScope>) -> Self {
-        ConditionalGuard::canonicalize_conjunction(&mut outer);
+    pub(crate) fn new(
+        outer: impl Into<GuardConjunction>,
+        mut nested: Vec<NestedGuardScope>,
+    ) -> Self {
+        let mut outer = outer.into();
+        outer.canonicalize();
         for scope in &mut nested {
             ConditionalGuard::canonicalize_conjunction(&mut scope.guards);
         }
@@ -378,19 +382,6 @@ impl GuardScopes {
 
     pub(crate) fn is_empty(&self) -> bool {
         self.outer.is_empty() && self.nested.is_empty()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct NonEmptyGuardScopes(GuardScopes);
-
-impl NonEmptyGuardScopes {
-    pub(crate) fn new(scopes: GuardScopes) -> Option<Self> {
-        (!scopes.is_empty()).then_some(Self(scopes))
-    }
-
-    pub(crate) fn scopes(&self) -> &GuardScopes {
-        &self.0
     }
 }
 
@@ -423,7 +414,7 @@ pub(crate) enum ConditionalFlavor {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum TerminalWhen {
     Always,
-    Guarded(NonEmptyGuardScopes),
+    Guarded,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -456,16 +447,13 @@ impl EmissionClass {
         }
     }
 
-    pub(crate) fn terminal_guarded(guards: Vec<ConditionalGuard>) -> Option<Self> {
-        let scopes = NonEmptyGuardScopes::new(GuardScopes::new(guards, Vec::new()))?;
-        Some(Self::Terminal {
-            when: TerminalWhen::Guarded(scopes),
-        })
-    }
-
-    pub(crate) const fn terminal_always() -> Self {
+    pub(crate) fn terminal(guards: &GuardConjunction) -> Self {
         Self::Terminal {
-            when: TerminalWhen::Always,
+            when: if guards.is_empty() {
+                TerminalWhen::Always
+            } else {
+                TerminalWhen::Guarded
+            },
         }
     }
 
@@ -496,7 +484,7 @@ impl EmissionClass {
                 when: TerminalWhen::Always,
             } => EmissionClassKind::TerminalAlways,
             Self::Terminal {
-                when: TerminalWhen::Guarded(_),
+                when: TerminalWhen::Guarded,
             } => EmissionClassKind::TerminalGuarded,
         }
     }

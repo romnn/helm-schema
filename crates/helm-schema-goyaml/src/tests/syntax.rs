@@ -1,4 +1,5 @@
 use color_eyre::eyre;
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use crate::{Event, Reader, Syntax, Token, TokenKind};
@@ -37,7 +38,12 @@ fn events(input: &str) -> eyre::Result<Vec<Event>> {
 
 #[test]
 fn observed_events_equal_the_event_sink_and_tokens_arrive_in_document_order() -> eyre::Result<()> {
-    let input = "a: [x, {y: z}]\nb:\n- c\n- d: e\n";
+    let input = indoc! {"
+        a: [x, {y: z}]
+        b:
+        - c
+        - d: e
+    "};
     let (tokens, observed) = observe(input)?;
     sim_assert_eq!(have: observed, want: events(input)?);
     let entries: Vec<usize> = tokens

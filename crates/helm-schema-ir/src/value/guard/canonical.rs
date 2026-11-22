@@ -1024,16 +1024,22 @@ impl CanonicalGuards {
     /// The canonical form of `guard`, composing every runtime test it holds; `None` when a
     /// node belongs to another context or a construction exhausts its allowance.
     fn form(&mut self, guard: &RuntimeGuard, context: *const super::GuardQueries) -> Option<u32> {
-        let RuntimeGuard::Branch(node) = guard else {
+        let RuntimeGuard::Branch(root) = guard else {
             return self.known(guard);
         };
-        if !std::ptr::eq(Rc::as_ptr(&node.queries), context) {
+        if !std::ptr::eq(std::rc::Rc::as_ptr(&root.queries), context) {
             return None;
         }
-        if let Some(form) = self.forms.get(&node.id) {
+        if let Some(form) = self.forms.get(&root.id) {
             return *form;
         }
-        let mut pending = vec![(guard, false)];
+        let mut pending = vec![(guard, true)];
+        pending.extend(
+            [root.test.runtime.as_ref(), Some(&root.yes), Some(&root.no)]
+                .into_iter()
+                .flatten()
+                .map(|part| (part, false)),
+        );
         while let Some((guard, expanded)) = pending.pop() {
             let RuntimeGuard::Branch(node) = guard else {
                 continue;
@@ -1144,3 +1150,7 @@ impl CanonicalGuards {
 #[cfg(test)]
 #[path = "../../tests/runtime_canonical_histories.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "../../tests/runtime_canonical_guards.rs"]
+mod guard_tests;

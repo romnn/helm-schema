@@ -135,8 +135,10 @@ fn replacement_and_materialized_mutated_hosts_do_not_constrain_original_input_ki
     }
 }
 
+/// (6a1 rework item 2, ADR 0072 §10) A summarized execution keeps a recorded host proof under
+/// the condition it was recorded with: never unconditional, and no longer dropped.
 #[test]
-fn summarized_execution_drops_host_proofs_instead_of_making_them_unconditional() {
+fn summarized_execution_keeps_host_proofs_under_their_own_condition() {
     let mut state = State::new(Value::nil());
     state.reads.insert(super::RuntimeRead {
         coverage: ReadCoverage::MemberHost { allows_nil: false },
@@ -145,13 +147,12 @@ fn summarized_execution_drops_host_proofs_instead_of_making_them_unconditional()
     });
     let exits = super::control::summarize_exits(super::eval::normal(state, Value::nil()));
     let execution = super::DocumentExecution::new(exits, crate::value::FileOutput::Manifest);
-    sim_assert_eq!(have: hosts(&execution), want: BTreeSet::new());
-    assert!(
-        execution
-            .observed_facts()
-            .captures
-            .iter()
-            .all(|capture| { !matches!(capture.kind, CaptureKind::MemberAccess { .. }) })
+    sim_assert_eq!(
+        have: hosts(&execution),
+        want: BTreeSet::from([HostObservation {
+            path: ValuesPath::parse("probe"),
+            condition: Predicate::truthy_path("enabled"),
+        }])
     );
 }
 

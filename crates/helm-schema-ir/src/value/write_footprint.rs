@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use super::{State, eval::local_name, namespace::Namespace};
+use super::{eval::local_name, namespace::Namespace};
 
 /// Certifies heap effects only; returned values still come from execution.
 /// Every writer must target a uniquely bound fresh dictionary. Recursive calls
@@ -98,25 +98,4 @@ pub(super) fn local_targets(
         nodes.extend(node.named_children(&mut cursor));
     }
     complete.then_some(targets)
-}
-
-pub(super) fn widen_targets(
-    state: &mut State,
-    targets: Option<&BTreeSet<String>>,
-    influences: &BTreeSet<helm_schema_core::ValuesPath>,
-) {
-    let Some(targets) = targets else {
-        super::operations::invalidate(state);
-        return;
-    };
-    for name in targets {
-        let Some(value) = state.read_local(name).cloned() else {
-            continue;
-        };
-        let Some(target) = state.map_target(&value) else {
-            super::operations::invalidate(state);
-            return;
-        };
-        super::operations::widen_map(&target, influences, state);
-    }
 }

@@ -1,6 +1,7 @@
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_core::ContractSchemaSignals;
+use helm_schema_core::{ContractSchemaSignals, GuardConjunction, Predicate};
 use helm_schema_json_schema_minify::DefinitionOrigin;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -9,7 +10,7 @@ use crate::base_schema::{BaseOwner, ConditionalTargetIndex, classify_base};
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
-use crate::emission_policy::EmissionPolicy;
+use crate::emission_policy::{EmissionClass, EmissionPolicy};
 use crate::emission_report::{EmissionReport, FactRecord, InsertionAbstentionCounts};
 use crate::generation_decisions::{BaseOwnerDecision, GenerationDecisions};
 use crate::overlay_lowering::{
@@ -25,18 +26,23 @@ use crate::schema_tree::{SchemaDocument, draft07_root_document};
 use crate::uncoalesced_root::UncoalescedRootGate;
 use crate::{AuthoringPolicy, ValuesSchemaInput};
 
-pub(crate) struct LoweredEmissionPlan {
+pub(crate) struct LoweredEmissionPlan<'signals> {
     predicate_memo: helm_schema_core::PredicateMemo,
-    contract_schema_signals: ContractSchemaSignals,
+    contract_schema_signals: &'signals ContractSchemaSignals,
     documents: RootValuesDocuments,
     values_descriptions: BTreeMap<String, String>,
-    resolved_paths: Vec<ResolvedPathSchema>,
-    conditional_schemas: Vec<LoweredConjunct>,
-    terminal_schemas: Vec<LoweredConjunct>,
+    projection: ProjectionInputs,
+    provider_terminal_clauses: Vec<GuardConjunction>,
     support: EmissionSupportPlan,
     insertion_abstentions: InsertionAbstentionCounts,
     decisions: GenerationDecisions,
     authoring_policy: AuthoringPolicy,
+}
+
+#[derive(Default)]
+struct ProjectionInputs {
+    resolved_paths: Vec<ResolvedPathSchema>,
+    conditional_schemas: Vec<LoweredConjunct>,
 }
 
 #[derive(Clone)]
@@ -59,16 +65,131 @@ pub(crate) struct RootValuesDocuments {
 #[derive(Clone)]
 struct GuardedRootValuesDocuments {
     guards: Vec<helm_schema_core::ConditionalGuard>,
+    activation: Predicate,
     composed: YamlValue,
     runtime_defaults: YamlValue,
     dependency_refill: YamlValue,
 }
 
+pub(crate) enum GuardedDefaultsSelection {
+    Selected(Option<usize>),
+    Unresolved,
+}
+
 impl RootValuesDocuments {
-    #[tracing::instrument(skip_all, level = "debug")]
-    pub(crate) fn condition_context<'a>(
-        &'a self,
+    fn prepare(
+        input: &ValuesSchemaInput<'_>,
+        predicate_memo: &helm_schema_core::PredicateMemo,
+    ) -> Self {
+        let contract_schema_signals = input.contract_schema_signals;
+        let mut composed = input
+            .values_documents
+            .map_or(YamlValue::Null, |documents| documents.composed.clone());
+        // Taken before render-time default merges: Helm validates, and
+        // `helm lint` compares against, the coalesced values alone.
+        let mut coalesced_defaults = serde_json::to_value(&composed).unwrap_or(Value::Null);
+        drop_null_members(&mut coalesced_defaults);
+        crate::values_yaml::apply_values_default_sources(
+            &mut composed,
+            contract_schema_signals.values_default_sources(),
+        );
+        let mut input_defaults = composed.clone();
+        crate::values_yaml::remove_values_paths(
+            &mut input_defaults,
+            input.shadowed_input_paths.unwrap_or(&BTreeSet::new()),
+        );
+        // A schema validates the COALESCED document, in which every chart's
+        // and every subchart's declared defaults have already been applied.
+        // A key missing from it was therefore null-deleted, and helm's
+        // coalescing carries that deletion through the subchart stage too
+        // (verified against helm v4.2.3: `--set kid.grp=null` renders
+        // `kid: {flag: true, global: {}}` and aborts on `.Values.grp.enabled`
+        // whether the parent, the subchart, or both declared `grp`). Nothing
+        // a chart DECLARES can refill such a key; only a render-time merge
+        // inside the templates (`set $ "Values" (mustMergeOverwrite defaults
+        // .Values)`) can, and those are exactly the `ValuesDefaultSource`
+        // facts. So this document starts empty and holds only them.
+        let mut runtime_defaults = YamlValue::Null;
+        crate::values_yaml::copy_values_default_sources(
+            &mut runtime_defaults,
+            &composed,
+            contract_schema_signals.values_default_sources(),
+        );
+        let mut dependency_refill = input.values_documents.map_or(YamlValue::Null, |documents| {
+            documents.dependency_refill.clone()
+        });
+        crate::values_yaml::copy_values_default_sources(
+            &mut dependency_refill,
+            &composed,
+            contract_schema_signals.values_default_sources(),
+        );
+        let guarded = prepare_guarded_values_documents(
+            contract_schema_signals,
+            &composed,
+            &runtime_defaults,
+            &dependency_refill,
+            predicate_memo,
+        );
+        let uncoalesced_root = input
+            .values_documents
+            .and_then(|documents| documents.uncoalesced_root.as_ref())
+            .and_then(|document| serde_json::to_value(document).ok());
+        Self {
+            composed,
+            coalesced_defaults,
+            uncoalesced_root,
+            input_defaults,
+            runtime_defaults,
+            dependency_refill,
+            guarded,
+        }
+    }
+
+    pub(crate) fn guarded_activations(
+        &self,
+    ) -> Vec<crate::requirement_activation::GuardedActivation> {
+        self.guarded
+            .iter()
+            .map(
+                |documents| crate::requirement_activation::GuardedActivation {
+                    predicate: documents.activation.clone(),
+                    guard_count: documents.guards.len(),
+                },
+            )
+            .collect()
+    }
+
+    pub(crate) fn selected_guarded_defaults(
+        &self,
+        active: &BTreeSet<usize>,
+        unknown: &BTreeSet<usize>,
+    ) -> GuardedDefaultsSelection {
+        let rank = |index: usize| {
+            self.guarded
+                .get(index)
+                .map(|entry| (entry.guards.len(), index))
+        };
+        let best_active = active.iter().copied().max_by_key(|index| rank(*index));
+        let best_unknown = unknown.iter().copied().max_by_key(|index| rank(*index));
+        if best_unknown.and_then(rank) > best_active.and_then(rank) {
+            return GuardedDefaultsSelection::Unresolved;
+        }
+        GuardedDefaultsSelection::Selected(best_active)
+    }
+
+    pub(crate) fn guarded_source_index(
+        &self,
         guards: &[helm_schema_core::ConditionalGuard],
+    ) -> Option<usize> {
+        self.guarded
+            .iter()
+            .position(|documents| documents.guards == guards)
+    }
+
+    #[tracing::instrument(skip_all, level = "debug")]
+    pub(crate) fn condition_context<'a, 'guard>(
+        &'a self,
+        guards: impl IntoIterator<Item = &'guard helm_schema_core::ConditionalGuard>,
         dependency_roots: &'a BTreeSet<Vec<String>>,
         predicate_memo: &helm_schema_core::PredicateMemo,
     ) -> (
@@ -76,29 +197,46 @@ impl RootValuesDocuments {
         &'a YamlValue,
         crate::condition_encoding::AbsenceDefaults<'a>,
     ) {
-        let predicate = helm_schema_core::Predicate::all(
-            guards
-                .iter()
-                .map(helm_schema_core::ConditionalGuard::predicate)
-                .collect(),
+        let guarded = self.guarded_context_index(
+            || {
+                helm_schema_core::Predicate::all(
+                    guards
+                        .into_iter()
+                        .map(helm_schema_core::ConditionalGuard::predicate)
+                        .collect(),
+                )
+            },
+            predicate_memo,
         );
-        let guarded = self
-            .guarded
+        self.condition_context_at(guarded, dependency_roots)
+    }
+
+    pub(crate) fn guarded_context_index(
+        &self,
+        predicate: impl FnOnce() -> Predicate,
+        predicate_memo: &helm_schema_core::PredicateMemo,
+    ) -> Option<usize> {
+        let predicate = std::cell::LazyCell::new(predicate);
+        self.guarded
             .iter()
             .enumerate()
             .filter(|(_, documents)| {
-                predicate_memo.exactly_implies(
-                    &predicate,
-                    &helm_schema_core::Predicate::all(
-                        documents
-                            .guards
-                            .iter()
-                            .map(helm_schema_core::ConditionalGuard::predicate)
-                            .collect(),
-                    ),
-                )
+                predicate_memo.exactly_implies(&predicate, &documents.activation)
             })
-            .max_by_key(|(_, documents)| documents.guards.len());
+            .max_by_key(|(_, documents)| documents.guards.len())
+            .map(|(index, _)| index)
+    }
+
+    pub(crate) fn condition_context_at<'a>(
+        &'a self,
+        index: Option<usize>,
+        dependency_roots: &'a BTreeSet<Vec<String>>,
+    ) -> (
+        Option<usize>,
+        &'a YamlValue,
+        crate::condition_encoding::AbsenceDefaults<'a>,
+    ) {
+        let guarded = self.guarded.get(index.unwrap_or(usize::MAX));
         let (values_document, composed, runtime_defaults, dependency_refill) = guarded.map_or(
             (
                 None,
@@ -106,9 +244,9 @@ impl RootValuesDocuments {
                 &self.runtime_defaults,
                 &self.dependency_refill,
             ),
-            |(index, documents)| {
+            |documents| {
                 (
-                    Some(index),
+                    index,
                     &documents.composed,
                     &documents.runtime_defaults,
                     &documents.dependency_refill,
@@ -127,6 +265,7 @@ impl RootValuesDocuments {
     }
 }
 
+#[tracing::instrument(skip_all)]
 fn prepare_guarded_values_documents(
     signals: &ContractSchemaSignals,
     composed: &YamlValue,
@@ -182,6 +321,7 @@ fn prepare_guarded_values_documents(
             );
             GuardedRootValuesDocuments {
                 guards: branch_guards.clone(),
+                activation: branch_predicate,
                 composed: branch_composed,
                 runtime_defaults: branch_runtime_defaults,
                 dependency_refill: branch_dependency_refill,
@@ -229,81 +369,21 @@ pub(crate) struct CompletedGeneratedSchema {
     pub(crate) definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }
 
-impl LoweredEmissionPlan {
+impl<'signals> LoweredEmissionPlan<'signals> {
     #[tracing::instrument(skip_all)]
-    pub(crate) fn build(input: &ValuesSchemaInput<'_>) -> Self {
+    pub(crate) fn build(input: &ValuesSchemaInput<'signals>) -> Self {
         let predicate_memo = helm_schema_core::PredicateMemo::new();
-        let contract_schema_signals = input.contract_schema_signals.clone();
-        let mut composed = input
-            .values_documents
-            .map_or(YamlValue::Null, |documents| documents.composed.clone());
-        // Taken before render-time default merges: Helm validates, and
-        // `helm lint` compares against, the coalesced values alone.
-        let mut coalesced_defaults = serde_json::to_value(&composed).unwrap_or(Value::Null);
-        drop_null_members(&mut coalesced_defaults);
-        crate::values_yaml::apply_values_default_sources(
-            &mut composed,
-            contract_schema_signals.values_default_sources(),
-        );
-        let mut input_defaults = composed.clone();
-        crate::values_yaml::remove_values_paths(
-            &mut input_defaults,
-            input.shadowed_input_paths.unwrap_or(&BTreeSet::new()),
-        );
-        // A schema validates the COALESCED document, in which every chart's
-        // and every subchart's declared defaults have already been applied.
-        // A key missing from it was therefore null-deleted, and helm's
-        // coalescing carries that deletion through the subchart stage too
-        // (verified against helm v4.2.3: `--set kid.grp=null` renders
-        // `kid: {flag: true, global: {}}` and aborts on `.Values.grp.enabled`
-        // whether the parent, the subchart, or both declared `grp`). Nothing
-        // a chart DECLARES can refill such a key; only a render-time merge
-        // inside the templates (`set $ "Values" (mustMergeOverwrite defaults
-        // .Values)`) can, and those are exactly the `ValuesDefaultSource`
-        // facts. So this document starts empty and holds only them.
-        let mut runtime_defaults = YamlValue::Null;
-        crate::values_yaml::copy_values_default_sources(
-            &mut runtime_defaults,
-            &composed,
-            contract_schema_signals.values_default_sources(),
-        );
-        let mut dependency_refill = input.values_documents.map_or(YamlValue::Null, |documents| {
-            documents.dependency_refill.clone()
-        });
-        crate::values_yaml::copy_values_default_sources(
-            &mut dependency_refill,
-            &composed,
-            contract_schema_signals.values_default_sources(),
-        );
-        let guarded = prepare_guarded_values_documents(
-            &contract_schema_signals,
-            &composed,
-            &runtime_defaults,
-            &dependency_refill,
-            &predicate_memo,
-        );
-        let uncoalesced_root = input
-            .values_documents
-            .and_then(|documents| documents.uncoalesced_root.as_ref())
-            .and_then(|document| serde_json::to_value(document).ok());
-        let documents = RootValuesDocuments {
-            composed,
-            coalesced_defaults,
-            uncoalesced_root,
-            input_defaults,
-            runtime_defaults,
-            dependency_refill,
-            guarded,
-        };
+        let contract_schema_signals = input.contract_schema_signals;
+        let documents = RootValuesDocuments::prepare(input, &predicate_memo);
         let provider_resolutions = crate::provider_resolution::ProviderSchemaResolutions::resolve(
-            &contract_schema_signals,
+            contract_schema_signals,
             input.provider,
         );
         let mut decisions = GenerationDecisions::default();
-        let dependency_roots = dependency_values_roots(&contract_schema_signals);
+        let dependency_roots = dependency_values_roots(contract_schema_signals);
         let helm_global_namespaces = helm_global_namespaces(&dependency_roots);
         let resolved_paths = PathSchemaResolver::new(
-            &contract_schema_signals,
+            contract_schema_signals,
             &documents.input_defaults,
             &documents.runtime_defaults,
             &helm_global_namespaces,
@@ -313,34 +393,39 @@ impl LoweredEmissionPlan {
         .resolve_all(&mut decisions);
         let (conditional_schemas, insertion_abstentions) = collect_conditional_schemas(
             &resolved_paths,
-            &contract_schema_signals,
+            contract_schema_signals,
             &documents.composed,
             &documents.runtime_defaults,
             &provider_resolutions,
             input.authoring_policy.declared_types,
             &mut decisions,
         );
-        let terminal_schemas = contract_schema_signals
-            .terminal_clauses()
-            .iter()
-            .chain(&provider_resolutions.unavailable_resources)
-            .map(|guards| LoweredConjunct::terminal(guards.clone()))
-            .collect::<Vec<_>>();
         let support = EmissionSupportPlan::build(
-            &contract_schema_signals,
+            contract_schema_signals,
             &resolved_paths,
             &conditional_schemas,
             dependency_roots,
         );
+
+        let mut provider_terminal_clauses = provider_resolutions
+            .unavailable_resources
+            .into_iter()
+            .map(GuardConjunction::from)
+            .collect::<Vec<_>>();
+        for guards in &mut provider_terminal_clauses {
+            guards.canonicalize();
+        }
 
         Self {
             predicate_memo,
             contract_schema_signals,
             documents,
             values_descriptions: input.values_descriptions.cloned().unwrap_or_default(),
-            resolved_paths,
-            conditional_schemas,
-            terminal_schemas,
+            projection: ProjectionInputs {
+                resolved_paths,
+                conditional_schemas,
+            },
+            provider_terminal_clauses,
             support,
             insertion_abstentions,
             decisions,
@@ -361,38 +446,79 @@ impl LoweredEmissionPlan {
         decisions
     }
 
+    #[tracing::instrument(skip_all)]
+    pub(crate) fn project_once(&mut self, policy: EmissionPolicy) -> ProjectedTree {
+        let ProjectionInputs {
+            resolved_paths,
+            conditional_schemas,
+        } = std::mem::take(&mut self.projection);
+        let mut report = EmissionReport::default();
+        report.insertion_abstentions = self.insertion_abstentions;
+        let selected = ProjectionInputs {
+            resolved_paths,
+            conditional_schemas: select_conjuncts(
+                conditional_schemas.into_iter().map(Cow::Owned),
+                policy,
+                &mut report,
+            ),
+        };
+        let terminal_clauses = self.select_terminal_clauses(policy, &mut report);
+        self.project_inputs(selected, &terminal_clauses, report)
+    }
+
+    #[cfg(any(test, feature = "bench-support"))]
     pub(crate) fn project(&self, policy: EmissionPolicy) -> ProjectedTree {
-        debug_assert!(policy.is_valid());
-        let mut emission_report = EmissionReport::default();
-        emission_report.insertion_abstentions = self.insertion_abstentions;
-        let mut selected_conditionals = Vec::new();
-        for conjunct in &self.conditional_schemas {
-            let selected = policy.selects(&conjunct.class);
-            emission_report.record_fact(FactRecord {
-                class: &conjunct.class,
-                selected,
-            });
-            if selected {
-                selected_conditionals.push(conjunct.clone());
-            }
-        }
-        let selected_terminals = self
-            .terminal_schemas
+        let mut report = EmissionReport::default();
+        report.insertion_abstentions = self.insertion_abstentions;
+        let selected = ProjectionInputs {
+            resolved_paths: self.projection.resolved_paths.clone(),
+            conditional_schemas: select_conjuncts(
+                self.projection
+                    .conditional_schemas
+                    .iter()
+                    .map(Cow::Borrowed),
+                policy,
+                &mut report,
+            ),
+        };
+        let terminal_clauses = self.select_terminal_clauses(policy, &mut report);
+        self.project_inputs(selected, &terminal_clauses, report)
+    }
+
+    fn select_terminal_clauses(
+        &self,
+        policy: EmissionPolicy,
+        report: &mut EmissionReport,
+    ) -> Vec<&GuardConjunction> {
+        self.contract_schema_signals
+            .terminal_clauses()
             .iter()
-            .filter(|conjunct| {
-                let selected = policy.selects(&conjunct.class);
-                emission_report.record_fact(FactRecord {
-                    class: &conjunct.class,
+            .chain(&self.provider_terminal_clauses)
+            .filter(|guards| {
+                let class = EmissionClass::terminal(guards);
+                let selected = policy.selects(&class);
+                report.record_fact(FactRecord {
+                    class: &class,
                     selected,
                 });
                 selected
             })
-            .cloned()
-            .collect::<Vec<_>>();
+            .collect()
+    }
 
-        // Candidate metadata is consumed only after selection. The shared
-        // plan stays immutable, and each projection receives fresh payloads.
-        let mut resolved_paths = self.resolved_paths.clone();
+    #[tracing::instrument(skip_all)]
+    fn project_inputs(
+        &self,
+        projection: ProjectionInputs,
+        terminal_clauses: &[&GuardConjunction],
+        mut emission_report: EmissionReport,
+    ) -> ProjectedTree {
+        let ProjectionInputs {
+            mut resolved_paths,
+            conditional_schemas: mut selected_conditionals,
+        } = projection;
+        // Candidate metadata is consumed only after selection. Projection owns the payloads;
+        // repeated benchmark projections clone only selected schema payloads.
         let mut definition_origins = BTreeMap::new();
         let mut provider_definitions = extract_provider_definitions(
             &mut resolved_paths,
@@ -401,7 +527,7 @@ impl LoweredEmissionPlan {
             &mut definition_origins,
         );
         let (mut document, base_document_abstentions, base_owners) = materialize_base_document(
-            &self.contract_schema_signals,
+            self.contract_schema_signals,
             &self.documents.input_defaults,
             &resolved_paths,
             &self.support,
@@ -427,24 +553,20 @@ impl LoweredEmissionPlan {
             &self.predicate_memo,
             &mut uncoalesced_root_gate,
         );
-        if !selected_terminals.is_empty() {
-            let terminal_clauses = selected_terminals
-                .iter()
-                .filter_map(LoweredConjunct::terminal_guards)
-                .map(<[helm_schema_core::ConditionalGuard]>::to_vec)
-                .collect::<Vec<_>>();
+        if !terminal_clauses.is_empty() {
+            uncoalesced_root_gate.begin_terminal_conditions();
             append_terminal_clauses(
                 &mut document,
-                &terminal_clauses,
-                &self.contract_schema_signals,
+                terminal_clauses,
+                self.contract_schema_signals,
                 &self.documents,
                 &self.support.dependency_roots,
                 &self.predicate_memo,
                 &mut uncoalesced_root_gate,
             );
         }
-        let mut condition_definitions = uncoalesced_root_gate.take_condition_definitions();
-        prune_unreachable_provider_definitions(&document, &mut condition_definitions);
+        uncoalesced_root_gate.compact_condition_junctions(&document);
+        let condition_definitions = uncoalesced_root_gate.take_condition_definitions();
         definition_origins.extend(
             condition_definitions
                 .keys()
@@ -643,14 +765,123 @@ impl LoweredEmissionPlan {
         }
 
         let mut payloads = BTreeSet::new();
-        for resolved in &self.resolved_paths {
+        for resolved in &self.projection.resolved_paths {
             record_candidate(resolved.provider_schema_candidate.as_ref(), &mut payloads);
         }
-        for conjunct in &self.conditional_schemas {
+        for conjunct in &self.projection.conditional_schemas {
             record_candidate(conjunct.provider_candidate.as_ref(), &mut payloads);
         }
         payloads.iter().map(String::len).sum()
     }
+}
+
+#[tracing::instrument(skip_all, fields(conjuncts = conjuncts.len()))]
+fn select_conjuncts<'conjunct>(
+    conjuncts: impl ExactSizeIterator<Item = Cow<'conjunct, LoweredConjunct>>,
+    policy: EmissionPolicy,
+    report: &mut EmissionReport,
+) -> Vec<LoweredConjunct> {
+    debug_assert!(policy.is_valid());
+    conjuncts
+        .flat_map(requirement_policy_conjuncts)
+        .filter_map(|conjunct| {
+            let selected = policy.selects(&conjunct.class);
+            report.record_fact(FactRecord {
+                class: &conjunct.class,
+                selected,
+            });
+            if selected {
+                Some(conjunct.into_owned())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn requirement_policy_conjuncts(
+    conjunct: Cow<'_, LoweredConjunct>,
+) -> Vec<Cow<'_, LoweredConjunct>> {
+    use crate::emission_policy::GuardScopes;
+    use helm_schema_core::{ConditionalGuard, RequirementConditionBuilder};
+
+    let EmissionClass::Conditional {
+        guards,
+        anchor,
+        flavor,
+    } = &conjunct.class
+    else {
+        return vec![conjunct];
+    };
+    // Any ordinary outer or nested guard makes every proof region conditional.
+    if !guards.nested.is_empty()
+        || guards.outer.is_empty()
+        || guards
+            .outer
+            .iter()
+            .any(|guard| !matches!(guard, ConditionalGuard::Requirement(_)))
+    {
+        return vec![conjunct];
+    }
+    let mut graphs = guards.outer.iter().filter_map(|guard| match guard {
+        ConditionalGuard::Requirement(graph) => Some(graph),
+        _ => None,
+    });
+    let Some(first) = graphs.next() else {
+        return vec![conjunct];
+    };
+    let graph = if let Some(second) = graphs.next() {
+        let mut builder = RequirementConditionBuilder::default();
+        let roots = std::iter::once(first)
+            .chain(std::iter::once(second))
+            .chain(graphs)
+            .map(|graph| builder.guard(ConditionalGuard::Requirement(graph.clone())))
+            .collect::<Vec<_>>();
+        let root = builder.and(roots);
+        builder.freeze().root(root, false)
+    } else {
+        first.clone()
+    };
+    let Some(partitions) = crate::terminal_conditions::partition_requirement(
+        &graph,
+        |_, _| true,
+        |left, right| *left || *right,
+    ) else {
+        return vec![conjunct];
+    };
+    if partitions.len() == 1 && partitions.first().is_some_and(|part| part.context) {
+        return vec![conjunct];
+    }
+    let anchor = anchor.clone();
+    let flavor = *flavor;
+    let mut source = Some(conjunct);
+    let count = partitions.len();
+    let mut selected = Vec::with_capacity(count);
+    for (index, part) in partitions.into_iter().enumerate() {
+        let source = if index + 1 == count {
+            source.take()
+        } else {
+            source.clone()
+        };
+        let Some(source) = source else {
+            continue;
+        };
+        let mut source = source.into_owned();
+        source.class = if part.context {
+            EmissionClass::Conditional {
+                guards: GuardScopes::new(
+                    vec![ConditionalGuard::Requirement(part.condition)],
+                    Vec::new(),
+                ),
+                anchor: anchor.clone(),
+                flavor,
+            }
+        } else {
+            EmissionClass::Mandatory
+        };
+        selected.push(Cow::Owned(source));
+    }
+    selected
 }
 
 impl EmissionSupportPlan {

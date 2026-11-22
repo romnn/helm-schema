@@ -2,6 +2,7 @@
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::ValuePattern;
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::{Lexical, text_preimage};
@@ -23,14 +24,24 @@ const SAMPLES: &[&str] = &[
     "v1.2.3@sha256:abc",
     "@1.2.3",
     // Go's `@.*$` erases from the first `@` after the last newline: this keeps "1.2.3@x\n1.2.3".
-    "1.2.3@x\n1.2.3@y",
+    indoc! {"
+        1.2.3@x
+        1.2.3@y"},
     "1.2.3@",
     "1.2.3@a@b",
-    "1.2.3@a\nb",
-    "1.2\n@x",
+    indoc! {"
+        1.2.3@a
+        b"},
+    indoc! {"
+        1.2
+        @x"},
     // A token before the newline and another after it: Go keeps "a@b\nx-jmx" and "a@b\nc.d".
-    "a@b\nx-jmx@d",
-    "a@b\nc.d@e",
+    indoc! {"
+        a@b
+        x-jmx@d"},
+    indoc! {"
+        a@b
+        c.d@e"},
     "garbage",
     "latest-1.2.3",
     "master",

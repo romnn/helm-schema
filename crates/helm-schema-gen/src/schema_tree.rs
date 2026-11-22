@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_core::{Segment, ValuesPath};
 use serde_json::{Map, Value};
@@ -123,16 +123,13 @@ impl SchemaDocument {
         canonicalize_constraint_at_parts(&mut self.root, path_segments, &constraint)
     }
 
-    #[tracing::instrument(skip_all, fields(anchor_depth = ancestor_segments.len()))]
-    pub(crate) fn append_conditional_with_definitions(
+    pub(crate) fn append_conditional_with_type_partition(
         &mut self,
         ancestor_segments: &[String],
         condition: SchemaNode,
         then_schema: SchemaNode,
-        definitions: &BTreeMap<String, Value>,
+        type_partition: bool,
     ) {
-        let type_partition =
-            condition_is_value_type_partition(&condition.clone().into_value(), definitions);
         append_conditional_at_parts(
             &mut self.root,
             ancestor_segments,
@@ -746,38 +743,88 @@ fn conditional_entry(condition: Value, then_schema: SchemaNode) -> SchemaNode {
     ))
 }
 
-/// Whether a condition schema is a pure partition of the value's own TYPE
-/// (`{type: object}`, also negated or a combination of such tests). Such a
-/// condition deliberately selects one runtime kind out of several the chart
-/// handles, so the conditional's carrier must not assert `type: object`
-/// itself; a condition that tests members instead presupposes an object
-/// host.
-fn condition_is_value_type_partition(
-    condition: &Value,
-    definitions: &BTreeMap<String, Value>,
-) -> bool {
-    let Value::Object(object) = condition else {
-        return false;
-    };
-    if object.len() != 1 {
-        return false;
+/// Classifies type tests in one append-only scope of private condition definitions.
+#[derive(Default)]
+pub(crate) struct TypePartitionMemo {
+    known: HashMap<String, bool>,
+    definition_visits: usize,
+}
+
+enum TypePartitionStep<'a> {
+    Check(&'a Value),
+    FinishDefinition(&'a str),
+}
+
+impl TypePartitionMemo {
+    pub(crate) fn definition_visits(&self) -> usize {
+        self.definition_visits
     }
-    if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-        && let Some(reference) = helm_schema_json_schema_walk::parse_definition_reference(reference)
-    {
-        return definitions
-            .get(&reference.name)
-            .is_some_and(|body| condition_is_value_type_partition(body, definitions));
+
+    /// A condition that tests the value's own type does not require an object carrier.
+    pub(crate) fn classify(
+        &mut self,
+        condition: &Value,
+        definitions: &BTreeMap<String, Value>,
+    ) -> bool {
+        let mut pending = vec![TypePartitionStep::Check(condition)];
+        let mut active = HashSet::new();
+        loop {
+            let Some(step) = pending.pop() else {
+                return true;
+            };
+            let condition = match step {
+                TypePartitionStep::FinishDefinition(name) => {
+                    active.remove(name);
+                    self.known.insert(name.to_owned(), true);
+                    continue;
+                }
+                TypePartitionStep::Check(condition) => condition,
+            };
+            let Some(object) = condition.as_object().filter(|object| object.len() == 1) else {
+                break;
+            };
+            if let Some(reference) = object.get("$ref") {
+                // Private conditions live only in the generated dialect's container.
+                let Some(reference) = reference
+                    .as_str()
+                    .and_then(helm_schema_json_schema_walk::parse_definition_reference)
+                    .filter(|reference| {
+                        reference.keyword == helm_schema_json_schema_walk::GENERATED_DEFINITIONS
+                            && reference.suffix.is_empty()
+                    })
+                else {
+                    break;
+                };
+                if let Some(&known) = self.known.get(&reference.name) {
+                    if known {
+                        continue;
+                    }
+                    break;
+                }
+                let Some((name, body)) = definitions.get_key_value(&reference.name) else {
+                    // A later append can resolve this reference and its active ancestors.
+                    return false;
+                };
+                if !active.insert(name.as_str()) {
+                    return false;
+                }
+                self.definition_visits += 1;
+                pending.push(TypePartitionStep::FinishDefinition(name));
+                pending.push(TypePartitionStep::Check(body));
+            } else if let Some(inner) = object.get("not") {
+                pending.push(TypePartitionStep::Check(inner));
+            } else if let Some(Value::Array(items)) =
+                object.get("anyOf").or_else(|| object.get("allOf"))
+            {
+                pending.extend(items.iter().rev().map(TypePartitionStep::Check));
+            } else if !object.contains_key("type") {
+                break;
+            }
+        }
+        self.known
+            .extend(active.into_iter().map(|name| (name.to_owned(), false)));
+        false
     }
-    if let Some(inner) = object.get("not") {
-        return condition_is_value_type_partition(inner, definitions);
-    }
-    if let Some(Value::Array(items)) = object.get("anyOf").or_else(|| object.get("allOf")) {
-        return items
-            .iter()
-            .all(|item| condition_is_value_type_partition(item, definitions));
-    }
-    object.contains_key("type")
 }
 
 fn append_conditional_at_parts(
@@ -924,18 +971,16 @@ fn push_conditional_entry(
 }
 
 fn open_host_descendants_extended_by_schema(node: &mut SchemaNode, schema: &SchemaNode) {
-    let branch_properties = schema.property_entries();
-    if branch_properties.is_empty() {
+    let Some(branch_properties) = schema.properties() else {
         return;
-    }
-
+    };
     for (property, branch_child) in branch_properties {
-        let Some(mut host_child) = node.take_property(&property) else {
+        let Some(mut host_child) = node.take_property(property) else {
             continue;
         };
-        reconcile_node_host_with_branch_schema(&mut host_child, &branch_child);
-        open_host_descendants_extended_by_schema(&mut host_child, &branch_child);
-        node.put_property(property, host_child);
+        reconcile_node_host_with_branch_schema(&mut host_child, branch_child);
+        open_host_descendants_extended_by_schema(&mut host_child, branch_child);
+        node.put_property(property.clone(), host_child);
     }
 }
 
@@ -957,30 +1002,27 @@ fn reconcile_node_host_with_branch_schema(host: &mut SchemaNode, branch: &Schema
 }
 
 fn branch_schema_extends_node_host(host: &SchemaNode, branch: &SchemaNode) -> bool {
-    let branch_properties = branch.property_entries();
-    if branch_properties.is_empty() {
+    let Some(branch_properties) = branch.properties() else {
         return false;
-    }
-
-    let host_properties = host
-        .property_entries()
-        .into_iter()
-        .map(|(property, _)| property)
-        .collect::<BTreeSet<_>>();
+    };
+    let host_properties = host.properties();
     branch_properties
-        .iter()
-        .any(|(property, _)| !host_properties.contains(property))
+        .keys()
+        .any(|property| host_properties.is_none_or(|properties| !properties.contains_key(property)))
 }
 
 fn add_branch_property_placeholders_to_node(host: &mut SchemaNode, branch: &SchemaNode) {
-    let branch_properties = branch.property_entries();
-    if branch_properties.is_empty() {
+    let Some(branch_properties) = branch
+        .properties()
+        .filter(|properties| !properties.is_empty())
+    else {
         return;
-    }
-
+    };
     let properties = ensure_object_properties(host);
-    for (property, _) in branch_properties {
-        properties.entry(property).or_insert_with(SchemaNode::empty);
+    for property in branch_properties.keys() {
+        properties
+            .entry(property.clone())
+            .or_insert_with(SchemaNode::empty);
     }
 }
 

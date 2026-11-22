@@ -1,12 +1,46 @@
 //! Public semantic-contract parsing and path utility regressions.
 
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{
-    ApiPresenceQuery, ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor,
-    ConditionalPathOverlay, ContractRequirementImplication, ContractRequirementTarget, ContractUse,
-    ContractValuePathFacts, FailValueRequirement, Guard, MergeLayer, MergeLayerTransform,
-    MergeLayersUse, ValueKind, ValuesPath, YamlPath, join_value_path, split_value_path,
+    ApiPresenceQuery, CanonicalGuardComponents, ConditionalGuard, ConditionalOverlayEvidence,
+    ConditionalOverlayFlavor, ConditionalPathOverlay, ContractRequirementImplication,
+    ContractRequirementTarget, ContractUse, ContractValuePathFacts, FailValueRequirement, Guard,
+    GuardConjunction, GuardPrefix, MergeLayer, MergeLayerTransform, MergeLayersUse, ValueKind,
+    ValuesPath, YamlPath, join_value_path, split_value_path,
 };
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn canonical_guard_heads_remain_shared_before_ordered_appended_guards() -> eyre::Result<()> {
+    let guard = |name| ConditionalGuard::Truthy {
+        path: ValuesPath::parse(name),
+    };
+    let a = guard("a");
+    let b = guard("b");
+    let z = guard("z");
+    let prefix = GuardPrefix::new(vec![b.clone(), a.clone(), a.clone()]);
+    let mut row = GuardConjunction::prefixed(vec![z.clone()], prefix.clone(), Vec::new());
+    sim_assert_eq!(have:row.canonical_prefix_components().is_none(),want:true);
+    row.canonicalize();
+    row.push(a.clone());
+    row.push(b.clone());
+    let CanonicalGuardComponents {
+        prefix: head,
+        extras,
+        tail,
+    } = row
+        .canonical_prefix_components()
+        .ok_or_eyre("shared canonical head")?;
+    sim_assert_eq!(have:head.shares_storage(&prefix),want:true);
+    let canonical = head.canonical();
+    sim_assert_eq!(have:canonical.as_slice(),want:&[a.clone(),b.clone()]);
+    sim_assert_eq!(have:extras,want:std::slice::from_ref(&z));
+    sim_assert_eq!(have:tail,want:&[a.clone(),b.clone()]);
+    sim_assert_eq!(have:row.to_vec(),want:vec![a.clone(),b.clone(),z,a,b]);
+    // Floor and proof callers still require a completely canonical row.
+    sim_assert_eq!(have:row.canonical_parts().is_none(),want:true);
+    Ok(())
+}
 
 #[test]
 fn api_presence_query_parses_resource_and_group_version_literals() {
@@ -111,11 +145,37 @@ fn conditional_signal_constructors_canonicalize_guard_conjunctions() {
         want: ContractRequirementImplication {
             outer_guards: vec![truthy, ConditionalGuard::Absent {
                 path: ValuesPath::parse("fallback"),
-            }],
+            }].into(),
             target: ContractRequirementTarget::Value,
             requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
         },
     );
+}
+
+/// Terminal guards normalize at their owner while clause order and multiplicity stay intact.
+#[test]
+fn terminal_signal_rows_are_canonical_without_reordering_or_removing_clauses() {
+    let truthy = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("gate"),
+    };
+    let absent = ConditionalGuard::Absent {
+        path: ValuesPath::parse("value"),
+    };
+    let nested =
+        ConditionalGuard::AllOf(vec![absent.clone(), truthy.clone(), absent.clone()].into());
+    let signals = helm_schema_core::ContractSchemaSignals::new(
+        std::collections::BTreeMap::new(),
+        vec![
+            vec![absent.clone(), absent.clone()],
+            Vec::new(),
+            vec![nested.clone(), truthy.clone(), nested],
+        ],
+    );
+    sim_assert_eq!(have: signals.terminal_clauses(), want: &[
+        vec![absent.clone()],
+        Vec::new(),
+        vec![truthy.clone(), ConditionalGuard::AllOf(vec![truthy, absent].into())],
+    ]);
 }
 
 #[test]

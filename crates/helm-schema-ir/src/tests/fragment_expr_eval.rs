@@ -1273,7 +1273,7 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
         !signals
             .terminal_clauses()
             .iter()
-            .any(|clause| clause.as_slice() == impossible_fail),
+            .any(|clause| clause.iter().eq(impossible_fail.iter())),
         "the nested include always renders nonempty text, so its negation cannot reach fail: {signals:#?}"
     );
 }
@@ -2220,7 +2220,8 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
                 helm_schema_core::ContractRequirementImplication {
                     outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                         path: conditional_path("feature.explicit"),
-                    }],
+                    }]
+                    .into(),
                     target: helm_schema_core::ContractRequirementTarget::Value,
                     requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
                         handled_kinds: Vec::new(),

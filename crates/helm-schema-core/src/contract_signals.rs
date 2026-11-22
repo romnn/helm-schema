@@ -4,8 +4,8 @@ use serde::Serialize;
 use std::sync::Arc;
 
 use crate::{
-    CollectionDomain, CollectionQuantifier, Guard, GuardValue, Predicate, ProviderSchemaUse,
-    ValuePattern, ValuesPath,
+    CollectionDomain, CollectionQuantifier, Guard, GuardConjunction, GuardValue, Predicate,
+    ProviderSchemaUse, ValuePattern, ValuesPath,
 };
 
 /// Values-decidable guard expression that can be lowered into JSON Schema
@@ -158,6 +158,8 @@ pub enum ConditionalGuard {
     AllOf(Arc<Vec<ConditionalGuard>>),
     /// Disjunction of the enclosed guards.
     AnyOf(Arc<Vec<ConditionalGuard>>),
+    /// A shared projected condition exported from executed requirements.
+    Requirement(crate::RequirementCondition),
 }
 
 impl ConditionalGuard {
@@ -227,6 +229,7 @@ impl ConditionalGuard {
             Self::Absent { .. }
             | Self::TypeIs { .. }
             | Self::Decision(_)
+            | Self::Requirement(_)
             | Self::MatchesPattern { .. }
             | Self::MatchesValue { .. }
             | Self::CollectionPattern { .. }
@@ -269,7 +272,7 @@ impl ConditionalGuard {
         guards.dedup();
     }
 
-    fn canonicalize_nested(&mut self) {
+    pub(crate) fn canonicalize_nested(&mut self) {
         match self {
             Self::Not(inner) => {
                 let mut canonical = inner.as_ref().clone();
@@ -286,6 +289,7 @@ impl ConditionalGuard {
                 }
             }
             Self::Decision(_)
+            | Self::Requirement(_)
             | Self::Truthy { .. }
             | Self::With { .. }
             | Self::Eq { .. }
@@ -319,13 +323,13 @@ impl ConditionalGuard {
     pub fn is_self_truthy_for(&self, target: &ValuesPath) -> bool {
         match self {
             Self::Truthy { path } | Self::With { path } => path == target,
-            Self::Decision(graph) => {
-                graph.excludes_atom_value(
+            Self::Decision(_) | Self::Requirement(_) => {
+                self.excludes_atom_value(
                     &Self::Truthy {
                         path: target.clone(),
                     },
                     false,
-                ) || graph.excludes_atom_value(
+                ) || self.excludes_atom_value(
                     &Self::With {
                         path: target.clone(),
                     },
@@ -340,7 +344,7 @@ impl ConditionalGuard {
     #[must_use]
     pub fn is_self_presence_for(&self, target: &ValuesPath) -> bool {
         match self {
-            Self::Decision(graph) => graph.excludes_atom_value(
+            Self::Decision(_) | Self::Requirement(_) => self.excludes_atom_value(
                 &Self::Absent {
                     path: target.clone(),
                 },
@@ -359,13 +363,49 @@ impl ConditionalGuard {
         }
     }
 
+    pub(crate) fn excludes_atom_value(&self, atom: &Self, value: bool) -> bool {
+        if self == atom {
+            return !value;
+        }
+        match self {
+            Self::Decision(graph) => graph.excludes_atom_value(atom, value),
+            Self::Requirement(graph) => graph.excludes_atom_value(atom, value),
+            Self::Not(inner) => inner.as_ref() == atom && value,
+            Self::AllOf(parts) => parts
+                .iter()
+                .any(|part| part.excludes_atom_value(atom, value)),
+            Self::AnyOf(parts) => parts
+                .iter()
+                .all(|part| part.excludes_atom_value(atom, value)),
+            Self::HasKey { .. } => {
+                matches!(atom, Self::Absent { path } if value && self.is_self_presence_for(path))
+            }
+            Self::Truthy { .. }
+            | Self::With { .. }
+            | Self::Eq { .. }
+            | Self::NotEq { .. }
+            | Self::Absent { .. }
+            | Self::TypeIs { .. }
+            | Self::MatchesPattern { .. }
+            | Self::MatchesValue { .. }
+            | Self::CollectionPattern { .. }
+            | Self::IntGt { .. }
+            | Self::IntLt { .. }
+            | Self::ContainsMemberEquals { .. }
+            | Self::ContainsTruthyMember { .. }
+            | Self::ContainsEquals { .. }
+            | Self::AtMostOneMember { .. }
+            | Self::MinMembers { .. } => false,
+        }
+    }
+
     /// Reconstructs the exact Boolean predicate represented by this schema guard.
     #[must_use]
     pub fn predicate(&self) -> Predicate {
         self.shared_predicate(&mut ahash::AHashMap::new())
     }
 
-    fn shared_predicate(
+    pub(crate) fn shared_predicate(
         &self,
         projected: &mut ahash::AHashMap<*const Self, Predicate>,
     ) -> Predicate {
@@ -448,6 +488,7 @@ impl ConditionalGuard {
                 bound: *bound,
             }),
             Self::Decision(graph) => graph.predicate(),
+            Self::Requirement(graph) => graph.predicate(),
             Self::Not(inner) => inner.shared_predicate(projected).negated(),
             Self::AllOf(guards) => Predicate::all(
                 guards
@@ -673,6 +714,7 @@ impl ConditionalGuard {
             Self::Decision(graph) => {
                 Self::Decision(Arc::new(Arc::unwrap_or_clone(graph).map_value_paths(map)))
             }
+            Self::Requirement(graph) => Self::Requirement(graph.map_value_paths(map)),
             Self::Not(inner) => Self::Not(Arc::new(inner.as_ref().clone().map_value_paths(map))),
             Self::AllOf(guards) => Self::AllOf(
                 guards
@@ -694,7 +736,7 @@ impl ConditionalGuard {
         if mapped == original { original } else { mapped }
     }
 
-    fn collect_value_paths(
+    pub(crate) fn collect_value_paths(
         &self,
         paths: &mut BTreeSet<ValuesPath>,
         visited: &mut ahash::AHashSet<*const Self>,
@@ -728,6 +770,7 @@ impl ConditionalGuard {
                 paths.insert(path.clone());
             }
             Self::Decision(graph) => paths.extend(graph.value_paths()),
+            Self::Requirement(graph) => paths.extend(graph.value_paths()),
             Self::Not(inner) => inner.collect_value_paths(paths, visited),
             Self::AllOf(guards) | Self::AnyOf(guards) => {
                 for guard in guards.iter() {
@@ -905,7 +948,7 @@ pub struct ContractPathSchemaEvidence {
     pub requirement_implications: Vec<ContractRequirementImplication>,
     /// Positive opaque consumptions at this exact input path. An empty
     /// recorded set means export exhausted its budget and asserts no policy.
-    pub opaque_consumption_guards: Option<Vec<Vec<ConditionalGuard>>>,
+    pub opaque_consumption_guards: Option<Vec<GuardConjunction>>,
 }
 
 /// A chart-wide default subtree merged into an effective `.Values` subtree.
@@ -935,7 +978,7 @@ pub struct GuardedValuesDefaultSource {
 pub struct ContractRequirementImplication {
     /// Conditions outside the requirement; empty means it binds the path
     /// unconditionally.
-    pub outer_guards: Vec<ConditionalGuard>,
+    pub outer_guards: GuardConjunction,
     /// The runtime value affected by the requirement.
     pub target: ContractRequirementTarget,
     /// Conjunction of requirements the affected value must satisfy.
@@ -946,11 +989,21 @@ impl ContractRequirementImplication {
     /// Creates an implication with both conjunctions in canonical order.
     #[must_use]
     pub fn new(
-        mut outer_guards: Vec<ConditionalGuard>,
+        outer_guards: Vec<ConditionalGuard>,
+        target: ContractRequirementTarget,
+        requirements: Vec<FailValueRequirement>,
+    ) -> Self {
+        Self::from_conjunction(outer_guards.into(), target, requirements)
+    }
+
+    /// Canonicalizes both conjunctions while retaining shared guard storage.
+    #[must_use]
+    pub fn from_conjunction(
+        mut outer_guards: GuardConjunction,
         target: ContractRequirementTarget,
         mut requirements: Vec<FailValueRequirement>,
     ) -> Self {
-        ConditionalGuard::canonicalize_conjunction(&mut outer_guards);
+        outer_guards.canonicalize();
         requirements.sort();
         requirements.dedup();
         Self {
@@ -1206,16 +1259,37 @@ pub struct ContractSchemaSignals {
     /// of one clause hold, so no valid values document may satisfy them
     /// (`fail`/`required` under fully lowerable conditions). An empty clause
     /// is an unconditional termination.
-    terminal_clauses: Vec<Vec<ConditionalGuard>>,
+    terminal_clauses: Vec<GuardConjunction>,
 }
 
 impl ContractSchemaSignals {
     /// Builds a stable signal set from path evidence and terminal clauses.
+    /// Canonicalizes each terminal conjunction without changing clause order or multiplicity.
     #[must_use]
     pub fn new(
         schema_evidence_by_value_path: BTreeMap<crate::ValuesPath, ContractPathSchemaEvidence>,
         terminal_clauses: Vec<Vec<ConditionalGuard>>,
     ) -> Self {
+        Self::from_conjunctions(
+            schema_evidence_by_value_path,
+            terminal_clauses
+                .into_iter()
+                .map(GuardConjunction::from)
+                .collect(),
+        )
+    }
+
+    /// Builds signals while retaining shared guard storage in terminal clauses.
+    ///
+    /// Canonicalizes each terminal conjunction without changing clause order or multiplicity.
+    #[must_use]
+    pub fn from_conjunctions(
+        schema_evidence_by_value_path: BTreeMap<crate::ValuesPath, ContractPathSchemaEvidence>,
+        mut terminal_clauses: Vec<GuardConjunction>,
+    ) -> Self {
+        for guards in &mut terminal_clauses {
+            guards.canonicalize();
+        }
         let referenced_value_paths: BTreeSet<crate::ValuesPath> = schema_evidence_by_value_path
             .iter()
             .filter(|(_, evidence)| evidence.is_referenced_value_path)
@@ -1436,9 +1510,10 @@ impl ContractSchemaSignals {
                     .iter()
                     .map(|implication| {
                         let mut twin = implication.clone();
-                        twin.outer_guards = twin
+                        let mut guards = implication
                             .outer_guards
-                            .into_iter()
+                            .iter()
+                            .cloned()
                             .map(|guard| {
                                 guard.map_value_paths(&mut |guard_path| {
                                     if &guard_path == path || guard_path.is_descendant_of(path) {
@@ -1453,9 +1528,12 @@ impl ContractSchemaSignals {
                                 })
                             })
                             .chain(activation_guards.iter().cloned())
-                            .collect();
-                        twin.outer_guards.sort();
-                        twin.outer_guards.dedup();
+                            .collect::<Vec<_>>();
+                        guards.sort();
+                        guards.dedup();
+                        if implication.outer_guards != guards {
+                            twin.outer_guards = guards.into();
+                        }
                         twin
                     })
                     .collect();
@@ -1489,7 +1567,7 @@ impl ContractSchemaSignals {
     /// Terminating validator formulas: no valid values document satisfies
     /// all guards of one clause.
     #[must_use]
-    pub fn terminal_clauses(&self) -> &[Vec<ConditionalGuard>] {
+    pub fn terminal_clauses(&self) -> &[GuardConjunction] {
         &self.terminal_clauses
     }
 

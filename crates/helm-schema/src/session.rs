@@ -257,6 +257,13 @@ impl<T> SessionCache<T> {
         *guard = Some(Arc::clone(&value));
         Ok(value)
     }
+
+    fn take(&mut self) -> Option<Arc<T>> {
+        self.value
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take()
+    }
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
@@ -344,15 +351,7 @@ impl AnalysisSession {
             .get_or_try_init(&self.initializing, || {
                 let resolved = self.resolved()?;
                 let mut schema = resolved.schema.clone();
-                if self.opts.infer_required {
-                    helm_schema_gen::required_inference::apply_required_inference(
-                        &mut schema,
-                        self.finalized_contract()?
-                            .schema_signals()
-                            .schema_evidence_by_value_path(),
-                        &self.prepared()?.explicit_value_paths,
-                    );
-                }
+                self.infer_required(&mut schema)?;
                 Ok(GeneratedSchema {
                     schema,
                     emission_report: resolved.emission_report.clone(),
@@ -360,6 +359,52 @@ impl AnalysisSession {
                 })
             })?)
         .clone())
+    }
+
+    /// Returns the generated values schema and releases the session's analysis caches.
+    ///
+    /// Reuses a cached generated result or moves the resolved schema through
+    /// optional required inference.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when resolving the contract or preparing chart values fails.
+    #[tracing::instrument(skip_all)]
+    pub fn into_generated_schema(mut self) -> EngineResult<GeneratedSchema> {
+        self.take_generated_schema()
+    }
+
+    fn take_generated_schema(&mut self) -> EngineResult<GeneratedSchema> {
+        if let Some(generated) = self.generated_schema.take() {
+            return Ok(Arc::unwrap_or_clone(generated));
+        }
+        let resolved = self.resolved()?;
+        drop(self.resolved_contract.take());
+        let ResolvedContract {
+            mut schema,
+            emission_report,
+            definition_origins,
+            generation_decisions: _,
+        } = Arc::unwrap_or_clone(resolved);
+        self.infer_required(&mut schema)?;
+        Ok(GeneratedSchema {
+            schema,
+            emission_report,
+            definition_origins,
+        })
+    }
+
+    fn infer_required(&self, schema: &mut Value) -> EngineResult<()> {
+        if self.opts.infer_required {
+            helm_schema_gen::required_inference::apply_required_inference(
+                schema,
+                self.finalized_contract()?
+                    .schema_signals()
+                    .schema_evidence_by_value_path(),
+                &self.prepared()?.explicit_value_paths,
+            );
+        }
+        Ok(())
     }
 
     /// Emit the final JSON Schema document through the output pipeline.
@@ -375,17 +420,22 @@ impl AnalysisSession {
     /// or reference processing fails.
     pub fn emit(&self, request: EmitRequest) -> EngineResult<Value> {
         let generated = self.generated_schema()?;
-        apply_schema_output_pipeline(
-            generated.schema,
-            &generated.definition_origins,
+        apply_generated_output(
+            generated,
             PreparedEmitRequest::empty(request),
-            self.chart_base_dir(),
-            FinalOutputPolicy::new(
-                self.resolved_emission_policy()?,
-                self.opts.infer_required,
-                self.opts.authoring,
-            ),
+            Path::new(self.opts.chart_source.logical_path()),
+            self.final_output_policy()?,
         )
+    }
+
+    /// Emits the final document and releases the session before output transforms.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when generated-schema preparation or reference processing fails.
+    pub fn into_emit(mut self, request: EmitRequest) -> EngineResult<Value> {
+        let generated = self.take_generated_schema()?;
+        self.into_output(generated, PreparedEmitRequest::empty(request))
     }
 
     /// Load policy inputs from override paths, then emit the final document.
@@ -400,20 +450,46 @@ impl AnalysisSession {
         policy_input_options: PolicyInputOptions,
         request: EmitRequest,
     ) -> EngineResult<Value> {
-        let loaded = load_emit_request(override_paths, &policy_input_options, request)?;
-        let generated = self.generated_schema()?;
-        let prepared = prepare_emit_request(loaded, &policy_input_options, &generated.schema)?;
-        apply_schema_output_pipeline(
-            generated.schema,
-            &generated.definition_origins,
+        let (generated, prepared) =
+            prepare_policy_output(override_paths, &policy_input_options, request, || {
+                self.generated_schema()
+            })?;
+        apply_generated_output(
+            generated,
             prepared,
-            self.chart_base_dir(),
-            FinalOutputPolicy::new(
-                self.resolved_emission_policy()?,
-                self.opts.infer_required,
-                self.opts.authoring,
-            ),
+            Path::new(self.opts.chart_source.logical_path()),
+            self.final_output_policy()?,
         )
+    }
+
+    /// Loads override paths and releases the session before emitting the final document.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when an override cannot be loaded or prepared, when generation
+    /// fails, or when final output transforms fail.
+    pub fn into_emit_with_policy_paths(
+        mut self,
+        override_paths: &[PathBuf],
+        policy_input_options: PolicyInputOptions,
+        request: EmitRequest,
+    ) -> EngineResult<Value> {
+        let (generated, prepared) =
+            prepare_policy_output(override_paths, &policy_input_options, request, || {
+                self.take_generated_schema()
+            })?;
+        self.into_output(generated, prepared)
+    }
+
+    fn into_output(
+        self,
+        generated: GeneratedSchema,
+        prepared: PreparedEmitRequest,
+    ) -> EngineResult<Value> {
+        let policy = self.final_output_policy()?;
+        let chart_dir = self.opts.chart_source.logical_path().to_owned();
+        drop(self);
+        apply_generated_output(generated, prepared, Path::new(&chart_dir), policy)
     }
 
     /// Explain one values path using the current contract and chart
@@ -507,10 +583,6 @@ impl AnalysisSession {
         })
     }
 
-    fn chart_base_dir(&self) -> &Path {
-        Path::new(self.opts.chart_source.logical_path())
-    }
-
     #[tracing::instrument(skip_all)]
     fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
         self.finalized_contract
@@ -557,6 +629,14 @@ impl AnalysisSession {
             .get_or_try_init(&self.initializing, || Ok(self.opts.emission.resolve()?))?)
     }
 
+    fn final_output_policy(&self) -> EngineResult<FinalOutputPolicy> {
+        Ok(FinalOutputPolicy::new(
+            self.resolved_emission_policy()?,
+            self.opts.infer_required,
+            self.opts.authoring,
+        ))
+    }
+
     #[cfg(all(feature = "bench-support", test))]
     pub(crate) fn benchmark_emission_policies(
         &self,
@@ -577,6 +657,33 @@ impl AnalysisSession {
             &input, policies, runs,
         ))
     }
+}
+
+fn prepare_policy_output(
+    override_paths: &[PathBuf],
+    options: &PolicyInputOptions,
+    request: EmitRequest,
+    generate: impl FnOnce() -> EngineResult<GeneratedSchema>,
+) -> EngineResult<(GeneratedSchema, PreparedEmitRequest)> {
+    let loaded = load_emit_request(override_paths, options, request)?;
+    let generated = generate()?;
+    let prepared = prepare_emit_request(loaded, options, &generated.schema)?;
+    Ok((generated, prepared))
+}
+
+fn apply_generated_output(
+    generated: GeneratedSchema,
+    prepared: PreparedEmitRequest,
+    chart_dir: &Path,
+    policy: FinalOutputPolicy,
+) -> EngineResult<Value> {
+    apply_schema_output_pipeline(
+        generated.schema,
+        &generated.definition_origins,
+        prepared,
+        chart_dir,
+        policy,
+    )
 }
 
 pub(crate) fn emit_input_channel_diagnostics(
@@ -634,3 +741,7 @@ fn primary_kubernetes_version(opts: &GenerateOptions) -> Option<String> {
     }
     Some(core)
 }
+
+#[cfg(test)]
+#[path = "tests/session_owned.rs"]
+mod tests;

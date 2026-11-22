@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use test_util::prelude::sim_assert_eq;
 
-use super::History;
+use super::{History, fingerprint};
 
 #[derive(Debug)]
 struct Counted {
@@ -104,10 +104,14 @@ fn joining_an_unchanged_history_does_not_compare_any_elements() {
         let history: History<_> = (0..length).collect();
         let branch = history.clone();
         let comparisons = Cell::new(0);
-        let joined = history.union_by(&branch, |left, right| {
-            comparisons.set(comparisons.get() + 1);
-            left == right
-        });
+        let joined = history.union_by_hashed(
+            &branch,
+            |left, right| {
+                comparisons.set(comparisons.get() + 1);
+                left == right
+            },
+            fingerprint,
+        );
         sim_assert_eq!(have: joined.iter().copied().collect::<Vec<_>>(), want: (0..length).collect::<Vec<_>>());
         sim_assert_eq!(have: comparisons.get(), want: 0);
     }
@@ -123,14 +127,72 @@ fn joined_suffixes_keep_prefix_order_and_compare_only_new_observations() {
         right.push(length + 1);
         right.push(length);
         let comparisons = Cell::new(0);
-        let joined = left.union_by(&right, |left, right| {
-            comparisons.set(comparisons.get() + 1);
-            left == right
-        });
+        let joined = left.union_by_hashed(
+            &right,
+            |left, right| {
+                comparisons.set(comparisons.get() + 1);
+                left == right
+            },
+            fingerprint,
+        );
         sim_assert_eq!(have: joined.iter().copied().collect::<Vec<_>>(), want: (0..length + 2).collect::<Vec<_>>());
         sim_assert_eq!(have: parent.iter().copied().collect::<Vec<_>>(), want: (0..length).collect::<Vec<_>>());
-        sim_assert_eq!(have: comparisons.get(), want: 2 * length + 2);
+        sim_assert_eq!(have: comparisons.get(), want: 1);
     }
+}
+
+#[test]
+fn disjoint_suffix_membership_does_not_rescan_the_inherited_history() {
+    let parent: History<_> = (0..4096_u64).collect();
+    let mut left = parent.clone();
+    left.push(4096);
+    let mut right = parent.clone();
+    for value in (4097..5121).rev() {
+        right.push(value);
+    }
+    right.push(4096);
+    right.push(5);
+    let mut expected = left.iter().copied().collect::<Vec<_>>();
+    let mut linear_comparisons = 0;
+    for value in right.iter().skip(parent.len()) {
+        if !expected.iter().any(|existing| {
+            linear_comparisons += 1;
+            existing == value
+        }) {
+            expected.push(*value);
+        }
+    }
+    let fingerprints = Cell::new(0);
+    let comparisons = Cell::new(0);
+    let joined = left.union_by_hashed(
+        &right,
+        |left, right| {
+            comparisons.set(comparisons.get() + 1);
+            left == right
+        },
+        |value| {
+            fingerprints.set(fingerprints.get() + 1);
+            *value
+        },
+    );
+    sim_assert_eq!(
+        have: joined.iter().copied().collect::<Vec<_>>(),
+        want: expected,
+    );
+    sim_assert_eq!(have: comparisons.get(), want: 2);
+    sim_assert_eq!(have: fingerprints.get(), want: 4097 + 1026);
+    assert!(linear_comparisons > 4_000_000);
+}
+
+#[test]
+fn fingerprints_only_select_collisions_for_exact_ordered_membership() {
+    let left: History<_> = [1, 2, 1].into_iter().collect();
+    let right: History<_> = [3, 2, 4, 3, 1, 5].into_iter().collect();
+    let joined = left.union_by_hashed(&right, PartialEq::eq, |_| 0);
+    sim_assert_eq!(
+        have: joined.iter().copied().collect::<Vec<_>>(),
+        want: vec![1, 2, 1, 3, 4, 5],
+    );
 }
 
 #[test]
@@ -140,13 +202,13 @@ fn new_observations_equal_to_the_prefix_keep_the_existing_set_policy() {
     let mut right = parent.clone();
     right.push(5);
     right.push(33);
-    let joined = left.union_by(&right, PartialEq::eq);
+    let joined = left.union_by_hashed(&right, PartialEq::eq, fingerprint);
     sim_assert_eq!(have: joined.iter().copied().collect::<Vec<_>>(), want: (0..34).collect::<Vec<_>>());
 
     let mut rewritten = parent.clone();
     if let Some(value) = rewritten.iter_mut().next() {
         *value = 34;
     }
-    let joined = joined.union_by(&rewritten, PartialEq::eq);
+    let joined = joined.union_by_hashed(&rewritten, PartialEq::eq, fingerprint);
     sim_assert_eq!(have: joined.iter().copied().collect::<Vec<_>>(), want: (0..35).collect::<Vec<_>>());
 }

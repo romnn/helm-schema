@@ -316,7 +316,7 @@ fn opaque_policy_preserves_unreplaced_object_and_list_item_lanes() -> eyre::Resu
             Vec::new(),
         );
         let mut opaque = entry;
-        opaque.opaque_consumption_guards = Some(vec![Vec::new()]);
+        opaque.opaque_consumption_guards = Some(vec![Vec::new().into()]);
         let observed_signals =
             ContractSchemaSignals::new(BTreeMap::from([(path, opaque)]), Vec::new());
         let values = helm_schema_gen::PreparedValuesDocuments::new(

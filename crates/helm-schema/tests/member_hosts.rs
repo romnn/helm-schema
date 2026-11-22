@@ -2080,6 +2080,17 @@ const REDIS_AUTH_ACL_ENABLED_ENCODED: &str = indoc! {r#"
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "auth": {}
+              },
+              "required": [
+                "auth"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
               "auth": {
                 "properties": {
@@ -2093,6 +2104,19 @@ const REDIS_AUTH_ACL_ENABLED_ENCODED: &str = indoc! {r#"
                   "acl"
                 ],
                 "type": "object"
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "auth": {
+                "enum": [
+                  null
+                ]
               }
             },
             "required": [
@@ -2147,37 +2171,6 @@ const REDIS_AUTH_ACL_ENABLED_ENCODED: &str = indoc! {r#"
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "auth": {}
-              },
-              "required": [
-                "auth"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "auth": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "properties": {
@@ -2231,6 +2224,31 @@ const MILVUS_NESTED_INCLUDE_ENCODED: &str = indoc! {r#"
   "allOf": [
     {
       "if": {
+        "properties": {
+          "dataCoordinator": {
+            "not": {
+              "enum": [
+                null
+              ]
+            }
+          }
+        },
+        "required": [
+          "dataCoordinator"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dataCoordinator": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -2243,26 +2261,6 @@ const MILVUS_NESTED_INCLUDE_ENCODED: &str = indoc! {r#"
               "type": "object"
             }
           },
-          {
-            "properties": {
-              "dataCoordinator": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "dataCoordinator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "not": {
               "properties": {
@@ -2302,35 +2300,23 @@ const MILVUS_NESTED_INCLUDE_ENCODED: &str = indoc! {r#"
               "dataCoordinator"
             ],
             "type": "object"
+          },
+          {
+            "properties": {
+              "dataCoordinator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "dataCoordinator"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "properties": {
-          "dataCoordinator": {
-            "not": {
-              "enum": [
-                null
-              ]
-            }
-          }
-        },
-        "required": [
-          "dataCoordinator"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dataCoordinator": {
-            "type": "object"
-          }
-        }
-      }
     }
   ],
   "properties": {
@@ -2522,9 +2508,7 @@ fn expected_range_members(
         .ok_or_eyre("expected object schema")?;
     let all_of = if guarded {
         let constraint = format!("constrains/{host}:t");
-        let choice = format!("when/{host}:t/then/any/else/fail");
         let constraint_ref = format!("#/definitions/{}", constraint.replace('/', "~1"));
-        let choice_ref = format!("#/definitions/{}", choice.replace('/', "~1"));
         object.insert(
             "definitions".to_owned(),
             json!({
@@ -2538,16 +2522,15 @@ fn expected_range_members(
                 (constraint): {
                     "properties": {host: {"$ref": "#/definitions/t"}},
                     "required": [host], "type": "object"
-                },
-                (choice): {"else": false, "if": {"$ref": constraint_ref}, "then": true}
+                }
             }),
         );
         json!([
-            {"if": {"$ref": choice_ref}, "then": {"allOf": [
+            {"if": {"$ref": constraint_ref}, "then": body},
+            {"if": {"$ref": constraint_ref}, "then": {"allOf": [
                 member_domain,
                 {"additionalProperties": {}, "properties": {host: {"type": ["array", "null", "object"]}}}
-            ]}},
-            {"if": {"$ref": constraint_ref}, "then": body}
+            ]}}
         ])
     } else if allows_nil {
         json!([body])

@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
-use super::{DecisionEdge, Frame, FrameBoundary, FrozenTest, Heap, LoopId, State, Value};
+use super::{
+    Consumption, DecisionEdge, Frame, FrameBoundary, FrozenTest, Heap, LoopId, State, Value,
+};
 
 pub(super) struct ContinuationJoin {
     pub(super) decision: Rc<FrozenTest>,
@@ -449,7 +451,11 @@ impl State {
             sites: super::history::History::default(),
             text_sites: super::history::History::default(),
             reads: yes_reads.union(no_reads),
-            consumptions: yes_consumptions.union_by(no_consumptions, |left, right| left == right),
+            consumptions: yes_consumptions.union_by_hashed(
+                no_consumptions,
+                PartialEq::eq,
+                Consumption::history_fingerprint,
+            ),
             calls: yes_calls.clone(),
             program: *yes_program,
             namespace: Rc::clone(yes_namespace),

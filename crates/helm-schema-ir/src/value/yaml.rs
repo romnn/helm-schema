@@ -661,17 +661,31 @@ impl OutputPlacement {
         if unknown != Predicate::False {
             build.unknown.push(unknown);
         }
+        // Each selected layout completes on an allowance of its own: one costly alternative
+        // widens itself to unknown, never the alternatives completed after it (ADR 0072 §10).
+        let mut cost = limit
+            .saturating_sub(build.remaining)
+            .saturating_add(limit.saturating_sub(build.lexical.remaining));
         for mut context in known {
             context.condition =
                 memo.normalize(Predicate::all(vec![condition.clone(), context.condition]));
             if context.condition != Predicate::False {
+                build.remaining = limit;
+                build.lexical = LexicalTransfers::new(input_paths, input_objects);
+                build.lexical.remaining = limit;
                 build.finish_layout(context);
+                if build.remaining == 0 || build.lexical.remaining == 0 {
+                    let _bound = tracing::debug_span!(
+                        target: "helm_schema_ir::counters", "layout_completion_bound"
+                    )
+                    .entered();
+                }
+                cost = cost
+                    .saturating_add(limit.saturating_sub(build.remaining))
+                    .saturating_add(limit.saturating_sub(build.lexical.remaining));
             }
         }
         build.markers.incomplete |= !build.unknown.is_empty();
-        let cost = limit
-            .saturating_sub(build.remaining)
-            .saturating_add(limit.saturating_sub(build.lexical.remaining));
         *remaining = remaining.saturating_sub(cost);
         Self {
             layouts: build.layouts,
@@ -867,8 +881,9 @@ impl FilePlacement {
         let mut failures = Vec::new();
         let mut survivors = Vec::new();
         for exit in exits {
-            // Placements are claimed under the exported path; which documents abort depends
-            // on every survived check before the abort too.
+            // Placements are claimed under the exported path. A failure needs no earlier
+            // survival either: a document that failed an earlier check fails anyway, at that
+            // check's own exit.
             let claim = exit.state.path_predicate();
             let condition = exit.state.whole_path_predicate();
             let memo = &exit.state.heap.arena.predicate_memo;
@@ -891,10 +906,10 @@ impl FilePlacement {
             };
             if super::output::exit_may_continue(exit) {
                 let invalid = placement.invalid(memo);
-                failures.push(Predicate::all(vec![condition.clone(), invalid.clone()]));
+                failures.push(Predicate::all(vec![claim, invalid.clone()]));
                 survivors.push(Predicate::all(vec![condition, invalid.negated()]));
             } else {
-                failures.push(condition);
+                failures.push(claim);
             }
             outputs.push(placement);
         }
@@ -4735,6 +4750,12 @@ impl super::DocumentExecution {
             &exit.state.heap.arena.input_objects.borrow(),
             remaining,
         );
-        (*remaining != 0).then_some(placement)
+        if *remaining == 0 {
+            let _bound = tracing::debug_span!(
+                target: "helm_schema_ir::counters", "capture_placement_bound"
+            )
+            .entered();
+        }
+        Some(placement)
     }
 }

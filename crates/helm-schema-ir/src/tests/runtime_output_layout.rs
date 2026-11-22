@@ -743,3 +743,47 @@ fn lexical_transfers_keep_every_cached_key_alive() -> eyre::Result<()> {
     );
     Ok(())
 }
+
+/// Spending the capture's aggregate allowance cannot discard an already completed layout.
+#[test]
+fn capture_placement_keeps_layouts_completed_at_the_budget_boundary() -> eyre::Result<()> {
+    use color_eyre::eyre::OptionExt as _;
+    let mut state = State::new(Value::nil());
+    state.output.bytes(indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: law
+    "});
+    let graph = Rc::new(state.output.clone());
+    let execution = crate::value::DocumentExecution::new(
+        crate::value::eval::normal(state.clone(), Value::nil()),
+        crate::value::FileOutput::Manifest,
+    );
+    let fuel = (1..256)
+        .find(|fuel| {
+            let mut remaining = *fuel;
+            let placement = OutputPlacement::bounded(
+                super::PlacementSource {
+                    graph: &graph,
+                    condition: &Predicate::True,
+                },
+                &state.heap.arena.predicate_memo,
+                crate::value::FileOutput::Manifest,
+                &mut super::SyntaxContexts::default(),
+                &state.heap.arena.input_paths.borrow(),
+                &state.heap.arena.input_objects.borrow(),
+                &mut remaining,
+            );
+            remaining == 0 && !placement.layouts.is_empty()
+        })
+        .ok_or_eyre("no completed layout at the allowance boundary")?;
+    let mut remaining = fuel;
+    let placement = execution
+        .place_capture(&graph, &Predicate::True, &mut remaining)
+        .ok_or_eyre("completed capture was discarded")?;
+    sim_assert_eq!(have: placement.layouts.len(), want: 1);
+    sim_assert_eq!(have: placement.unknown, want: Predicate::False);
+    sim_assert_eq!(have: remaining, want: 0);
+    Ok(())
+}

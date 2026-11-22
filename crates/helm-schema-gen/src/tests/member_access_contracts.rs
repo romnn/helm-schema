@@ -210,7 +210,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() -> eyre::Res
         "if": {"allOf": [receiver_absent, {"$ref": "#/definitions/helm-condition-3"}]},
         "then": false,
     }]);
-    sim_assert_eq!(have: &schema, want: &expected);
+    sim_assert_eq!(have: super::rejection_encoding::canonical(&schema), want: super::rejection_encoding::canonical(&expected));
     Ok(())
 }
 
@@ -1976,7 +1976,8 @@ fn declared_shape_does_not_own_a_guarded_member_host_base() {
         requirement_implications: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                 path: helm_schema_core::ValuesPath::parse("spark.enabled"),
-            }],
+            }]
+            .into(),
             target: helm_schema_core::ContractRequirementTarget::Value,
             requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
                 handled_kinds: Vec::new(),
@@ -2039,10 +2040,12 @@ fn declared_shape_does_not_own_a_guarded_member_host_base() {
 }
 
 /// A complete arm owns the base only when every access site belongs to the
-/// exact domain. A second partial site means the unresolved states still
-/// need the declared fallback shape even though the exact arm remains useful.
+/// exact domain. A second partial site still needs the declared fallback shape
+/// where it may run, under its own guard, while the exact arm remains useful.
+/// Where neither arm runs, no consumer reads the host (step 6a1: the base holds
+/// under the arms' guards, never beside them).
 #[test]
-fn partial_member_host_domain_preserves_the_declared_base() {
+fn partial_member_host_domain_preserves_the_declared_base_under_its_guard() {
     let host_path = helm_schema_core::ContractPathSchemaEvidence {
         is_referenced_value_path: true,
         facts: ContractValuePathFacts {
@@ -2053,7 +2056,8 @@ fn partial_member_host_domain_preserves_the_declared_base() {
             helm_schema_core::ContractRequirementImplication {
                 outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                     path: helm_schema_core::ValuesPath::parse("exact"),
-                }],
+                }]
+                .into(),
                 target: helm_schema_core::ContractRequirementTarget::Value,
                 requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
                     handled_kinds: Vec::new(),
@@ -2063,7 +2067,8 @@ fn partial_member_host_domain_preserves_the_declared_base() {
             helm_schema_core::ContractRequirementImplication {
                 outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                     path: helm_schema_core::ValuesPath::parse("partial"),
-                }],
+                }]
+                .into(),
                 target: helm_schema_core::ContractRequirementTarget::Value,
                 requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
                     handled_kinds: Vec::new(),
@@ -2108,11 +2113,22 @@ fn partial_member_host_domain_preserves_the_declared_base() {
             &schema,
             &serde_json::json!({
                 "exact": false,
+                "partial": true,
+                "host": "outside the known arms",
+            }),
+        ),
+        "an incomplete access domain must retain the declared host shape where it runs: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "exact": false,
                 "partial": false,
                 "host": "outside the known arms",
             }),
         ),
-        "an incomplete access domain must retain the declared host shape: {schema}"
+        "no arm reads the host where neither runs: {schema}"
     );
     assert!(
         schema_accepts_instance(
@@ -2240,4 +2256,73 @@ fn inline_definition_does_not_hide_later_nested_helper_effects() {
             "instance={instance}; schema={schema}",
         );
     }
+}
+
+/// Projection completeness cannot add a declared-base conjunct to an otherwise identical arm.
+#[test]
+fn an_incomplete_projection_withholds_the_base_instead_of_narrowing_its_arm() {
+    use helm_schema_core::{
+        ConditionalGuard, ContractPathSchemaEvidence, ContractRequirementImplication,
+        ContractRequirementTarget, FailValueRequirement, ValuesPath,
+    };
+    let schema = |complete_domain| {
+        let evidence = ContractPathSchemaEvidence {
+            is_referenced_value_path: true,
+            facts: ContractValuePathFacts {
+                has_non_control_use: true,
+                ..ContractValuePathFacts::default()
+            },
+            requirement_implications: vec![ContractRequirementImplication::new(
+                vec![ConditionalGuard::Truthy {
+                    path: ValuesPath::parse("p"),
+                }],
+                ContractRequirementTarget::Value,
+                vec![FailValueRequirement::MemberHost {
+                    handled_kinds: Vec::new(),
+                    complete_domain,
+                }],
+            )],
+            ..ContractPathSchemaEvidence::default()
+        };
+        schema_for_values_yaml(
+            ContractSchemaSignals::new(
+                BTreeMap::from([
+                    (ValuesPath::parse("host"), evidence),
+                    (
+                        ValuesPath::parse("p"),
+                        ContractPathSchemaEvidence {
+                            is_referenced_value_path: true,
+                            ..ContractPathSchemaEvidence::default()
+                        },
+                    ),
+                ]),
+                Vec::new(),
+            ),
+            Some(indoc! {"
+                host:
+                  - sample
+            "}),
+        )
+    };
+    let exact = schema(true);
+    let incomplete = schema(false);
+    assert!(
+        schema_accepts_instance(&exact, &serde_json::json!({"p": true, "host": {"leaf": 7}})),
+        "{exact}"
+    );
+    assert!(
+        !schema_accepts_instance(&exact, &serde_json::json!({"p": true, "host": 7})),
+        "{exact}"
+    );
+    for p in [true, false] {
+        for host in [
+            serde_json::json!({"leaf": 7}),
+            serde_json::json!({"leaf": "ok"}),
+            serde_json::json!(7),
+        ] {
+            let document = serde_json::json!({"p": p, "host": host});
+            sim_assert_eq!(have: schema_accepts_instance(&incomplete, &document), want: schema_accepts_instance(&exact, &document));
+        }
+    }
+    sim_assert_eq!(have: incomplete, want: exact);
 }

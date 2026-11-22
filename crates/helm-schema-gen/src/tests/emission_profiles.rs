@@ -9,6 +9,471 @@ use color_eyre::eyre;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
+fn requirement_implication_schema(
+    guard_rows: Vec<Vec<helm_schema_core::ConditionalGuard>>,
+    typed_base: bool,
+) -> Value {
+    use helm_schema_core::{
+        ContractPathSchemaEvidence, ContractRequirementImplication, ContractRequirementTarget,
+        FailValueRequirement, ValuesPath,
+    };
+    let evidence = ContractPathSchemaEvidence {
+        is_referenced_value_path: true,
+        type_hints: if typed_base {
+            BTreeSet::from(["string".to_owned()])
+        } else {
+            BTreeSet::new()
+        },
+        requirement_implications: guard_rows
+            .into_iter()
+            .map(|guards| ContractRequirementImplication {
+                outer_guards: guards.into(),
+                target: ContractRequirementTarget::Value,
+                requirements: vec![FailValueRequirement::SchemaType("string".to_owned())],
+            })
+            .collect(),
+        ..ContractPathSchemaEvidence::default()
+    };
+    let signals = ContractSchemaSignals::new(
+        BTreeMap::from([(ValuesPath::parse("target"), evidence)]),
+        Vec::new(),
+    );
+    generate_values_schema(
+        ValuesSchemaInput::new(&signals, &NoopProvider).with_authoring_policy(
+            crate::AuthoringPolicy {
+                root: crate::RootPolicy::Open,
+                ..Default::default()
+            },
+        ),
+    )
+}
+
+#[test]
+fn long_requirement_disjunction_is_shallow_on_a_two_mib_stack() -> eyre::Result<()> {
+    use helm_schema_core::{ConditionalGuard, RequirementConditionBuilder, ValuesPath};
+    use serde_json::json;
+
+    const ALTERNATIVES: i64 = 2_049;
+    const MAX_CONDITION_DEPTH: usize = 16;
+
+    let mut graph = RequirementConditionBuilder::default();
+    let mut root = RequirementConditionBuilder::FALSE;
+    for value in 0..ALTERNATIVES {
+        let leaf = graph.guard(ConditionalGuard::Eq {
+            path: ValuesPath::parse("choice"),
+            value: GuardValue::Int(value),
+        });
+        root = graph.or([root, leaf]);
+    }
+    let schema = requirement_implication_schema(
+        vec![vec![ConditionalGuard::Requirement(
+            graph.freeze().root(root, true),
+        )]],
+        false,
+    );
+    let mut depth = 0;
+    let mut pending = vec![(&schema, 0)];
+    while let Some((node, level)) = pending.pop() {
+        depth = depth.max(level);
+        if let Some(reference) = node.get("$ref").and_then(Value::as_str) {
+            let target = schema
+                .pointer(reference.trim_start_matches('#'))
+                .ok_or_else(|| eyre::eyre!("missing target {reference}"))?;
+            pending.push((target, level + 1));
+        }
+        match node {
+            Value::Object(fields) => pending.extend(
+                fields
+                    .iter()
+                    .filter(|(key, _)| *key != "definitions")
+                    .map(|(_, child)| (child, level + 1)),
+            ),
+            Value::Array(items) => pending.extend(items.iter().map(|item| (item, level + 1))),
+            _ => {}
+        }
+    }
+    assert!(
+        depth <= MAX_CONDITION_DEPTH,
+        "condition depth {depth} exceeds {MAX_CONDITION_DEPTH}"
+    );
+    std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(move || -> eyre::Result<()> {
+            let validator = jsonschema::validator_for(&schema)?;
+            for (values, accepts) in [
+                (json!({"choice": 0, "target": false}), false),
+                (json!({"choice": ALTERNATIVES - 1, "target": false}), false),
+                (json!({"choice": ALTERNATIVES, "target": false}), true),
+                (json!({"choice": 0, "target": "valid"}), true),
+                (json!({"target": false}), true),
+            ] {
+                sim_assert_eq!(have: validator.is_valid(&values), want: accepts);
+            }
+            Ok(())
+        })?
+        .join()
+        .map_err(|_| eyre::eyre!("condition validator worker panicked"))?
+}
+
+#[test]
+fn requirement_junctions_flatten_without_copying_shared_nodes() -> eyre::Result<()> {
+    use color_eyre::eyre::OptionExt as _;
+    use helm_schema_core::{ConditionalGuard, RequirementConditionBuilder, ValuesPath};
+    use serde_json::json;
+
+    let flag = |name| ConditionalGuard::Eq {
+        path: ValuesPath::parse(name),
+        value: GuardValue::Bool(true),
+    };
+    let mut graph = RequirementConditionBuilder::default();
+    let [
+        shared_first,
+        shared_second,
+        extra_first,
+        extra_second,
+        required_first,
+        required_second,
+        required_third,
+    ] = ["a", "b", "c", "d", "e", "f", "g"].map(|name| graph.guard(flag(name)));
+    let shared = graph.or([shared_first, shared_second]);
+    let prefix = graph.or([shared, extra_first]);
+    let left = graph.or([prefix, extra_second]);
+    let pair = graph.and([required_first, required_second]);
+    let conjunction = graph.and([pair, required_third]);
+    let right = graph.or([shared, conjunction]);
+    let root = graph.decision(flag("choose"), left, right);
+    let schema = requirement_implication_schema(
+        vec![vec![ConditionalGuard::Requirement(
+            graph.freeze().root(root, true),
+        )]],
+        false,
+    );
+    let validator = jsonschema::validator_for(&schema)?;
+    for flags in 0_u16..256 {
+        let [
+            shared_first,
+            shared_second,
+            extra_first,
+            extra_second,
+            required_first,
+            required_second,
+            required_third,
+            choose,
+        ] = std::array::from_fn(|index| flags & (1 << index) != 0);
+        let active = if choose {
+            shared_first || shared_second || extra_first || extra_second
+        } else {
+            shared_first || shared_second || (required_first && required_second && required_third)
+        };
+        let mut values = json!({
+            "a": shared_first, "b": shared_second, "c": extra_first, "d": extra_second,
+            "e": required_first, "f": required_second, "g": required_third, "choose": choose,
+        });
+        for (target, valid) in [(json!(false), false), (json!("valid"), true)] {
+            values["target"] = target;
+            sim_assert_eq!(have: validator.is_valid(&values), want: !active || valid);
+        }
+    }
+
+    let definitions = schema["definitions"]
+        .as_object()
+        .ok_or_eyre("missing condition definitions")?;
+    let decision = definitions
+        .values()
+        .find(|definition| definition.get("else").is_some())
+        .ok_or_eyre("missing condition decision")?;
+    let resolve = |reference: &Value| {
+        let pointer = reference["$ref"].as_str()?.strip_prefix('#')?;
+        schema.pointer(pointer)
+    };
+    let left = resolve(&decision["then"]).ok_or_eyre("missing left branch")?;
+    let right = resolve(&decision["else"]).ok_or_eyre("missing right branch")?;
+    let left = left["anyOf"]
+        .as_array()
+        .ok_or_eyre("left branch is not a disjunction")?;
+    let right = right["anyOf"]
+        .as_array()
+        .ok_or_eyre("right branch is not a disjunction")?;
+    sim_assert_eq!(have: left.len(), want: 3);
+    sim_assert_eq!(have: right.len(), want: 2);
+    let shared = right
+        .iter()
+        .find(|reference| resolve(reference).is_some_and(|body| body.get("anyOf").is_some()))
+        .ok_or_eyre("right branch does not reference the shared disjunction")?;
+    assert!(left.contains(shared));
+    let conjunction = right
+        .iter()
+        .filter_map(resolve)
+        .find_map(|body| body["allOf"].as_array())
+        .ok_or_eyre("missing right branch conjunction")?;
+    sim_assert_eq!(have: conjunction.len(), want: 3);
+    Ok(())
+}
+
+#[test]
+fn requirement_support_abstention_keeps_a_supported_sibling_arm() -> eyre::Result<()> {
+    use helm_schema_core::{ConditionalGuard, RequirementConditionBuilder, ValuesPath};
+    use serde_json::json;
+
+    let supported = ConditionalGuard::Eq {
+        path: ValuesPath::parse("enabled"),
+        value: GuardValue::Bool(true),
+    };
+    let mut graph = RequirementConditionBuilder::default();
+    let known = graph.guard(supported.clone());
+    let unsupported = graph.guard(ConditionalGuard::Truthy {
+        path: ValuesPath::parse("unresolved"),
+    });
+    let root = graph.union([known, unsupported]);
+    let schema = requirement_implication_schema(
+        vec![vec![ConditionalGuard::Requirement(
+            graph.freeze().root(root, true),
+        )]],
+        false,
+    );
+    let expected = requirement_implication_schema(vec![vec![supported]], false);
+    sim_assert_eq!(have: &schema, want: &expected);
+    let validator = jsonschema::validator_for(&schema)?;
+    sim_assert_eq!(have: validator.is_valid(&json!({"enabled":true,"target":false})), want: false);
+    sim_assert_eq!(have: validator.is_valid(&json!({"unresolved":true,"target":false})), want: true);
+    Ok(())
+}
+
+#[test]
+fn requirement_guarded_owner_keeps_a_dormant_target_open() -> eyre::Result<()> {
+    use helm_schema_core::{ConditionalGuard, RequirementConditionBuilder, ValuesPath};
+    use serde_json::json;
+
+    let self_truthy = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("target"),
+    };
+    let enabled = ConditionalGuard::Eq {
+        path: ValuesPath::parse("enabled"),
+        value: GuardValue::Bool(true),
+    };
+    let mut graph = RequirementConditionBuilder::default();
+    let local = graph.guard(self_truthy.clone());
+    let external = graph.guard(enabled.clone());
+    let root = graph.union([local, external]);
+    let schema = requirement_implication_schema(
+        vec![vec![ConditionalGuard::Requirement(
+            graph.freeze().root(root, true),
+        )]],
+        true,
+    );
+    let mut expected = requirement_implication_schema(vec![vec![self_truthy], vec![enabled]], true);
+    expected["allOf"][0]["if"] = json!({"$ref":"#/definitions/helm-condition-0"});
+    expected["definitions"]["helm-condition-0"] = json!({"anyOf":[
+        {"type":"object","properties":{"target":{"$ref":"#/definitions/t"}},"required":["target"]},
+        {"type":"object","properties":{"enabled":{"enum":[true]}},"required":["enabled"]},
+    ]});
+    sim_assert_eq!(have: &schema, want: &expected);
+    let validator = jsonschema::validator_for(&schema)?;
+    sim_assert_eq!(have: validator.is_valid(&json!({"enabled":false,"target":false})), want: true);
+    sim_assert_eq!(have: validator.is_valid(&json!({"enabled":true,"target":false})), want: false);
+    Ok(())
+}
+
+#[test]
+fn requirement_split_keeps_guarded_runtime_defaults_with_equal_successors() -> eyre::Result<()> {
+    use color_eyre::eyre::OptionExt as _;
+    use helm_schema_core::{
+        ConditionalGuard, ContractSchemaSignals, Guard, GuardedValuesDefaultSource, Predicate,
+        RequirementAtom, RequirementBdd, RequirementConditionBuilder, ValuesDefaultSource,
+        ValuesPath,
+    };
+    use serde_json::json;
+
+    let enabled = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("enabled"),
+    };
+    let atoms = [RequirementAtom::Value(Guard::Truthy {
+        path: ValuesPath::parse("enabled"),
+    })];
+    let predicate = Predicate::truthy_path("enabled");
+    let mut work = RequirementBdd::WORK_BUDGET;
+    let mut test = RequirementBdd::new(&atoms, &mut work).ok_or_eyre("split test inventory")?;
+    let test_root = test
+        .predicate(&predicate)
+        .ok_or_eyre("split test predicate")?;
+    let test = test.finish(test_root).ok_or_eyre("exact split test")?;
+    let mut graph = RequirementConditionBuilder::default();
+    let split = graph.split(
+        test,
+        RequirementConditionBuilder::TRUE,
+        RequirementConditionBuilder::TRUE,
+    );
+    let signals = ContractSchemaSignals::new(
+        BTreeMap::new(),
+        vec![vec![
+            ConditionalGuard::Requirement(graph.freeze().root(split, true)),
+            ConditionalGuard::Absent {
+                path: ValuesPath::parse("cfg"),
+            },
+        ]],
+    )
+    .with_guarded_values_default_sources([GuardedValuesDefaultSource {
+        outer_guards: vec![enabled],
+        source: ValuesDefaultSource {
+            target_path: ValuesPath::default(),
+            source_path: ValuesPath::parse("defaults"),
+        },
+    }]);
+    let documents = crate::PreparedValuesDocuments::new(
+        serde_yaml::to_value(json!({"enabled":true,"defaults":{"cfg":"ok"}}))?,
+        serde_yaml::Value::Null,
+    );
+    let authoring = crate::AuthoringPolicy {
+        root: crate::RootPolicy::Open,
+        ..Default::default()
+    };
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &NoopProvider)
+            .with_values_documents(&documents)
+            .with_authoring_policy(authoring),
+    );
+    let no_requirements = ContractSchemaSignals::default();
+    let mut expected = generate_values_schema(
+        ValuesSchemaInput::new(&no_requirements, &NoopProvider)
+            .with_values_documents(&documents)
+            .with_authoring_policy(authoring),
+    );
+    let enabled = json!({"type":"object","properties":{"enabled":{"$ref":"#/definitions/t"}},"required":["enabled"]});
+    let test = json!({"$ref":"#/definitions/helm-condition-0"});
+    let high = json!({"$ref":"#/definitions/helm-condition-1"});
+    let low = json!({"$ref":"#/definitions/helm-condition-2"});
+    expected["definitions"] = json!({
+        "t": crate::condition_encoding::helm_truthy_definition_schema(),
+        "helm-condition-0": {"if":enabled,"then":true,"else":false},
+        "helm-condition-1": {"if":test,"then":true,"else":false},
+        "helm-condition-2": {"if":test,"then":false,"else":true},
+    });
+    let cfg_supplied =
+        json!({"type":"object","properties":{"cfg":{"not":{"enum":[null]}}},"required":["cfg"]});
+    let cfg_absent = json!({"not":{"type":"object","properties":{"cfg":{}},"required":["cfg"]}});
+    let cfg_null = json!({"type":"object","properties":{"cfg":{"enum":[null]}},"required":["cfg"]});
+    expected["allOf"] = json!([
+        {"if":{"allOf":[high,{"not":cfg_supplied},{"not":{
+            "type":"object","properties":{"defaults":cfg_supplied},"required":["defaults"]
+        }}]},"then":false},
+        {"if":{"anyOf":[
+            {"allOf":[cfg_null,high]},
+            {"allOf":[{"anyOf":[cfg_absent,cfg_null]},low]},
+        ]},"then":false},
+    ]);
+    sim_assert_eq!(have: &schema, want: &expected);
+    let validator = jsonschema::validator_for(&schema)?;
+    for (values, accepts) in [
+        (json!({"enabled":true,"defaults":{"cfg":"ok"}}), true),
+        (json!({"enabled":false,"defaults":{"cfg":"ok"}}), false),
+        (json!({"enabled":true,"defaults":{}}), false),
+        (
+            json!({"enabled":false,"defaults":{},"cfg":"explicit"}),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&values), want: accepts);
+    }
+    Ok(())
+}
+
+#[test]
+fn requirement_alternative_rejected_only_by_lint_keeps_its_own_disposition() -> eyre::Result<()> {
+    use helm_schema_core::{
+        ConditionalGuard, ContractSchemaSignals, RequirementConditionBuilder, ValuesPath,
+    };
+    use serde_json::json;
+
+    let mut graph = RequirementConditionBuilder::default();
+    let split = graph.split(
+        ConditionalGuard::Truthy {
+            path: ValuesPath::parse("flag"),
+        },
+        RequirementConditionBuilder::TRUE,
+        RequirementConditionBuilder::TRUE,
+    );
+    let signals = ContractSchemaSignals::new(
+        BTreeMap::new(),
+        vec![vec![
+            ConditionalGuard::Truthy {
+                path: ValuesPath::parse("check"),
+            },
+            ConditionalGuard::Requirement(graph.freeze().root(split, true)),
+        ]],
+    );
+    let coalesced = json!({"flag":false,"check":true});
+    let raw = json!({"flag":true,"check":true});
+    let documents = crate::PreparedValuesDocuments::new(
+        serde_yaml::to_value(&coalesced)?,
+        serde_yaml::Value::Null,
+    )
+    .with_uncoalesced_root(serde_yaml::to_value(&raw)?);
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &NoopProvider).with_values_documents(&documents),
+    );
+    let no_requirements = ContractSchemaSignals::default();
+    let mut expected = generate_values_schema(
+        ValuesSchemaInput::new(&no_requirements, &NoopProvider).with_values_documents(&documents),
+    );
+    expected["definitions"] = json!({
+        "t": crate::condition_encoding::helm_truthy_definition_schema(),
+        "helm-condition-2": {
+            "if":{"type":"object","properties":{"flag":{"$ref":"#/definitions/t"}},"required":["flag"]},
+            "then":false,
+            "else":true,
+        },
+    });
+    expected["allOf"] = json!([{"if":{"allOf":[
+        {"type":"object","properties":{"check":{"$ref":"#/definitions/t"}},"required":["check"]},
+        {"$ref":"#/definitions/helm-condition-2"},
+    ]},"then":false}]);
+    sim_assert_eq!(have: &schema, want: &expected);
+    let validator = jsonschema::validator_for(&schema)?;
+    sim_assert_eq!(have: validator.is_valid(&raw), want: true);
+    sim_assert_eq!(have: validator.is_valid(&coalesced), want: false);
+    sim_assert_eq!(have: validator.is_valid(&json!({"flag":false,"check":false})), want: true);
+    Ok(())
+}
+
+/// Projection copies share immutable guard storage.
+#[test]
+fn projection_clones_share_immutable_guard_scope_storage() {
+    use crate::emission_policy::GuardScopes;
+    let scope = GuardScopes::new(
+        (0..128)
+            .map(|index| helm_schema_core::ConditionalGuard::Truthy {
+                path: helm_schema_core::ValuesPath::parse(&format!("guard{index}")),
+            })
+            .collect::<Vec<_>>(),
+        Vec::new(),
+    );
+    let copy = scope.clone();
+    sim_assert_eq!(have: &copy, want: &scope);
+    sim_assert_eq!(have: scope.outer.len(), want: 128);
+    sim_assert_eq!(have: scope.outer.first().map(std::ptr::from_ref), want: copy.outer.first().map(std::ptr::from_ref));
+}
+
+#[test]
+fn canonical_signal_scopes_share_their_rows_and_normalization_stays_local() {
+    use crate::emission_policy::GuardScopes;
+    use helm_schema_core::{ConditionalGuard, GuardConjunction, ValuesPath};
+    let first = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("a"),
+    };
+    let second = ConditionalGuard::Truthy {
+        path: ValuesPath::parse("b"),
+    };
+    let canonical = vec![first.clone(), second.clone()];
+    let canonical_row = GuardConjunction::from(canonical.clone()).canonicalized();
+    let shared = GuardScopes::new(canonical_row.clone(), Vec::new());
+    sim_assert_eq!(have: shared.outer.first().map(std::ptr::from_ref), want: canonical_row.first().map(std::ptr::from_ref));
+    let source = GuardConjunction::from(vec![second.clone(), first.clone(), second.clone()]);
+    let normalized = GuardScopes::new(source.clone(), Vec::new());
+    sim_assert_eq!(have: normalized.outer.to_vec(), want: canonical);
+    sim_assert_eq!(have: source.to_vec(), want: vec![second.clone(), first, second]);
+    sim_assert_eq!(have: normalized, want: shared);
+}
+
 #[test]
 fn lean_profile_keeps_local_conditionals_and_omits_document_level_conditionals() {
     let source = indoc! {r#"

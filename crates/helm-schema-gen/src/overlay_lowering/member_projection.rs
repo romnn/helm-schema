@@ -547,7 +547,7 @@ pub(super) fn member_implication_covers_range_domain(
 ) -> bool {
     implications.iter().any(|implication| {
         use helm_schema_core::ContractRequirementTarget;
-        if implication.outer_guards != guards {
+        if !implication.outer_guards.iter().eq(guards.iter()) {
             return false;
         }
         match &implication.target {
@@ -577,30 +577,6 @@ pub(super) fn member_implication_covers_range_domain(
             } => false,
         }
     })
-}
-
-pub(super) fn implication_has_self_truthy_guard(
-    implication: &helm_schema_core::ContractRequirementImplication,
-    target_value_path: &helm_schema_core::ValuesPath,
-) -> bool {
-    implication
-        .outer_guards
-        .iter()
-        .any(|guard| guard.is_self_truthy_for(target_value_path))
-}
-
-/// Whether an outer guard scopes the arm to the target's own strict
-/// PRESENCE — `¬Absent(target)` or a `HasKey` naming the target as its
-/// parent's member. Such arms fire only where the value exists, so the
-/// base must keep its independent resolution.
-pub(super) fn implication_has_self_presence_guard(
-    implication: &helm_schema_core::ContractRequirementImplication,
-    target_value_path: &helm_schema_core::ValuesPath,
-) -> bool {
-    implication
-        .outer_guards
-        .iter()
-        .any(|guard| guard.is_self_presence_for(target_value_path))
 }
 
 /// Whether the structural schema's runtime types contain the types a

@@ -2,19 +2,26 @@
 
 use std::borrow::Cow;
 use std::cell::{OnceCell, RefCell};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::rc::Rc;
+use std::sync::Arc;
 
-use helm_schema_core::{ConditionalGuard, Segment, ValuesPath};
+use helm_schema_core::{
+    ConditionalGuard, GuardConjunction, GuardPrefix, RequirementCondition,
+    RequirementConditionBuilder, RequirementConditionNode, RequirementDecision, Segment,
+    ValuesPath,
+};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
 use crate::condition_encoding::{
-    AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, evaluate_guard_set_on_values,
-    input_path_present_condition,
+    AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, EncodedConditionPlan,
+    EncodedConjunction, evaluate_guard_set_on_values, input_path_present_condition,
 };
 use crate::emission_report::{LintDocument, LintOutcome, LintWithdrawal};
 use crate::lint_validators::{ConstraintValidator, LintValidators};
 use crate::schema_node::SchemaNode;
+use crate::terminal_conditions::{ProofGuardRole, RequirementPartition, partition_requirement};
 
 /// How a constraint encodes its guards, so the lint projection is encoded
 /// alike.
@@ -25,10 +32,189 @@ pub(crate) struct GuardEncoding<'a> {
     pub(crate) polarity: ConditionPolarity,
 }
 
+struct FloorPrefixFacts {
+    prefix: GuardPrefix,
+    held_prefix: GuardPrefix,
+    table_paths: BTreeSet<ValuesPath>,
+    anchored_bases: RefCell<BTreeMap<ValuesPath, Rc<Value>>>,
+    dependency_boundaries: RefCell<BTreeMap<DependencyBoundaryKey, BTreeSet<ValuesPath>>>,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct DependencyBoundaryKey {
+    anchor: ValuesPath,
+    roots: BTreeSet<Vec<String>>,
+}
+
+#[derive(Default)]
+struct FloorOverrideCache {
+    bases: BTreeMap<BTreeSet<ValuesPath>, Rc<Value>>,
+    created_bases: usize,
+    hits: usize,
+    shared_path_hits: usize,
+    extra_full_clones: usize,
+}
+
 /// A condition whose successful or failed compilation is shared by one fact's checks.
+enum LintCondition {
+    Flat(Value),
+    Planned(EncodedConjunction),
+}
+
+impl LintCondition {
+    fn matches(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Flat(left), Self::Flat(right)) => left == right,
+            (Self::Planned(left), Self::Planned(right)) => left.legacy_eq(right),
+            (Self::Flat(value), Self::Planned(plan)) | (Self::Planned(plan), Self::Flat(value)) => {
+                *value == plan.flat_schema().into_value()
+            }
+        }
+    }
+}
+
 struct LintConstraint {
-    condition: Value,
+    condition: LintCondition,
     validator: OnceCell<Option<ConstraintValidator>>,
+}
+
+#[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct LintGuardPaths {
+    override_tables: BTreeSet<ValuesPath>,
+}
+
+impl LintGuardPaths {
+    pub(crate) fn join(&self, other: &Self) -> Self {
+        if self == other {
+            return self.clone();
+        }
+        Self {
+            override_tables: union(&self.override_tables, &other.override_tables),
+        }
+    }
+}
+
+fn union(left: &BTreeSet<ValuesPath>, right: &BTreeSet<ValuesPath>) -> BTreeSet<ValuesPath> {
+    left.union(right).cloned().collect()
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum LintProofDocument {
+    Raw,
+    Coalesced,
+    Floor,
+    CreatedFloor,
+    ProjectedCoalesced,
+}
+
+impl LintProofDocument {
+    fn projects_guards(self) -> bool {
+        matches!(
+            self,
+            Self::Floor | Self::CreatedFloor | Self::ProjectedCoalesced
+        )
+    }
+}
+
+struct LintProofInstance<'a> {
+    document: LintProofDocument,
+    value: &'a Value,
+}
+
+#[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+struct LintProofVerdict {
+    disabled: BTreeSet<usize>,
+    raw_uncompiled: bool,
+    projection_uncompiled: bool,
+}
+
+#[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+struct LintDecidingContext {
+    boundaries: BTreeSet<ValuesPath>,
+    paths: BTreeSet<ValuesPath>,
+    absence_tests: BTreeSet<ValuesPath>,
+}
+
+impl LintDecidingContext {
+    fn join(&self, other: &Self) -> Self {
+        if self == other {
+            return self.clone();
+        }
+        Self {
+            boundaries: union(&self.boundaries, &other.boundaries),
+            paths: union(&self.paths, &other.paths),
+            absence_tests: union(&self.absence_tests, &other.absence_tests),
+        }
+    }
+}
+
+struct FailingLintProofDocuments<'a> {
+    raw: Option<&'a Value>,
+    floor: Vec<&'a Value>,
+    dependency_boundaries: &'a BTreeSet<Vec<String>>,
+}
+
+struct LintProofConstraint<'a> {
+    ancestor: &'a [String],
+    anchor: &'a ValuesPath,
+    graph: &'a RequirementCondition,
+    extra_guards: Vec<&'a ConditionalGuard>,
+    then_value: &'a Value,
+}
+
+#[derive(Default)]
+struct LintProofEmissions {
+    kept: Vec<LintRequirement>,
+    withdrawals: Vec<LintWithdrawal>,
+}
+
+impl LintProofVerdict {
+    fn join(&self, other: &Self) -> Self {
+        if self == other {
+            return self.clone();
+        }
+        Self {
+            disabled: self.disabled.union(&other.disabled).copied().collect(),
+            raw_uncompiled: self.raw_uncompiled || other.raw_uncompiled,
+            projection_uncompiled: self.projection_uncompiled || other.projection_uncompiled,
+        }
+    }
+
+    fn fails_on(&self, instances: &[LintProofInstance<'_>], document: LintProofDocument) -> bool {
+        let uncompiled = if document.projects_guards() {
+            self.projection_uncompiled
+        } else {
+            self.raw_uncompiled
+        };
+        !uncompiled
+            && instances.iter().enumerate().any(|(index, instance)| {
+                instance.document == document && !self.disabled.contains(&index)
+            })
+    }
+}
+
+fn partition_lint_verdicts(
+    graph: &RequirementCondition,
+    instances: &[LintProofInstance<'_>],
+    observe: impl Fn(&ConditionalGuard, ProofGuardRole) -> LintProofVerdict,
+) -> Option<Vec<RequirementPartition<LintProofVerdict>>> {
+    if !instances.is_empty() {
+        return partition_requirement(graph, observe, LintProofVerdict::join);
+    }
+    // With no rejected instances, every guard has the same neutral verdict.
+    let partition =
+        (!matches!(graph.node(graph.root())?, RequirementConditionNode::False)).then(|| {
+            RequirementPartition {
+                context: LintProofVerdict::default(),
+                condition: graph.clone(),
+            }
+        });
+    Some(partition.into_iter().collect())
+}
+
+pub(crate) struct LintRequirement {
+    pub(crate) guards: GuardConjunction,
+    pub(crate) then_value: Value,
 }
 
 /// Relaxes constraints that `helm lint` documents fail.
@@ -74,14 +260,27 @@ struct LintConstraint {
 /// judging only the default documents cannot establish its render-time guard.
 pub(crate) struct UncoalescedRootGate<'a> {
     uncoalesced_root: Option<&'a Value>,
-    lint_floor: Option<(Value, YamlValue)>,
+    lint_floor: Option<(Rc<Value>, YamlValue)>,
     coalesced_defaults: &'a Value,
     relaxed: Vec<LintWithdrawal>,
     conditions: RefCell<ConditionFragmentCache>,
     validators: LintValidators<'a>,
+    floor_prefixes: RefCell<BTreeMap<usize, Rc<FloorPrefixFacts>>>,
+    floor_overrides: RefCell<FloorOverrideCache>,
 }
 
 impl<'a> UncoalescedRootGate<'a> {
+    pub(crate) fn record_storage(&self) {
+        self.conditions.borrow().record_storage();
+        self.validators.record_storage();
+        tracing::info_span!(
+            target: "helm_schema_gen::counters", "lint_gate_storage",
+            withdrawals = self.relaxed.len(), floor_prefixes = self.floor_prefixes.borrow().len(),
+            floor_bases = self.floor_overrides.borrow().bases.len(),
+        )
+        .in_scope(|| {});
+    }
+
     pub(crate) fn new(
         uncoalesced_root: Option<&'a Value>,
         coalesced_defaults: &'a Value,
@@ -90,7 +289,7 @@ impl<'a> UncoalescedRootGate<'a> {
         let lint_floor = uncoalesced_root.map(|root| {
             let floor = root_declared_part(coalesced_defaults, root);
             let floor_yaml = serde_yaml::to_value(&floor).unwrap_or(YamlValue::Null);
-            (floor, floor_yaml)
+            (Rc::new(floor), floor_yaml)
         });
         let mut conditions = ConditionFragmentCache::new();
         for (name, definition) in definitions {
@@ -104,6 +303,8 @@ impl<'a> UncoalescedRootGate<'a> {
             relaxed: Vec::new(),
             conditions: RefCell::new(conditions),
             validators: LintValidators::new(definitions),
+            floor_prefixes: RefCell::new(BTreeMap::new()),
+            floor_overrides: RefCell::default(),
         }
     }
 
@@ -124,6 +325,83 @@ impl<'a> UncoalescedRootGate<'a> {
             .clauses(guards, ancestor, values, absence, polarity)
     }
 
+    pub(crate) fn planned_conjunction(
+        &self,
+        guards: &GuardConjunction,
+        ancestor: &[String],
+        values: &YamlValue,
+        absence: AbsenceDefaults<'_>,
+        polarity: ConditionPolarity,
+    ) -> EncodedConjunction {
+        self.conditions
+            .borrow_mut()
+            .planned_conjunction(guards, ancestor, values, absence, polarity)
+    }
+
+    pub(crate) fn supports_scope_guards<'guard>(
+        &self,
+        guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
+    ) -> bool {
+        self.conditions.borrow().supports_scope_guards(guards)
+    }
+
+    pub(crate) fn requirements_encode_fully<'guard>(
+        &self,
+        guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
+        ancestor: &[String],
+        encoding: GuardEncoding<'_>,
+    ) -> bool {
+        let GuardEncoding {
+            values_yaml_doc,
+            absence,
+            polarity,
+        } = encoding;
+        let mut conditions = self.conditions.borrow_mut();
+        guards.into_iter().all(|guard| {
+            conditions.requirements_encode_fully(
+                guard,
+                ancestor,
+                values_yaml_doc,
+                absence,
+                polarity,
+            )
+        })
+    }
+
+    pub(crate) fn allows_terminal_coalescing(&self) -> bool {
+        self.conditions.borrow().allows_shared_conditions()
+    }
+
+    pub(crate) fn conjunction_is_type_partition(&self, condition: &EncodedConjunction) -> bool {
+        let mut conditions = self.conditions.borrow_mut();
+        condition.legacy_type_partition(|fragment| conditions.is_type_partition(fragment))
+    }
+
+    pub(crate) fn append_planned_conditional(
+        &self,
+        document: &mut crate::schema_tree::SchemaDocument,
+        ancestor: &[String],
+        plan: &EncodedConditionPlan,
+        then_schema: SchemaNode,
+    ) {
+        let mut conditions = self.conditions.borrow_mut();
+        let type_partition =
+            plan.legacy_type_partition(|fragment| conditions.is_type_partition(fragment));
+        let materializing = tracing::info_span!("materialize_planned_condition");
+        let materializing_scope = materializing.enter();
+        let condition = conditions.materialize_condition(plan);
+        drop(materializing_scope);
+        drop(materializing);
+        let _append = tracing::info_span!("append_materialized_condition").entered();
+        document.append_conditional_with_type_partition(
+            ancestor,
+            condition,
+            then_schema,
+            type_partition,
+        );
+    }
+
+    #[tracing::instrument(skip_all, fields(anchor_depth = ancestor.len()))]
     pub(crate) fn append_conditional(
         &self,
         document: &mut crate::schema_tree::SchemaDocument,
@@ -131,16 +409,36 @@ impl<'a> UncoalescedRootGate<'a> {
         condition: SchemaNode,
         then_schema: SchemaNode,
     ) {
-        document.append_conditional_with_definitions(
+        let type_partition = self.conditions.borrow_mut().is_type_partition(&condition);
+        document.append_conditional_with_type_partition(
             ancestor,
             condition,
             then_schema,
-            &self.conditions.borrow().definitions,
+            type_partition,
         );
     }
 
+    pub(crate) fn compact_condition_junctions(
+        &mut self,
+        document: &crate::schema_tree::SchemaDocument,
+    ) {
+        self.conditions
+            .get_mut()
+            .compact_condition_junctions(document);
+    }
+
     pub(crate) fn take_condition_definitions(&mut self) -> BTreeMap<String, Value> {
-        std::mem::take(&mut self.conditions.borrow_mut().definitions)
+        self.conditions.borrow_mut().take_definitions()
+    }
+
+    pub(crate) fn begin_terminal_conditions(&mut self) {
+        self.conditions.borrow_mut().begin_terminal_conditions();
+    }
+
+    /// Releases compiled judges after the conditional lint checks have completed.
+    pub(crate) fn finish_conditional_lint(&mut self) {
+        self.record_floor_override_cache();
+        self.validators.release_compiled_parts();
     }
 
     /// The `then` part `if condition then then_value`, anchored at
@@ -148,12 +446,429 @@ impl<'a> UncoalescedRootGate<'a> {
     /// conditioned on the paths the lint documents lack, or `None` when the
     /// constraint is withdrawn.
     /// `condition` encodes `guards` with `encoding`.
-    #[tracing::instrument(skip_all, fields(guards = guards.len(), anchor_depth = ancestor_segments.len()))]
+    #[tracing::instrument(skip_all, fields(guards = guard_row.len(), anchor_depth = ancestor_segments.len()))]
     pub(crate) fn lint_safe_then(
         &mut self,
         ancestor_segments: &[String],
-        guards: &[ConditionalGuard],
+        guard_row: &GuardConjunction,
         condition: &SchemaNode,
+        then_value: Value,
+        encoding: GuardEncoding<'_>,
+    ) -> Option<Value> {
+        if self.uncoalesced_root.is_none() {
+            return Some(then_value);
+        }
+        self.lint_safe_constraint(
+            ancestor_segments,
+            guard_row,
+            &LintConstraint {
+                condition: LintCondition::Flat(condition.clone().into_value()),
+                validator: OnceCell::new(),
+            },
+            then_value,
+            encoding,
+        )
+    }
+
+    pub(crate) fn lint_safe_planned_then(
+        &mut self,
+        ancestor_segments: &[String],
+        guard_row: &GuardConjunction,
+        condition: &EncodedConjunction,
+        then_value: Value,
+        encoding: GuardEncoding<'_>,
+    ) -> Option<Value> {
+        if self.uncoalesced_root.is_none() {
+            return Some(then_value);
+        }
+        self.lint_safe_constraint(
+            ancestor_segments,
+            guard_row,
+            &LintConstraint {
+                condition: LintCondition::Planned(condition.clone()),
+                validator: OnceCell::new(),
+            },
+            then_value,
+            encoding,
+        )
+    }
+
+    pub(crate) fn lint_guard_paths(&self, guard: &ConditionalGuard) -> LintGuardPaths {
+        let Some((floor, _)) = self.lint_floor.as_ref() else {
+            return LintGuardPaths::default();
+        };
+        let mut paths = LintGuardPaths::default();
+        for path in guard.value_paths().iter().filter_map(ValuesPath::parent) {
+            let segments = path.segments().collect::<Vec<_>>();
+            collect_missing_override_tables(
+                Some(floor),
+                self.coalesced_defaults,
+                &segments,
+                &ValuesPath::default(),
+                &mut paths.override_tables,
+            );
+        }
+        paths
+    }
+
+    /// Checks each shared proof region under its existing lint document judgments.
+    ///
+    /// The caller supplies a region with one set of floor override tables.
+    /// Partition by guard truth at the comparison instances before choosing deciding paths.
+    /// A coalesced failure in one alternative must not prevent
+    /// relaxation of another alternative that fails only under lint.
+    pub(crate) fn lint_requirement_partitions(
+        &mut self,
+        ancestor: &[String],
+        guards: &GuardConjunction,
+        graph: &RequirementCondition,
+        then_value: Value,
+        encoding: GuardEncoding<'_>,
+    ) -> Vec<LintRequirement> {
+        let Some((raw, (floor, floor_yaml))) = self.uncoalesced_root.zip(self.lint_floor.as_ref())
+        else {
+            return vec![LintRequirement {
+                guards: guards.clone(),
+                then_value,
+            }];
+        };
+        let anchor = ValuesPath::from_segments(
+            ancestor
+                .iter()
+                .map(|segment| Segment::from_encoded_component(segment)),
+        );
+        let mut created = Cow::Borrowed(floor.as_ref());
+        self.create_requirement_floor_tables(&anchor, guards, &then_value, &mut created);
+        let instances = self.lint_proof_instances(
+            [
+                (LintProofDocument::Raw, raw),
+                (LintProofDocument::Coalesced, self.coalesced_defaults),
+                (LintProofDocument::Floor, floor.as_ref()),
+                (LintProofDocument::CreatedFloor, created.as_ref()),
+                (
+                    LintProofDocument::ProjectedCoalesced,
+                    self.coalesced_defaults,
+                ),
+            ],
+            ancestor,
+            &then_value,
+        );
+        let then_compiles = instances.is_some();
+        let instances = instances.unwrap_or_default();
+        let observe = |guard: &ConditionalGuard, role: ProofGuardRole| {
+            self.lint_proof_guard_verdict(guard, role, ancestor, encoding, floor_yaml, &instances)
+        };
+        let extra_guards = guards.iter().filter(|guard| {
+            !matches!(guard, ConditionalGuard::Requirement(other) if std::ptr::eq(graph, other))
+        }).collect::<Vec<_>>();
+        let extras = extra_guards
+            .iter()
+            .fold(LintProofVerdict::default(), |combined, guard| {
+                combined.join(&observe(guard, ProofGuardRole::Leaf))
+            });
+        let Some(partitions) = partition_lint_verdicts(graph, &instances, observe) else {
+            return Vec::new();
+        };
+        let no_boundaries = BTreeSet::new();
+        let dependency_boundaries = if then_value == Value::Bool(false) {
+            encoding.absence.dependency_roots
+        } else {
+            &no_boundaries
+        };
+        let mut emissions = LintProofEmissions::default();
+        for partition in partitions {
+            let verdict = partition.context.join(&extras);
+            let coalesced_holds = !verdict.fails_on(&instances, LintProofDocument::Coalesced);
+            let raw_fails = coalesced_holds && verdict.fails_on(&instances, LintProofDocument::Raw);
+            let projected_coalesced_holds =
+                !verdict.fails_on(&instances, LintProofDocument::ProjectedCoalesced);
+            let failing_floor = [
+                (LintProofDocument::Floor, floor.as_ref()),
+                (LintProofDocument::CreatedFloor, created.as_ref()),
+            ]
+            .into_iter()
+            .filter_map(|(document, value)| {
+                (projected_coalesced_holds && verdict.fails_on(&instances, document))
+                    .then_some(value)
+            })
+            .collect::<Vec<_>>();
+            let lacking = if coalesced_holds && then_compiles && !verdict.raw_uncompiled {
+                self.member_requirements_the_floor_lacks(&anchor, &then_value)
+            } else {
+                BTreeSet::new()
+            };
+            let failing = FailingLintProofDocuments {
+                raw: raw_fails.then_some(raw),
+                floor: failing_floor,
+                dependency_boundaries,
+            };
+            self.emit_lint_proof(
+                LintProofConstraint {
+                    ancestor,
+                    anchor: &anchor,
+                    graph: &partition.condition,
+                    extra_guards: extra_guards.clone(),
+                    then_value: &then_value,
+                },
+                &failing,
+                raw,
+                floor_yaml,
+                lacking,
+                &mut emissions,
+            );
+        }
+        self.relaxed.extend(emissions.withdrawals);
+        emissions.kept
+    }
+
+    fn emit_lint_proof(
+        &self,
+        proof: LintProofConstraint<'_>,
+        failing: &FailingLintProofDocuments<'_>,
+        raw: &Value,
+        floor_yaml: &YamlValue,
+        mut then_paths: BTreeSet<ValuesPath>,
+        emissions: &mut LintProofEmissions,
+    ) {
+        let LintProofConstraint {
+            ancestor,
+            anchor,
+            graph,
+            extra_guards,
+            then_value,
+        } = proof;
+        for document in failing.raw.into_iter().chain(failing.floor.iter().copied()) {
+            self.collect_deciding_paths(
+                document,
+                std::iter::empty(),
+                then_value,
+                anchor,
+                &mut then_paths,
+            );
+        }
+        let lint_document = if failing.raw.is_some() {
+            Some(LintDocument::Root)
+        } else if !failing.floor.is_empty() || !then_paths.is_empty() {
+            Some(LintDocument::Floor)
+        } else {
+            None
+        };
+        let row_with = |condition| -> GuardConjunction {
+            extra_guards
+                .iter()
+                .map(|&guard| guard.clone())
+                .chain(std::iter::once(ConditionalGuard::Requirement(condition)))
+                .collect::<Vec<_>>()
+                .into()
+        };
+        if lint_document.is_none() && failing.dependency_boundaries.is_empty() {
+            emissions.kept.push(LintRequirement {
+                guards: row_with(graph.clone()),
+                then_value: then_value.clone(),
+            });
+            return;
+        }
+        let observe = |guard: &ConditionalGuard, _role| {
+            self.lint_deciding_context(anchor, guard, raw, floor_yaml, failing)
+        };
+        let Some(decisions) = partition_requirement(graph, observe, LintDecidingContext::join)
+        else {
+            return;
+        };
+        let extra_context = extra_guards
+            .iter()
+            .fold(LintDecidingContext::default(), |combined, guard| {
+                combined.join(&observe(guard, ProofGuardRole::Leaf))
+            });
+        for decision in decisions {
+            let LintDecidingContext {
+                boundaries,
+                mut paths,
+                absence_tests,
+            } = decision.context.join(&extra_context);
+            let boundaries = dependency_boundary_leaves(boundaries.iter());
+            let lint_document =
+                lint_document.or_else(|| (!boundaries.is_empty()).then_some(LintDocument::Floor));
+            paths.extend(boundaries);
+            paths.extend(then_paths.iter().cloned());
+            let guard_row = row_with(decision.condition);
+            if let Some(document) = lint_document {
+                let deciding_absence = !paths.is_disjoint(&absence_tests);
+                let then_value = (!deciding_absence)
+                    .then(|| {
+                        condition_on_deciding_paths(
+                            ancestor,
+                            &guard_row,
+                            &paths,
+                            then_value.clone(),
+                        )
+                    })
+                    .flatten();
+                let outcome = if then_value.is_some() {
+                    LintOutcome::Conditioned
+                } else {
+                    LintOutcome::Withdrawn
+                };
+                emissions.withdrawals.push(LintWithdrawal {
+                    anchor: anchor.clone(),
+                    document,
+                    deciding_paths: paths.into_iter().collect(),
+                    outcome,
+                });
+                if let Some(then_value) = then_value {
+                    emissions.kept.push(LintRequirement {
+                        guards: guard_row,
+                        then_value,
+                    });
+                }
+            } else {
+                emissions.kept.push(LintRequirement {
+                    guards: guard_row,
+                    then_value: then_value.clone(),
+                });
+            }
+        }
+    }
+
+    fn lint_deciding_context(
+        &self,
+        anchor: &ValuesPath,
+        guard: &ConditionalGuard,
+        raw: &Value,
+        floor_yaml: &YamlValue,
+        failing: &FailingLintProofDocuments<'_>,
+    ) -> LintDecidingContext {
+        let mut context = LintDecidingContext::default();
+        if !failing.dependency_boundaries.is_empty() {
+            context.boundaries = self.collect_dependency_boundaries(
+                raw,
+                anchor,
+                std::iter::once(guard),
+                failing.dependency_boundaries,
+            );
+        }
+        let keep_floor_guard = !failing.floor.is_empty() && holds_on(guard, floor_yaml);
+        for document in failing
+            .raw
+            .into_iter()
+            .chain(failing.floor.iter().copied().filter(|_| keep_floor_guard))
+        {
+            self.collect_deciding_paths(
+                document,
+                std::iter::once(guard),
+                &Value::Bool(false),
+                &ValuesPath::default(),
+                &mut context.paths,
+            );
+        }
+        if let ConditionalGuard::Absent { path } = guard {
+            context.absence_tests.insert(path.clone());
+        }
+        context
+    }
+
+    fn create_requirement_floor_tables(
+        &self,
+        anchor: &ValuesPath,
+        guards: &GuardConjunction,
+        then_value: &Value,
+        created: &mut Cow<'_, Value>,
+    ) {
+        let mut tables = BTreeSet::from([anchor.clone()]);
+        for guard in guards {
+            tables.extend(guard.value_paths().iter().filter_map(ValuesPath::parent));
+        }
+        let mut paths = BTreeSet::new();
+        collect_property_paths(then_value, anchor, &mut paths);
+        tables.extend(paths.iter().filter_map(ValuesPath::parent));
+        for path in tables {
+            let segments = path.segments().collect::<Vec<_>>();
+            create_override_tables(created, self.coalesced_defaults, &segments);
+        }
+    }
+
+    fn lint_proof_instances<'v>(
+        &self,
+        documents: impl IntoIterator<Item = (LintProofDocument, &'v Value)>,
+        ancestor: &[String],
+        then_value: &Value,
+    ) -> Option<Vec<LintProofInstance<'v>>> {
+        let definitions = self.conditions.borrow();
+        let validator = self.validators.constraint_validator(
+            &Value::Bool(true),
+            then_value,
+            &definitions.definitions,
+        )?;
+        let mut picked = Vec::new();
+        for (document, value) in documents {
+            let mut instances = Vec::new();
+            collect_anchored_instances(value, ancestor, &mut instances);
+            picked.extend(
+                instances
+                    .into_iter()
+                    .filter(|instance| !validator.is_valid(instance))
+                    .map(|value| LintProofInstance { document, value }),
+            );
+        }
+        Some(picked)
+    }
+
+    fn lint_proof_guard_verdict(
+        &self,
+        guard: &ConditionalGuard,
+        role: ProofGuardRole,
+        ancestor: &[String],
+        encoding: GuardEncoding<'_>,
+        floor: &YamlValue,
+        instances: &[LintProofInstance<'_>],
+    ) -> LintProofVerdict {
+        if instances.is_empty() {
+            return LintProofVerdict::default();
+        }
+        let condition = SchemaNode::all_of(self.condition_clauses(
+            std::slice::from_ref(guard),
+            ancestor,
+            encoding.values_yaml_doc,
+            encoding.absence,
+            match role {
+                ProofGuardRole::Leaf => encoding.polarity,
+                ProofGuardRole::SplitTest => ConditionPolarity::Exact,
+            },
+        ))
+        .into_value();
+        let projected_away = !holds_on(guard, floor);
+        let definitions = self.conditions.borrow();
+        let Some(validator) = self.validators.constraint_validator(
+            &condition,
+            &Value::Bool(false),
+            &definitions.definitions,
+        ) else {
+            return LintProofVerdict {
+                raw_uncompiled: true,
+                projection_uncompiled: !projected_away,
+                ..LintProofVerdict::default()
+            };
+        };
+        LintProofVerdict {
+            disabled: instances
+                .iter()
+                .enumerate()
+                .filter_map(|(index, instance)| {
+                    (!(projected_away && instance.document.projects_guards())
+                        && validator.is_valid(instance.value))
+                    .then_some(index)
+                })
+                .collect(),
+            raw_uncompiled: false,
+            projection_uncompiled: false,
+        }
+    }
+
+    fn lint_safe_constraint(
+        &mut self,
+        ancestor_segments: &[String],
+        guard_row: &GuardConjunction,
+        constraint: &LintConstraint,
         then_value: Value,
         encoding: GuardEncoding<'_>,
     ) -> Option<Value> {
@@ -165,10 +880,6 @@ impl<'a> UncoalescedRootGate<'a> {
                 .iter()
                 .map(|segment| Segment::from_encoded_component(segment)),
         );
-        let constraint = LintConstraint {
-            condition: condition.clone().into_value(),
-            validator: OnceCell::new(),
-        };
         let mut instances = Vec::new();
         collect_anchored_instances(uncoalesced_root, ancestor_segments, &mut instances);
         let mut coalesced_instances = Vec::new();
@@ -178,16 +889,16 @@ impl<'a> UncoalescedRootGate<'a> {
             &mut coalesced_instances,
         );
         let mut deciding_paths = if then_value == Value::Bool(false) {
-            self.dependency_boundary_paths(&anchor, guards, encoding.absence)
+            self.dependency_boundary_paths(&anchor, guard_row, encoding.absence.dependency_roots)
         } else {
             BTreeSet::new()
         };
         let mut document = (!deciding_paths.is_empty()).then_some(LintDocument::Floor);
-        if self.fails_only_lint(&instances, &coalesced_instances, &constraint, &then_value) {
+        if self.fails_only_lint(&instances, &coalesced_instances, constraint, &then_value) {
             document = Some(LintDocument::Root);
             self.collect_deciding_paths(
                 uncoalesced_root,
-                guards,
+                guard_row,
                 &then_value,
                 &anchor,
                 &mut deciding_paths,
@@ -196,10 +907,10 @@ impl<'a> UncoalescedRootGate<'a> {
         if let Some((held, failing)) = self.floor_failure(
             &anchor,
             ancestor_segments,
-            guards,
+            guard_row,
             &then_value,
             encoding,
-            &constraint,
+            constraint,
         ) {
             document.get_or_insert(LintDocument::Floor);
             for floor in &failing {
@@ -215,7 +926,7 @@ impl<'a> UncoalescedRootGate<'a> {
         let lacking = self.member_requirements_the_floor_lacks(&anchor, &then_value);
         if !lacking.is_empty()
             && self
-                .prepared_validator(&constraint, &then_value)
+                .prepared_validator(constraint, &then_value)
                 .is_some_and(|validator| {
                     coalesced_instances
                         .iter()
@@ -229,7 +940,7 @@ impl<'a> UncoalescedRootGate<'a> {
             return Some(then_value);
         };
         let kept =
-            condition_on_deciding_paths(ancestor_segments, guards, &deciding_paths, then_value);
+            condition_on_deciding_paths(ancestor_segments, guard_row, &deciding_paths, then_value);
         let outcome = if kept.is_some() {
             LintOutcome::Conditioned
         } else {
@@ -261,8 +972,48 @@ impl<'a> UncoalescedRootGate<'a> {
     fn dependency_boundary_paths(
         &self,
         anchor: &ValuesPath,
-        guards: &[ConditionalGuard],
-        absence: AbsenceDefaults<'_>,
+        guards: &GuardConjunction,
+        dependency_roots: &BTreeSet<Vec<String>>,
+    ) -> BTreeSet<ValuesPath> {
+        let Some(raw) = self
+            .uncoalesced_root
+            .filter(|_| !dependency_roots.is_empty())
+        else {
+            return BTreeSet::new();
+        };
+        let Some(((prefix, extras), (_, floor))) =
+            guards.canonical_parts().zip(self.lint_floor.as_ref())
+        else {
+            let boundaries =
+                self.collect_dependency_boundaries(raw, anchor, guards, dependency_roots);
+            return dependency_boundary_leaves(boundaries.iter());
+        };
+        let extra_boundaries =
+            self.collect_dependency_boundaries(raw, anchor, extras, dependency_roots);
+        let facts = self.floor_prefix_facts(prefix, floor);
+        let mut cached = facts.dependency_boundaries.borrow_mut();
+        let boundaries = cached
+            .entry(DependencyBoundaryKey {
+                anchor: anchor.clone(),
+                roots: dependency_roots.clone(),
+            })
+            .or_insert_with(|| {
+                self.collect_dependency_boundaries(
+                    raw,
+                    anchor,
+                    prefix.canonical().iter(),
+                    dependency_roots,
+                )
+            });
+        dependency_boundary_leaves(boundaries.union(&extra_boundaries))
+    }
+
+    fn collect_dependency_boundaries<'guard>(
+        &self,
+        raw: &Value,
+        anchor: &ValuesPath,
+        guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
+        dependency_roots: &BTreeSet<Vec<String>>,
     ) -> BTreeSet<ValuesPath> {
         let mut candidates = BTreeSet::new();
         for guard in guards {
@@ -270,12 +1021,9 @@ impl<'a> UncoalescedRootGate<'a> {
             collect_tested_keys(guard, &mut candidates);
         }
         let mut boundaries = BTreeSet::new();
-        let Some(raw) = self.uncoalesced_root else {
-            return boundaries;
-        };
         for path in candidates {
             let segments = path.segments().collect::<Vec<_>>();
-            for root in absence.dependency_roots {
+            for root in dependency_roots {
                 let root_path = ValuesPath::from_segments(root.iter().cloned().map(Segment::from));
                 if path != root_path && !path.is_descendant_of(&root_path) {
                     continue;
@@ -292,29 +1040,17 @@ impl<'a> UncoalescedRootGate<'a> {
                 }
             }
         }
-        // A supplied descendant already requires every table above it.
-        // Structural path order places each ancestor immediately before its descendants.
-        let mut ordered = boundaries.into_iter().peekable();
-        let mut leaves = BTreeSet::new();
-        while let Some(path) = ordered.next() {
-            if ordered
-                .peek()
-                .is_none_or(|next| !next.is_descendant_of(&path))
-            {
-                leaves.insert(path);
-            }
-        }
-        leaves
+        boundaries
     }
 
     /// Adds the constraint's paths whose presence differs between `judged`
     /// and the coalesced defaults: absent or null in `judged` where the
     /// defaults supply a value, or a null in `judged` that coalescing
     /// deletes.
-    fn collect_deciding_paths(
+    fn collect_deciding_paths<'guard>(
         &self,
         judged: &Value,
-        guards: &[ConditionalGuard],
+        guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
         then_value: &Value,
         anchor: &ValuesPath,
         deciding_paths: &mut BTreeSet<ValuesPath>,
@@ -340,6 +1076,92 @@ impl<'a> UncoalescedRootGate<'a> {
         }
     }
 
+    fn floor_prefix_facts(&self, prefix: &GuardPrefix, floor: &YamlValue) -> Rc<FloorPrefixFacts> {
+        let address = prefix.as_slice().as_ptr().addr();
+        let mut prefixes = self.floor_prefixes.borrow_mut();
+        let facts = prefixes.entry(address).or_insert_with(|| {
+            let canonical = prefix.canonical();
+            let mut held = Vec::new();
+            let mut table_paths = BTreeSet::new();
+            for guard in canonical.iter() {
+                if holds_on(guard, floor) {
+                    held.push(guard.clone());
+                }
+                table_paths.extend(guard.value_paths().iter().filter_map(ValuesPath::parent));
+            }
+            let held_prefix = if held.len() == canonical.len() {
+                prefix.clone()
+            } else {
+                GuardPrefix::new(held)
+            };
+            Rc::new(FloorPrefixFacts {
+                prefix: prefix.clone(),
+                held_prefix,
+                table_paths,
+                anchored_bases: RefCell::default(),
+                dependency_boundaries: RefCell::default(),
+            })
+        });
+        debug_assert!(facts.prefix.shares_storage(prefix));
+        Rc::clone(facts)
+    }
+
+    fn floor_with_prefix(
+        &self,
+        floor: &Rc<Value>,
+        anchor: &ValuesPath,
+        facts: &FloorPrefixFacts,
+    ) -> Rc<Value> {
+        let mut anchored = facts.anchored_bases.borrow_mut();
+        let mut overrides = self.floor_overrides.borrow_mut();
+        if let Some(base) = anchored.get(anchor) {
+            overrides.hits += 1;
+            return Rc::clone(base);
+        }
+
+        let mut paths = facts.table_paths.clone();
+        paths.insert(anchor.clone());
+        let base = if let Some(base) = overrides.bases.get(&paths).cloned() {
+            overrides.hits += 1;
+            overrides.shared_path_hits += 1;
+            base
+        } else {
+            // Every request creates its own parents and leaves existing values alone.
+            // Applying the same set of requests therefore makes the same document.
+            let mut created = Cow::Borrowed(floor.as_ref());
+            for path in &paths {
+                let segments = path.segments().collect::<Vec<_>>();
+                create_override_tables(&mut created, self.coalesced_defaults, &segments);
+            }
+            let base = match created {
+                Cow::Borrowed(_) => Rc::clone(floor),
+                Cow::Owned(value) => {
+                    overrides.created_bases += 1;
+                    Rc::new(value)
+                }
+            };
+            overrides.bases.insert(paths, Rc::clone(&base));
+            base
+        };
+        anchored.insert(anchor.clone(), Rc::clone(&base));
+        base
+    }
+
+    fn record_floor_override_cache(&self) {
+        let overrides = self.floor_overrides.borrow();
+        tracing::info_span!(
+            target: "helm_schema_gen::counters",
+            "lint_floor_override_cache",
+            lint_enabled = self.uncoalesced_root.is_some(),
+            requested_sets = overrides.bases.len(),
+            created_bases = overrides.created_bases,
+            cache_hits = overrides.hits,
+            shared_path_hits = overrides.shared_path_hits,
+            extra_full_clones = overrides.extra_full_clones,
+        )
+        .in_scope(|| {});
+    }
+
     /// The guards already holding on the lint floor and the floor documents
     /// failing the constraint's lint projection (those guards, every other
     /// guard switched on): the floor itself and the floor with the tables
@@ -348,19 +1170,39 @@ impl<'a> UncoalescedRootGate<'a> {
         &self,
         anchor: &ValuesPath,
         ancestor_segments: &[String],
-        guards: &[ConditionalGuard],
+        guard_row: &GuardConjunction,
         then_value: &Value,
         encoding: GuardEncoding<'_>,
         constraint: &LintConstraint,
-    ) -> Option<(Vec<ConditionalGuard>, Vec<Cow<'_, Value>>)> {
+    ) -> Option<(Vec<ConditionalGuard>, Vec<Rc<Value>>)> {
         let (floor, floor_yaml) = self.lint_floor.as_ref()?;
-        let mut held = Vec::new();
-        let mut created = Cow::Borrowed(floor);
-        let anchor_segments = anchor.segments().collect::<Vec<_>>();
-        create_override_tables(&mut created, self.coalesced_defaults, &anchor_segments);
-        for guard in guards {
-            if holds_on(guard, floor_yaml) {
-                held.push(guard.clone());
+        let parts = guard_row.canonical_parts();
+        let prepared = parts.map(|(prefix, _)| self.floor_prefix_facts(prefix, floor_yaml));
+        let base = prepared.as_deref().map_or_else(
+            || Rc::clone(floor),
+            |facts| self.floor_with_prefix(floor, anchor, facts),
+        );
+        let mut held_extras = Vec::new();
+        let mut created = Cow::Borrowed(base.as_ref());
+        if prepared.is_none() {
+            let anchor_segments = anchor.segments().collect::<Vec<_>>();
+            create_override_tables(&mut created, self.coalesced_defaults, &anchor_segments);
+        }
+        let (extras, flat_guards) = match parts {
+            Some((_, extras)) => (Some(extras.iter()), None),
+            None => (None, Some(guard_row.iter())),
+        };
+        for guard in extras
+            .into_iter()
+            .flatten()
+            .chain(flat_guards.into_iter().flatten())
+        {
+            if let ConditionalGuard::Requirement(graph) = guard {
+                if let Some(projected) = requirement_on_lint_floor(graph, floor_yaml) {
+                    held_extras.push(projected);
+                }
+            } else if holds_on(guard, floor_yaml) {
+                held_extras.push(guard.clone());
             }
             for path in guard.value_paths() {
                 let segments = path.segments().collect::<Vec<_>>();
@@ -377,18 +1219,23 @@ impl<'a> UncoalescedRootGate<'a> {
                 create_override_tables(&mut created, self.coalesced_defaults, parents);
             }
         }
+        let held_row = if let Some(prepared) = prepared.as_ref() {
+            GuardConjunction::prefixed(held_extras, prepared.held_prefix.clone(), Vec::new())
+                .canonicalized()
+        } else {
+            held_extras.into()
+        };
         let projected = LintConstraint {
-            condition: SchemaNode::all_of(self.condition_clauses(
-                &held,
+            condition: LintCondition::Planned(self.planned_conjunction(
+                &held_row,
                 ancestor_segments,
                 encoding.values_yaml_doc,
                 encoding.absence,
                 encoding.polarity,
-            ))
-            .into_value(),
+            )),
             validator: OnceCell::new(),
         };
-        let constraint = if projected.condition == constraint.condition {
+        let constraint = if projected.condition.matches(&constraint.condition) {
             constraint
         } else {
             &projected
@@ -400,7 +1247,16 @@ impl<'a> UncoalescedRootGate<'a> {
             &mut coalesced_instances,
         );
         let mut failing = Vec::new();
-        for document in [Cow::Borrowed(floor), created] {
+        let created = match created {
+            Cow::Borrowed(_) => Rc::clone(&base),
+            Cow::Owned(value) => {
+                if prepared.is_some() {
+                    self.floor_overrides.borrow_mut().extra_full_clones += 1;
+                }
+                Rc::new(value)
+            }
+        };
+        for document in [Rc::clone(floor), created] {
             let mut instances = Vec::new();
             collect_anchored_instances(&document, ancestor_segments, &mut instances);
             if self.fails_only_lint(&instances, &coalesced_instances, constraint, then_value) {
@@ -410,7 +1266,7 @@ impl<'a> UncoalescedRootGate<'a> {
         if failing.is_empty() {
             None
         } else {
-            Some((held, failing))
+            Some((held_row.to_vec(), failing))
         }
     }
 
@@ -483,32 +1339,130 @@ impl<'a> UncoalescedRootGate<'a> {
         constraint
             .validator
             .get_or_init(|| {
-                self.validators.constraint_validator(
-                    &constraint.condition,
-                    then_value,
-                    &self.conditions.borrow().definitions,
-                )
+                let conditions = self.conditions.borrow();
+                match &constraint.condition {
+                    LintCondition::Flat(condition) => self.validators.constraint_validator(
+                        condition,
+                        then_value,
+                        &conditions.definitions,
+                    ),
+                    LintCondition::Planned(condition) => {
+                        self.validators.planned_constraint_validator(
+                            condition,
+                            then_value,
+                            &conditions.definitions,
+                        )
+                    }
+                }
             })
             .as_ref()
     }
 
     /// The relaxed constraints, in relaxation order.
     pub(crate) fn into_relaxed(self) -> Vec<LintWithdrawal> {
+        self.record_floor_override_cache();
         self.relaxed
     }
 }
 
-fn condition_on_deciding_paths(
+fn requirement_on_lint_floor(
+    graph: &RequirementCondition,
+    floor: &YamlValue,
+) -> Option<ConditionalGuard> {
+    let mut builder = RequirementConditionBuilder::default();
+    let mut projected = HashMap::<usize, usize>::new();
+    for id in graph.reachable_ids() {
+        let result = match graph.node(id)? {
+            RequirementConditionNode::False => RequirementConditionBuilder::FALSE,
+            RequirementConditionNode::True => RequirementConditionBuilder::TRUE,
+            RequirementConditionNode::Guard(guard) => {
+                if holds_on(guard, floor) {
+                    builder.guard(guard.clone())
+                } else {
+                    RequirementConditionBuilder::TRUE
+                }
+            }
+            RequirementConditionNode::And(children) => {
+                let children = children
+                    .iter()
+                    .map(|child| projected.get(child).copied())
+                    .collect::<Option<Vec<_>>>()?;
+                builder.and(children)
+            }
+            RequirementConditionNode::Or(children) => {
+                let children = children
+                    .iter()
+                    .map(|child| projected.get(child).copied())
+                    .collect::<Option<Vec<_>>>()?;
+                builder.union(children)
+            }
+            RequirementConditionNode::Decision(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            })
+            | RequirementConditionNode::Split(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            }) => {
+                let yes = *projected.get(when_true)?;
+                let no = *projected.get(when_false)?;
+                let positive = if holds_on(test, floor) {
+                    builder.split(test.clone(), yes, RequirementConditionBuilder::FALSE)
+                } else {
+                    yes
+                };
+                let negated = ConditionalGuard::Not(Arc::new(test.clone()));
+                let negative = if holds_on(&negated, floor) {
+                    builder.split(test.clone(), RequirementConditionBuilder::FALSE, no)
+                } else {
+                    no
+                };
+                builder.union([positive, negative])
+            }
+        };
+        projected.insert(id, result);
+    }
+    let root = *projected.get(&graph.root())?;
+    Some(ConditionalGuard::Requirement(
+        builder.freeze().root(root, false),
+    ))
+}
+
+fn dependency_boundary_leaves<'a>(
+    boundaries: impl Iterator<Item = &'a ValuesPath>,
+) -> BTreeSet<ValuesPath> {
+    // A supplied descendant requires its tables. Prune in the complete path order so a
+    // sibling such as `kid-aux` between `kid` and `kid.leaf` keeps the original decision.
+    let mut ordered = boundaries.peekable();
+    let mut leaves = BTreeSet::new();
+    while let Some(path) = ordered.next() {
+        if ordered
+            .peek()
+            .is_none_or(|next| !next.is_descendant_of(path))
+        {
+            leaves.insert(path.clone());
+        }
+    }
+    leaves
+}
+
+fn condition_on_deciding_paths<'guard>(
     ancestor_segments: &[String],
-    guards: &[ConditionalGuard],
+    guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
     deciding_paths: &BTreeSet<ValuesPath>,
     then_value: Value,
 ) -> Option<Value> {
     // A guard testing a deciding path for absence contradicts its
     // presence: conditioning would leave a constraint that never fires.
     if deciding_paths.is_empty()
-        || guards.iter().any(|guard| {
-            matches!(guard, ConditionalGuard::Absent { path } if deciding_paths.contains(path))
+        || guards.into_iter().any(|guard| match guard {
+            ConditionalGuard::Absent { path } => deciding_paths.contains(path),
+            ConditionalGuard::Requirement(graph) => {
+                requirement_requires_a_deciding_absence(graph, deciding_paths)
+            }
+            _ => false,
         })
     {
         return None;
@@ -521,6 +1475,42 @@ fn condition_on_deciding_paths(
     conditioned.insert("if".to_string(), SchemaNode::all_of(presence).into_value());
     conditioned.insert("then".to_string(), then_value);
     Some(Value::Object(conditioned))
+}
+
+fn requirement_requires_a_deciding_absence(
+    graph: &RequirementCondition,
+    deciding_paths: &BTreeSet<ValuesPath>,
+) -> bool {
+    let tests_absence = |guard: &ConditionalGuard| match guard {
+        ConditionalGuard::Absent { path } => deciding_paths.contains(path),
+        _ => false,
+    };
+    let mut possible = HashMap::<usize, bool>::new();
+    for id in graph.reachable_ids() {
+        let Some(node) = graph.node(id) else {
+            return false;
+        };
+        let child = |child| possible.get(child).copied().unwrap_or(true);
+        let holds_without_absence = match node {
+            RequirementConditionNode::False => false,
+            RequirementConditionNode::True => true,
+            RequirementConditionNode::Guard(guard) => !tests_absence(guard),
+            RequirementConditionNode::And(children) => children.iter().all(child),
+            RequirementConditionNode::Or(children) => children.iter().any(child),
+            RequirementConditionNode::Decision(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            })
+            | RequirementConditionNode::Split(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            }) => (!tests_absence(test) && child(when_true)) || child(when_false),
+        };
+        possible.insert(id, holds_without_absence);
+    }
+    possible.get(&graph.root()) == Some(&false)
 }
 
 /// Whether `guard` already holds on the lint floor, so no override is
@@ -549,6 +1539,21 @@ fn collect_tested_keys(guard: &ConditionalGuard, paths: &mut BTreeSet<ValuesPath
                 collect_tested_keys(guard, paths);
             }
         }
+        ConditionalGuard::Decision(graph) => {
+            for RequirementDecision {
+                test,
+                when_true: _,
+                when_false: _,
+            } in graph.decisions()
+            {
+                collect_tested_keys(test, paths);
+            }
+        }
+        ConditionalGuard::Requirement(graph) => {
+            for guard in graph.guards() {
+                collect_tested_keys(guard, paths);
+            }
+        }
         _ => {}
     }
 }
@@ -558,7 +1563,11 @@ fn collect_tested_keys(guard: &ConditionalGuard, paths: &mut BTreeSet<ValuesPath
 /// creates. A ranged segment creates every member table the coalesced
 /// defaults hold, as an override naming that member does. A null or scalar
 /// the document holds stops the walk.
-fn create_override_tables(document: &mut Cow<'_, Value>, coalesced: &Value, segments: &[&Segment]) {
+pub(crate) fn create_override_tables(
+    document: &mut Cow<'_, Value>,
+    coalesced: &Value,
+    segments: &[&Segment],
+) {
     if matches!(document, Cow::Borrowed(_))
         && !override_tables_missing(document, coalesced, segments)
     {
@@ -588,6 +1597,36 @@ fn override_tables_missing(document: &Value, coalesced: &Value, segments: &[&Seg
                 .get(key)
                 .is_none_or(|member| override_tables_missing(member, coalesced_member, tail))
     })
+}
+
+fn collect_missing_override_tables(
+    document: Option<&Value>,
+    coalesced: &Value,
+    segments: &[&Segment],
+    prefix: &ValuesPath,
+    tables: &mut BTreeSet<ValuesPath>,
+) {
+    let Some((head, tail)) = segments.split_first() else {
+        return;
+    };
+    if document.is_some_and(|value| !value.is_object()) {
+        return;
+    }
+    let Some(coalesced) = coalesced.as_object() else {
+        return;
+    };
+    for (key, value) in coalesced {
+        if !value.is_object() || head.literal().is_some_and(|literal| literal != key) {
+            continue;
+        }
+        let mut path = prefix.clone();
+        path.push(key.as_str());
+        let declared = document.and_then(|instance| instance.get(key));
+        if declared.is_none() {
+            tables.insert(path.clone());
+        }
+        collect_missing_override_tables(declared, value, tail, &path, tables);
+    }
 }
 
 fn create_override_tables_in(document: &mut Value, coalesced: &Value, segments: &[&Segment]) {

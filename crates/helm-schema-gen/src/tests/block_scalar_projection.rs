@@ -189,7 +189,7 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
             }
         }
     });
-    sim_assert_eq!(have: schema, want: expected);
+    sim_assert_eq!(have: super::rejection_encoding::canonical(&schema), want: super::rejection_encoding::canonical(&expected));
 }
 
 #[test]
@@ -408,7 +408,7 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
             }
         }
     });
-    sim_assert_eq!(have: schema, want: expected);
+    sim_assert_eq!(have: super::rejection_encoding::canonical(&schema), want: super::rejection_encoding::canonical(&expected));
 }
 
 #[test]

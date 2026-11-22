@@ -1,5 +1,4 @@
 use super::eval::{Executor, local_name, normal};
-use super::write_footprint::widen_targets;
 use super::{
     Coverage, Datum, Exit, Flow, Leaf, Normal, ObjectData, Remainder, State, Value, ValueNode,
 };
@@ -29,8 +28,14 @@ enum RangeInput {
     Invalid,
 }
 struct RangeSummary {
-    nonempty: bool,
+    first: Option<RangeEntry>,
     member: Value,
+}
+/// One execution of a range body, split by where each exit continues.
+struct LoopPass {
+    backedge: Vec<Exit>,
+    breaks: Vec<Exit>,
+    other: Vec<Exit>,
 }
 impl Executor<'_> {
     pub(super) fn body(&self, source: &str, path: Option<&str>, state: State) -> Vec<Exit> {
@@ -503,7 +508,7 @@ impl Executor<'_> {
         pending.extend(breaks.finish());
         pending
     }
-    #[tracing::instrument(skip_all, fields(nonempty = summary.nonempty))]
+    #[tracing::instrument(skip_all, fields(exact_first = summary.first.is_some()))]
     fn unknown_range(
         &self,
         program: &Program<'_>,
@@ -513,25 +518,15 @@ impl Executor<'_> {
         bindings: &RangeBindings,
         summary: RangeSummary,
     ) -> Vec<Exit> {
-        let RangeSummary {
-            nonempty,
-            mut member,
-        } = summary;
+        let RangeSummary { first, mut member } = summary;
         let uniform_path = uniform_member_path(program, bindings, state, value);
         if let Some(path) = &uniform_path {
             let mut path = path.clone();
             path.push_each_member();
             member = Value::input(path);
         }
-        let local_targets =
-            super::write_footprint::local_targets(program.source, program.syntax, &state.namespace);
-        super::stage0_diagnostics::certificate(
-            program.source,
-            &state.namespace,
-            local_targets.as_ref(),
-        );
         let mut exits = Vec::new();
-        let mut state = if nonempty {
+        let state = if first.is_some() {
             state.clone()
         } else {
             let test = if let Some(path) = &uniform_path {
@@ -551,64 +546,30 @@ impl Executor<'_> {
             state.fork(test, true)
         };
         let id = state.loop_id(bindings.body.start as u64);
-        let iteration = |mut state: State| {
-            state.enter_scope(Some(member.clone()));
+        let iteration = |mut state: State, entry: Option<&RangeEntry>| {
+            let entry_value = entry.map_or(&member, |entry| &entry.value);
+            state.enter_scope(Some(entry_value.clone()));
             if let Some(name) = &bindings.key {
-                bind_range(
-                    &mut state,
-                    name,
-                    Value::influenced(value.inputs()),
-                    bindings.assignment,
+                let key = entry.map_or_else(
+                    || Value::influenced(value.inputs()),
+                    |entry| entry.key.clone(),
                 );
+                bind_range(&mut state, name, key, bindings.assignment);
             }
             if let Some(name) = &bindings.value {
-                bind_range(&mut state, name, member.clone(), bindings.assignment);
+                bind_range(&mut state, name, entry_value.clone(), bindings.assignment);
             }
             if let Some(id) = id {
                 state.loops.push(id);
             }
             state
         };
-        // The first possible iteration can read named inputs before loop-carried
-        // writes erase their provenance.
-        // A writer requires separate summary execution; only widening reads
-        // from this initial execution survive that replacement.
-        let prior_sites = state.sites.clone();
-        let first_exits = self.window(
-            program,
-            bindings.body,
-            normal(iteration(state.clone()), Value::nil()),
-        );
-        let first_reads = first_exits
-            .iter()
-            .map(|exit| first_iteration_reads(&exit.state, &prior_sites))
-            .fold(super::read_set::ReadSet::default(), |reads, next| {
-                reads.union(&next)
-            });
-        let mut body_exits = if local_targets.as_ref().is_some_and(BTreeSet::is_empty) {
-            // With no loop-carried writes, the initial execution already used
-            // the summary's exact start state.
-            first_exits
-        } else {
-            widen_targets(&mut state, local_targets.as_ref(), &value.inputs());
-            self.window(
-                program,
-                bindings.body,
-                normal(iteration(state), Value::nil()),
-            )
-        };
-        for exit in &mut body_exits {
-            exit.state.reads = exit.state.reads.union(&first_reads);
-            if id.is_some() {
-                exit.state.loops.pop();
+        let (other, mut leaving) =
+            self.iterate_members(program, bindings, &iteration, id, &state, first.as_ref());
+        for exit in &mut leaving {
+            if !matches!(exit.flow, Flow::Normal(_)) {
+                continue;
             }
-            exit.state.leave_scope();
-            match &exit.flow {
-                Flow::Break(target) | Flow::Continue(target) if Some(*target) == id => {}
-                Flow::Normal(_) => {}
-                Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => continue,
-            }
-            widen_targets(&mut exit.state, local_targets.as_ref(), &value.inputs());
             exit.flow = Flow::Normal(Normal {
                 value: Value::unknown(),
             });
@@ -616,8 +577,204 @@ impl Executor<'_> {
                 .output
                 .emit(exit.state.heap.freeze(&Value::influenced(value.inputs())));
         }
-        exits.extend(body_exits);
+        exits.extend(other);
+        exits.extend(leaving);
         exits
+    }
+
+    /// Runs the members of a range from `state`: the first iteration from the exact entry
+    /// state, then the Rest post-fixpoint when that iteration changed a carried component.
+    /// Returns the exits that leave the loop's control (aborts, outer loops) and the states that
+    /// continue after it.
+    fn iterate_members(
+        &self,
+        program: &Program<'_>,
+        bindings: &RangeBindings,
+        iteration: &dyn Fn(State, Option<&RangeEntry>) -> State,
+        id: Option<super::LoopId>,
+        state: &State,
+        first_entry: Option<&RangeEntry>,
+    ) -> (Vec<Exit>, Vec<Exit>) {
+        // ADR 0072 §6: the first iteration runs from the entry state with its exact member
+        // when known. A pass using the summary member can stand for later iterations if its
+        // backedges stay inside the entry state.
+        // Each iteration declares its binders afresh, so their values never carry over.
+        let rebound = [&bindings.key, &bindings.value]
+            .into_iter()
+            .flatten()
+            .filter(|_| !bindings.assignment)
+            .map(|name| local_name(name).to_owned())
+            .collect();
+        let scope = super::loops::CarriedScope {
+            frames: state.frames.len(),
+            rebound: &rebound,
+        };
+        let mut first = self.loop_pass(
+            program,
+            bindings.body,
+            iteration(state.clone(), first_entry),
+            id,
+        );
+        for exit in first
+            .backedge
+            .iter_mut()
+            .chain(&mut first.breaks)
+            .chain(&mut first.other)
+        {
+            exit.state.retain_rendered_uses_since(state);
+        }
+        let LoopPass {
+            backedge,
+            breaks,
+            other,
+        } = first;
+        let mut leaving = breaks;
+        if backedge.is_empty() {
+            return (other, leaving);
+        }
+        if first_entry.is_none()
+            && backedge
+                .iter()
+                .all(|exit| super::loops::covers(state, &exit.state, scope))
+        {
+            leaving.extend(backedge);
+            return (other, leaving);
+        }
+        let starts = if first_entry.is_some() {
+            // A summarized known collection has more than one member.
+            backedge
+                .into_iter()
+                .map(|exit| super::loops::Carried::new(exit.state))
+                .collect()
+        } else {
+            let more =
+                state
+                    .heap
+                    .arena
+                    .decision(Predicate::False, Predicate::False, Coverage::Partial);
+            backedge
+                .into_iter()
+                .map(|exit| {
+                    leaving.push(Exit {
+                        state: exit.state.fork(Rc::clone(&more), false),
+                        flow: exit.flow,
+                    });
+                    super::loops::Carried::new(exit.state.fork(Rc::clone(&more), true))
+                })
+                .collect()
+        };
+        leaving.extend(self.rest_fixpoint(
+            program,
+            bindings.body,
+            &|state| iteration(state, None),
+            id,
+            starts,
+            scope,
+        ));
+        (other, leaving)
+    }
+
+    /// Runs the Rest passes from the states after the first iteration until one pass stays
+    /// inside the states it started from (a post-fixpoint over every carried component).
+    /// Earlier proved observations and terminal exits survive the carried-state joins.
+    fn rest_fixpoint(
+        &self,
+        program: &Program<'_>,
+        body: Window,
+        iteration: &dyn Fn(State) -> State,
+        id: Option<super::LoopId>,
+        mut starts: Vec<super::loops::Carried>,
+        scope: super::loops::CarriedScope<'_>,
+    ) -> Vec<Exit> {
+        let mut passes = 0;
+        let mut leaving = Vec::new();
+        loop {
+            passes += 1;
+            let mut results = starts
+                .iter()
+                .map(|start| self.loop_pass(program, body, iteration(start.state.clone()), id))
+                .collect::<Vec<_>>();
+            let stable = starts.iter().zip(&results).all(|(start, pass)| {
+                pass.backedge
+                    .iter()
+                    .all(|exit| start.covers(&exit.state, scope))
+            });
+            for pass in &mut results {
+                leaving.append(&mut pass.breaks);
+                leaving.append(&mut pass.other);
+            }
+            if stable {
+                tracing::debug!(passes, "range fixpoint");
+                leaving.extend(results.into_iter().flat_map(|pass| pass.backedge));
+                return leaving;
+            }
+            // Up to the pass bound a changed field of an exact map widens alone; past it every
+            // uncovered object widens whole, and past twice the bound every uncovered location
+            // becomes the top summary. Each top round tops a carried location not topped before,
+            // so the transfer terminates within the loop's own carried locations.
+            let widening = if passes < super::loops::MAX_LOOP_PASSES {
+                super::loops::Widening::Fields
+            } else if passes < 2 * super::loops::MAX_LOOP_PASSES {
+                super::loops::Widening::Objects
+            } else {
+                super::loops::Widening::Top
+            };
+            if passes == super::loops::MAX_LOOP_PASSES {
+                let _bound =
+                    tracing::debug_span!(target: "helm_schema_ir::counters", "loop_fixpoint_bound")
+                        .entered();
+            }
+            if passes == 2 * super::loops::MAX_LOOP_PASSES {
+                let _bound =
+                    tracing::debug_span!(target: "helm_schema_ir::counters", "loop_fixpoint_top")
+                        .entered();
+            }
+            for (start, pass) in starts.iter_mut().zip(&results) {
+                for exit in &pass.backedge {
+                    start.widen(&exit.state, scope, widening);
+                }
+            }
+        }
+    }
+
+    /// One execution of a range body: backedge (normal end or `continue`), this loop's
+    /// `break`s, and every other exit (aborts, outer loops).
+    fn loop_pass(
+        &self,
+        program: &Program<'_>,
+        body: Window,
+        state: State,
+        id: Option<super::LoopId>,
+    ) -> LoopPass {
+        let mut pass = LoopPass {
+            backedge: Vec::new(),
+            breaks: Vec::new(),
+            other: Vec::new(),
+        };
+        for mut exit in self.window(program, body, normal(state, Value::nil())) {
+            if id.is_some() {
+                exit.state.loops.pop();
+            }
+            exit.state.leave_scope();
+            match &exit.flow {
+                Flow::Break(target) if Some(*target) == id => {
+                    exit.flow = Flow::Normal(Normal {
+                        value: Value::nil(),
+                    });
+                    pass.breaks.push(exit);
+                }
+                Flow::Continue(target) if Some(*target) == id => {
+                    exit.flow = Flow::Normal(Normal {
+                        value: Value::nil(),
+                    });
+                    pass.backedge.push(exit);
+                }
+                Flow::Normal(_) => pass.backedge.push(exit),
+                Flow::Abort(_) | Flow::Break(_) | Flow::Continue(_) => pass.other.push(exit),
+            }
+        }
+        pass.backedge = reconverge(pass.backedge);
+        pass
     }
     fn range_else(
         &self,
@@ -641,35 +798,6 @@ impl Executor<'_> {
             normal(state, Value::nil())
         }
     }
-}
-
-fn first_iteration_reads(
-    state: &State,
-    prior_sites: &super::history::History<super::ExecutedSite>,
-) -> super::read_set::ReadSet {
-    let mut reads = state
-        .reads
-        .without_coverage(super::ReadCoverage::MemberHost { allows_nil: false })
-        .without_coverage(super::ReadCoverage::MemberHost { allows_nil: true })
-        .without_coverage(super::ReadCoverage::MapArgument { allows_nil: false })
-        .without_coverage(super::ReadCoverage::MapArgument { allows_nil: true });
-    for site in state
-        .sites
-        .since(prior_sites)
-        .filter(|site| site.rendered && site.value.value.identity().is_none())
-    {
-        let condition = site.condition();
-        for path in site.value.inputs() {
-            if path.segments().next().is_some() {
-                reads.insert(super::RuntimeRead {
-                    coverage: super::ReadCoverage::SerializedInfluence,
-                    path,
-                    condition: condition.clone(),
-                });
-            }
-        }
-    }
-    reads
 }
 
 fn literal_span(program: &Program<'_>, next: usize, span: Span) -> Span {
@@ -779,14 +907,13 @@ fn range_domain(state: &State, value: &Value, two_variables: bool) -> RangeInput
         Some(entries) if entries.len() <= 32 => RangeInput::Exact(entries),
         Some(entries) => {
             tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
-            let member = summarized_member(state, &entries, value.inputs());
-            RangeInput::Summary(RangeSummary {
-                nonempty: true,
-                member,
-            })
+            let mut entries = entries.into_iter();
+            let first = entries.next();
+            let member = summarized_member(state, entries.as_slice(), value.inputs());
+            RangeInput::Summary(RangeSummary { first, member })
         }
         None => RangeInput::Summary(RangeSummary {
-            nonempty: false,
+            first: None,
             member: Value::influenced(value.inputs()),
         }),
     }
@@ -836,39 +963,36 @@ fn integer_entries(value: &Value, two_variables: bool) -> RangeInput {
     }) = value.node.as_ref()
     else {
         return RangeInput::Summary(RangeSummary {
-            nonempty: false,
+            first: None,
             member: Value::influenced(value.inputs()),
         });
     };
     let Some(GuardValue::Int(count)) = value.constant() else {
         return RangeInput::Summary(RangeSummary {
-            nonempty: false,
+            first: None,
             member: Value::with_influences(Value::scalar(*go_type, None), value.inputs()),
         });
+    };
+    let entry = |index| {
+        let value = Value::scalar(
+            *go_type,
+            Some(super::scalar_value::ScalarContent::Literal(
+                GuardValue::Int(index),
+            )),
+        );
+        RangeEntry {
+            key: value.clone(),
+            value,
+        }
     };
     if *count > 32 {
         tracing::debug!(reason = ?super::BoundReason::LoopMembers, "widen range");
         return RangeInput::Summary(RangeSummary {
-            nonempty: true,
+            first: Some(entry(0)),
             member: Value::with_influences(Value::scalar(*go_type, None), value.inputs()),
         });
     }
-    RangeInput::Exact(
-        (0..*count)
-            .map(|index| {
-                let value = Value::scalar(
-                    *go_type,
-                    Some(super::scalar_value::ScalarContent::Literal(
-                        GuardValue::Int(index),
-                    )),
-                );
-                RangeEntry {
-                    key: value.clone(),
-                    value,
-                }
-            })
-            .collect(),
-    )
+    RangeInput::Exact((0..*count).map(entry).collect())
 }
 
 fn entries(state: &State, value: &Value) -> Option<Vec<RangeEntry>> {
@@ -1040,6 +1164,12 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 }
             }
             let mut representative = group.pop()?;
+            // The summary widens only the continuation (ADR 0072 §10): every member's recorded
+            // consumptions, reads, sites and text sites survive under their own conditions.
+            for exit in &group {
+                representative.state.retain_loop_facts(&exit.state);
+            }
+            let history = representative.state.reads.clone();
             if group
                 .iter()
                 .any(|exit| exit.state.namespace.id() != representative.state.namespace.id())
@@ -1050,7 +1180,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
             representative.state.reads = reads;
             representative.state.invocation_records_complete = false;
             super::operations::invalidate(&mut representative.state);
-            representative.state.reads = representative
+            let widened: super::read_set::ReadSet = representative
                 .state
                 .reads
                 .iter()
@@ -1061,6 +1191,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                     condition: Predicate::True,
                 })
                 .collect();
+            representative.state.reads = widened.union(&history);
             for frame in &mut representative.state.frames {
                 let frame = Rc::make_mut(frame);
                 for value in frame.bindings.values_mut() {
@@ -1077,8 +1208,8 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
             );
             representative.state.active =
                 super::path::Path::from_edges([super::DecisionEdge { test, taken: true }]);
-            representative.state.sites.clear();
-            representative.state.text_sites.clear();
+            // Recorded sites keep their placements' facts only where the output stays exact.
+            representative.state.output_widened = true;
             representative.state.observation_count = super::output::BranchCounts::default();
             representative.state.output = super::TextBuffer::default();
             representative.state.output.emit(

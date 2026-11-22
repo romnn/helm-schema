@@ -553,19 +553,11 @@ impl SchemaNode {
         }
     }
 
-    pub(crate) fn property_entries(&self) -> Vec<(String, SchemaNode)> {
+    pub(crate) fn properties(&self) -> Option<&BTreeMap<String, SchemaNode>> {
         match self {
-            Self::Object { properties, .. } => properties
-                .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect(),
-            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords
-                .properties
-                .iter()
-                .flat_map(|properties| properties.iter())
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect(),
-            _ => Vec::new(),
+            Self::Object { properties, .. } => Some(properties),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords.properties.as_ref(),
+            _ => None,
         }
     }
 

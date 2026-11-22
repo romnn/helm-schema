@@ -28,11 +28,13 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::rc::Rc;
+use std::sync::Arc;
 
 use serde_json::Value;
 
 use crate::condition_encoding::{
-    HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
+    EncodedConjunction, EncodedPrefix, HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema,
+    value_references_helm_truthy,
 };
 
 /// The map a reachable definition's body is read from.
@@ -46,6 +48,30 @@ enum DefinitionSource {
 /// The definitions of one constraint's document by name.
 type Scope = BTreeMap<String, DefinitionSource>;
 
+#[derive(Clone, Copy)]
+enum ScopeView<'a> {
+    Local(&'a Scope),
+    WithPrefix {
+        prefix: &'a Scope,
+        residual: &'a Scope,
+    },
+}
+
+impl<'a> ScopeView<'a> {
+    fn get_key_value(self, name: &str) -> Option<(&'a String, &'a DefinitionSource)> {
+        match self {
+            Self::Local(scope) => scope.get_key_value(name),
+            Self::WithPrefix { prefix, residual } => prefix
+                .get_key_value(name)
+                .or_else(|| residual.get_key_value(name)),
+        }
+    }
+
+    fn get(self, name: &str) -> Option<DefinitionSource> {
+        self.get_key_value(name).map(|(_, source)| *source)
+    }
+}
+
 /// Everything a part's verdict and compilation depend on: its text and
 /// each definition of the constraint's document it reaches.
 #[derive(PartialEq, Eq, Hash)]
@@ -56,7 +82,9 @@ struct PartKey {
 
 /// `if condition then then_value`, as the boolean structure of its parts,
 /// or as one part when it addresses its own document.
-pub(crate) enum ConstraintValidator {
+pub(crate) struct ConstraintValidator(ConstraintJudge);
+
+enum ConstraintJudge {
     Split {
         condition: Rc<Judge>,
         then: Rc<Judge>,
@@ -66,11 +94,11 @@ pub(crate) enum ConstraintValidator {
 
 impl ConstraintValidator {
     pub(crate) fn is_valid(&self, instance: &Value) -> bool {
-        match self {
-            Self::Split { condition, then } => {
+        match &self.0 {
+            ConstraintJudge::Split { condition, then } => {
                 !condition.is_valid(instance) || then.is_valid(instance)
             }
-            Self::Whole(constraint) => constraint.is_valid(instance),
+            ConstraintJudge::Whole(constraint) => constraint.is_valid(instance),
         }
     }
 }
@@ -135,6 +163,16 @@ struct BodyReferences {
 
 type DefinitionKey = (String, DefinitionSource);
 
+struct ClosedPrefix {
+    scope: Scope,
+    judge: Option<Rc<Judge>>,
+}
+
+struct PrefixJudge {
+    prefix: Arc<EncodedPrefix>,
+    closed: Option<ClosedPrefix>,
+}
+
 /// The compiled parts of one generation's lint constraints.
 pub(crate) struct LintValidators<'a> {
     providers: &'a BTreeMap<String, Value>,
@@ -145,9 +183,19 @@ pub(crate) struct LintValidators<'a> {
     /// Whether each definition body is a valid draft-07 schema.
     meta_valid: RefCell<HashMap<DefinitionKey, bool>>,
     parts: RefCell<HashMap<PartKey, Option<Rc<Judge>>>>,
+    prefixes: RefCell<HashMap<usize, Rc<PrefixJudge>>>,
 }
 
 impl<'a> LintValidators<'a> {
+    pub(crate) fn record_storage(&self) {
+        let parts = self.parts.borrow();
+        tracing::info_span!(
+            target: "helm_schema_gen::counters", "lint_validator_storage",
+            parts = parts.len(), scope_names = parts.keys().map(|key|key.definitions.len()).sum::<usize>(),
+            references = self.references.borrow().len(), prefixes = self.prefixes.borrow().len(),
+        ).in_scope(|| {});
+    }
+
     pub(crate) fn new(providers: &'a BTreeMap<String, Value>) -> Self {
         Self {
             providers,
@@ -156,7 +204,13 @@ impl<'a> LintValidators<'a> {
             references_helm_truthy: RefCell::new(HashMap::new()),
             meta_valid: RefCell::new(HashMap::new()),
             parts: RefCell::new(HashMap::new()),
+            prefixes: RefCell::default(),
         }
+    }
+
+    pub(crate) fn release_compiled_parts(&mut self) {
+        self.prefixes.get_mut().clear();
+        self.parts.get_mut().clear();
     }
 
     /// The validator of `if condition then then_value`, or `None` when it
@@ -174,19 +228,124 @@ impl<'a> LintValidators<'a> {
     ) -> Option<ConstraintValidator> {
         let (scope, document_relative) = self.scope(condition, then_value, conditions);
         tracing::Span::current().record("definitions", scope.len());
+        let scope = ScopeView::Local(&scope);
         if document_relative {
             let constraint = serde_json::json!({ "if": condition, "then": then_value });
-            return Some(ConstraintValidator::Whole(self.part(
+            return Some(ConstraintValidator(ConstraintJudge::Whole(self.part(
                 &constraint,
-                &scope,
+                scope,
                 conditions,
-            )?));
+            )?)));
         }
         let mut expanding = Vec::new();
-        Some(ConstraintValidator::Split {
-            condition: self.judge(condition, &scope, conditions, &mut expanding)?,
-            then: self.judge(then_value, &scope, conditions, &mut expanding)?,
-        })
+        Some(ConstraintValidator(ConstraintJudge::Split {
+            condition: self.judge(condition, scope, conditions, &mut expanding)?,
+            then: self.judge(then_value, scope, conditions, &mut expanding)?,
+        }))
+    }
+
+    /// Judges the legacy condition while reusing a prefix with closed reference scope.
+    pub(crate) fn planned_constraint_validator(
+        &self,
+        condition: &EncodedConjunction,
+        then_value: &Value,
+        conditions: &BTreeMap<String, Value>,
+    ) -> Option<ConstraintValidator> {
+        let flat = || {
+            self.constraint_validator(
+                &condition.flat_schema().into_value(),
+                then_value,
+                conditions,
+            )
+        };
+        let Some((prefix, extras)) = condition.shared_lint_parts() else {
+            return flat();
+        };
+        let prepared = self.prefix_judge(prefix, conditions);
+        let Some(closed) = &prepared.closed else {
+            return flat();
+        };
+        let extra_schema = extras.into_value();
+        let (residual, document_relative) = self.scope(&extra_schema, then_value, conditions);
+        if document_relative {
+            return flat();
+        }
+        // The prefix introduces only immutable condition definitions and the builtin truthiness.
+        // Keep those names visible to references reached from the rest of the constraint.
+        let full_scope = ScopeView::WithPrefix {
+            prefix: &closed.scope,
+            residual: &residual,
+        };
+        let prefix_judge = closed.judge.clone()?;
+        let mut expanding = Vec::new();
+        let extras = self.judge(&extra_schema, full_scope, conditions, &mut expanding)?;
+        let then = self.judge(then_value, full_scope, conditions, &mut expanding)?;
+        Some(ConstraintValidator(ConstraintJudge::Split {
+            condition: Rc::new(Judge::AllOf(vec![prefix_judge, extras])),
+            then,
+        }))
+    }
+
+    fn prefix_judge(
+        &self,
+        prefix: &Arc<EncodedPrefix>,
+        conditions: &BTreeMap<String, Value>,
+    ) -> Rc<PrefixJudge> {
+        let address = Arc::as_ptr(prefix).addr();
+        if let Some(cached) = self.prefixes.borrow().get(&address).cloned() {
+            debug_assert!(Arc::ptr_eq(&cached.prefix, prefix));
+            return cached;
+        }
+        let prepared = Rc::new(PrefixJudge {
+            prefix: Arc::clone(prefix),
+            closed: self.closed_prefix(&prefix.flat_schema().into_value(), conditions),
+        });
+        self.prefixes
+            .borrow_mut()
+            .insert(address, Rc::clone(&prepared));
+        prepared
+    }
+
+    fn closed_prefix(
+        &self,
+        schema: &Value,
+        conditions: &BTreeMap<String, Value>,
+    ) -> Option<ClosedPrefix> {
+        let (scope, document_relative) = self.scope(schema, &Value::Bool(true), conditions);
+        if document_relative {
+            return None;
+        }
+        let mut roots = Vec::new();
+        if collect_references(schema, &mut roots)
+            || roots.iter().any(|name| !scope.contains_key(name))
+        {
+            return None;
+        }
+        for (name, source) in &scope {
+            // A later exact reference to Helm truthiness can replace a non-builtin `t`.
+            if self.providers.contains_key(name)
+                || *source == DefinitionSource::Provider
+                || (name == HELM_TRUTHY_DEFINITION_NAME && *source != DefinitionSource::HelmTruthy)
+            {
+                return None;
+            }
+            let references = self.body_references(name, *source, conditions);
+            if references.document_relative
+                || references
+                    .names
+                    .iter()
+                    .any(|referenced| !scope.contains_key(referenced))
+            {
+                return None;
+            }
+        }
+        let judge = self.judge(
+            schema,
+            ScopeView::Local(&scope),
+            conditions,
+            &mut Vec::new(),
+        );
+        Some(ClosedPrefix { scope, judge })
     }
 
     /// The definitions of the constraint's document: the provider and the
@@ -247,7 +406,7 @@ impl<'a> LintValidators<'a> {
     fn judge(
         &self,
         schema: &Value,
-        scope: &Scope,
+        scope: ScopeView<'_>,
         conditions: &BTreeMap<String, Value>,
         expanding: &mut Vec<String>,
     ) -> Option<Rc<Judge>> {
@@ -303,7 +462,7 @@ impl<'a> LintValidators<'a> {
     fn part(
         &self,
         schema: &Value,
-        scope: &Scope,
+        scope: ScopeView<'_>,
         conditions: &BTreeMap<String, Value>,
     ) -> Option<Rc<Judge>> {
         let key = self.part_key(schema, scope, conditions);
@@ -326,7 +485,7 @@ impl<'a> LintValidators<'a> {
     fn part_key(
         &self,
         schema: &Value,
-        scope: &Scope,
+        scope: ScopeView<'_>,
         conditions: &BTreeMap<String, Value>,
     ) -> PartKey {
         let mut referenced = Vec::new();
@@ -337,8 +496,8 @@ impl<'a> LintValidators<'a> {
             if let Some(source) = scope.get(&name)
                 && !reached.contains_key(&name)
             {
-                reached.insert(name.clone(), *source);
-                pending.push((name, *source));
+                reached.insert(name.clone(), source);
+                pending.push((name, source));
             }
         }
         while let Some((name, source)) = pending.pop() {
@@ -346,8 +505,8 @@ impl<'a> LintValidators<'a> {
                 if let Some(source) = scope.get(referenced)
                     && !reached.contains_key(referenced)
                 {
-                    reached.insert(referenced.clone(), *source);
-                    pending.push((referenced.clone(), *source));
+                    reached.insert(referenced.clone(), source);
+                    pending.push((referenced.clone(), source));
                 }
             }
         }
@@ -399,7 +558,7 @@ impl<'a> LintValidators<'a> {
     fn expandable_reference<'s>(
         &self,
         schema: &Value,
-        scope: &'s Scope,
+        scope: ScopeView<'s>,
         conditions: &BTreeMap<String, Value>,
         expanding: &[String],
     ) -> Option<(&'s str, DefinitionSource)> {
@@ -425,7 +584,7 @@ impl<'a> LintValidators<'a> {
     fn splits(
         &self,
         schema: &Value,
-        scope: &Scope,
+        scope: ScopeView<'_>,
         conditions: &BTreeMap<String, Value>,
         expanding: &[String],
     ) -> bool {
@@ -552,3 +711,11 @@ fn collect_references(value: &Value, names: &mut Vec<String>) -> bool {
         Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => false,
     }
 }
+
+#[cfg(test)]
+#[path = "tests/lint_validator_memory.rs"]
+mod tests;
+
+#[cfg(test)]
+#[path = "tests/planned_lint_validators.rs"]
+mod planned_lint_validators;

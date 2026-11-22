@@ -133,17 +133,9 @@ impl Store {
         }
     }
 
-    pub(super) fn join(
-        yes: &Self,
-        no: &Self,
-        mut join: impl FnMut(
-            &ObjectId,
-            Option<Rc<ObjectVersion>>,
-            Option<Rc<ObjectVersion>>,
-        ) -> Option<Rc<ObjectVersion>>,
-    ) -> Self {
-        let mut merged = yes.clone();
-        let changed: BTreeSet<_> = if yes.shares_epoch(no) {
+    /// The objects whose identity or contents may differ between two stores.
+    pub(super) fn differing<'a>(yes: &'a Self, no: &'a Self) -> BTreeSet<&'a ObjectId> {
+        if yes.shares_epoch(no) {
             // Both maps skip pointer-equal subtrees before comparing entries.
             let mut changed = BTreeSet::new();
             for difference in yes.contents.diff(&no.contents) {
@@ -172,8 +164,20 @@ impl Store {
         } else {
             // Distinct epochs change every older entry even when its metadata is shared.
             yes.identities.keys().chain(no.identities.keys()).collect()
-        };
-        for object in changed {
+        }
+    }
+
+    pub(super) fn join(
+        yes: &Self,
+        no: &Self,
+        mut join: impl FnMut(
+            &ObjectId,
+            Option<Rc<ObjectVersion>>,
+            Option<Rc<ObjectVersion>>,
+        ) -> Option<Rc<ObjectVersion>>,
+    ) -> Self {
+        let mut merged = yes.clone();
+        for object in Self::differing(yes, no) {
             tracing::debug_span!(target: "helm_schema_ir::counters::heap_store", "heap_join_diff_objects")
                 .in_scope(|| {});
             if let Some(storage) = join(object, yes.object(object), no.object(object)) {

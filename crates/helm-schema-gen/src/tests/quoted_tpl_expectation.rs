@@ -39,12 +39,12 @@ pub(super) fn action_free_contract(
                 _ => expected.push(guard(&predicate)?),
             }
         }
-        *clause = expected;
-        ConditionalGuard::canonicalize_conjunction(clause);
+        *clause = expected.into();
+        clause.canonicalize();
     }
     clauses.sort();
     clauses.dedup();
-    Ok(ContractSchemaSignals::new(
+    Ok(ContractSchemaSignals::from_conjunctions(
         raw.schema_evidence_by_value_path().clone(),
         clauses,
     ))
@@ -170,7 +170,7 @@ fn formatted_contract(raw: &ContractSchemaSignals, key: &str) -> ContractSchemaS
     let mut expected = helm_schema_ir::ContractIr::from_contract_uses(Vec::new());
     expected.add_terminal_fail_condition(failure);
     let expected = expected.finalize().into_schema_signals();
-    ContractSchemaSignals::new(
+    ContractSchemaSignals::from_conjunctions(
         raw.schema_evidence_by_value_path().clone(),
         expected.terminal_clauses().to_vec(),
     )

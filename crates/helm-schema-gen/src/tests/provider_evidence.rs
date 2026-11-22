@@ -434,7 +434,7 @@ fn always_omitted_provider_member_yields_declared_typing_to_its_leaf() -> eyre::
         );
     }
 
-    sim_assert_eq!(have: schema, want: expected);
+    sim_assert_eq!(have: super::rejection_encoding::canonical(&schema), want: super::rejection_encoding::canonical(&expected));
     Ok(())
 }
 

@@ -62,7 +62,7 @@ fn integer_range_constraint_uses_generated_member_values() {
 #[test]
 fn member_number_requirement_emits_an_unbounded_integer_count_lane() {
     let implication = ContractRequirementImplication {
-        outer_guards: Vec::new(),
+        outer_guards: Vec::new().into(),
         target: ContractRequirementTarget::Members {
             allow_integer: true,
         },
@@ -88,7 +88,7 @@ fn member_number_requirement_emits_an_unbounded_integer_count_lane() {
 #[test]
 fn key_requirement_uses_the_same_value_sensitive_member_sequence() {
     let implication = ContractRequirementImplication {
-        outer_guards: Vec::new(),
+        outer_guards: Vec::new().into(),
         target: ContractRequirementTarget::Keys,
         requirements: vec![FailValueRequirement::HelmFalsy],
     };

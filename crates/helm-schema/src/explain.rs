@@ -7,7 +7,7 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
-use helm_schema_core::{ConditionalGuard, ContractPathSchemaEvidence, ValuesPath};
+use helm_schema_core::{ContractPathSchemaEvidence, GuardConjunction, ValuesPath};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -41,7 +41,7 @@ struct GenerationReport<'a> {
     status: ReportStatus,
     coverage: Coverage,
     generation: Option<&'a PathGenerationDecision>,
-    references: GuardReferences<'a>,
+    references: GuardReferences,
 }
 
 #[derive(Serialize)]
@@ -74,20 +74,20 @@ struct Coverage {
 /// reference by position, in position order. Backprojected implications are
 /// synthesized during lowering and keep no guard record to reference.
 #[derive(Serialize)]
-struct GuardReferences<'a> {
-    overlays: Vec<GuardReference<'a>>,
-    requirement_implications: Vec<GuardReference<'a>>,
+struct GuardReferences {
+    overlays: Vec<GuardReference>,
+    requirement_implications: Vec<GuardReference>,
 }
 
 /// The guards of one referenced record, by its position in the owning signal
 /// vector.
 #[derive(Serialize)]
-struct GuardReference<'a> {
+struct GuardReference {
     index: usize,
-    guards: &'a [ConditionalGuard],
+    guards: GuardConjunction,
 }
 
-fn guard_references(references: BTreeMap<usize, &[ConditionalGuard]>) -> Vec<GuardReference<'_>> {
+fn guard_references(references: BTreeMap<usize, GuardConjunction>) -> Vec<GuardReference> {
     references
         .into_iter()
         .map(|(index, guards)| GuardReference { index, guards })
@@ -105,7 +105,7 @@ pub(crate) fn generation_report(
     if let (Some(decision), Some(evidence)) = (decision, evidence) {
         for overlay in &decision.overlays {
             if let Some(source) = evidence.conditional_overlays.get(overlay.overlay) {
-                overlays.insert(overlay.overlay, source.guards.as_slice());
+                overlays.insert(overlay.overlay, source.guards.clone().into());
             }
         }
         for containment in &decision.containment_checks {
@@ -113,7 +113,7 @@ pub(crate) fn generation_report(
             if implication.origin == EmissionOrigin::RequirementImplication
                 && let Some(source) = evidence.requirement_implications.get(implication.index)
             {
-                requirement_implications.insert(implication.index, source.outer_guards.as_slice());
+                requirement_implications.insert(implication.index, source.outer_guards.clone());
             }
         }
     }

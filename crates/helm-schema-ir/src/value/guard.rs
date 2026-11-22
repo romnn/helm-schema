@@ -1853,74 +1853,93 @@ impl RuntimeGuard {
         &self,
         scope: &super::consumption::RequirementScope,
         remaining: &mut usize,
-        memo: &mut AHashMap<
-            (bool, u64),
-            std::sync::Arc<super::consumption::FrozenRequirementGuard>,
-        >,
+        memo: &mut AHashMap<(bool, u64), super::consumption::FrozenRequirementEntry>,
     ) -> Option<std::sync::Arc<super::consumption::FrozenRequirementGuard>> {
         self.freeze_requirement_at_depth(scope, remaining, memo, 128)
+            .map(|entry| entry.guard)
     }
 
     fn freeze_requirement_at_depth(
         &self,
         scope: &super::consumption::RequirementScope,
         remaining: &mut usize,
-        memo: &mut AHashMap<
-            (bool, u64),
-            std::sync::Arc<super::consumption::FrozenRequirementGuard>,
-        >,
+        memo: &mut AHashMap<(bool, u64), super::consumption::FrozenRequirementEntry>,
         depth: usize,
-    ) -> Option<std::sync::Arc<super::consumption::FrozenRequirementGuard>> {
-        use super::consumption::FrozenRequirementGuard;
-        let depth = depth.checked_sub(1)?;
+    ) -> Option<super::consumption::FrozenRequirementEntry> {
+        use super::consumption::{FrozenRequirementEntry, FrozenRequirementGuard};
+        let initial = *remaining;
+        if let Self::Branch(node) = self
+            && let Some(frozen) = memo.get(&(true, node.id))
+        {
+            return frozen.charged(remaining, depth);
+        }
+        let child_depth = depth.checked_sub(1)?;
         *remaining = remaining.checked_sub(1)?;
-        let frozen = match self {
-            Self::False => std::sync::Arc::new(FrozenRequirementGuard::False),
-            Self::True => std::sync::Arc::new(FrozenRequirementGuard::True),
+        let (guard, height) = match self {
+            Self::False => (FrozenRequirementGuard::False, 1),
+            Self::True => (FrozenRequirementGuard::True, 1),
             Self::Branch(node) => {
-                if let Some(frozen) = memo.get(&(true, node.id)) {
-                    frozen.check_depth(depth, remaining)?;
-                    return Some(std::sync::Arc::clone(frozen));
-                }
                 let test = if let Some(test) = memo.get(&(false, node.test.id)) {
-                    test.check_depth(depth, remaining)?;
-                    std::sync::Arc::clone(test)
+                    test.charged(remaining, child_depth)?
                 } else {
+                    let before_test = *remaining;
                     let test = if let Some(runtime) = &node.test.runtime {
-                        runtime.freeze_requirement_at_depth(scope, remaining, memo, depth)?
-                    } else if node.test.coverage == Coverage::Exact {
-                        let cost = node.test.when_true.node_work(*remaining)?;
-                        *remaining = remaining.checked_sub(cost)?;
-                        if node.test.when_true.contains_approximation() {
+                        runtime.freeze_requirement_at_depth(scope, remaining, memo, child_depth)?
+                    } else {
+                        if child_depth == 0 {
                             return None;
                         }
-                        std::sync::Arc::new(FrozenRequirementGuard::Predicate(
-                            node.test.when_true.clone(),
-                        ))
-                    } else {
-                        std::sync::Arc::new(FrozenRequirementGuard::Choice(
-                            super::consumption::FrozenChoice {
+                        *remaining = remaining.checked_sub(1)?;
+                        let guard = if node.test.coverage == Coverage::Exact {
+                            let cost = node
+                                .test
+                                .when_true
+                                .node_work(super::consumption::MAX_REQUIREMENT_FREEZE_WORK)?;
+                            *remaining = remaining.checked_sub(cost)?;
+                            if node.test.when_true.contains_approximation() {
+                                return None;
+                            }
+                            FrozenRequirementGuard::Predicate(node.test.when_true.clone())
+                        } else {
+                            FrozenRequirementGuard::Choice(super::consumption::FrozenChoice {
                                 scope: scope.clone(),
                                 decision: node.test.id,
-                            },
-                        ))
+                            })
+                        };
+                        FrozenRequirementEntry {
+                            guard: std::sync::Arc::new(guard),
+                            work: before_test - *remaining,
+                            depth: 1,
+                        }
                     };
-                    memo.insert((false, node.test.id), std::sync::Arc::clone(&test));
+                    memo.insert((false, node.test.id), test.clone());
                     test
                 };
-                let frozen = std::sync::Arc::new(FrozenRequirementGuard::Select {
-                    test,
-                    yes: node
-                        .yes
-                        .freeze_requirement_at_depth(scope, remaining, memo, depth)?,
-                    no: node
-                        .no
-                        .freeze_requirement_at_depth(scope, remaining, memo, depth)?,
-                });
-                memo.insert((true, node.id), std::sync::Arc::clone(&frozen));
-                frozen
+                let yes =
+                    node.yes
+                        .freeze_requirement_at_depth(scope, remaining, memo, child_depth)?;
+                let no =
+                    node.no
+                        .freeze_requirement_at_depth(scope, remaining, memo, child_depth)?;
+                let height = 1 + test.depth.max(yes.depth).max(no.depth);
+                (
+                    FrozenRequirementGuard::Select {
+                        test: test.guard,
+                        yes: yes.guard,
+                        no: no.guard,
+                    },
+                    height,
+                )
             }
         };
-        Some(frozen)
+        let entry = FrozenRequirementEntry {
+            guard: std::sync::Arc::new(guard),
+            work: initial - *remaining,
+            depth: height,
+        };
+        if let Self::Branch(node) = self {
+            memo.insert((true, node.id), entry.clone());
+        }
+        Some(entry)
     }
 }

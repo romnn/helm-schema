@@ -7,7 +7,7 @@ use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use indoc::indoc;
-use serde_json::Value;
+use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
 
@@ -62,6 +62,49 @@ fn generate(path: &Path) -> eyre::Result<Output> {
         .arg(path)
         .output()
         .wrap_err("generate schema")
+}
+
+#[test]
+fn packaged_chart_preserves_final_override_bytes() -> eyre::Result<()> {
+    let temp = ScratchDir::new("packaged-override")?;
+    let chart = temp.path().join("chart");
+    write_chart(&chart, None)?;
+    let archive = temp.path().join("config-surface-0.1.0.tgz");
+    package_chart(&chart, &archive)?;
+    std::fs::write(temp.path().join("target.json"), r#"{"const":"override"}"#)?;
+    let override_path = temp.path().join("override.json");
+    std::fs::write(
+        &override_path,
+        r#"{"properties":{"value":{"$ref":"./target.json"}}}"#,
+    )?;
+    let emit = |source: &Path| {
+        Command::new(HELM_SCHEMA_BIN)
+            .args([
+                "--offline",
+                "--no-k8s-schemas",
+                "--compact",
+                "--override-schema",
+            ])
+            .arg(&override_path)
+            .arg(source)
+            .output()
+            .wrap_err("emit the packaged or directory chart")
+    };
+    let directory = emit(&chart)?;
+    let packaged = emit(&archive)?;
+    for output in [&directory, &packaged] {
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    sim_assert_eq!(have: &packaged.stdout, want: &directory.stdout);
+    let schema = serde_json::from_slice(&packaged.stdout)?;
+    let validator = jsonschema::validator_for(&schema)?;
+    assert!(validator.is_valid(&json!({"value": "override"})));
+    assert!(!validator.is_valid(&json!({"value": "other"})));
+    Ok(())
 }
 
 fn yaml(output: &Output) -> eyre::Result<Value> {

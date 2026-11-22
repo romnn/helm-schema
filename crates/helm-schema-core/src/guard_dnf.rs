@@ -92,6 +92,16 @@ impl GuardDnf {
         minimize_disjunction_by(keys, crate::guard_algebra::guards_are_complementary)
     }
 
+    /// Normalizes guard rows while retaining shared branch prefixes.
+    ///
+    /// Each input row is canonicalized, including its nested Boolean guards.
+    #[must_use]
+    pub fn normalize_shared_conditional_guard_disjunction(
+        conjunctions: impl IntoIterator<Item = crate::GuardConjunction>,
+    ) -> Vec<crate::GuardConjunction> {
+        crate::guard_algebra::minimize_shared_guard_disjunction(conjunctions.into_iter().collect())
+    }
+
     /// Builds and minimizes a DNF from predicate conjunction alternatives.
     #[tracing::instrument(skip_all, level = "debug")]
     #[must_use]

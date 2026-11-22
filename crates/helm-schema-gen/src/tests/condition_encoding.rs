@@ -1,9 +1,11 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{
-    CollectionDomain, CollectionQuantifier, ConditionalGuard, Guard, GuardValue, ValuePattern,
-    ValuesPath,
+    CollectionDomain, CollectionQuantifier, ConditionalGuard, Guard, GuardValue,
+    RequirementConditionBuilder, ValuePattern, ValuesPath,
 };
 use indoc::indoc;
 use serde_json::{Value, json};
@@ -12,6 +14,8 @@ use test_util::prelude::sim_assert_eq;
 use crate::condition_encoding::{
     AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, guard_encodes_fully,
 };
+use crate::schema_node::SchemaNode;
+use crate::schema_tree::TypePartitionMemo;
 
 pub(super) fn build_condition_clauses(
     guards: &[ConditionalGuard],
@@ -1146,7 +1150,8 @@ fn shared_type_partition_conditions_keep_the_original_host_shape() {
         absence,
         ConditionPolarity::Widen,
     ));
-    let original = crate::schema_node::SchemaNode::all_of(build_condition_clauses(
+    let mut inline_cache = ConditionFragmentCache::default();
+    let original = SchemaNode::all_of(inline_cache.clauses(
         &guards,
         &ancestor,
         &empty,
@@ -1155,19 +1160,230 @@ fn shared_type_partition_conditions_keep_the_original_host_shape() {
     ));
     let mut shared = crate::schema_tree::SchemaDocument::new_root_object(crate::RootPolicy::Open);
     let mut inline = shared.clone();
-    shared.append_conditional_with_definitions(
+    let type_partition = cache.is_type_partition(&encoded);
+    assert!(type_partition);
+    shared.append_conditional_with_type_partition(
         &ancestor,
         encoded,
         crate::schema_node::SchemaNode::from_value(serde_json::json!({"required":["child"]})),
-        &cache.definitions,
+        type_partition,
     );
-    inline.append_conditional_with_definitions(
+    let type_partition = inline_cache.is_type_partition(&original);
+    assert!(type_partition);
+    inline.append_conditional_with_type_partition(
         &ancestor,
         original,
         crate::schema_node::SchemaNode::from_value(serde_json::json!({"required":["child"]})),
-        &std::collections::BTreeMap::new(),
+        type_partition,
     );
     sim_assert_eq!(have: expand_conditions(shared.into_value(), &cache.definitions), want: inline.into_value());
+}
+
+#[derive(Clone, Default)]
+struct RequirementVisits {
+    encoded: Arc<AtomicU64>,
+    available: Arc<AtomicU64>,
+}
+
+impl tracing::field::Visit for RequirementVisits {
+    fn record_debug(&mut self, _: &tracing::field::Field, _: &dyn std::fmt::Debug) {}
+
+    fn record_u64(&mut self, field: &tracing::field::Field, value: u64) {
+        match field.name() {
+            "requirement_encoding_visits" => self.encoded.store(value, Ordering::Relaxed),
+            "requirement_availability_visits" => self.available.store(value, Ordering::Relaxed),
+            _ => {}
+        }
+    }
+}
+
+impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for RequirementVisits {
+    fn on_new_span(
+        &self,
+        attributes: &tracing::span::Attributes<'_>,
+        _: &tracing::span::Id,
+        _: tracing_subscriber::layer::Context<'_, S>,
+    ) {
+        if attributes.metadata().name() == "condition_encoding_storage" {
+            attributes.record(&mut self.clone());
+        }
+    }
+}
+
+fn flag_guard(name: &str) -> ConditionalGuard {
+    ConditionalGuard::Eq {
+        path: ValuesPath::parse(name),
+        value: GuardValue::Bool(true),
+    }
+}
+
+fn flag_schema(name: &str) -> Value {
+    json!({"type": "object", "properties": {(name): {"enum": [true]}}, "required": [name]})
+}
+
+fn definition_ref(name: &str) -> Value {
+    json!({"$ref": helm_schema_json_schema_walk::GENERATED_DEFINITIONS.reference(name)})
+}
+
+#[test]
+fn requirement_encoding_and_availability_prune_shared_interiors() -> eyre::Result<()> {
+    use tracing_subscriber::prelude::*;
+
+    let width = 1_024_u64;
+    let roots = 512_u64;
+    let mut builder = RequirementConditionBuilder::default();
+    let shared = (0..width)
+        .map(|index| builder.guard(flag_guard(&format!("shared-{index:04}"))))
+        .collect::<Vec<_>>();
+    let shared = builder.or(shared);
+    let root_ids = (0..roots)
+        .map(|index| {
+            let gate = builder.guard(flag_guard(&format!("gate-{index:04}")));
+            builder.and([gate, shared])
+        })
+        .collect::<Vec<_>>();
+    let arena = builder.freeze();
+    let empty = serde_yaml::Value::Null;
+    let dependency_roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &empty,
+        dependency_refill: &empty,
+        dependency_roots: &dependency_roots,
+    };
+    let mut cache = ConditionFragmentCache::new();
+    let mut encoded_roots = Vec::new();
+    for id in root_ids {
+        let requirement = ConditionalGuard::Requirement(arena.root(id, true));
+        assert!(cache.encodes_fully(&requirement, &[], &empty, absence));
+        let clauses = cache.clauses(
+            &[requirement],
+            &[],
+            &empty,
+            absence,
+            ConditionPolarity::Widen,
+        );
+        encoded_roots.extend(clauses.into_iter().map(SchemaNode::into_value));
+    }
+
+    let visits = RequirementVisits::default();
+    let subscriber = tracing_subscriber::registry().with(visits.clone());
+    tracing::subscriber::with_default(subscriber, || cache.record_storage());
+    // After the first root, each traversal enters only the root, its gate, and the shared cache hit.
+    let expected_visits = width + roots * 3;
+    sim_assert_eq!(have: visits.encoded.load(Ordering::Relaxed), want: expected_visits);
+    sim_assert_eq!(have: visits.available.load(Ordering::Relaxed), want: expected_visits);
+
+    let alternatives = (0..width)
+        .map(|index| flag_schema(&format!("shared-{index:04}")))
+        .collect::<Vec<_>>();
+    let mut definitions = BTreeMap::from([(
+        "helm-condition-0".to_owned(),
+        json!({"anyOf": alternatives}),
+    )]);
+    let mut expected_roots = Vec::new();
+    for index in 0..roots {
+        let key = format!("helm-condition-{}", index + 1);
+        definitions.insert(key.clone(), json!({"allOf": [flag_schema(&format!("gate-{index:04}")), definition_ref("helm-condition-0")]}));
+        expected_roots.push(definition_ref(&key));
+    }
+    let schema = json!({"definitions": cache.definitions, "anyOf": encoded_roots});
+    sim_assert_eq!(have: &schema, want: &json!({"definitions": definitions, "anyOf": expected_roots}));
+    let validator = jsonschema::validator_for(&schema)?;
+    assert!(validator.is_valid(&json!({"shared-0511": true, "gate-0511": true})));
+    assert!(!validator.is_valid(&json!({"shared-0511": true})));
+    assert!(!validator.is_valid(&json!({"gate-0511": true})));
+    Ok(())
+}
+
+#[test]
+fn unavailable_requirement_nodes_do_not_poison_other_roots_or_anchors() {
+    let empty = serde_yaml::Value::Null;
+    let dependency_roots = BTreeSet::new();
+    let absence = AbsenceDefaults {
+        runtime_defaults: &empty,
+        dependency_refill: &empty,
+        dependency_roots: &dependency_roots,
+    };
+    let mut builder = RequirementConditionBuilder::default();
+    let outside = builder.guard(flag_guard("outside"));
+    let inside = builder.guard(flag_guard("inside.ready"));
+    let root = builder.split(flag_guard("inside.testing"), outside, inside);
+    let arena = builder.freeze();
+    let requirement = ConditionalGuard::Requirement(arena.root(root, true));
+    let available_sibling = ConditionalGuard::Requirement(arena.root(inside, true));
+    let anchor = ["inside".to_owned()];
+    let mut cache = ConditionFragmentCache::new();
+    assert!(!cache.encodes_fully(&requirement, &anchor, &empty, absence));
+    assert!(cache.encodes_fully(&available_sibling, &anchor, &empty, absence));
+    assert!(cache.encodes_fully(&requirement, &[], &empty, absence));
+}
+
+#[test]
+fn type_partition_diamonds_visit_each_definition_once() {
+    let mut previous = "kind/0".to_owned();
+    let mut definitions = BTreeMap::from([(previous.clone(), json!({"type": "string"}))]);
+    for level in 1..=24 {
+        let name = format!("kind/{level}");
+        let reference = definition_ref(&previous);
+        definitions.insert(
+            name.clone(),
+            json!({"anyOf": [
+                {"not": reference}, {"allOf": [reference, {"type": "array"}]}
+            ]}),
+        );
+        previous = name;
+    }
+    let mut memo = TypePartitionMemo::default();
+    assert!(memo.classify(&definition_ref(&previous), &definitions));
+    assert!(memo.classify(&definition_ref("kind/20"), &definitions));
+    sim_assert_eq!(have: memo.definition_visits(), want: definitions.len());
+
+    let mut non_partition = "members/0".to_owned();
+    definitions.insert(non_partition.clone(), json!({"required": ["child"]}));
+    for level in 1..=24 {
+        let name = format!("members/{level}");
+        definitions.insert(
+            name.clone(),
+            json!({"allOf": [
+                definition_ref(&non_partition), definition_ref(&previous)
+            ]}),
+        );
+        non_partition = name;
+    }
+    assert!(!memo.classify(&definition_ref(&non_partition), &definitions));
+    for level in 0..=24 {
+        assert!(!memo.classify(&definition_ref(&format!("members/{level}")), &definitions));
+    }
+    sim_assert_eq!(have: memo.definition_visits(), want: definitions.len());
+}
+
+#[test]
+fn type_partitions_require_closed_references_in_the_current_scope() {
+    let mut definitions = BTreeMap::from([
+        ("pending".to_owned(), definition_ref("late")),
+        (
+            "recurse".to_owned(),
+            json!({"not": definition_ref("recurse")}),
+        ),
+    ]);
+    let mut memo = TypePartitionMemo::default();
+    let pending = definition_ref("pending");
+    assert!(!memo.classify(&pending, &definitions));
+    definitions.insert("late".to_owned(), json!({"type": "string"}));
+    assert!(memo.classify(&pending, &definitions));
+
+    for reference in [
+        definition_ref("recurse"),
+        json!({"$ref": "#/definitions/late/type"}),
+        json!({"$ref": "other.json#/definitions/late"}),
+        json!({"$id": "urn:other", "$ref": "#/definitions/late"}),
+        // The other container's spelling names a different, absent definition.
+        json!({"$ref": "#/$defs/late"}),
+    ] {
+        assert!(!memo.classify(&reference, &definitions));
+    }
+    let mut other_scope = TypePartitionMemo::default();
+    assert!(!other_scope.classify(&pending, &BTreeMap::new()));
 }
 
 #[test]

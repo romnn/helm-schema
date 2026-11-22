@@ -62,9 +62,12 @@ fn failure_requirement_counts_exhaustion_after_retrying_without_coverage() -> ey
         8192
     ];
     consumption.append_activation(&guards);
-    let mut terminal = vec![vec![ConditionalGuard::Truthy {
-        path: ValuesPath::parse("already_rejected"),
-    }]];
+    let mut terminal = vec![
+        vec![ConditionalGuard::Truthy {
+            path: ValuesPath::parse("already_rejected"),
+        }]
+        .into(),
+    ];
     let bounds = Arc::new(RequirementBounds::default());
     let subscriber =
         tracing_subscriber::registry().with(RequirementBoundLayer(Arc::clone(&bounds)));
@@ -216,6 +219,155 @@ fn canonicalization_and_mapping_preserve_shared_payloads_and_serialization() -> 
                 ] }
             ]
         }),
+    );
+    Ok(())
+}
+
+fn assert_shared_conjunct_survives_split(
+    occurrences: &[crate::value::FrozenConsumption],
+) -> eyre::Result<()> {
+    use super::executed_requirements::{ExistingCoverage, fold_clauses};
+    let occurrences = occurrences
+        .iter()
+        .filter(|item| matches!(item.domain, crate::value::ConsumptionDomain::Known { .. }))
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: occurrences.len(), want: 2);
+    let expected = Predicate::truthy_path("p");
+    let fold = |occurrences: &[&crate::value::FrozenConsumption], work| {
+        let clauses = fold_clauses(occurrences, &ExistingCoverage::default(), None, work);
+        let split = clauses
+            .iter()
+            .any(|clause| matches!(clause.folded.guard, ConditionalGuard::Requirement(_)));
+        let guard = Predicate::Or(
+            clauses
+                .iter()
+                .map(|clause| {
+                    Predicate::all(
+                        clause
+                            .prefix
+                            .iter()
+                            .map(ConditionalGuard::predicate)
+                            .chain([clause.folded.guard.predicate()])
+                            .collect(),
+                    )
+                })
+                .collect(),
+        )
+        .normalize_boolean();
+        (split, guard)
+    };
+    let work = (16..256)
+        .find(|work| {
+            let (split, guard) = fold(&occurrences, *work);
+            split && guard == expected
+        })
+        .ok_or_eyre("no bounded Shannon split preserved p")?;
+    let first = *occurrences.first().ok_or_eyre("first occurrence")?;
+    let second = *occurrences.last().ok_or_eyre("second occurrence")?;
+    let (_, positive_only) = fold(&[first], helm_schema_core::RequirementBdd::WORK_BUDGET);
+    let (_, negative_only) = fold(&[second], helm_schema_core::RequirementBdd::WORK_BUDGET);
+    sim_assert_eq!(have: Predicate::Or(vec![positive_only, negative_only]).normalize_boolean(), want: Predicate::False);
+    let split_clauses = fold_clauses(&occurrences, &ExistingCoverage::default(), None, work);
+    assert!(
+        split_clauses
+            .iter()
+            .all(|clause| !clause.folded.projection_complete),
+        "a split cannot promote an unproved union to complete base ownership"
+    );
+    for order in [
+        vec![first, second],
+        vec![second, first],
+        vec![first, first, second, second],
+        vec![first, second, first, second],
+    ] {
+        let (split, guard) = fold(&order, work);
+        assert!(split, "the law must exercise an exhausted union");
+        sim_assert_eq!(have: guard, want: expected);
+    }
+    Ok(())
+}
+
+/// A forced split retains p after complementary unresolved guards cancel, in every input order.
+#[test]
+fn shannon_requirement_splits_preserve_shared_conjuncts_independently_of_order() -> eyre::Result<()>
+{
+    let occurrences = crate::value::FrozenConsumption::test_complementary_guards(None)?;
+    assert_shared_conjunct_survives_split(&occurrences)?;
+    let bound = occurrences
+        .iter()
+        .map(|occurrence| {
+            let mut occurrence =
+                occurrence.test_under(Predicate::from(helm_schema_core::Guard::Range {
+                    path: ValuesPath::parse("items"),
+                }));
+            occurrence.path = ValuesPath::parse("items.*.bad");
+            occurrence
+        })
+        .collect::<Vec<_>>();
+    assert_shared_conjunct_survives_split(&bound)
+}
+
+/// Wildcard values atoms are universally projected choices and cannot select a Shannon split.
+#[test]
+fn shannon_requirement_splits_do_not_select_wildcard_atoms() -> eyre::Result<()> {
+    let occurrences = crate::value::FrozenConsumption::test_complementary_guards(Some(
+        Predicate::truthy_path("a.*.enabled"),
+    ))?;
+    assert_shared_conjunct_survives_split(&occurrences)
+}
+
+/// Equal runtime ordinals from independent interpreters are independent unresolved choices.
+#[test]
+fn requirement_scope_projection_does_not_correlate_equal_choice_ordinals() -> eyre::Result<()> {
+    use super::executed_requirements::{ExistingCoverage, fold_clauses};
+    let first = crate::value::FrozenConsumption::test_complementary_guards(None)?;
+    let second = crate::value::FrozenConsumption::test_complementary_guards(None)?;
+    let positive = first.first().ok_or_eyre("first scope's positive arm")?;
+    let negative = second.last().ok_or_eyre("second scope's negative arm")?;
+    for order in [vec![positive, negative], vec![negative, positive]] {
+        let clauses = fold_clauses(
+            &order,
+            &ExistingCoverage::default(),
+            None,
+            helm_schema_core::RequirementBdd::WORK_BUDGET,
+        );
+        let guard = Predicate::Or(
+            clauses
+                .iter()
+                .map(|clause| {
+                    Predicate::all(
+                        clause
+                            .prefix
+                            .iter()
+                            .map(ConditionalGuard::predicate)
+                            .chain([clause.folded.guard.predicate()])
+                            .collect(),
+                    )
+                })
+                .collect(),
+        )
+        .normalize_boolean();
+        sim_assert_eq!(have: guard, want: Predicate::False);
+    }
+    Ok(())
+}
+
+/// A failed group fold cannot turn a proved-empty fallback into an unknown use.
+#[test]
+fn local_impossibility_survives_incomplete_group_ownership() -> eyre::Result<()> {
+    use super::executed_requirements::{ExistingCoverage, fold_clauses};
+    let occurrences = crate::value::FrozenConsumption::test_complementary_guards(None)?;
+    let impossible = occurrences
+        .first()
+        .ok_or_eyre("occurrence")?
+        .test_impossible_choice();
+    let clauses = fold_clauses(&[&impossible], &ExistingCoverage::default(), None, 0);
+    sim_assert_eq!(have: clauses.len(), want: 1);
+    assert!(clauses.iter().all(|clause| clause.folded.proved_impossible));
+    assert!(
+        clauses
+            .iter()
+            .all(|clause| !clause.folded.projection_complete)
     );
     Ok(())
 }

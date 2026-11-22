@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
-    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
+    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardConjunction, GuardValue,
     ProviderSchemaFragment, ValuesPath,
 };
 use serde_json::Value;
@@ -10,7 +10,7 @@ use serde_yaml::Value as YamlValue;
 use crate::common_prefix_len;
 use crate::condition_encoding::{evaluate_guard_set_on_values, guard_encodes_fully};
 use crate::emission_policy::{
-    ConditionalFlavor, EmissionClass, EmissionOrigin, GuardScopes, NestedGuardScope, TerminalWhen,
+    ConditionalFlavor, EmissionClass, EmissionOrigin, GuardScopes, NestedGuardScope,
 };
 use crate::emission_report::{EmissionReport, InsertionAbstentionCounts};
 use crate::generation_decisions::{
@@ -30,7 +30,7 @@ use crate::values_yaml::yaml_value_at_values_path;
 fn append_opaque_policy(
     conditionals: &mut Vec<LoweredConjunct>,
     path: &ValuesPath,
-    guard_sets: &[Vec<ConditionalGuard>],
+    guard_sets: &[GuardConjunction],
     values: &YamlValue,
 ) {
     if path.segments().any(|segment| segment.literal().is_none()) {
@@ -117,7 +117,7 @@ impl LoweredConjunct {
         target_value_path: ValuesPath,
         ancestor_segments: Vec<String>,
         relative_target_segments: Vec<String>,
-        guards: Vec<ConditionalGuard>,
+        guards: impl Into<GuardConjunction>,
         nested_guard_scopes: Vec<NestedGuardScope>,
         target_schema: SchemaNode,
         provider_schema_candidate: Option<ProviderSchemaCandidate>,
@@ -144,27 +144,6 @@ impl LoweredConjunct {
         }
     }
 
-    pub(crate) fn terminal(guards: Vec<ConditionalGuard>) -> Self {
-        let class = if guards.is_empty() {
-            EmissionClass::terminal_always()
-        } else {
-            EmissionClass::terminal_guarded(guards).unwrap_or_else(EmissionClass::terminal_always)
-        };
-        Self {
-            class,
-            origin: EmissionOrigin::RequirementImplication,
-            carrier: ConjunctCarrier {
-                target_value_path: ValuesPath::default(),
-                ancestor_segments: Vec::new(),
-                relative_target_segments: Vec::new(),
-                base_effect: ConditionalBaseEffect::None,
-                relax_untyped_host: false,
-            },
-            schema: SchemaNode::foreign(Value::Bool(false)),
-            provider_candidate: None,
-        }
-    }
-
     fn guard_scopes(&self) -> Option<&GuardScopes> {
         match &self.class {
             EmissionClass::Conditional { guards, .. } => Some(guards),
@@ -173,10 +152,11 @@ impl LoweredConjunct {
         }
     }
 
-    fn outer_guards(&self) -> &[ConditionalGuard] {
+    fn shared_outer_guards(&self) -> GuardConjunction {
         self.guard_scopes()
-            .map(|scopes| scopes.outer.as_slice())
-            .unwrap_or_default()
+            .unwrap_or(&EMPTY_GUARD_SCOPES)
+            .outer
+            .clone()
     }
 
     fn nested_guard_scopes(&self) -> &[NestedGuardScope] {
@@ -184,24 +164,10 @@ impl LoweredConjunct {
             .map(|scopes| scopes.nested.as_slice())
             .unwrap_or_default()
     }
-
-    pub(crate) fn terminal_guards(&self) -> Option<&[ConditionalGuard]> {
-        match &self.class {
-            EmissionClass::Terminal {
-                when: TerminalWhen::Always,
-            } => Some(&[]),
-            EmissionClass::Terminal {
-                when: TerminalWhen::Guarded(scopes),
-            } => Some(scopes.scopes().outer.as_slice()),
-            EmissionClass::Mandatory | EmissionClass::Conditional { .. } => None,
-        }
-    }
 }
 
-static EMPTY_GUARD_SCOPES: GuardScopes = GuardScopes {
-    outer: Vec::new(),
-    nested: Vec::new(),
-};
+static EMPTY_GUARD_SCOPES: std::sync::LazyLock<GuardScopes> =
+    std::sync::LazyLock::new(|| GuardScopes::new(Vec::new(), Vec::new()));
 
 #[tracing::instrument(skip_all)]
 #[expect(
@@ -278,15 +244,11 @@ pub(crate) fn collect_conditional_schemas(
     let root_path = ValuesPath::default();
     if let Some(root_implications) = synthesized_implications.get(&root_path) {
         for implication in root_implications {
-            if !implication.outer_guards.is_empty()
-                && !implication_guards_supported(
-                    &implication.outer_guards,
-                    &root_path,
-                    &resolved_by_path,
-                )
-            {
+            let Some(implication) = admit_implication(implication, &root_path, &resolved_by_path)
+            else {
                 continue;
-            }
+            };
+            let implication = implication.as_ref();
             let (target_schema, abstentions) =
                 crate::path_resolver::fail_requirement_schema(std::iter::once(implication));
             insertion_abstentions.requirement_target += abstentions;
@@ -310,6 +272,13 @@ pub(crate) fn collect_conditional_schemas(
     }
 
     for (target_value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        let _path = tracing::info_span!(
+            "lower_value_path",
+            path = ?target_value_path,
+            requirements = evidence.requirement_implications.len(),
+            opaque_rows = evidence.opaque_consumption_guards.as_ref().map_or(0, Vec::len),
+        )
+        .entered();
         let Some(resolved_target) = resolved_by_path.get(target_value_path) else {
             continue;
         };
@@ -368,7 +337,8 @@ pub(crate) fn collect_conditional_schemas(
                 .peekable();
             member_host_implications.peek().is_some()
                 && member_host_implications.all(|implication| {
-                    implication_has_self_presence_guard(implication, target_value_path)
+                    implication_scope(&implication.outer_guards, target_value_path)
+                        .all_self_presence
                 })
         };
         for (implication, origin, index) in
@@ -383,12 +353,18 @@ pub(crate) fn collect_conditional_schemas(
                     (implication, EmissionOrigin::Backprojection, index)
                 }))
         {
+            let Some(implication) =
+                admit_implication(implication, target_value_path, &resolved_by_path)
+            else {
+                continue;
+            };
+            let implication = implication.as_ref();
             if is_bare_iterable_implication(implication)
                 && let [helm_schema_core::FailValueRequirement::Iterable { allow_integer }] =
                     implication.requirements.as_slice()
                 && member_implication_covers_range_domain(
                     &evidence.requirement_implications,
-                    &implication.outer_guards,
+                    &implication.outer_guards.to_vec(),
                     *allow_integer,
                 )
             {
@@ -411,15 +387,6 @@ pub(crate) fn collect_conditional_schemas(
                         }
                     )
                 });
-            if !implication.outer_guards.is_empty()
-                && !implication_guards_supported(
-                    &implication.outer_guards,
-                    target_value_path,
-                    &resolved_by_path,
-                )
-            {
-                continue;
-            }
             let (mut target_schema, abstentions) =
                 crate::path_resolver::fail_requirement_schema(std::iter::once(implication));
             insertion_abstentions.requirement_target += abstentions;
@@ -490,14 +457,14 @@ pub(crate) fn collect_conditional_schemas(
             // exact arms the chart never navigates the host, so values.yaml
             // shape is not a runtime constraint. Only independent structural
             // evidence may retain the base beside those arms.
-            let presence_scoped_type_arm =
-                implication.requirements.iter().all(|requirement| {
-                    matches!(
-                        requirement,
-                        helm_schema_core::FailValueRequirement::SchemaType(_)
-                            | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(_)
-                    )
-                }) && implication_has_self_presence_guard(implication, target_value_path);
+            let scope = implication_scope(&implication.outer_guards, target_value_path);
+            let presence_scoped_type_arm = implication.requirements.iter().all(|requirement| {
+                matches!(
+                    requirement,
+                    helm_schema_core::FailValueRequirement::SchemaType(_)
+                        | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(_)
+                )
+            }) && scope.any_self_presence;
             // Only runtime structural evidence can retain a base beside a
             // guarded requirement. A compatible values.yaml sample does not
             // constrain states where an unrelated caller gate keeps every
@@ -505,21 +472,25 @@ pub(crate) fn collect_conditional_schemas(
             let short_circuit = |short_circuit_reason| ContainmentCheck::NotEvaluated {
                 short_circuit_reason,
             };
-            let (check, preserve_base_schema) = if member_host_only && !member_host_complete_domain
-            {
-                (
-                    short_circuit(ContainmentShortCircuit::IncompleteMemberHost),
-                    true,
-                )
-            } else if implication.outer_guards.is_empty() {
-                (
-                    short_circuit(ContainmentShortCircuit::UnguardedRequirement),
-                    true,
-                )
-            } else if implication_has_self_truthy_guard(implication, target_value_path) {
+            // A projected arm is a sufficient subset of its execution reach.
+            // It cannot own the declared base on the omitted executions, so an incomplete
+            // member-host domain withholds that base throughout, including after a split.
+            let incomplete = member_host_only && !member_host_complete_domain;
+            // A self-truthy arm never fires on a Helm-falsy input.
+            let (check, preserve_base_schema) = if scope.any_self_truthy {
                 (
                     short_circuit(ContainmentShortCircuit::SelfTruthyGuard),
                     false,
+                )
+            } else if incomplete {
+                (
+                    short_circuit(ContainmentShortCircuit::IncompleteMemberHost),
+                    false,
+                )
+            } else if !scope.has_guarded_proof {
+                (
+                    short_circuit(ContainmentShortCircuit::UnguardedRequirement),
+                    true,
                 )
             } else if presence_scoped_type_arm {
                 (
@@ -532,12 +503,10 @@ pub(crate) fn collect_conditional_schemas(
                 let contains = matches!(check, ContainmentCheck::Evaluated { contains: true, .. });
                 (check, contains)
             };
-            let base_effect = if !preserve_base_schema {
-                ConditionalBaseEffect::Own
-            } else if member_host_only && !member_host_complete_domain {
-                ConditionalBaseEffect::Require
-            } else {
+            let base_effect = if preserve_base_schema {
                 ConditionalBaseEffect::None
+            } else {
+                ConditionalBaseEffect::Own
             };
             decisions
                 .path_mut(target_value_path)
@@ -836,6 +805,7 @@ fn positive_self_type(guard: &ConditionalGuard, target: &ValuesPath) -> bool {
             guards.iter().any(|guard| positive_self_type(guard, target))
         }
         ConditionalGuard::Decision(_)
+        | ConditionalGuard::Requirement(_)
         | ConditionalGuard::Truthy { path: _ }
         | ConditionalGuard::With { path: _ }
         | ConditionalGuard::Eq { path: _, value: _ }
@@ -888,6 +858,7 @@ fn type_guard_implies_schema(
             .iter()
             .all(|guard| type_guard_implies_schema(guard, target, schema)),
         ConditionalGuard::Decision(_)
+        | ConditionalGuard::Requirement(_)
         | ConditionalGuard::Truthy { path: _ }
         | ConditionalGuard::With { path: _ }
         | ConditionalGuard::Eq { path: _, value: _ }
@@ -1052,13 +1023,12 @@ pub(crate) use conditional_constraints::{
     prepare_conditional_hosts,
 };
 use conditional_constraints::{
-    conditional_ancestor_segments, guards_supported_for_conditional_lowering,
-    implication_guards_supported, partition_guard_scopes, resolve_overlay_target_schema,
+    admit_implication, conditional_ancestor_segments, guards_supported_for_conditional_lowering,
+    implication_scope, partition_guard_scopes, resolve_overlay_target_schema,
 };
 pub(crate) use member_projection::member_descendant_projection;
 use member_projection::{
-    append_merge_shadow_arms, append_omitted_member_arms, implication_has_self_presence_guard,
-    implication_has_self_truthy_guard, is_bare_iterable_implication,
+    append_merge_shadow_arms, append_omitted_member_arms, is_bare_iterable_implication,
     is_unconditional_self_presence_overlay, member_implication_covers_range_domain,
     structural_collection_member_projection, structural_domain_containment,
 };

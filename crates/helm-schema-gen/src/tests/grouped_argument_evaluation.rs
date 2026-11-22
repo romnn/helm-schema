@@ -491,7 +491,7 @@ fn named_local_selector_preserves_receiver_and_leaf_boundaries() -> eyre::Result
     );
 
     let canonical_expected = canonical_nil_safe_selector_schema("cfg", "db");
-    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    sim_assert_eq!(have: super::rejection_encoding::canonical(&schema), want: super::rejection_encoding::canonical(&canonical_expected));
     super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
@@ -640,7 +640,7 @@ fn helper_dot_selector_tolerates_nil_receiver_but_not_nil_leaf() -> eyre::Result
     );
 
     let canonical_expected = canonical_nil_safe_selector_schema("subject", "child");
-    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    sim_assert_eq!(have: super::rejection_encoding::canonical(&schema), want: super::rejection_encoding::canonical(&canonical_expected));
     super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
@@ -840,7 +840,7 @@ fn branch_root_reassignment_joins_value_and_mode_per_arm() -> eyre::Result<()> {
     let expected = expected_branch_root_reassignment_schema();
 
     let canonical_expected = canonical_branch_root_schema();
-    sim_assert_eq!(have: &schema, want: &canonical_expected);
+    sim_assert_eq!(have: super::rejection_encoding::canonical(&schema), want: super::rejection_encoding::canonical(&canonical_expected));
     super::schema_quotient::assert_equivalent(&schema, &expected)?;
 
     for (instance, want) in [
@@ -1990,6 +1990,9 @@ fn selected_string_rejection_truth(
     let object = formula
         .as_object()
         .ok_or_eyre("non-object rejection formula")?;
+    if object.is_empty() {
+        return Ok(true);
+    }
     if let Some(test) = object.get("if") {
         eyre::ensure!(
             object

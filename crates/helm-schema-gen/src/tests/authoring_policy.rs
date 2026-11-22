@@ -468,8 +468,8 @@ fn dependency_schema(policy: AuthoringPolicy) -> Value {
 )]
 fn annotate_backfills_dependency_defaults_as_documentation() {
     sim_assert_eq!(
-        have: dependency_schema(ANNOTATE),
-        want: serde_json::json!({
+        have: super::rejection_encoding::canonical(&dependency_schema(ANNOTATE)),
+        want: super::rejection_encoding::canonical(&serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "allOf": [
@@ -569,11 +569,11 @@ fn annotate_backfills_dependency_defaults_as_documentation() {
                 }
             },
             "type": "object"
-        })
+        }))
     );
     sim_assert_eq!(
-        have: dependency_schema(OPEN_AND_ANNOTATE),
-        want: serde_json::json!({
+        have: super::rejection_encoding::canonical(&dependency_schema(OPEN_AND_ANNOTATE)),
+        want: super::rejection_encoding::canonical(&serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "allOf": [
                 {
@@ -672,7 +672,7 @@ fn annotate_backfills_dependency_defaults_as_documentation() {
                 }
             },
             "type": "object"
-        })
+        }))
     );
 }
 

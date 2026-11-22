@@ -364,3 +364,243 @@ fn allocation_collapse_keeps_aliases_in_the_unknown_write_region() -> eyre::Resu
     }
     Ok(())
 }
+
+/// Whether a `fail` in `source`, run over an unknown root, is reachable.
+fn reaches_fail(source: &str) -> bool {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    Executor { db: &db }
+        .body(source, None, State::new(Value::unknown()))
+        .iter()
+        .any(|exit| matches!(exit.flow, Flow::Abort(AbortReason::Fail)))
+}
+
+/// (6a1-V, Sol pre-landing item 4) A second unknown write is not covered by the first: the
+/// first iteration restores `$d.x` after its unknown write, the second iteration's unknown write
+/// may set it to `stop`, and the third iteration's check then aborts.
+#[test]
+fn a_later_unknown_write_reaches_the_third_iteration() {
+    assert!(reaches_fail(indoc! {r#"
+        {{- $d := dict "x" "go" }}{{ $first := true }}
+        {{- range .items }}
+        {{- if eq $d.x "stop" }}{{ fail "third" }}{{ end }}
+        {{- if $first }}{{ include (printf "h-%v" .) $d }}{{ $_ := set $d "x" "go" }}{{ else }}{{ include (printf "h-%v" .) $d }}{{ end }}
+        {{- $first = false }}
+        {{- end }}
+    "#}));
+}
+
+/// (6a1-T, Sol pre-landing item 1) In-place sorts of shared slots reach a third-iteration state
+/// the second does not cover: Helm sorts `d,c,b,a` to `abcd` after three members.
+#[test]
+fn a_slice_sorted_in_place_reaches_its_third_iteration_state() {
+    assert!(reaches_fail(indoc! {r#"
+        {{- $s := splitList "," "d,c,b,a" }}
+        {{- range .items }}{{ $_ := sortAlpha (slice $s 0 2) }}{{ $_ := sortAlpha (slice $s 1 3) }}{{ $_ := sortAlpha (slice $s 2 4) }}{{- end }}
+        {{- if eq (join "" $s) "abcd" }}{{ fail "sorted" }}{{ end }}
+    "#}));
+}
+
+/// (6a1-X) A range binder is declared afresh at every iteration, and a frame inside an outer
+/// binding shadows it: neither is carried, so an unknown write that rewrites them leaves the
+/// next iteration's start covered. A visible outer binding still counts.
+#[test]
+fn shadowed_and_rebound_bindings_are_not_carried() {
+    use crate::value::loops::{CarriedScope, covers};
+    use std::collections::BTreeSet;
+
+    let mut start = State::new(Value::unknown());
+    start.bind("outer".to_owned(), Value::nil());
+    start.bind("shadowed".to_owned(), Value::nil());
+    start.enter_scope(None);
+    start.bind("shadowed".to_owned(), Value::nil());
+    start.bind("k".to_owned(), Value::nil());
+    let frames = start.frames.len();
+    let rebind = |name: &str, frame: usize| {
+        let mut end = start.clone();
+        if let Some(target) = end.frames.get_mut(frame) {
+            Rc::make_mut(target)
+                .bindings
+                .insert(name.to_owned(), Value::unknown());
+        }
+        end
+    };
+    let rebound = BTreeSet::from(["k".to_owned()]);
+    let scope = CarriedScope {
+        frames,
+        rebound: &rebound,
+    };
+    let none = BTreeSet::new();
+    assert!(covers(&start, &rebind("k", frames - 1), scope));
+    assert!(!covers(
+        &start,
+        &rebind("k", frames - 1),
+        CarriedScope {
+            frames,
+            rebound: &none,
+        }
+    ));
+    assert!(covers(&start, &rebind("shadowed", 0), scope));
+    assert!(!covers(&start, &rebind("outer", 0), scope));
+}
+
+/// An assumption set has its own Top; fresh choices cannot extend the pass ladder forever. The
+/// Top states the assumption the pass made instead of `False` (6a1 rework item 1), so the carried
+/// path still admits every document where that assumption holds.
+#[test]
+fn loop_top_covers_fresh_validity_assumptions() {
+    use crate::value::loops::{Carried, CarriedScope, Widening};
+    use crate::value::{Coverage, DecisionEdge, path::LinkKind};
+    use std::collections::BTreeSet;
+
+    let state = State::new(Value::unknown());
+    let rebound = BTreeSet::new();
+    let scope = CarriedScope {
+        frames: state.frames.len(),
+        rebound: &rebound,
+    };
+    let mut carried = Carried::new(state);
+    for index in 0..2 {
+        let mut end = carried.state.clone();
+        let predicate = Predicate::truthy_path(format!("p{index}"));
+        let test = end
+            .heap
+            .arena
+            .decision(predicate.clone(), predicate.negated(), Coverage::Exact);
+        end.active
+            .push(DecisionEdge { test, taken: true }, LinkKind::Assume);
+        carried.widen(&end, scope, Widening::Top);
+        assert!(carried.covers(&end, scope));
+        sim_assert_eq!(have: carried.state.path_predicate(), want: Predicate::truthy_path("p0"));
+    }
+}
+
+/// Reading an input map leaves its entry remainder intact; a lazy merge changes that remainder.
+#[test]
+fn late_input_remainders_are_compared_against_the_entry_state() -> eyre::Result<()> {
+    use crate::value::loops::{CarriedScope, covers};
+    use helm_schema_core::ValuesPath;
+    use std::collections::BTreeSet;
+
+    let start = State::new(Value::unknown());
+    let rebound = BTreeSet::new();
+    let scope = CarriedScope {
+        frames: start.frames.len(),
+        rebound: &rebound,
+    };
+    let mut end = start.clone();
+    let path = ValuesPath::parse("cfg");
+    let object = end.input_object(&path);
+    assert!(covers(&start, &end, scope), "a read alone is covered");
+    let source = Value::input(ValuesPath::parse("source"));
+    assert!(end.merge_into(&object, &source, true, 0, &Rc::default()));
+    let data = end
+        .heap
+        .version
+        .object(&object)
+        .ok_or_eyre("merged input")?;
+    assert!(
+        matches!(&data.data, crate::value::ObjectData::Map { fields, .. } if fields.is_empty())
+    );
+    assert!(
+        !covers(&start, &end, scope),
+        "a layered remainder is a carried mutation"
+    );
+    Ok(())
+}
+
+/// (6a1 rework item 2, ADR 0072 §10) Summarizing more than 4,096 exits widens only the
+/// continuation: every member's consumptions, requirement reads, sites and text sites survive
+/// with the conditions they were recorded under.
+#[test]
+fn summarized_exits_keep_every_member_history() -> eyre::Result<()> {
+    use crate::value::ExitBuffer;
+    use helm_schema_core::ValuesPath;
+
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let normal_exit = |source: &str| {
+        execute_document(source, None, &db)
+            .exits
+            .into_iter()
+            .find(|exit| matches!(exit.flow, Flow::Normal(_)))
+            .ok_or_eyre("normal exit")
+    };
+    let early = normal_exit(indoc! {r"
+        {{- $_ := upper .Values.early }}
+        host: {{ .Values.host.k }}
+        early: text
+    "})?;
+    let late = normal_exit("{{- $_ := upper .Values.late }}late: text\n")?;
+    let mut buffer = ExitBuffer::default();
+    buffer.push(early.clone());
+    for _ in 0..4096 {
+        buffer.push(late.clone());
+    }
+    let summarized = buffer
+        .finish()
+        .into_iter()
+        .find(|exit| matches!(exit.flow, Flow::Normal(_)))
+        .ok_or_eyre("summarized normal exit")?;
+    let state = &summarized.state;
+    for member in [&early, &late] {
+        for consumption in &member.state.consumptions {
+            assert!(
+                state.consumptions.iter().any(|kept| kept == consumption),
+                "lost the consumption of {:?}",
+                consumption.path
+            );
+        }
+        for site in &member.state.sites {
+            assert!(
+                state
+                    .sites
+                    .iter()
+                    .any(|kept| (kept.program, kept.ordinal, kept.span)
+                        == (site.program, site.ordinal, site.span)),
+                "lost a site"
+            );
+        }
+        for text in &member.state.text_sites {
+            assert!(
+                state.text_sites.iter().any(|kept| kept == text),
+                "lost a text site"
+            );
+        }
+    }
+    let host = ValuesPath::parse("host");
+    let requirement = early
+        .state
+        .reads
+        .iter()
+        .find(|read| read.path == host && read.coverage.is_requirement())
+        .ok_or_eyre("the early member's requirement read")?;
+    assert!(
+        state.reads.iter().any(|read| read == requirement),
+        "lost the requirement read of host"
+    );
+    Ok(())
+}
+
+#[test]
+fn large_integer_range_starts_at_exact_zero_and_reaches_its_rest() {
+    assert!(!reaches_fail(
+        r#"{{ range 33 }}{{ if eq . 0 }}{{ break }}{{ end }}{{ fail "nonzero" }}{{ end }}"#,
+    ));
+    assert!(reaches_fail(
+        r#"{{ range $i := 33 }}{{ if eq $i 0 }}{{ continue }}{{ end }}{{ fail "nonzero" }}{{ end }}"#,
+    ));
+}
+
+#[test]
+fn a_first_pass_render_keeps_serialized_use_after_a_terminal_exit() {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(
+        r#"{{ range 33 }}{{ toYaml $.Values.labels }}{{ fail "after rendering" }}{{ end }}"#,
+        None,
+        &db,
+    );
+    sim_assert_eq!(have: execution.abort_predicate(), want: Predicate::True);
+    assert!(execution.projection_reads().iter().any(|read| {
+        read.kind == crate::ValueKind::Serialized
+            && read.values_path == helm_schema_core::ValuesPath::parse("labels")
+    }));
+}

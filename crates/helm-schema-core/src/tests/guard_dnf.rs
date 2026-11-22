@@ -1,3 +1,4 @@
+use color_eyre::eyre;
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
@@ -391,7 +392,7 @@ fn conjunction_drops_an_approximation_proven_by_its_exact_sibling() {
 
 #[test]
 fn conditional_guard_disjunction_uses_the_same_normalization() {
-    let condition = GuardDnf::normalize_conditional_guard_disjunction([
+    let conjunctions = [
         vec![
             ConditionalGuard::Truthy {
                 path: path("enabled"),
@@ -408,7 +409,22 @@ fn conditional_guard_disjunction_uses_the_same_normalization() {
                 path: path("shared"),
             },
         ],
-    ]);
+    ];
+    let borrowed = GuardDnf::normalize_shared_conditional_guard_disjunction(
+        conjunctions
+            .iter()
+            .cloned()
+            .map(crate::GuardConjunction::from),
+    )
+    .iter()
+    .map(crate::GuardConjunction::to_vec)
+    .collect::<Vec<_>>();
+    let condition = GuardDnf::normalize_conditional_guard_disjunction(conjunctions);
+    sim_assert_eq!(have: borrowed, want: condition.clone());
+    sim_assert_eq!(
+        have: GuardDnf::normalize_conditional_guard_disjunction([[]]),
+        want: vec![Vec::<ConditionalGuard>::new()]
+    );
 
     sim_assert_eq!(
         have: condition,
@@ -723,4 +739,237 @@ fn ranked_resolution_keeps_mask_boundaries_and_full_scan_callback_order() {
         sim_assert_eq!(have: actual, want: expected);
         sim_assert_eq!(have: actual_calls.into_inner(), want: expected_calls.into_inner());
     }
+}
+
+#[test]
+fn shared_guard_disjunction_matches_flat_resolution_and_absorption() -> eyre::Result<()> {
+    use crate::{GuardConjunction, GuardPrefix};
+    use color_eyre::eyre::OptionExt as _;
+    let a = ConditionalGuard::Truthy { path: path("a") };
+    let b = ConditionalGuard::Truthy { path: path("b") };
+    let literals = [
+        a.clone(),
+        ConditionalGuard::Not(std::sync::Arc::new(a.clone())),
+        b.clone(),
+        ConditionalGuard::Not(std::sync::Arc::new(b.clone())),
+        ConditionalGuard::Absent { path: path("c") },
+    ];
+    let prefixes = [
+        GuardPrefix::default(),
+        GuardPrefix::new(vec![a.clone()]),
+        GuardPrefix::new(vec![b, a.clone(), a]),
+    ];
+    let pick = |index: usize| -> eyre::Result<ConditionalGuard> {
+        literals
+            .iter()
+            .cycle()
+            .nth(index % literals.len())
+            .cloned()
+            .ok_or_eyre("guard literal")
+    };
+    for seed in 0..128 {
+        let mut rows = Vec::new();
+        for (index, prefix) in prefixes.iter().cycle().take(12).enumerate() {
+            let before = if (seed + index) % 3 == 0 {
+                Vec::new()
+            } else {
+                vec![pick(seed + index)?]
+            };
+            let after = if (seed + index) % 2 == 0 {
+                Vec::new()
+            } else {
+                vec![pick(seed * 3 + index)?]
+            };
+            let row = GuardConjunction::prefixed(before, prefix.clone(), after).canonicalized();
+            rows.push(if index % 2 == 0 {
+                row
+            } else {
+                GuardConjunction::from(row.to_vec()).canonicalized()
+            });
+        }
+        let expected = GuardDnf::normalize_conditional_guard_disjunction(
+            rows.iter().map(GuardConjunction::to_vec),
+        );
+        let actual = GuardDnf::normalize_shared_conditional_guard_disjunction(rows)
+            .iter()
+            .map(GuardConjunction::to_vec)
+            .collect::<Vec<_>>();
+        sim_assert_eq!(have: actual, want: expected);
+    }
+    Ok(())
+}
+
+#[test]
+fn shared_guard_disjunction_keeps_large_equal_width_antichains_compact() {
+    use crate::{GuardConjunction, GuardPrefix};
+    let prefix = GuardPrefix::new(
+        (0..64)
+            .map(|index| ConditionalGuard::Truthy {
+                path: path(&format!("flag{index:02}")),
+            })
+            .collect(),
+    );
+    let rows = (0..5000)
+        .map(|index| {
+            GuardConjunction::prefixed(
+                vec![ConditionalGuard::Absent {
+                    path: path(&format!("row{index:04}")),
+                }],
+                prefix.clone(),
+                Vec::new(),
+            )
+            .canonicalized()
+        })
+        .collect::<Vec<_>>();
+    let actual = GuardDnf::normalize_shared_conditional_guard_disjunction(rows.clone());
+    sim_assert_eq!(have: &actual, want: &rows);
+    assert!(actual.iter().all(|row| {
+        row.canonical_parts()
+            .is_some_and(|(stored, _)| stored.shares_storage(&prefix))
+    }));
+    assert!(
+        actual
+            .iter()
+            .map(GuardConjunction::owned_capacity)
+            .sum::<usize>()
+            <= actual.len()
+    );
+}
+
+#[test]
+fn shared_guard_complement_lookup_preserves_long_branch_prefixes() {
+    use crate::{GuardConjunction, GuardPrefix};
+    let prefix = GuardPrefix::new(
+        (0..64)
+            .map(|index| ConditionalGuard::TypeIs {
+                path: path(&format!("flag{index:02}")),
+                schema_type: "boolean".to_owned(),
+            })
+            .collect(),
+    );
+    let mut rows = Vec::new();
+    for index in 0..512 {
+        let positive = ConditionalGuard::Truthy {
+            path: path(&format!("choice{index:04}")),
+        };
+        for extra in [
+            positive.clone(),
+            ConditionalGuard::Not(std::sync::Arc::new(positive)),
+        ] {
+            rows.push(
+                GuardConjunction::prefixed(vec![extra], prefix.clone(), Vec::new()).canonicalized(),
+            );
+        }
+    }
+    let actual = GuardDnf::normalize_shared_conditional_guard_disjunction(rows);
+    let expected =
+        vec![GuardConjunction::prefixed(Vec::new(), prefix.clone(), Vec::new()).canonicalized()];
+    sim_assert_eq!(have: &actual, want: &expected);
+    assert!(actual.iter().all(|row| {
+        row.canonical_parts()
+            .is_some_and(|(stored, _)| stored.shares_storage(&prefix))
+    }));
+    sim_assert_eq!(have: actual.iter().map(GuardConjunction::owned_capacity).sum::<usize>(), want: 0);
+}
+
+#[test]
+fn shared_guard_absorption_matches_flat_subsets_across_prefix_widths() {
+    use crate::{GuardConjunction, GuardPrefix};
+    let literals = (0..8)
+        .map(|index| ConditionalGuard::TypeIs {
+            path: path(&format!("value{index}")),
+            schema_type: "boolean".to_owned(),
+        })
+        .collect::<Vec<_>>();
+    for seed in 0..128 {
+        let rows = (0..32)
+            .map(|index| {
+                let prefix = literals
+                    .iter()
+                    .enumerate()
+                    .filter(|(bit, _)| (seed + index * 3) & (1 << bit) != 0)
+                    .map(|(_, guard)| guard.clone())
+                    .collect();
+                let extras = literals
+                    .iter()
+                    .enumerate()
+                    .filter(|(bit, _)| (seed * 13 + index * 7) & (1 << bit) != 0)
+                    .map(|(_, guard)| guard.clone())
+                    .collect();
+                GuardConjunction::prefixed(extras, GuardPrefix::new(prefix), Vec::new())
+                    .canonicalized()
+            })
+            .collect::<Vec<_>>();
+        let expected = GuardDnf::normalize_conditional_guard_disjunction(
+            rows.iter().map(GuardConjunction::to_vec),
+        );
+        let actual = GuardDnf::normalize_shared_conditional_guard_disjunction(rows)
+            .iter()
+            .map(GuardConjunction::to_vec)
+            .collect::<Vec<_>>();
+        sim_assert_eq!(have: actual, want: expected);
+    }
+}
+
+#[test]
+fn shared_guard_absorption_keeps_large_mixed_width_rows_compact() {
+    use crate::{GuardConjunction, GuardPrefix};
+    let literals = (0..64)
+        .map(|index| ConditionalGuard::TypeIs {
+            path: path(&format!("flag{index:02}")),
+            schema_type: "boolean".to_owned(),
+        })
+        .collect::<Vec<_>>();
+    let prefix = GuardPrefix::new(literals.clone());
+    let shorter = GuardPrefix::new(literals.iter().take(63).cloned().collect());
+    let mut expected = Vec::new();
+    let mut rows = Vec::new();
+    for index in 0..5000 {
+        let extra = ConditionalGuard::Absent {
+            path: path(&format!("row{index:04}")),
+        };
+        let minimal = GuardConjunction::prefixed(vec![extra.clone()], prefix.clone(), Vec::new())
+            .canonicalized();
+        expected.push(minimal.clone());
+        rows.push(minimal);
+        let redundant = std::iter::once(extra)
+            .chain(literals.iter().skip(63).cloned())
+            .chain(std::iter::once(ConditionalGuard::Absent {
+                path: path(&format!("detail{index:04}")),
+            }))
+            .collect();
+        rows.push(
+            GuardConjunction::prefixed(redundant, shorter.clone(), Vec::new()).canonicalized(),
+        );
+    }
+    expected.sort();
+    let actual = GuardDnf::normalize_shared_conditional_guard_disjunction(rows);
+    sim_assert_eq!(have: &actual, want: &expected);
+    assert!(actual.iter().all(|row| {
+        row.canonical_parts()
+            .is_some_and(|(stored, _)| stored.shares_storage(&prefix))
+    }));
+    sim_assert_eq!(have: actual.iter().map(GuardConjunction::owned_capacity).sum::<usize>(), want: 5000);
+}
+
+#[test]
+fn shared_guard_absorption_skips_equal_width_distinct_prefixes() {
+    use crate::{GuardConjunction, GuardPrefix};
+    let mut expected = (0..5000)
+        .map(|index| {
+            GuardConjunction::prefixed(
+                vec![ConditionalGuard::Absent {
+                    path: path(&format!("row{index:04}")),
+                }],
+                GuardPrefix::new(vec![ConditionalGuard::Absent {
+                    path: path(&format!("flag{index:04}")),
+                }]),
+                Vec::new(),
+            )
+            .canonicalized()
+        })
+        .collect::<Vec<_>>();
+    expected.sort();
+    let actual = GuardDnf::normalize_shared_conditional_guard_disjunction(expected.clone());
+    sim_assert_eq!(have: actual, want: expected);
 }

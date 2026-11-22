@@ -4,6 +4,8 @@
 //! JSON Schema document, finds repeated schema subtrees, and rewrites repeated
 //! occurrences to internal definitions and `$ref` entries.
 
+mod definition_graph;
+mod junction_groups;
 mod naming;
 mod single_use;
 
@@ -27,25 +29,31 @@ pub use naming::{
 /// keyword payloads, such as `required`, `enum`, `type`, or Kubernetes
 /// extension metadata, are never replaced with `$ref`.
 ///
-/// Every extraction decision is made on the document as given, including
-/// the caller's private definition handles, and on private planning ids.
-/// Only then are those handles and the extracted definitions named by
-/// `names` (see [`name_definitions`]), so no final name influences which
-/// subtrees are extracted.
+/// Subtree extraction uses the caller's private definition handles and
+/// private planning ids. After naming the definitions, repeated junction
+/// operands share new definitions only when they save serialized bytes.
 #[must_use]
 #[tracing::instrument(skip_all)]
 pub fn minimize_schema(
-    schema: Value,
+    mut schema: Value,
     anonymous: &BTreeMap<String, Vec<DefinitionOrigin>>,
     names: DefinitionNames,
 ) -> Value {
+    let has_private_definitions = anonymous.values().any(Vec::is_empty);
+    definition_graph::compact(&mut schema, anonymous);
     let (mut minimized, generated) = extract_repeated_subschemas(schema);
     let mut anonymous = anonymous.clone();
     for id in generated {
         anonymous.entry(id).or_default();
     }
     single_use::inline_single_use_definitions(&mut minimized);
+    if has_private_definitions {
+        junction_groups::flatten_junctions(&mut minimized);
+    }
     name_definitions(&mut minimized, &anonymous, names);
+    if has_private_definitions {
+        junction_groups::share_reference_groups(&mut minimized);
+    }
     minimized
 }
 

@@ -2,7 +2,8 @@ mod algebra;
 mod consumption;
 mod control;
 pub(crate) use consumption::{
-    Consumption, ConsumptionDomain, ConsumptionKey, FrozenConsumption, RequirementIdentities,
+    Consumption, ConsumptionDomain, ConsumptionKey, FrozenConsumption, GuardImports, GuardWalk,
+    RequirementGuardInterner, RequirementIdentities, RequirementOrderKey,
     collect_requirement_atoms, map_consumption_paths,
 };
 mod eval;
@@ -24,6 +25,7 @@ mod json_query;
 pub(crate) mod kinds;
 mod layers;
 mod lexical;
+mod loops;
 mod namespace;
 mod operations;
 mod ordering;

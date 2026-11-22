@@ -1,14 +1,26 @@
+use std::borrow::Cow;
+use std::collections::HashMap;
+
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, EmissionClass, EmissionReport,
     GuardValue, LoweredConjunct, NestedGuardScope, PathSchemaResolver, ResolvedPathSchema,
     SchemaDocument, SchemaNode, Value, YamlValue, common_prefix_len, evaluate_guard_set_on_values,
     guard_encodes_fully,
 };
-use helm_schema_core::ValuesPath;
+use helm_schema_core::{
+    ContractRequirementImplication, GuardConjunction, RequirementCondition,
+    RequirementConditionBuilder, RequirementConditionNode, RequirementDecision, ValuesPath,
+};
 
+use crate::condition_encoding::{AbsenceDefaults, ConditionFragmentCache, EncodedConditionPlan};
 use crate::emission_policy::EmissionOrigin;
 use crate::schema_tree::{CanonicalConstraintApplication, CanonicalConstraintOutcome};
-use crate::uncoalesced_root::{GuardEncoding, UncoalescedRootGate};
+use crate::terminal_conditions::{
+    ProofGuardRole, TerminalContext, TerminalEmissions, partition_requirement,
+};
+use crate::uncoalesced_root::{
+    GuardEncoding, LintGuardPaths, LintRequirement, UncoalescedRootGate,
+};
 use crate::values_yaml::yaml_value_at_values_path;
 
 pub(super) fn resolve_overlay_target_schema(
@@ -129,13 +141,14 @@ pub(super) fn guards_supported_for_conditional_lowering(
 /// - truthy guards over other undeclared-but-resolved paths lower
 ///   type-generically: the requirement is a hard render failure, and a
 ///   fabricated guard path merely leaves the arm inactive.
-pub(super) fn implication_guards_supported(
-    guards: &[ConditionalGuard],
+fn implication_guards_supported<'guard>(
+    guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
     target_value_path: &ValuesPath,
     resolved_by_path: &BTreeMap<&ValuesPath, &ResolvedPathSchema>,
 ) -> bool {
-    !guards.is_empty()
-        && guards.iter().all(|guard| match guard {
+    let mut guards = guards.into_iter().peekable();
+    guards.peek().is_some()
+        && guards.all(|guard| match guard {
             // The values ROOT owns no resolved path entry, but its
             // truthiness encodes at the document node itself. Rejecting it
             // here would drop the WHOLE implication — every sibling arm
@@ -148,6 +161,7 @@ pub(super) fn implication_guards_supported(
                     || resolved_by_path.contains_key(path)
             }
             ConditionalGuard::Decision(_)
+            | ConditionalGuard::Requirement(_)
             | ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
@@ -172,14 +186,255 @@ pub(super) fn implication_guards_supported(
             | ConditionalGuard::AtMostOneMember { .. }
             | ConditionalGuard::MinMembers { .. } => true,
             ConditionalGuard::Not(inner) => implication_guards_supported(
-                std::slice::from_ref(inner),
+                std::iter::once(inner.as_ref()),
                 target_value_path,
                 resolved_by_path,
             ),
             ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
-                implication_guards_supported(guards, target_value_path, resolved_by_path)
+                implication_guards_supported(guards.iter(), target_value_path, resolved_by_path)
             }
         })
+}
+
+pub(super) fn admit_implication<'a>(
+    implication: &'a ContractRequirementImplication,
+    target: &ValuesPath,
+    resolved: &BTreeMap<&ValuesPath, &ResolvedPathSchema>,
+) -> Option<Cow<'a, ContractRequirementImplication>> {
+    let guards = &implication.outer_guards;
+    let supports = |guard: &ConditionalGuard| {
+        implication_guards_supported(std::iter::once(guard), target, resolved)
+    };
+    if !guards.iter().all(supports) {
+        return None;
+    }
+    if requirement_guard(guards).is_none() {
+        return Some(Cow::Borrowed(implication));
+    }
+    let mut changed = false;
+    let mut admitted = Vec::new();
+    for guard in guards {
+        if let ConditionalGuard::Requirement(graph) = guard
+            && let RequirementAdmission::Narrowed(narrowed) =
+                supported_requirement(graph, supports)?
+        {
+            changed = true;
+            admitted.push(ConditionalGuard::Requirement(narrowed));
+        } else {
+            admitted.push(guard.clone());
+        }
+    }
+    if !changed {
+        return Some(Cow::Borrowed(implication));
+    }
+    let mut updated = implication.clone();
+    updated.outer_guards = admitted.into();
+    Some(Cow::Owned(updated))
+}
+
+enum RequirementAdmission {
+    Unchanged,
+    Narrowed(RequirementCondition),
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct ImplicationScope {
+    pub(super) has_guarded_proof: bool,
+    pub(super) any_self_truthy: bool,
+    pub(super) any_self_presence: bool,
+    pub(super) all_self_presence: bool,
+}
+
+impl ImplicationScope {
+    const UNCONDITIONAL: Self = Self {
+        has_guarded_proof: false,
+        any_self_truthy: false,
+        any_self_presence: false,
+        all_self_presence: false,
+    };
+    const IMPOSSIBLE: Self = Self {
+        all_self_presence: true,
+        ..Self::UNCONDITIONAL
+    };
+
+    fn guard(guard: &ConditionalGuard, target: &ValuesPath) -> Self {
+        let presence = guard.is_self_presence_for(target);
+        Self {
+            has_guarded_proof: true,
+            any_self_truthy: guard.is_self_truthy_for(target),
+            any_self_presence: presence,
+            all_self_presence: presence,
+        }
+    }
+
+    fn and(self, other: Self) -> Self {
+        Self {
+            has_guarded_proof: self.has_guarded_proof || other.has_guarded_proof,
+            any_self_truthy: self.any_self_truthy || other.any_self_truthy,
+            any_self_presence: self.any_self_presence || other.any_self_presence,
+            all_self_presence: self.all_self_presence || other.all_self_presence,
+        }
+    }
+
+    fn or(self, other: Self) -> Self {
+        Self {
+            has_guarded_proof: self.has_guarded_proof || other.has_guarded_proof,
+            any_self_truthy: self.any_self_truthy || other.any_self_truthy,
+            any_self_presence: self.any_self_presence || other.any_self_presence,
+            all_self_presence: self.all_self_presence && other.all_self_presence,
+        }
+    }
+}
+
+pub(super) fn implication_scope(
+    guards: &GuardConjunction,
+    target: &ValuesPath,
+) -> ImplicationScope {
+    guards
+        .iter()
+        .fold(ImplicationScope::UNCONDITIONAL, |scope, guard| {
+            let guard_scope = match guard {
+                ConditionalGuard::Requirement(graph) => {
+                    requirement_implication_scope(graph, target)
+                        .unwrap_or(ImplicationScope::UNCONDITIONAL)
+                }
+                _ => ImplicationScope::guard(guard, target),
+            };
+            scope.and(guard_scope)
+        })
+}
+
+fn requirement_implication_scope(
+    graph: &RequirementCondition,
+    target: &ValuesPath,
+) -> Option<ImplicationScope> {
+    let mut scopes = HashMap::<usize, ImplicationScope>::new();
+    for id in graph.reachable_ids() {
+        let scope = match graph.node(id)? {
+            RequirementConditionNode::False => ImplicationScope::IMPOSSIBLE,
+            RequirementConditionNode::True => ImplicationScope::UNCONDITIONAL,
+            RequirementConditionNode::Guard(guard) => ImplicationScope::guard(guard, target),
+            RequirementConditionNode::And(children) => children
+                .iter()
+                .try_fold(ImplicationScope::UNCONDITIONAL, |scope, child| {
+                    Some(scope.and(*scopes.get(child)?))
+                })?,
+            RequirementConditionNode::Or(children) => children
+                .iter()
+                .try_fold(ImplicationScope::IMPOSSIBLE, |scope, child| {
+                    Some(scope.or(*scopes.get(child)?))
+                })?,
+            RequirementConditionNode::Decision(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            })
+            | RequirementConditionNode::Split(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            }) => {
+                let yes = if *when_true == RequirementConditionBuilder::FALSE {
+                    ImplicationScope::IMPOSSIBLE
+                } else {
+                    scopes
+                        .get(when_true)?
+                        .and(ImplicationScope::guard(test, target))
+                };
+                let no = if *when_false == RequirementConditionBuilder::FALSE {
+                    ImplicationScope::IMPOSSIBLE
+                } else {
+                    scopes
+                        .get(when_false)?
+                        .and(negative_implication_scope(test, target))
+                };
+                yes.or(no)
+            }
+        };
+        scopes.insert(id, scope);
+    }
+    scopes.get(&graph.root()).copied()
+}
+
+fn negative_implication_scope(test: &ConditionalGuard, target: &ValuesPath) -> ImplicationScope {
+    let negative = ConditionalGuard::Not(std::sync::Arc::new(test.clone()));
+    if let ConditionalGuard::Decision(graph) = test
+        && let [
+            RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            },
+        ] = graph.decisions()
+    {
+        match (*when_true, *when_false) {
+            (0, 1) => return ImplicationScope::guard(test, target),
+            (1, 0) => {
+                return ImplicationScope::guard(
+                    &ConditionalGuard::Not(std::sync::Arc::new(test.clone())),
+                    target,
+                );
+            }
+            _ => {}
+        }
+    }
+    ImplicationScope::guard(&negative, target)
+}
+
+fn supported_requirement(
+    graph: &RequirementCondition,
+    supports: impl Fn(&ConditionalGuard) -> bool,
+) -> Option<RequirementAdmission> {
+    let order = graph.reachable_ids();
+    if order.iter().all(|&id| match graph.node(id) {
+        Some(RequirementConditionNode::Guard(guard)) => supports(guard),
+        _ => true,
+    }) {
+        return Some(RequirementAdmission::Unchanged);
+    }
+    let mut builder = RequirementConditionBuilder::default();
+    let mut mapped = HashMap::new();
+    for id in order {
+        let root = match graph.node(id)? {
+            RequirementConditionNode::True => RequirementConditionBuilder::TRUE,
+            RequirementConditionNode::Guard(guard) if supports(guard) => {
+                builder.guard(guard.clone())
+            }
+            RequirementConditionNode::False | RequirementConditionNode::Guard(_) => {
+                RequirementConditionBuilder::FALSE
+            }
+            RequirementConditionNode::And(children) => builder.and(
+                children
+                    .iter()
+                    .map(|child| mapped.get(child).copied())
+                    .collect::<Option<Vec<_>>>()?,
+            ),
+            RequirementConditionNode::Or(children) => builder.union(
+                children
+                    .iter()
+                    .map(|child| mapped.get(child).copied())
+                    .collect::<Option<Vec<_>>>()?,
+            ),
+            RequirementConditionNode::Decision(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            })
+            | RequirementConditionNode::Split(RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            }) => builder.split(
+                test.clone(),
+                *mapped.get(when_true)?,
+                *mapped.get(when_false)?,
+            ),
+        };
+        mapped.insert(id, root);
+    }
+    let root = *mapped.get(&graph.root())?;
+    (root != RequirementConditionBuilder::FALSE)
+        .then(|| RequirementAdmission::Narrowed(builder.freeze().root(root, false)))
 }
 
 fn guards_supported_with_self_path(
@@ -201,6 +456,7 @@ fn guards_supported_with_self_path(
                     || resolved_by_path.contains_key(path)
             }
             ConditionalGuard::Decision(_)
+            | ConditionalGuard::Requirement(_)
             | ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
@@ -241,28 +497,6 @@ fn guards_supported_with_self_path(
         })
 }
 
-#[tracing::instrument(skip_all, level = "debug")]
-fn terminal_guard_ancestor(guards: &[ConditionalGuard], values: &YamlValue) -> Vec<String> {
-    let ancestor = shared_guard_ancestor_segments(guards);
-    let path = ValuesPath::from_segments(
-        ancestor
-            .iter()
-            .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
-    );
-    // A missing coalesced ancestor supplies no local instance for the lint comparison.
-    // Keep its definite absence failure at the root so that comparison cannot withdraw it.
-    if matches!(guards, [ConditionalGuard::Absent { .. }])
-        && !matches!(
-            yaml_value_at_values_path(values, &path),
-            Some(YamlValue::Mapping(_))
-        )
-    {
-        Vec::new()
-    } else {
-        ancestor
-    }
-}
-
 /// Lowers terminating validator formulas into `if <guards> then false` clauses.
 ///
 /// No valid values document satisfies all of a clause's guards.
@@ -270,19 +504,20 @@ fn terminal_guard_ancestor(guards: &[ConditionalGuard], values: &YamlValue) -> V
 /// supplies no coalesced instance for the lint comparison.
 /// Any unencodable guard skips the whole clause: a partially encoded `if` would
 /// reject documents the validator never terminates.
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip_all, fields(guarded_default_sources = signals.guarded_values_default_sources().len()))]
 pub(crate) fn append_terminal_clauses(
     root_schema: &mut SchemaDocument,
-    clauses: &[Vec<ConditionalGuard>],
+    clauses: &[&GuardConjunction],
     signals: &helm_schema_core::ContractSchemaSignals,
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
     predicate_memo: &helm_schema_core::PredicateMemo,
     gate: &mut UncoalescedRootGate<'_>,
 ) {
+    let prepared = prepare_terminal_clauses(clauses, documents, gate);
     append_values_default_source_absence_clauses(
         root_schema,
-        clauses,
+        &prepared,
         signals,
         documents,
         dependency_roots,
@@ -291,7 +526,7 @@ pub(crate) fn append_terminal_clauses(
     );
     append_guarded_values_default_source_clauses(
         root_schema,
-        clauses,
+        &prepared,
         signals,
         documents,
         dependency_roots,
@@ -300,19 +535,43 @@ pub(crate) fn append_terminal_clauses(
     );
     append_deleted_dependency_root_clauses(
         root_schema,
-        clauses,
+        &prepared,
         documents,
         dependency_roots,
         predicate_memo,
         gate,
     );
     // Availability probes must not reserve names in the emitted condition definitions.
-    let mut encodings = crate::condition_encoding::ConditionFragmentCache::default();
-    for guards in clauses {
+    let mut encodings = ConditionFragmentCache::default();
+    let mut paths = crate::terminal_conditions::TerminalPathCache::default();
+    let mut emissions = TerminalEmissions::default();
+    let rows_span = tracing::info_span!("prepare_terminal_rows", rows = clauses.len());
+    let rows_scope = rows_span.enter();
+    for (row_index, entry) in prepared.iter().enumerate() {
+        if row_index.is_multiple_of(4_096)
+            && tracing::enabled!(target: "helm_schema_gen::counters", tracing::Level::INFO)
+        {
+            emissions.record_storage();
+            gate.record_storage();
+        }
+        let guard_row = entry.guards.as_ref();
+        let guards = guard_row;
         let (_, values_yaml_doc, absence) =
-            documents.condition_context(guards, dependency_roots, predicate_memo);
-        let shared_ancestor = terminal_guard_ancestor(guards, values_yaml_doc);
-        let all_vacuous = guards.iter().all(guard_holds_vacuously);
+            entry.condition_context(documents, dependency_roots, predicate_memo);
+        let (shared_ancestor, all_vacuous) = entry.context.as_ref().map_or_else(
+            || {
+                (
+                    paths.ancestor(guards, values_yaml_doc),
+                    guards.iter().all(guard_holds_vacuously),
+                )
+            },
+            |context| {
+                (
+                    context.ancestor(values_yaml_doc),
+                    !context.requires_presence(),
+                )
+            },
+        );
         // Keep present values attributed to their nearest shared object.
         // A separate root clause evaluates the original formula only while
         // that object is missing; retaining every guard matters because a
@@ -327,49 +586,304 @@ pub(crate) fn append_terminal_clauses(
         } else {
             shared_ancestor
         };
-        if !guards.iter().all(|guard| {
-            encodings.encodes_fully(guard, &ancestor_segments, values_yaml_doc, absence)
-        }) {
-            continue;
-        }
-        append_terminal_clause(
-            root_schema,
-            gate,
+        if !encodings.conjunction_encodes_fully(
             guards,
             &ancestor_segments,
             values_yaml_doc,
             absence,
+        ) {
+            continue;
+        }
+        append_terminal_clause(
+            &mut emissions,
+            gate,
+            guard_row,
+            &ancestor_segments,
+            values_yaml_doc,
+            absence,
         );
-        // `runtime_defaults` is the effective subtree when the document supplies
-        // no ancestor. A definitively false original formula makes the
-        // missing-ancestor companion unreachable; uncertainty stays open.
-        if split_vacuous_ancestor
-            && evaluate_guard_set_on_values(guards, absence.runtime_defaults) != Some(false)
-        {
-            let path = ValuesPath::from_segments(
-                ancestor_segments
-                    .iter()
-                    .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+        if split_vacuous_ancestor {
+            append_missing_ancestor_clause(
+                &mut emissions,
+                gate,
+                &mut encodings,
+                guard_row,
+                &ancestor_segments,
+                values_yaml_doc,
+                absence,
             );
-            let absent = ConditionalGuard::Absent { path };
-            let root = Vec::new();
-            let mut missing_ancestor_guards = guards.clone();
-            missing_ancestor_guards.push(absent);
-            if missing_ancestor_guards
-                .iter()
-                .all(|guard| encodings.encodes_fully(guard, &root, values_yaml_doc, absence))
-            {
-                append_terminal_clause(
-                    root_schema,
-                    gate,
-                    &missing_ancestor_guards,
-                    &root,
-                    values_yaml_doc,
-                    absence,
-                );
+        }
+    }
+    drop(rows_scope);
+    drop(rows_span);
+    emissions.append(root_schema, gate);
+}
+
+fn append_missing_ancestor_clause(
+    emissions: &mut TerminalEmissions,
+    gate: &mut UncoalescedRootGate<'_>,
+    encodings: &mut ConditionFragmentCache,
+    guards: &GuardConjunction,
+    ancestor_segments: &[String],
+    values_yaml_doc: &YamlValue,
+    absence: AbsenceDefaults<'_>,
+) {
+    // Runtime defaults provide the effective subtree when the ancestor is absent.
+    // A definitively false guard makes the companion unreachable.
+    if evaluate_guard_set_on_values(guards, absence.runtime_defaults) == Some(false) {
+        return;
+    }
+    let path = ValuesPath::from_segments(
+        ancestor_segments
+            .iter()
+            .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+    );
+    let mut missing_ancestor_guards = guards.clone();
+    missing_ancestor_guards.push(ConditionalGuard::Absent { path });
+    if encodings.conjunction_encodes_fully(&missing_ancestor_guards, &[], values_yaml_doc, absence)
+    {
+        append_terminal_clause(
+            emissions,
+            gate,
+            &missing_ancestor_guards,
+            &[],
+            values_yaml_doc,
+            absence,
+        );
+    }
+}
+
+struct PreparedTerminalClause<'a> {
+    guards: Cow<'a, GuardConjunction>,
+    context: Option<TerminalContext>,
+    default_document: GuardDefaultDocument,
+}
+
+impl PreparedTerminalClause<'_> {
+    fn condition_context<'a>(
+        &self,
+        documents: &'a crate::emission_plan::RootValuesDocuments,
+        dependency_roots: &'a BTreeSet<Vec<String>>,
+        predicate_memo: &helm_schema_core::PredicateMemo,
+    ) -> (
+        Option<usize>,
+        &'a YamlValue,
+        crate::condition_encoding::AbsenceDefaults<'a>,
+    ) {
+        self.default_document.condition_context(
+            self.guards.as_ref(),
+            documents,
+            dependency_roots,
+            predicate_memo,
+        )
+    }
+}
+
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
+enum GuardDefaultDocument {
+    #[default]
+    Derive,
+    Selected(Option<usize>),
+}
+
+impl GuardDefaultDocument {
+    fn condition_context<'a>(
+        self,
+        guards: &GuardConjunction,
+        documents: &'a crate::emission_plan::RootValuesDocuments,
+        dependency_roots: &'a BTreeSet<Vec<String>>,
+        predicate_memo: &helm_schema_core::PredicateMemo,
+    ) -> (
+        Option<usize>,
+        &'a YamlValue,
+        crate::condition_encoding::AbsenceDefaults<'a>,
+    ) {
+        match self {
+            Self::Selected(index) => documents.condition_context_at(index, dependency_roots),
+            Self::Derive => documents.condition_context(guards, dependency_roots, predicate_memo),
+        }
+    }
+}
+
+struct RequirementDefaultRegion {
+    condition: RequirementCondition,
+    default_document: GuardDefaultDocument,
+}
+
+fn requirement_default_regions(
+    guards: &GuardConjunction,
+    graph: &RequirementCondition,
+    documents: &crate::emission_plan::RootValuesDocuments,
+) -> Vec<RequirementDefaultRegion> {
+    use crate::emission_plan::GuardedDefaultsSelection;
+
+    let activations = documents.guarded_activations();
+    if activations.is_empty() {
+        return vec![RequirementDefaultRegion {
+            condition: graph.clone(),
+            default_document: GuardDefaultDocument::Selected(None),
+        }];
+    }
+    let extras = helm_schema_core::Predicate::all(
+        guards_outside_requirement(guards, graph)
+            .map(ConditionalGuard::predicate)
+            .collect(),
+    );
+    let Some(regions) =
+        crate::requirement_activation::partition_activation(graph, &extras, &activations)
+    else {
+        return Vec::new();
+    };
+    regions
+        .into_iter()
+        .filter_map(|region| {
+            match documents.selected_guarded_defaults(&region.active, &region.unknown) {
+                GuardedDefaultsSelection::Selected(index) => Some(RequirementDefaultRegion {
+                    condition: region.condition,
+                    default_document: GuardDefaultDocument::Selected(index),
+                }),
+                GuardedDefaultsSelection::Unresolved => {
+                    let _bound = tracing::debug_span!(
+                    target: "helm_schema_gen::counters", "requirement_default_context_unresolved",
+                ).entered();
+                    None
+                }
+            }
+        })
+        .collect()
+}
+
+#[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+struct TerminalRequirementContext {
+    shape: TerminalContext,
+    lint: LintGuardPaths,
+}
+
+impl TerminalRequirementContext {
+    fn join(&self, other: &Self) -> Self {
+        Self {
+            shape: self.shape.join(&other.shape),
+            lint: self.lint.join(&other.lint),
+        }
+    }
+}
+
+fn prepare_terminal_clauses<'a>(
+    clauses: &[&'a GuardConjunction],
+    documents: &crate::emission_plan::RootValuesDocuments,
+    gate: &UncoalescedRootGate<'_>,
+) -> Vec<PreparedTerminalClause<'a>> {
+    let mut prepared = Vec::new();
+    let observe = |guard: &ConditionalGuard, role: ProofGuardRole| TerminalRequirementContext {
+        shape: TerminalContext::of_guard(guard, !guard_holds_vacuously(guard), role),
+        lint: gate.lint_guard_paths(guard),
+    };
+    for &clause in clauses {
+        let Some(graph) = requirement_guard(clause) else {
+            prepared.push(PreparedTerminalClause {
+                guards: Cow::Borrowed(clause),
+                context: None,
+                default_document: GuardDefaultDocument::Derive,
+            });
+            continue;
+        };
+        // A sharing barrier applies to the original proof, including every successor.
+        if !gate.supports_scope_guards(clause) {
+            continue;
+        }
+        let extra_context = guards_outside_requirement(clause, graph)
+            .fold(TerminalRequirementContext::default(), |context, guard| {
+                context.join(&observe(guard, ProofGuardRole::Leaf))
+            });
+        for region in requirement_default_regions(clause, graph, documents) {
+            let Some(partitions) =
+                partition_requirement(&region.condition, observe, TerminalRequirementContext::join)
+            else {
+                continue;
+            };
+            for partition in partitions {
+                prepared.push(PreparedTerminalClause {
+                    guards: Cow::Owned(with_requirement_partition(
+                        clause,
+                        graph,
+                        partition.condition,
+                    )),
+                    context: Some(partition.context.shape.join(&extra_context.shape)),
+                    default_document: region.default_document,
+                });
             }
         }
     }
+    prepared
+}
+
+fn requirement_guard(clause: &GuardConjunction) -> Option<&RequirementCondition> {
+    clause.iter().find_map(|guard| match guard {
+        ConditionalGuard::Requirement(graph) => Some(graph),
+        _ => None,
+    })
+}
+
+fn guards_outside_requirement<'a>(
+    clause: &'a GuardConjunction,
+    graph: &RequirementCondition,
+) -> impl Iterator<Item = &'a ConditionalGuard> {
+    clause.iter().filter(move |guard| {
+        !matches!(guard, ConditionalGuard::Requirement(other) if std::ptr::eq(graph, other))
+    })
+}
+
+fn with_requirement_partition(
+    clause: &GuardConjunction,
+    graph: &RequirementCondition,
+    condition: RequirementCondition,
+) -> GuardConjunction {
+    let guard = match condition.node(condition.root()) {
+        Some(RequirementConditionNode::True) => None,
+        Some(RequirementConditionNode::Guard(guard)) => Some(guard.clone()),
+        _ => Some(ConditionalGuard::Requirement(condition)),
+    };
+    guards_outside_requirement(clause, graph)
+        .cloned()
+        .chain(guard)
+        .collect::<Vec<_>>()
+        .into()
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct ScopedGuardRow {
+    guards: GuardConjunction,
+    default_document: GuardDefaultDocument,
+}
+
+fn conditional_guard_rows(
+    guards: GuardConjunction,
+    documents: &crate::emission_plan::RootValuesDocuments,
+    gate: &UncoalescedRootGate<'_>,
+) -> Vec<ScopedGuardRow> {
+    let Some(graph) = requirement_guard(&guards) else {
+        return vec![ScopedGuardRow {
+            guards,
+            default_document: GuardDefaultDocument::Derive,
+        }];
+    };
+    if !gate.supports_scope_guards(&guards) {
+        return Vec::new();
+    }
+    let observe = |guard: &ConditionalGuard, _role| gate.lint_guard_paths(guard);
+    let mut rows = Vec::new();
+    for region in requirement_default_regions(&guards, graph, documents) {
+        let Some(partitions) =
+            partition_requirement(&region.condition, observe, LintGuardPaths::join)
+        else {
+            continue;
+        };
+        rows.extend(partitions.into_iter().map(|partition| ScopedGuardRow {
+            guards: with_requirement_partition(&guards, graph, partition.condition),
+            default_document: region.default_document,
+        }));
+    }
+    rows
 }
 
 /// A deleted dependency values root is not the document minus a key: helm
@@ -377,21 +891,21 @@ pub(crate) fn append_terminal_clauses(
 /// guards all hold against that refill terminates every document missing the
 /// root — the half a clause anchored inside the root cannot reach. One clause
 /// per root states it.
-#[tracing::instrument(skip_all, level = "debug")]
+#[tracing::instrument(skip_all)]
 fn append_deleted_dependency_root_clauses(
     root_schema: &mut SchemaDocument,
-    clauses: &[Vec<ConditionalGuard>],
+    clauses: &[PreparedTerminalClause<'_>],
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
     predicate_memo: &helm_schema_core::PredicateMemo,
     gate: &mut UncoalescedRootGate<'_>,
 ) {
     let mut deleted_roots = BTreeSet::new();
-    for guards in clauses {
-        let (_, _, absence) = documents.condition_context(guards, dependency_roots, predicate_memo);
-        if let Some(root) =
-            crate::condition_encoding::deleted_dependency_root_terminates(guards, absence)
-        {
+    let mut paths = crate::terminal_conditions::TerminalPathCache::default();
+    for entry in clauses {
+        let guards = entry.guards.as_ref();
+        let (_, _, absence) = entry.condition_context(documents, dependency_roots, predicate_memo);
+        if let Some(root) = paths.deleted_dependency_root(guards, absence) {
             deleted_roots.insert(root);
         }
     }
@@ -423,18 +937,22 @@ fn append_deleted_dependency_root_clauses(
     }
 }
 
-#[tracing::instrument(skip_all, level = "debug")]
+#[tracing::instrument(skip_all)]
 fn append_values_default_source_absence_clauses(
     root_schema: &mut SchemaDocument,
-    clauses: &[Vec<ConditionalGuard>],
+    clauses: &[PreparedTerminalClause<'_>],
     signals: &helm_schema_core::ContractSchemaSignals,
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
     predicate_memo: &helm_schema_core::PredicateMemo,
     gate: &mut UncoalescedRootGate<'_>,
 ) {
-    for guards in clauses {
-        let [ConditionalGuard::Absent { path }] = guards.as_slice() else {
+    for entry in clauses {
+        let guards = entry.guards.as_ref();
+        if guards.len() != 1 {
+            continue;
+        }
+        let Some(ConditionalGuard::Absent { path }) = guards.iter().next() else {
             continue;
         };
         let Some(source_path) =
@@ -452,7 +970,7 @@ fn append_values_default_source_absence_clauses(
             continue;
         };
         let (_, values_yaml_doc, absence) =
-            documents.condition_context(guards, dependency_roots, predicate_memo);
+            entry.condition_context(documents, dependency_roots, predicate_memo);
         append_unless_withdrawn(
             root_schema,
             gate,
@@ -471,39 +989,42 @@ fn append_values_default_source_absence_clauses(
     }
 }
 
-#[tracing::instrument(skip_all, level = "debug")]
+#[tracing::instrument(skip_all)]
 fn append_guarded_values_default_source_clauses(
     root_schema: &mut SchemaDocument,
-    clauses: &[Vec<ConditionalGuard>],
+    clauses: &[PreparedTerminalClause<'_>],
     signals: &helm_schema_core::ContractSchemaSignals,
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
     predicate_memo: &helm_schema_core::PredicateMemo,
     gate: &mut UncoalescedRootGate<'_>,
 ) {
-    for guards in clauses {
-        let guard_predicate = helm_schema_core::Predicate::all(
-            guards.iter().map(ConditionalGuard::predicate).collect(),
-        );
+    for entry in clauses {
+        let guards = entry.guards.as_ref();
+        let absent_paths = guards
+            .iter()
+            .filter_map(|guard| match guard {
+                ConditionalGuard::Absent { path } => Some(path),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        if absent_paths.is_empty() {
+            continue;
+        }
         for fact in signals.guarded_values_default_sources() {
-            let activation = helm_schema_core::Predicate::all(
-                fact.outer_guards
-                    .iter()
-                    .map(ConditionalGuard::predicate)
-                    .collect(),
-            );
-            if !predicate_memo.exactly_implies(&guard_predicate, &activation) {
-                continue;
-            }
-            let Some(ConditionalGuard::Absent { path }) = guards.iter().find(|guard| {
-                matches!(guard, ConditionalGuard::Absent { path } if source_path_for_effective(path, &fact.source).is_some())
+            // An unrelated row cannot produce a default-source absence clause.
+            // Prove that eligibility before retaining a whole-row implication query.
+            let Some((path, source_path)) = absent_paths.iter().find_map(|&path| {
+                source_path_for_effective(path, &fact.source).map(|source| (path, source))
             }) else {
                 continue;
             };
-            let Some(source_path) = source_path_for_effective(path, &fact.source) else {
+            let Some(target_absent) = crate::condition_encoding::input_path_absent_condition(path)
+            else {
                 continue;
             };
-            let Some(target_absent) = crate::condition_encoding::input_path_absent_condition(path)
+            let Some(guards) =
+                active_source_guards(entry, documents, &fact.outer_guards, predicate_memo)
             else {
                 continue;
             };
@@ -518,7 +1039,7 @@ fn append_guarded_values_default_source_clauses(
                 .cloned()
                 .collect::<Vec<_>>();
             let (_, values_yaml_doc, absence) =
-                documents.condition_context(guards, dependency_roots, predicate_memo);
+                entry.condition_context(documents, dependency_roots, predicate_memo);
             let mut conditions = gate.condition_clauses(
                 &remaining_guards,
                 &[],
@@ -545,6 +1066,51 @@ fn append_guarded_values_default_source_clauses(
             );
         }
     }
+}
+
+fn active_source_guards<'a>(
+    entry: &'a PreparedTerminalClause<'_>,
+    documents: &crate::emission_plan::RootValuesDocuments,
+    source_activation: &[ConditionalGuard],
+    predicate_memo: &helm_schema_core::PredicateMemo,
+) -> Option<Cow<'a, GuardConjunction>> {
+    let guards = entry.guards.as_ref();
+    if let GuardDefaultDocument::Selected(Some(selected)) = entry.default_document
+        && documents.guarded_source_index(source_activation) == Some(selected)
+    {
+        return Some(Cow::Borrowed(guards));
+    }
+    let activation = helm_schema_core::Predicate::all(
+        source_activation
+            .iter()
+            .map(ConditionalGuard::predicate)
+            .collect(),
+    );
+    if let Some(graph) = requirement_guard(guards) {
+        let extras = helm_schema_core::Predicate::all(
+            guards_outside_requirement(guards, graph)
+                .map(ConditionalGuard::predicate)
+                .collect(),
+        );
+        let source = crate::requirement_activation::GuardedActivation {
+            predicate: activation,
+            guard_count: source_activation.len(),
+        };
+        let active =
+            crate::requirement_activation::partition_activation(graph, &extras, &[source])?
+                .into_iter()
+                .find(|region| region.active.contains(&0))?;
+        return Some(Cow::Owned(with_requirement_partition(
+            guards,
+            graph,
+            active.condition,
+        )));
+    }
+    let predicate =
+        helm_schema_core::Predicate::all(guards.iter().map(ConditionalGuard::predicate).collect());
+    predicate_memo
+        .exactly_implies(&predicate, &activation)
+        .then_some(Cow::Borrowed(guards))
 }
 
 fn source_path_for_effective(
@@ -620,6 +1186,7 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         | ConditionalGuard::MinMembers { .. } => false,
         ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
         ConditionalGuard::Decision(_)
+        | ConditionalGuard::Requirement(_)
         | ConditionalGuard::NotEq { .. }
         | ConditionalGuard::Absent { .. }
         | ConditionalGuard::AtMostOneMember { .. }
@@ -627,31 +1194,6 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         ConditionalGuard::AllOf(inner) => inner.iter().all(guard_holds_vacuously),
         ConditionalGuard::AnyOf(inner) => inner.iter().any(guard_holds_vacuously),
     }
-}
-
-/// The longest common prefix of the PARENTS of every path the guards
-/// reference. Presence tests (`required`/`Absent` encodings) need the
-/// tested segment to stay relative, so a single-path clause anchors at the
-/// path's parent rather than the path itself.
-fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
-    let mut shared: Option<Vec<String>> = None;
-    for guard in guards {
-        for guard_path in guard.value_paths() {
-            let mut segments = guard_path
-                .segments()
-                .map(helm_schema_core::Segment::encode_component)
-                .collect::<Vec<_>>();
-            segments.pop();
-            shared = Some(match shared {
-                None => segments,
-                Some(prefix) => {
-                    let len = common_prefix_len(&prefix, &segments);
-                    prefix.get(..len).unwrap_or_default().to_vec()
-                }
-            });
-        }
-    }
-    shared.unwrap_or_default()
 }
 
 #[derive(Debug, Clone, Default)]
@@ -686,7 +1228,7 @@ pub(crate) fn prepare_conditional_hosts(
     preparation
 }
 
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip_all, fields(conditionals = conditionals.len(), guard_groups = tracing::field::Empty, content_groups = tracing::field::Empty, max_content_guards = tracing::field::Empty))]
 #[expect(
     clippy::too_many_lines,
     reason = "keeping conditional grouping and emission together makes the equivalence rewrites auditable"
@@ -705,8 +1247,23 @@ pub(crate) fn append_selected_constraints(
     // repeated `if` blocks dominate emitted size on charts with many guarded
     // blocks. Distinct targets merge disjointly; a leaf collision falls back
     // to its own conditional.
-    let mut grouped: BTreeMap<(Vec<String>, Vec<ConditionalGuard>), Vec<LoweredConjunct>> =
-        BTreeMap::new();
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    struct GuardGroupKey {
+        ancestor_segments: Vec<String>,
+        row: ScopedGuardRow,
+    }
+    #[expect(
+        clippy::mutable_key_type,
+        reason = "the guard prefix OnceLock memoizes the canonical order of immutable guards"
+    )]
+    let mut grouped: BTreeMap<GuardGroupKey, Vec<LoweredConjunct>> = BTreeMap::new();
+    let grouping_span = tracing::info_span!(
+        "group_conditional_rows",
+        groups = tracing::field::Empty,
+        allocated_slots = tracing::field::Empty,
+        row_bytes = std::mem::size_of::<LoweredConjunct>(),
+    )
+    .entered();
     for conditional in conditionals {
         // Schema-less conditionals carry base ownership established by a
         // transform or by a separate implication that already emits the
@@ -717,24 +1274,81 @@ pub(crate) fn append_selected_constraints(
             }
             continue;
         }
+        let mut rows = conditional_guard_rows(conditional.shared_outer_guards(), documents, gate);
+        let Some(last) = rows.pop() else {
+            continue;
+        };
+        let ancestor_segments = conditional.carrier.ancestor_segments.clone();
+        for row in rows {
+            grouped
+                .entry(GuardGroupKey {
+                    ancestor_segments: ancestor_segments.clone(),
+                    row,
+                })
+                .or_default()
+                .push(conditional.clone());
+        }
         grouped
-            .entry((
-                conditional.carrier.ancestor_segments.clone(),
-                conditional.outer_guards().to_vec(),
-            ))
+            .entry(GuardGroupKey {
+                ancestor_segments,
+                row: last,
+            })
             .or_default()
             .push(conditional);
     }
+    grouping_span.record("groups", grouped.len());
+    grouping_span.record(
+        "allocated_slots",
+        grouped.values().map(Vec::capacity).sum::<usize>(),
+    );
+    drop(grouping_span);
+    tracing::Span::current().record("guard_groups", grouped.len());
     struct ContentGroup {
         fragment: Value,
-        guard_sets: Vec<Vec<ConditionalGuard>>,
+        guard_sets: Vec<ScopedGuardRow>,
         facts: usize,
         mandatory_facts: usize,
     }
     let mut by_content: BTreeMap<(Vec<String>, String), ContentGroup> = BTreeMap::new();
-    for ((ancestor_segments, guards), group) in grouped {
-        let (_, values_yaml_doc, absence) =
-            documents.condition_context(&guards, dependency_roots, predicate_memo);
+    let mut insert_content = |ancestor: &[String], fragment: Value, row, facts, mandatory_facts| {
+        let content = by_content
+            .entry((
+                ancestor.to_vec(),
+                helm_schema_json_schema_walk::canonical_json_string(&fragment),
+            ))
+            .or_insert_with(|| ContentGroup {
+                fragment,
+                guard_sets: Vec::new(),
+                facts: 0,
+                mandatory_facts: 0,
+            });
+        content.guard_sets.push(row);
+        content.facts += facts;
+        content.mandatory_facts += mandatory_facts;
+    };
+    for (
+        GuardGroupKey {
+            ancestor_segments,
+            row:
+                ScopedGuardRow {
+                    guards: guard_row,
+                    default_document,
+                },
+        },
+        group,
+    ) in grouped
+    {
+        let (_, values_yaml_doc, absence) = default_document.condition_context(
+            &guard_row,
+            documents,
+            dependency_roots,
+            predicate_memo,
+        );
+        let encoding = GuardEncoding {
+            values_yaml_doc,
+            absence,
+            polarity: crate::condition_encoding::ConditionPolarity::Widen,
+        };
         let mut merged: Option<(Value, usize, usize)> = None;
         let mut separate = Vec::new();
         // Each conditional is judged against the lint documents before
@@ -742,32 +1356,76 @@ pub(crate) fn append_selected_constraints(
         let mut guard_condition = None;
         for conditional in group {
             let mandatory = usize::from(matches!(conditional.class, EmissionClass::Mandatory));
+            if !gate.supports_scope_guards(&guard_row)
+                || !gate.requirements_encode_fully(&guard_row, &ancestor_segments, encoding)
+                || conditional
+                    .nested_guard_scopes()
+                    .iter()
+                    .any(|scope| !gate.supports_scope_guards(&scope.guards))
+            {
+                let _abstention = tracing::debug_span!(
+                    target: "helm_schema_gen::counters", "condition_scope_encoding_abstention",
+                )
+                .entered();
+                report.mandatory_outcomes.fallback += mandatory;
+                continue;
+            }
             let Some(fragment) =
                 build_scoped_target_fragment(&conditional, values_yaml_doc, absence, gate)
             else {
                 report.mandatory_outcomes.fallback += mandatory;
                 continue;
             };
+            if let Some(graph) = requirement_guard(&guard_row) {
+                let judged = if conditional.carrier.relax_untyped_host {
+                    vec![LintRequirement {
+                        guards: guard_row.clone(),
+                        then_value: fragment,
+                    }]
+                } else {
+                    gate.lint_requirement_partitions(
+                        &ancestor_segments,
+                        &guard_row,
+                        graph,
+                        fragment,
+                        encoding,
+                    )
+                };
+                for LintRequirement { guards, then_value } in judged {
+                    insert_content(
+                        &ancestor_segments,
+                        then_value,
+                        ScopedGuardRow {
+                            guards,
+                            default_document,
+                        },
+                        1,
+                        mandatory,
+                    );
+                }
+                continue;
+            }
             let condition = guard_condition.get_or_insert_with(|| {
-                SchemaNode::all_of(gate.condition_clauses(
-                    &guards,
+                gate.planned_conjunction(
+                    &guard_row,
                     &ancestor_segments,
                     values_yaml_doc,
                     absence,
                     crate::condition_encoding::ConditionPolarity::Widen,
-                ))
+                )
             });
-            let encoding = GuardEncoding {
-                values_yaml_doc,
-                absence,
-                polarity: crate::condition_encoding::ConditionPolarity::Widen,
-            };
             // A nil-safe host is already scoped by its actual entry domain.
             // Strict hasKey presence includes null; a second non-null gate would lose its failure.
             let kept = if conditional.carrier.relax_untyped_host {
                 Some(fragment)
             } else {
-                gate.lint_safe_then(&ancestor_segments, &guards, condition, fragment, encoding)
+                gate.lint_safe_planned_then(
+                    &ancestor_segments,
+                    &guard_row,
+                    condition,
+                    fragment,
+                    encoding,
+                )
             };
             let Some(fragment) = kept else {
                 report.mandatory_outcomes.fallback += mandatory;
@@ -794,22 +1452,28 @@ pub(crate) fn append_selected_constraints(
             // their guards: `if G1 then X` and `if G2 then X` is
             // `if anyOf [G1, G2] then X`, and X (often a repeated provider
             // schema) is the dominant emitted size.
-            let content = by_content
-                .entry((
-                    ancestor_segments.clone(),
-                    helm_schema_json_schema_walk::canonical_json_string(&fragment),
-                ))
-                .or_insert_with(|| ContentGroup {
-                    fragment,
-                    guard_sets: Vec::new(),
-                    facts: 0,
-                    mandatory_facts: 0,
-                });
-            content.guard_sets.push(guards.clone());
-            content.facts += facts;
-            content.mandatory_facts += mandatory_facts;
+            insert_content(
+                &ancestor_segments,
+                fragment,
+                ScopedGuardRow {
+                    guards: guard_row.clone(),
+                    default_document,
+                },
+                facts,
+                mandatory_facts,
+            );
         }
     }
+    tracing::Span::current().record("content_groups", by_content.len());
+    tracing::Span::current().record(
+        "max_content_guards",
+        by_content
+            .values()
+            .map(|group| group.guard_sets.len())
+            .max()
+            .unwrap_or_default(),
+    );
+    gate.finish_conditional_lint();
     // Arms sharing one scope and one encoded condition conjoin their
     // contents: `if C then A` beside `if C then B` is `if C then A ∧ B`,
     // and the repeated condition trees dominate emitted size on charts
@@ -819,51 +1483,71 @@ pub(crate) fn append_selected_constraints(
     // no if-block to save and land as their own conjuncts unchanged.
     struct PendingEmission {
         ancestor_segments: Vec<String>,
-        condition: SchemaNode,
+        condition: EncodedConditionPlan,
         contents: Vec<SchemaNode>,
         facts: usize,
         mandatory_facts: usize,
     }
     let mut emissions = Vec::<PendingEmission>::new();
-    let mut emission_index: BTreeMap<(Vec<String>, String), usize> = BTreeMap::new();
+    #[expect(
+        clippy::mutable_key_type,
+        reason = "condition OnceLocks memoize canonical bytes and lengths derived from immutable schema fragments"
+    )]
+    let mut emission_index: BTreeMap<(Vec<String>, EncodedConditionPlan), usize> = BTreeMap::new();
     for ((ancestor_segments, _), group) in by_content {
         // An empty guard set is trivially true: the fragment applies
         // unconditionally (an unguarded requirement implication).
-        if group.guard_sets.iter().any(Vec::is_empty) {
+        if group.guard_sets.iter().any(|row| row.guards.is_empty()) {
             emissions.push(PendingEmission {
                 ancestor_segments,
-                condition: SchemaNode::empty(),
+                condition: EncodedConditionPlan::any_of(Vec::new()),
                 contents: vec![SchemaNode::foreign(group.fragment)],
                 facts: group.facts,
                 mandatory_facts: group.mandatory_facts,
             });
             continue;
         }
-        let mut conditions: Vec<SchemaNode> =
-            helm_schema_core::GuardDnf::normalize_conditional_guard_disjunction(group.guard_sets)
-                .into_iter()
-                .map(|guards| {
-                    let (_, values_yaml_doc, absence) =
-                        documents.condition_context(&guards, dependency_roots, predicate_memo);
-                    SchemaNode::all_of(gate.condition_clauses(
+        let guard_sets = if group.guard_sets.iter().any(|row| {
+            row.default_document != GuardDefaultDocument::Derive
+                || requirement_guard(&row.guards).is_some()
+        }) {
+            group.guard_sets
+        } else {
+            helm_schema_core::GuardDnf::normalize_shared_conditional_guard_disjunction(
+                group.guard_sets.into_iter().map(|row| row.guards),
+            )
+            .into_iter()
+            .map(|guards| ScopedGuardRow {
+                guards,
+                default_document: GuardDefaultDocument::Derive,
+            })
+            .collect()
+        };
+        let conditions = guard_sets
+            .into_iter()
+            .map(
+                |ScopedGuardRow {
+                     guards,
+                     default_document,
+                 }| {
+                    let (_, values_yaml_doc, absence) = default_document.condition_context(
+                        &guards,
+                        documents,
+                        dependency_roots,
+                        predicate_memo,
+                    );
+                    gate.planned_conjunction(
                         &guards,
                         &ancestor_segments,
                         values_yaml_doc,
                         absence,
                         crate::condition_encoding::ConditionPolarity::Widen,
-                    ))
-                })
-                .collect();
-        let condition = if conditions.len() == 1 {
-            conditions.remove(0)
-        } else {
-            SchemaNode::any_of(conditions)
-        };
-        let condition_value = condition.clone().into_value();
-        let key = (
-            ancestor_segments.clone(),
-            helm_schema_json_schema_walk::canonical_json_string(&condition_value),
-        );
+                    )
+                },
+            )
+            .collect();
+        let condition = EncodedConditionPlan::any_of(conditions);
+        let key = (ancestor_segments.clone(), condition.clone());
         match emission_index.entry(key) {
             std::collections::btree_map::Entry::Occupied(entry) => {
                 if let Some(emission) = emissions.get_mut(*entry.get()) {
@@ -892,10 +1576,10 @@ pub(crate) fn append_selected_constraints(
         };
         report.carriers.grouping_fan_in = report.carriers.grouping_fan_in.max(emission.facts);
         report.mandatory_outcomes.fallback += emission.mandatory_facts;
-        gate.append_conditional(
+        gate.append_planned_conditional(
             root_schema,
             &emission.ancestor_segments,
-            emission.condition,
+            &emission.condition,
             content,
         );
     }
@@ -968,9 +1652,16 @@ fn build_scoped_target_fragment(
     for scope in conditional.nested_guard_scopes().iter().rev() {
         let relative = current_anchor.strip_prefix(scope.ancestor_segments.as_slice())?;
         let then_schema = build_target_fragment(relative, content);
-        if !scope.guards.iter().all(|guard| {
-            guard_encodes_fully(guard, &scope.ancestor_segments, values_yaml_doc, absence)
-        }) {
+        let encoding = GuardEncoding {
+            values_yaml_doc,
+            absence,
+            polarity: crate::condition_encoding::ConditionPolarity::Widen,
+        };
+        if !gate.requirements_encode_fully(&scope.guards, &scope.ancestor_segments, encoding)
+            || !scope.guards.iter().all(|guard| {
+                guard_encodes_fully(guard, &scope.ancestor_segments, values_yaml_doc, absence)
+            })
+        {
             return None;
         }
         let condition = SchemaNode::all_of(gate.condition_clauses(
@@ -1083,33 +1774,63 @@ fn build_target_fragment(path_segments: &[String], leaf_schema: SchemaNode) -> S
 /// withdraws it.
 #[tracing::instrument(skip_all, level = "debug")]
 fn append_terminal_clause(
-    root_schema: &mut SchemaDocument,
+    emissions: &mut crate::terminal_conditions::TerminalEmissions,
     gate: &mut UncoalescedRootGate<'_>,
-    guards: &[ConditionalGuard],
+    guard_row: &GuardConjunction,
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
 ) {
+    if !gate.supports_scope_guards(guard_row) {
+        let _abstention = tracing::debug_span!(
+            target: "helm_schema_gen::counters", "terminal_scope_encoding_abstention",
+        )
+        .entered();
+        return;
+    }
     let encoding = GuardEncoding {
         values_yaml_doc,
         absence,
         polarity: crate::condition_encoding::ConditionPolarity::Narrow,
     };
-    let condition = SchemaNode::all_of(gate.condition_clauses(
-        guards,
+    if !gate.requirements_encode_fully(guard_row, ancestor_segments, encoding) {
+        return;
+    }
+    if let Some(graph) = requirement_guard(guard_row) {
+        for LintRequirement { guards, then_value } in gate.lint_requirement_partitions(
+            ancestor_segments,
+            guard_row,
+            graph,
+            Value::Bool(false),
+            encoding,
+        ) {
+            let planned = gate.planned_conjunction(
+                &guards,
+                ancestor_segments,
+                values_yaml_doc,
+                absence,
+                encoding.polarity,
+            );
+            emissions.push(gate, ancestor_segments, planned, then_value);
+        }
+        return;
+    }
+    let planned = gate.planned_conjunction(
+        guard_row,
         ancestor_segments,
         values_yaml_doc,
         absence,
         encoding.polarity,
-    ));
-    append_unless_withdrawn(
-        root_schema,
-        gate,
-        ancestor_segments,
-        guards,
-        condition,
-        encoding,
     );
+    if let Some(then_schema) = gate.lint_safe_planned_then(
+        ancestor_segments,
+        guard_row,
+        &planned,
+        Value::Bool(false),
+        encoding,
+    ) {
+        emissions.push(gate, ancestor_segments, planned, then_schema);
+    }
 }
 
 /// Appends `if condition then false` at `ancestor_segments` as the lint gate
@@ -1122,9 +1843,18 @@ fn append_unless_withdrawn(
     condition: SchemaNode,
     encoding: GuardEncoding<'_>,
 ) {
+    if !gate.supports_scope_guards(guards)
+        || !gate.requirements_encode_fully(guards, ancestor_segments, encoding)
+    {
+        let _abstention = tracing::debug_span!(
+            target: "helm_schema_gen::counters", "terminal_scope_encoding_abstention",
+        )
+        .entered();
+        return;
+    }
     if let Some(then_schema) = gate.lint_safe_then(
         ancestor_segments,
-        guards,
+        &GuardConjunction::from(guards.to_vec()),
         &condition,
         Value::Bool(false),
         encoding,
@@ -1137,3 +1867,7 @@ fn append_unless_withdrawn(
         );
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/terminal_scope_encoding.rs"]
+mod tests;

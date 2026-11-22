@@ -1,4 +1,8 @@
+use std::collections::hash_map::Entry;
+use std::hash::{BuildHasher as _, BuildHasherDefault, DefaultHasher, Hash};
 use std::rc::Rc;
+
+use ahash::AHashMap;
 
 // Only the tail may be partial; append copies at most one shared chunk plus the Rc directory.
 const CHUNK_LENGTH: usize = 16;
@@ -104,16 +108,49 @@ impl<T> History<T> {
 }
 
 impl<T: Clone> History<T> {
+    /// Appends incoming observations absent under `same`.
+    ///
+    /// Equivalent observations must have equal fingerprints.
     #[tracing::instrument(skip_all, fields(left = self.len(), right = other.len(), comparisons = tracing::field::Empty, shared_prefix = tracing::field::Empty))]
-    pub(super) fn union_by(&self, other: &Self, mut same: impl FnMut(&T, &T) -> bool) -> Self {
+    pub(super) fn union_by_hashed(
+        &self,
+        other: &Self,
+        mut same: impl FnMut(&T, &T) -> bool,
+        mut fingerprint: impl FnMut(&T) -> u64,
+    ) -> Self {
         let prefix = self.shared_prefix(other);
         let mut result = self.clone();
         let mut comparisons = 0_u64;
-        for value in other.suffix(prefix) {
-            if !result.iter().any(|existing| {
-                comparisons += 1;
-                same(existing, value)
-            }) {
+        let mut compare = |left: &T, right: &T| {
+            comparisons += 1;
+            same(left, right)
+        };
+        if other.length - prefix <= 1 {
+            for value in other.suffix(prefix) {
+                if !self.iter().any(|existing| compare(existing, value)) {
+                    result.push(value.clone());
+                }
+            }
+        } else {
+            let mut members = AHashMap::<u64, FingerprintBucket<'_, T>>::with_capacity(self.len());
+            for value in self {
+                members
+                    .entry(fingerprint(value))
+                    .and_modify(|bucket| bucket.collisions.push(value))
+                    .or_insert_with(|| FingerprintBucket::new(value));
+            }
+            for value in other.suffix(prefix) {
+                match members.entry(fingerprint(value)) {
+                    Entry::Occupied(mut entry) => {
+                        if entry.get().iter().any(|existing| compare(existing, value)) {
+                            continue;
+                        }
+                        entry.get_mut().collisions.push(value);
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(FingerprintBucket::new(value));
+                    }
+                }
                 result.push(value.clone());
             }
         }
@@ -150,6 +187,28 @@ impl<T: Clone> History<T> {
             remaining: self.length,
         }
     }
+}
+
+struct FingerprintBucket<'a, T> {
+    first: &'a T,
+    collisions: Vec<&'a T>,
+}
+
+impl<'a, T> FingerprintBucket<'a, T> {
+    fn new(first: &'a T) -> Self {
+        Self {
+            first,
+            collisions: Vec::new(),
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &'a T> + '_ {
+        std::iter::once(self.first).chain(self.collisions.iter().copied())
+    }
+}
+
+pub(super) fn fingerprint<T: Hash + ?Sized>(key: &T) -> u64 {
+    BuildHasherDefault::<DefaultHasher>::default().hash_one(key)
 }
 
 impl<T: Clone> FromIterator<T> for History<T> {

@@ -33,6 +33,7 @@ struct CandidateKey {
 }
 
 impl ProviderSchemaResolutions {
+    #[tracing::instrument(skip_all)]
     pub(crate) fn resolve(
         contract_schema_signals: &ContractSchemaSignals,
         provider: &dyn ResourceSchemaOracle,

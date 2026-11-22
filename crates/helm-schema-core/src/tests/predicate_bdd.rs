@@ -4,8 +4,9 @@ use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 use super::{
-    FALSE, PredicateBdd, PredicateMemo, TRUE, exact_implies_uncached, memo_sizes,
-    normalize_literal_conjunction, normalize_uncached, simplify_structure,
+    FALSE, MAX_BDD_NODES, PredicateBdd, PredicateMemo, PredicateResidualNode, PredicateResiduals,
+    TRUE, exact_implies_uncached, memo_sizes, normalize_literal_conjunction, normalize_uncached,
+    simplify_structure,
 };
 use crate::{
     ApproximationRole, CollectionDomain, CollectionQuantifier, Guard, GuardValue, Predicate,
@@ -16,6 +17,212 @@ fn guard(index: usize) -> Predicate {
     Predicate::from(Guard::Truthy {
         path: ValuesPath::from_segments([format!("value-{index}")]),
     })
+}
+
+#[test]
+fn predicate_residuals_preserve_live_counterexamples() -> eyre::Result<()> {
+    let left = guard(0);
+    let right = guard(1);
+    let activation = Predicate::And(vec![left.clone(), right.clone()]);
+    let mut session = PredicateResiduals::new([&right, &activation, &left]);
+    let live = session.atoms(&right).ok_or_eyre("missing live atom")?;
+    let left_node = session.import(&left).ok_or_eyre("missing left literal")?;
+    let right_node = session.import(&right).ok_or_eyre("missing right literal")?;
+    let activation_node = session
+        .import(&activation)
+        .ok_or_eyre("missing activation")?;
+    let counterexample = session
+        .not(activation_node)
+        .ok_or_eyre("cannot negate activation")?;
+    let selected = session
+        .and(counterexample, left_node)
+        .ok_or_eyre("cannot constrain activation")?;
+    let projected = session
+        .forget_except(selected, &live)
+        .ok_or_eyre("cannot forget left atom")?;
+    let negative_right = session
+        .not(right_node)
+        .ok_or_eyre("cannot negate right atom")?;
+    sim_assert_eq!(have: projected, want: negative_right);
+    sim_assert_eq!(have: session.atom_count(), want: 2);
+    let ordinals = live
+        .iter()
+        .copied()
+        .map(super::PredicateResidualAtom::ordinal)
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: session.forget_where(selected, |atom| ordinals.contains(&atom.ordinal())),
+        want: Some(negative_right),
+    );
+    sim_assert_eq!(have: session.and(projected, right_node), want: Some(PredicateResidualNode::FALSE));
+    assert!(activation.exactly_implies(&right));
+    Ok(())
+}
+
+#[test]
+fn residual_inventory_supports_large_literal_equality() -> eyre::Result<()> {
+    let literal = Guard::Eq {
+        path: ValuesPath::parse("flag"),
+        value: GuardValue::String("x".repeat(8193)),
+    };
+    let premise = Predicate::from(literal.clone());
+    let activation = Predicate::from(literal);
+    assert!(premise.exactly_implies(&activation));
+
+    let mut session = PredicateResiduals::new([&premise, &activation]);
+    let premise = session.import(&premise).ok_or_eyre("missing premise")?;
+    let activation = session
+        .import(&activation)
+        .ok_or_eyre("missing activation")?;
+    let inactive = session
+        .not(activation)
+        .ok_or_eyre("cannot negate activation")?;
+    sim_assert_eq!(
+        have: session.and(premise, inactive),
+        want: Some(PredicateResidualNode::FALSE),
+    );
+    Ok(())
+}
+
+#[test]
+fn residuals_support_deep_decisions_for_flat_predicates() -> eyre::Result<()> {
+    let guards = (0..513)
+        .rev()
+        .map(|index| Predicate::truthy_path(format!("value-{index:03}")))
+        .collect::<Vec<_>>();
+    let newest = guards.first().ok_or_eyre("missing first literal")?;
+    let premise = Predicate::And(guards.clone());
+    assert!(premise.exactly_implies(newest));
+
+    let mut session = PredicateResiduals::new([&premise, newest]);
+    let premise = session
+        .import(&premise)
+        .ok_or_eyre("missing descending conjunction")?;
+    let activation = session.import(newest).ok_or_eyre("missing activation")?;
+    let inactive = session
+        .not(activation)
+        .ok_or_eyre("cannot negate activation")?;
+    sim_assert_eq!(
+        have: session.and(premise, inactive),
+        want: Some(PredicateResidualNode::FALSE),
+    );
+    Ok(())
+}
+
+#[test]
+fn conjunction_activation_retains_at_most_two_residuals_per_frontier() -> eyre::Result<()> {
+    let guards = (0..64).map(guard).collect::<Vec<_>>();
+    let activation = Predicate::And(guards.clone());
+    let mut session = PredicateResiduals::new(guards.iter().chain([&activation]));
+    let mut live = session
+        .atoms(&activation)
+        .ok_or_eyre("missing activation atoms")?;
+    let activation = session
+        .import(&activation)
+        .ok_or_eyre("missing activation")?;
+    let initial = session
+        .not(activation)
+        .ok_or_eyre("cannot negate activation")?;
+    let mut residuals = BTreeSet::from([initial]);
+    for guard in &guards {
+        let atoms = session.atoms(guard).ok_or_eyre("missing split atom")?;
+        live.retain(|atom| !atoms.contains(atom));
+        let literal = session.import(guard).ok_or_eyre("missing split literal")?;
+        let negative = session
+            .not(literal)
+            .ok_or_eyre("cannot negate split literal")?;
+        let mut next = BTreeSet::new();
+        for residual in residuals {
+            for branch in [literal, negative] {
+                let scoped = session
+                    .and(residual, branch)
+                    .ok_or_eyre("cannot scope residual")?;
+                next.insert(
+                    session
+                        .forget_except(scoped, &live)
+                        .ok_or_eyre("cannot project residual")?,
+                );
+            }
+        }
+        assert!(next.len() <= 2);
+        residuals = next;
+    }
+    sim_assert_eq!(
+        have: residuals,
+        want: BTreeSet::from([PredicateResidualNode::FALSE, PredicateResidualNode::TRUE]),
+    );
+    Ok(())
+}
+
+#[test]
+fn residual_limits_are_local_and_warm_operations_pay_the_same_work() -> eyre::Result<()> {
+    let guards = (0..=MAX_BDD_NODES).map(guard).collect::<Vec<_>>();
+    let unknown = Predicate::approximate("unresolved", BTreeSet::new());
+    let conjunction = Predicate::And(guards.iter().take(32).cloned().collect());
+    let mut session = PredicateResiduals::new(guards.iter().chain([&unknown, &conjunction]));
+    assert!(session.atoms(&unknown).is_none());
+    assert!(session.import(&unknown).is_none());
+
+    let cold = session
+        .import(&conjunction)
+        .ok_or_eyre("missing cold conjunction")?;
+    let cold_allowance = session.bdd.remaining_work;
+    for predicate in &guards {
+        assert!(session.import(predicate).is_some());
+    }
+    let warm = session
+        .import(&conjunction)
+        .ok_or_eyre("missing warm conjunction")?;
+    sim_assert_eq!(have: cold, want: warm);
+    sim_assert_eq!(have: session.bdd.remaining_work, want: cold_allowance);
+    let independent = PredicateResiduals::new(guards.iter().rev().chain([&conjunction]));
+    sim_assert_eq!(have: independent.atoms(&conjunction), want: session.atoms(&conjunction));
+    Ok(())
+}
+
+#[test]
+fn failed_residual_operations_discard_all_new_nodes() -> eyre::Result<()> {
+    let outside = Predicate::truthy_path("outside");
+    let too_large = Predicate::And(
+        (0..100)
+            .map(|index| Predicate::truthy_path(format!("value-{index:03}")))
+            .collect(),
+    );
+    let mut session = PredicateResiduals::new([&outside, &too_large]);
+    let precedent = session
+        .import(&outside)
+        .ok_or_eyre("missing preceding result")?;
+    assert!(session.atoms(&too_large).is_some());
+    for _ in 0..6 {
+        assert!(session.import(&too_large).is_none());
+        sim_assert_eq!(have: session.bdd.nodes.len(), want: 1);
+        sim_assert_eq!(have: session.bdd.unique_nodes.len(), want: 1);
+    }
+    sim_assert_eq!(have: session.import(&outside), want: Some(precedent));
+    Ok(())
+}
+
+#[test]
+fn successful_residual_operations_commit_only_reachable_new_nodes() -> eyre::Result<()> {
+    let outside = Predicate::truthy_path("outside");
+    let conjunction = Predicate::And(
+        (0..40)
+            .map(|index| Predicate::truthy_path(format!("value-{index:03}")))
+            .collect(),
+    );
+    let mut session = PredicateResiduals::new([&outside, &conjunction]);
+    let precedent = session
+        .import(&outside)
+        .ok_or_eyre("missing preceding result")?;
+    let first = session
+        .import(&conjunction)
+        .ok_or_eyre("missing reduced conjunction")?;
+    sim_assert_eq!(have: session.bdd.nodes.len(), want: 41);
+    sim_assert_eq!(have: session.bdd.unique_nodes.len(), want: 41);
+    sim_assert_eq!(have: session.import(&outside), want: Some(precedent));
+    sim_assert_eq!(have: session.import(&conjunction), want: Some(first));
+    sim_assert_eq!(have: session.bdd.nodes.len(), want: 41);
+    Ok(())
 }
 
 #[test]
@@ -35,7 +242,10 @@ fn shared_predicate_dag_normalizes_without_unfolding_occurrences() -> eyre::Resu
     sim_assert_eq!(have: predicate.dag_size(41), want: Some(41));
     let mut bdd = PredicateBdd::for_predicate(&predicate).ok_or_eyre("exact DAG has one atom")?;
     sim_assert_eq!(have: bdd.build(&predicate), want: Some(2));
-    sim_assert_eq!(have: bdd.built.len(), want: 41);
+    let super::PredicateBuilds::Identity(built) = &bdd.built else {
+        eyre::bail!("normalization must memoize this shared predicate by identity");
+    };
+    sim_assert_eq!(have: built.len(), want: 41);
     let mut remaining = 256;
     sim_assert_eq!(have: PredicateMemo::new().normalize_bounded(predicate.clone(), &mut remaining), want: Some(leaf.clone()));
     sim_assert_eq!(have: predicate.normalize_boolean(), want: leaf);
@@ -518,6 +728,52 @@ fn memoized_predicate_operations_match_uncached_results() {
         sim_assert_eq!(have: memo.normalize(predicate.clone()), want: normalized);
         sim_assert_eq!(have: memo.may_be_true(predicate), want: want);
     }
+}
+
+#[test]
+fn distinct_inputs_reuse_one_simplified_root() {
+    let value_is = |value: &str| {
+        Predicate::from(Guard::Eq {
+            path: ValuesPath::parse("choice"),
+            value: GuardValue::String(value.to_owned()),
+        })
+    };
+    let root = Predicate::Or(vec![
+        Predicate::And(vec![value_is("a"), value_is("b")]),
+        Predicate::And(vec![value_is("b"), value_is("c")]),
+    ]);
+    let memo = PredicateMemo::new();
+    let mut neutral = Predicate::True;
+    for _ in 0..16 {
+        neutral = Predicate::Not(Box::new(Predicate::Not(Box::new(neutral))));
+        let predicate = Predicate::And(vec![root.clone(), neutral.clone()]);
+        assert!(!memo.may_be_true(predicate));
+    }
+    sim_assert_eq!(have: memo.feasibility.borrow().len(), want: 16);
+    sim_assert_eq!(have: memo.fallback_feasibility.borrow().len(), want: 1);
+}
+
+#[test]
+fn fallback_cache_reuses_only_equal_sharing() {
+    let build = |common: &dyn Fn() -> Predicate| {
+        Predicate::Or(
+            (1..=16)
+                .map(|index| Predicate::And(vec![common(), guard(index)]))
+                .collect(),
+        )
+    };
+    let shared = guard(0);
+    let first = build(&|| shared.clone());
+    let equal_shared = guard(0);
+    let second = build(&|| equal_shared.clone());
+    let unshared = build(&|| guard(0));
+    sim_assert_eq!(have: &first, want: &second);
+    sim_assert_eq!(have: &first, want: &unshared);
+    let memo = PredicateMemo::new();
+    // Seed a different verdict so the lookup and a fresh proof are distinguishable.
+    memo.fallback_feasibility.borrow_mut().insert(first, false);
+    assert!(!memo.fallback_may_be_true(second));
+    assert!(memo.fallback_may_be_true(unshared));
 }
 
 #[test]

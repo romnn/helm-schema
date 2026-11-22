@@ -20,11 +20,13 @@ mod provider_requirement_synthesis;
 mod provider_resolution;
 mod provider_schema;
 pub mod required_inference;
+mod requirement_activation;
 mod requirement_domain;
 mod resolve_policy;
 mod schema_model;
 mod schema_node;
 mod schema_tree;
+mod terminal_conditions;
 mod uncoalesced_root;
 mod values_yaml;
 
@@ -223,8 +225,8 @@ pub struct GeneratedValuesSchema {
 /// Generates a JSON Schema and the fact-level accounting from the same emitter run.
 #[tracing::instrument(skip_all)]
 pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> GeneratedValuesSchema {
-    let plan = LoweredEmissionPlan::build(&input);
-    let mut projected = plan.project(input.emission_policy);
+    let mut plan = LoweredEmissionPlan::build(&input);
+    let mut projected = plan.project_once(input.emission_policy);
     let base_owners = std::mem::take(&mut projected.base_owners);
     let completed = plan.complete(projected);
     GeneratedValuesSchema {

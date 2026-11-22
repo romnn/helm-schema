@@ -139,7 +139,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
             fetch_policy: FetchPolicy::input_assembly(!cli.k8s.offline),
             load_budget: LoadBudget::default(),
         };
-        session.emit_with_policy_paths(
+        session.into_emit_with_policy_paths(
             &cli.override_schema,
             policy_input_options,
             cli.output.emit_request(),

@@ -36,6 +36,7 @@ use crate::provider_resolution::ProviderSchemaResolutions;
     clippy::too_many_lines,
     reason = "the direct and conditional projections share one provider-nullability cache and source-default invariant"
 )]
+#[tracing::instrument(skip_all)]
 pub(crate) fn synthesized_required_source_implications(
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
@@ -184,6 +185,7 @@ pub(crate) fn synthesized_required_source_implications(
     clippy::too_many_lines,
     reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
 )]
+#[tracing::instrument(skip_all)]
 pub(crate) fn synthesized_ranged_member_required_implications(
     contract_schema_signals: &ContractSchemaSignals,
     runtime_defaults_doc: &YamlValue,
@@ -410,6 +412,7 @@ fn provider_use_rejects_null(
 /// construction, so the self-truthy guard never over-fires — falsy sources
 /// skip their `with`-scoped render (or render an empty segment the sibling
 /// string-contract arm already governs).
+#[tracing::instrument(skip_all)]
 pub(crate) fn synthesized_split_segment_implications(
     contract_schema_signals: &ContractSchemaSignals,
     provider_resolutions: &ProviderSchemaResolutions,
@@ -457,6 +460,7 @@ pub(crate) fn synthesized_split_segment_implications(
 /// validly, so the collection's key domain must be strings; an empty list
 /// runs zero iterations and stays open, as do maps (JSON object keys are
 /// always strings, so the arm is vacuous for them beyond documentation).
+#[tracing::instrument(skip_all)]
 pub(crate) fn synthesized_range_key_implications(
     contract_schema_signals: &ContractSchemaSignals,
     provider_resolutions: &ProviderSchemaResolutions,

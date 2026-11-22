@@ -736,7 +736,7 @@ fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Resul
         want: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                 path: conditional_path("postgresql.enabled"),
-            }],
+            }].into(),
             target: helm_schema_core::ContractRequirementTarget::Value,
             requirements: vec![helm_schema_core::FailValueRequirement::SchemaType(
                 "string".to_string(),
@@ -888,7 +888,7 @@ fn activation_guards_scope_dependency_root_overlay_twins() -> eyre::Result<()> {
         want: vec![helm_schema_core::ContractRequirementImplication {
             outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
                 path: conditional_path("child.enabled"),
-            }],
+            }].into(),
             target: helm_schema_core::ContractRequirementTarget::Value,
             requirements: vec![helm_schema_core::FailValueRequirement::SchemaType(
                 "string".to_string(),

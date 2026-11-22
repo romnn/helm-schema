@@ -2740,6 +2740,190 @@ fn validate_external_comparison(comparison: &AcceptanceComparison) -> eyre::Resu
     Ok(())
 }
 
+#[test]
+#[ignore = "maintenance: requires a complete Helm-ready corpus generation dump"]
+fn corpus_dump_schemas_compile_on_two_mib_threads() -> eyre::Result<()> {
+    let dump = candidate_dump_dir(std::env::var_os(CANDIDATE_DUMP_VAR))?;
+    let manifest = std::fs::File::open(dump.join("manifest.json"))?;
+    let manifest: helm_schema_test_support::manifest::Manifest =
+        serde_json::from_reader(std::io::BufReader::new(manifest))?;
+    let mut checked = 0;
+    for artifact in registry::registry() {
+        if artifact.id.kind() != registry::ArtifactKind::Chart {
+            continue;
+        }
+        let key = artifact.id.key();
+        let helm_ready = manifest
+            .artifacts
+            .iter()
+            .find(|entry| entry.key == key)
+            .and_then(|entry| entry.helm_ready.as_ref())
+            .ok_or_else(|| eyre::eyre!("missing Helm-ready companion for {key}"))?;
+        let shipped = dump.join(&helm_ready.schema.file);
+        eyre::ensure!(
+            std::fs::metadata(&shipped)?.len()
+                <= u64::try_from(helm_schema::output::HELM_MAX_CHART_FILE_BYTES)?,
+            "{key} exceeds the Helm chart file limit"
+        );
+        for path in [dump_artifact_path(&dump, &artifact), shipped] {
+            eprintln!("compiling {}", path.display());
+            std::thread::Builder::new()
+                .stack_size(2 * 1024 * 1024)
+                .spawn(move || -> eyre::Result<()> {
+                    let bytes = std::fs::read(&path)
+                        .wrap_err_with(|| format!("read {}", path.display()))?;
+                    let schema: serde_json::Value = serde_json::from_slice(&bytes)
+                        .wrap_err_with(|| format!("parse {}", path.display()))?;
+                    jsonschema::validator_for(&schema)
+                        .wrap_err_with(|| format!("compile {}", path.display()))?;
+                    Ok(())
+                })?
+                .join()
+                .map_err(|_| eyre::eyre!("corpus validator worker panicked"))??;
+            checked += 1;
+        }
+    }
+    eprintln!("schemas_compiled={checked}");
+    Ok(())
+}
+
+#[test]
+#[ignore = "maintenance: screens two complete corpus generation dumps"]
+fn external_corpus_dumps_accept_the_same_probe_documents() -> eyre::Result<()> {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    const BASELINE_DUMP_VAR: &str = "SCHEMA_ACCEPTANCE_BASELINE_DUMP";
+    let baseline = PathBuf::from(std::env::var_os(BASELINE_DUMP_VAR).ok_or_eyre(
+        "SCHEMA_ACCEPTANCE_BASELINE_DUMP must name the producer dump of the baseline build",
+    )?);
+    let candidate = candidate_dump_dir(std::env::var_os(CANDIDATE_DUMP_VAR))?;
+    let selected = std::env::var(CHART_VAR).ok();
+    let mut charts = Vec::new();
+    for artifact in registry::registry() {
+        let chart = match artifact.id {
+            registry::ArtifactId::Chart(chart) => chart.relative_path(),
+            registry::ArtifactId::Lean(lean) => lean.chart(),
+            registry::ArtifactId::Template(_)
+            | registry::ArtifactId::FinalPolicy(_)
+            | registry::ArtifactId::Authoring(_)
+            | registry::ArtifactId::Ir(_) => continue,
+        };
+        if selected
+            .as_deref()
+            .is_some_and(|selected| selected != chart)
+        {
+            continue;
+        }
+        charts.push(external_dump_chart(
+            &artifact, chart, &baseline, &candidate,
+        )?);
+    }
+    let observed = Arc::new(AtomicUsize::new(0));
+    let differences = Arc::new(AtomicUsize::new(0));
+    let mut config = battery_config(&charts)?;
+    eyre::ensure!(
+        config.kubernetes.is_none(),
+        "expected schema-only screening"
+    );
+    config.witnesses = Some(Arc::new({
+        let observed = Arc::clone(&observed);
+        let differences = Arc::clone(&differences);
+        move |witness| {
+            observed.fetch_add(1, Ordering::Relaxed);
+            if witness.baseline_accepts != witness.candidate_accepts {
+                differences.fetch_add(1, Ordering::Relaxed);
+                eprintln!("different verdict for {}", witness.case());
+            }
+            Ok(())
+        }
+    }));
+    let comparison = compare_charts(charts, &config)?;
+    for coverage in &comparison.coverage {
+        validate_probe_coverage(coverage)?;
+    }
+    eyre::ensure!(
+        comparison.screening_failures.is_empty(),
+        "screening failures: {}",
+        comparison.screening_failures.join("\n")
+    );
+    let differences = differences.load(Ordering::Relaxed);
+    eprintln!(
+        "charts_checked={} probes_checked={} documents_judged={} verdict_differences={differences} screened_flips={}",
+        comparison.coverage.len(),
+        comparison.probes_checked,
+        observed.load(Ordering::Relaxed),
+        comparison.flips.len(),
+    );
+    for flip in &comparison.flips {
+        eprintln!("screening flag {flip}");
+    }
+    sim_assert_eq!(have: differences, want: 0);
+    Ok(())
+}
+
+fn external_dump_chart(
+    artifact: &registry::ArtifactSpec,
+    chart: &'static str,
+    baseline: &std::path::Path,
+    candidate: &std::path::Path,
+) -> eyre::Result<ComparedChart> {
+    let baseline_path = dump_artifact_path(baseline, artifact);
+    let candidate_path = dump_artifact_path(candidate, artifact);
+    let loaded_candidate = candidate_path.clone();
+    let load = move || -> eyre::Result<LoadedInputs> {
+        eprintln!("screening {chart} from {}", baseline_path.display());
+        let baseline_bytes = std::fs::read(&baseline_path)
+            .wrap_err_with(|| format!("read {}", baseline_path.display()))?;
+        let candidate_bytes = std::fs::read(&loaded_candidate)
+            .wrap_err_with(|| format!("read {}", loaded_candidate.display()))?;
+        Ok(LoadedInputs {
+            baseline: serde_json::from_slice(&baseline_bytes)
+                .wrap_err_with(|| format!("parse {}", baseline_path.display()))?,
+            candidate: serde_json::from_slice(&candidate_bytes)
+                .wrap_err_with(|| format!("parse {}", loaded_candidate.display()))?,
+            baseline_bytes,
+            candidate_bytes,
+            defaults: read_coalesced_defaults(chart)?,
+        })
+    };
+    let inputs = if artifact.target == registry::ArtifactTarget::Internal {
+        let LoadedInputs {
+            baseline,
+            candidate,
+            baseline_bytes,
+            candidate_bytes,
+            defaults,
+        } = load()?;
+        ChartInputs::Given {
+            baseline,
+            candidate,
+            baseline_bytes,
+            candidate_bytes,
+            defaults,
+        }
+    } else {
+        ChartInputs::Artifact {
+            load: Box::new(load),
+            candidate_path,
+        }
+    };
+    Ok(ComparedChart {
+        label: artifact.id.key(),
+        chart_relative_path: chart.to_owned(),
+        inputs,
+        annotation: None,
+        replay: Replay::default(),
+    })
+}
+
+fn dump_artifact_path(dump: &std::path::Path, artifact: &registry::ArtifactSpec) -> PathBuf {
+    match artifact.target {
+        registry::ArtifactTarget::Fixture(_) => dump.join(&artifact.dump_name),
+        registry::ArtifactTarget::Internal => dump.join("internal").join(&artifact.dump_name),
+    }
+}
+
 fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<ProbeCoverage>)> {
     let comparison = corpus_acceptance_comparison()?;
     comparison.validate_lint_completeness(comparison.helm_adjudication.enabled)?;

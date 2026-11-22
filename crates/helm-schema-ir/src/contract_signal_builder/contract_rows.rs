@@ -21,7 +21,7 @@ pub(super) struct ContractPathAccumulator {
     pub(super) has_unconditional_overlay_peer: bool,
     pub(super) saw_unsupported_overlay: bool,
     pub(super) requirement_implications: Vec<ContractRequirementImplication>,
-    pub(super) opaque_consumption_guards: Option<Vec<Vec<ConditionalGuard>>>,
+    pub(super) opaque_consumption_guards: Option<Vec<helm_schema_core::GuardConjunction>>,
     pub(super) member_access_conditions: MemberAccessConditions,
 }
 
@@ -242,6 +242,7 @@ pub(super) fn record_contract_use(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     let source_path = contract_use.source_expr.clone();
     if contract_use.range_key {
@@ -324,7 +325,13 @@ pub(super) fn record_contract_use(
                 _ => predicate,
             })
             .collect();
-        record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
+        record_contract_use_conjunction(
+            paths,
+            contract_use,
+            &predicates,
+            range_modes,
+            predicate_memo,
+        );
     }
 }
 
@@ -495,6 +502,7 @@ pub(super) fn record_contract_use_conjunction(
     contract_use: &ContractUse,
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
+    predicate_memo: &helm_schema_core::PredicateMemo,
 ) {
     if record_default_dependency_metadata(paths, contract_use, predicates) {
         return;
@@ -673,6 +681,9 @@ pub(super) fn record_contract_use_conjunction(
     // row's own iteration, not a foreign condition gating it. It is NOT a
     // null-tolerance signal though — iteration does not skip null members.
     let self_range_guarded = range_guard_paths.contains(&source_path);
+    // A row is self-guarded when its condition proves its own source truthy, also when
+    // normalization factors that test through every arm of a disjunction (longhorn's
+    // `release_namespace` under `if and … (not (eq … "")) … else if …`).
     let has_matching_self_guard = predicates.iter().any(|predicate| {
         matches!(
             predicate.kind(),
@@ -684,7 +695,13 @@ pub(super) fn record_contract_use_conjunction(
                     | Guard::Default { path }
             ) if path == &source_path
         )
-    });
+    }) || (source_path.segments().next().is_some()
+        && predicate_memo.exactly_implies(
+            &Predicate::all(predicates.to_vec()),
+            &Predicate::from(Guard::Truthy {
+                path: source_path.clone(),
+            }),
+        ));
     let pathless_self_default_guarded = path_is_empty
         && predicates.iter().any(|predicate| {
             matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == &source_path)

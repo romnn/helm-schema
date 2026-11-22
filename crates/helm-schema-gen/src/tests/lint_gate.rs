@@ -132,7 +132,7 @@ fn judge(
     let mut gate = UncoalescedRootGate::new(Some(root), coalesced, &definitions);
     let kept = gate.lint_safe_then(
         &anchor,
-        guards,
+        &helm_schema_core::GuardConjunction::from(guards.to_vec()),
         &condition,
         then_schema,
         GuardEncoding {
@@ -644,5 +644,46 @@ fn tuple_guard_lint_projection_uses_the_emitted_draft07_dialect() -> eyre::Resul
     sim_assert_eq!(have: validator.is_valid(&json!({"subject": ["safe", "bad"]})), want: true);
     sim_assert_eq!(have: validator.is_valid(&json!({"subject": ["bad", "safe"]})), want: false);
     sim_assert_eq!(have: validator.is_valid(&json!({"subject": ["safe", "bad", "extra"]})), want: false);
+    Ok(())
+}
+
+#[test]
+fn a_decision_has_key_keeps_the_dependency_only_member_deciding() -> eyre::Result<()> {
+    use helm_schema_core::{Guard, Predicate, RequirementAtom, RequirementBdd};
+
+    let guard = Guard::HasKey {
+        path: ValuesPath::parse("kid"),
+        key: "enabled".to_owned(),
+    };
+    let predicate = Predicate::from(guard.clone());
+    let atoms = [RequirementAtom::Value(guard)];
+    let mut work = RequirementBdd::WORK_BUDGET;
+    let mut bdd = RequirementBdd::new(&atoms, &mut work).ok_or_eyre("decision inventory")?;
+    let root = bdd.predicate(&predicate).ok_or_eyre("decision atom")?;
+    let decision = bdd.finish(root).ok_or_eyre("decision guard")?;
+    assert!(matches!(decision, ConditionalGuard::Decision(_)));
+
+    let raw = json!({"kid": {}});
+    let defaults = json!({"kid": {"enabled": true}});
+    let (schema, relaxed) = judge(
+        &raw,
+        &defaults,
+        &["kid"],
+        &[decision],
+        json!(false),
+        ConditionPolarity::Narrow,
+        &Dependencies {
+            roots: &BTreeSet::from([vec!["kid".to_owned()]]),
+            refill: &defaults,
+        },
+    )?;
+    sim_assert_eq!(
+        have: relaxed.iter().flat_map(|row| row.deciding_paths.clone()).collect::<Vec<_>>(),
+        want: vec![ValuesPath::parse("kid.enabled")],
+    );
+    let schema = schema.ok_or_eyre("explicit key must retain its abort")?;
+    let validator = jsonschema::validator_for(&schema)?;
+    assert!(validator.is_valid(&raw));
+    assert!(!validator.is_valid(&defaults));
     Ok(())
 }

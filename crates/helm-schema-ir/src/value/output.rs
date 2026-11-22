@@ -1,5 +1,5 @@
 use super::scalar_value::ScalarContent;
-use super::{Datum, Exit, Flow, FrozenValue, Leaf, ObjectData, Value, ValueNode};
+use super::{Consumption, Datum, Exit, Flow, FrozenValue, Leaf, ObjectData, Value, ValueNode};
 use super::{
     DocumentExecution, ExecutedSite, ExecutedText, ObservationId, OutputNode, TextBuffer, TextPart,
 };
@@ -485,6 +485,34 @@ impl ExecutedSite {
             && consumption_binder == other_binder
             && condition == other_condition
             && self.coverage_exact() == other.coverage_exact()
+    }
+
+    fn history_fingerprint(&self) -> u64 {
+        // Runtime condition equality can compare projections of distinct runtime guards.
+        let Self {
+            program,
+            coverage_exact: _,
+            rendered_unchanged,
+            ordinal,
+            span,
+            source_path,
+            condition: _,
+            value: FrozenValue { heap, value: _ },
+            consumption_binder,
+            plain_scalar_placement,
+            rendered,
+        } = self;
+        super::history::fingerprint(&(
+            program,
+            ordinal,
+            span,
+            source_path.as_deref(),
+            std::rc::Rc::as_ptr(heap),
+            consumption_binder,
+            plain_scalar_placement,
+            rendered_unchanged,
+            rendered,
+        ))
     }
 
     pub(crate) fn coverage_exact(&self) -> bool {
@@ -1423,6 +1451,48 @@ impl super::State {
         self.invocation_count.increment();
         slots
     }
+    /// Records the transformed uses in a completed first pass, including its terminal exits.
+    /// These frozen uses can inform authoring policy before the file has a placement.
+    pub(super) fn retain_rendered_uses_since(&mut self, entry: &Self) {
+        for site in self
+            .sites
+            .since(&entry.sites)
+            .filter(|site| site.rendered && site.value.value.identity().is_none())
+        {
+            let condition = site.condition();
+            for path in site.value.inputs() {
+                if path.segments().next().is_some() {
+                    self.reads.insert(super::RuntimeRead {
+                        coverage: super::ReadCoverage::SerializedInfluence,
+                        path,
+                        condition: condition.clone(),
+                    });
+                }
+            }
+        }
+    }
+
+    /// Retains each pass's frozen observations under its original reach and validity.
+    /// Destination placement remains provisional until the complete file is certified.
+    pub(super) fn retain_loop_facts(&mut self, pass: &Self) {
+        self.sites = self.sites.union_by_hashed(
+            &pass.sites,
+            ExecutedSite::same_site,
+            ExecutedSite::history_fingerprint,
+        );
+        self.text_sites = self.text_sites.union_by_hashed(
+            &pass.text_sites,
+            PartialEq::eq,
+            ExecutedText::history_fingerprint,
+        );
+        self.consumptions = self.consumptions.union_by_hashed(
+            &pass.consumptions,
+            PartialEq::eq,
+            Consumption::history_fingerprint,
+        );
+        self.reads = self.reads.union(&pass.reads);
+    }
+
     pub(super) fn merge_observations(
         &mut self,
         decision: &std::rc::Rc<super::FrozenTest>,
@@ -1448,9 +1518,21 @@ impl super::State {
             &no.invocation_count,
             &self.heap.arena,
         );
-        self.sites = yes.sites.union_by(&no.sites, ExecutedSite::same_site);
-        self.text_sites = yes.text_sites.union_by(&no.text_sites, PartialEq::eq);
-        self.invocations = yes.invocations.union_by(&no.invocations, PartialEq::eq);
+        self.sites = yes.sites.union_by_hashed(
+            &no.sites,
+            ExecutedSite::same_site,
+            ExecutedSite::history_fingerprint,
+        );
+        self.text_sites = yes.text_sites.union_by_hashed(
+            &no.text_sites,
+            PartialEq::eq,
+            ExecutedText::history_fingerprint,
+        );
+        self.invocations = yes.invocations.union_by_hashed(
+            &no.invocations,
+            PartialEq::eq,
+            super::ExecutedInvocationRecord::history_fingerprint,
+        );
         self.invocation_records_complete =
             yes.invocation_records_complete && no.invocation_records_complete;
     }
@@ -1745,13 +1827,13 @@ impl DocumentExecution {
             observed_facts: crate::observed_facts::ObservedFacts::default(),
             placement,
         };
-        let mut requirement_work = 262_144;
         let mut requirement_guards = AHashMap::new();
         execution.observed_facts.consumptions = execution
             .exits
             .iter()
             .flat_map(|exit| exit.state.consumptions.iter())
-            .filter_map(|consumption| {
+            .map(|consumption| {
+                let mut requirement_work = super::consumption::MAX_REQUIREMENT_FREEZE_WORK;
                 consumption.freeze(&mut requirement_work, &mut requirement_guards)
             })
             .collect();
@@ -2290,6 +2372,27 @@ impl PartialEq for ExecutedText {
 }
 
 impl super::ExecutedText {
+    fn history_fingerprint(&self) -> u64 {
+        let Self {
+            program,
+            coverage_exact: _,
+            rendered_unchanged,
+            ordinal,
+            bytes,
+            span,
+            source_path,
+            condition: _,
+        } = self;
+        super::history::fingerprint(&(
+            program,
+            ordinal,
+            span,
+            source_path.as_deref(),
+            bytes.len(),
+            rendered_unchanged,
+        ))
+    }
+
     pub(crate) fn coverage_exact(&self) -> bool {
         self.coverage_exact && self.condition.exact()
     }
@@ -2305,6 +2408,21 @@ impl super::ExecutedText {
     }
     pub(crate) fn bytes(&self) -> &str {
         &self.bytes
+    }
+}
+
+impl super::ExecutedInvocationRecord {
+    fn history_fingerprint(&self) -> u64 {
+        let Self {
+            ordinal,
+            invocation,
+            program,
+            site,
+            function: _,
+            values_fallback: _,
+            condition: _,
+        } = self;
+        super::history::fingerprint(&(invocation, program, site, ordinal))
     }
 }
 
